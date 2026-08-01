@@ -55,9 +55,9 @@
       "console": "internalConsole",
       "outputCapture": "std",
       "serverReadyAction": {
-        "pattern": "Local:\\s+(https?://\\S+)",
+        "pattern": "TVBT full stack ready:\\s+(https?://\\S+)",
         "uriFormat": "%s",
-        "action": "debugWithChrome"
+        "action": "openExternally"
       }
     },
     {
@@ -71,21 +71,23 @@
       "outputCapture": "std",
       "preLaunchTask": "build: web",
       "serverReadyAction": {
-        "pattern": "Local:\\s+(https?://\\S+)",
+        "pattern": "TVBT full stack ready:\\s+(https?://\\S+)",
         "uriFormat": "%s",
-        "action": "debugWithChrome"
+        "action": "openExternally"
       }
     }
   ],
   "compounds": [
     {
-      "name": "Debug all services (fast)",
+      "name": "Debug all services",
       "configurations": ["Go API (fast)", "Python engine (fast)", "Vue Vite (fast)"],
+      "preLaunchTask": "prepare: demo data",
       "stopAll": true
     },
     {
       "name": "Debug all services (checked)",
       "configurations": ["Go API (checked)", "Python engine (checked)", "Vue Vite (checked)"],
+      "preLaunchTask": "prepare: demo data",
       "stopAll": true
     }
   ]

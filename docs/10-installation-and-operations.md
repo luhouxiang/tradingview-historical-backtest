@@ -49,6 +49,12 @@ Ctrl+C 会按精确进程树停止三个服务。启动诊断输出位于 `bin/r
 ./scripts/start-all.ps1
 ~~~
 
+在 VS Code 中运行 `Debug all services (fast)` 或 `Debug all services (checked)` 时，Vite 会在
+Go 的统一健康检查确认 Go/Python 均为 `ok` 后检查 catalog。若尚无就绪数据集，compound 的
+启动前任务只在缺失时准备 AO2609 样例，随后 Vite 开发插件通过 Go 公共 API 扫描并导入该样例；
+已有数据集时不扫描、不导入、不覆盖。首个数据集就绪后输出全栈就绪标记，VS Code 随后调用
+系统默认浏览器打开 `http://127.0.0.1:5173/`；浏览器未运行时会启动，已运行时会新开标签页。
+
 也可分别使用 `start-python-checked.ps1`、`start-go-checked.ps1` 和
 `start-web-checked.ps1`。Python 内部 API 仅监听 127.0.0.1；浏览器只访问 Go 的
 `/api/v1`，不得直接访问 Python 或数据文件。

@@ -172,7 +172,10 @@ npm ci
 “开始正式回测”即可完成回测。Ctrl+C 会停止本次启动的精确进程树。
 
 VS Code 提供“Debug all services (fast)”和“Debug all services (checked)”两个复合启动项。
-Go、Python、Vite 的调试输出进入 Debug Console；构建门禁任务使用 Terminal。
+Go、Python、Vite 的调试输出进入 Debug Console；构建门禁任务使用 Terminal。Vite 会等待 Go 的
+统一健康检查确认 Go/Python 均已就绪；若 catalog 为空，调试启动项只准备并通过 Go 扫描、导入
+AO2609 样例。首个数据集就绪后，VS Code 调用系统默认浏览器打开 K 线页面；浏览器尚未运行时
+会启动浏览器，已经运行时会再次打开一个新标签页。
 
 ## 9. 里程碑 1：历史数据导入
 
