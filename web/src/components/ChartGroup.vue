@@ -5,18 +5,23 @@ import {
   ColorType,
   CrosshairMode,
   HistogramSeries,
+  LineStyle,
   LineSeries,
   createChart,
   type IChartApi,
   type ISeriesApi,
   type LogicalRange,
   type MouseEventParams,
+  type AutoscaleInfo,
   type UTCTimestamp,
 } from 'lightweight-charts'
 import { getCalculationResults } from '../api/client'
 import { ChartSession } from '../chart/session'
 import { ChanPrimitive } from '../chart/chanPrimitive'
+import { HollowVolumeSeries } from '../chart/hollowVolumeSeries'
+import { MacdStickSeries } from '../chart/macdStickSeries'
 import { defaultPaneLayout, enforceMinimumHeights, removePane, resizeAdjacent, type PaneLayout } from '../chart/layout'
+import { histogramColor, indicatorLineColor, MARKET_COLORS } from '../chart/marketStyle'
 import { logger } from '../logging/logger'
 import type { ReplayObjects, ReplaySignal } from '../replay/eventIndex'
 import type { ChanCalculationResults, DatasetMeta, SeriesSource, StrategySource } from '../types/api'
@@ -65,19 +70,23 @@ const projectedDrawings = ref<ProjectedDrawing[]>([])
 const pendingAnchor = ref<DrawingAnchor | null>(null)
 const previewPoint = ref<{ x: number; y: number } | null>(null)
 const crosshairPoint = ref<{ x: number; y: number } | null>(null)
+const latestIndicatorValues = ref<Record<string, number>>({})
+const hoveredIndicatorValues = ref<Record<string, number> | null>(null)
+const latestVolume = ref<number | null>(null)
+const hoveredVolume = ref<number | null>(null)
 const session = new ChartSession()
 const layerManager = new LayerManager()
 let chart: IChartApi | null = null
 let candles: ISeriesApi<'Candlestick'> | null = null
 let macdPlaceholder: ISeriesApi<'Histogram'> | null = null
-let volume: ISeriesApi<'Histogram'> | null = null
+let volume: ISeriesApi<'Custom'> | null = null
 let prefetchTimer: number | undefined
 let indicatorTimer: number | undefined
 let dragCleanup: (() => void) | null = null
 let savedWeights: number[] | null = null
 let resizeObserver: ResizeObserver | null = null
 let dragDrawings: DrawingObject[] | null = null
-const indicatorSeries = new Map<string, ISeriesApi<'Line'> | ISeriesApi<'Histogram'>>()
+const indicatorSeries = new Map<string, ISeriesApi<'Line'> | ISeriesApi<'Histogram'> | ISeriesApi<'Custom'>>()
 const chanPrimitive = new ChanPrimitive()
 const pendingProjected = computed(() => {
   if (!pendingAnchor.value || !chart || !candles) return null
@@ -104,9 +113,52 @@ const splitterPositions = computed(() => {
   let cumulative = 0
   return effectivePanes.value.slice(0, -1).map((pane) => {
     cumulative += pane.weight
-    return (cumulative / total) * 100
+    return (cumulative / total) * chartHeight.value
   })
 })
+const maLegendItems = computed(() => props.indicatorSources
+  .filter((source) => source.status === 'completed' && source.definition.algorithm_id === 'ma')
+  .map((source) => ({
+    key: `${source.source_id}:ma`,
+    period: Number(source.parameters.period),
+    color: indicatorLineColor(source, 'ma'),
+  }))
+  .sort((left, right) => left.period - right.period))
+const macdSource = computed(() => props.indicatorSources.find((source) => source.status === 'completed' && source.definition.algorithm_id === 'macd') ?? null)
+
+function paneControlTop(index: number): string {
+  return index === 0 ? '6px' : `${(splitterPositions.value[index - 1] ?? 0) + 5}px`
+}
+
+function legendValue(key: string): number | null {
+  return hoveredIndicatorValues.value?.[key] ?? latestIndicatorValues.value[key] ?? null
+}
+
+function formatLegendValue(value: number | null): string {
+  return value === null || !Number.isFinite(value) ? '--' : value.toFixed(2)
+}
+
+function macdParameters(): string {
+  const source = macdSource.value
+  return source
+    ? `${source.parameters.fast_period},${source.parameters.slow_period},${source.parameters.signal_period}`
+    : '12,26,9'
+}
+
+function macdLegendValue(outputName: string): number | null {
+  return macdSource.value ? legendValue(`${macdSource.value.source_id}:${outputName}`) : null
+}
+
+function symmetricAutoscale(baseImplementation: () => AutoscaleInfo | null): AutoscaleInfo | null {
+  const info = baseImplementation()
+  if (!info?.priceRange) return info
+  const extent = Math.max(Math.abs(info.priceRange.minValue), Math.abs(info.priceRange.maxValue), Number.EPSILON)
+  return {
+    ...info,
+    priceRange: { minValue: -extent, maxValue: extent },
+    margins: { above: 6, below: 6 },
+  }
+}
 
 function applyWeights(): void {
   if (!chart) return
@@ -129,12 +181,16 @@ function renderBars(): void {
     high: bar.highI64 / scale,
     low: bar.lowI64 / scale,
     close: bar.closeI64 / scale,
+    color: bar.closeI64 >= bar.openI64 ? MARKET_COLORS.background : MARKET_COLORS.falling,
+    borderColor: bar.closeI64 >= bar.openI64 ? MARKET_COLORS.rising : MARKET_COLORS.falling,
+    wickColor: bar.closeI64 >= bar.openI64 ? MARKET_COLORS.rising : MARKET_COLORS.falling,
   })))
   volume.setData(bars.map((bar) => ({
     time: Math.floor(bar.timestampUtc / 1000) as UTCTimestamp,
     value: bar.volume,
-    color: bar.closeI64 >= bar.openI64 ? '#08998199' : '#f2364599',
+    rising: bar.closeI64 >= bar.openI64,
   })))
+  latestVolume.value = bars.at(-1)?.volume ?? null
   projectDrawings()
 }
 
@@ -247,6 +303,19 @@ function beginHandleDrag(drawing: DrawingObject, handle: number, event: PointerE
 
 function crosshairMoved(parameter: MouseEventParams): void {
   crosshairPoint.value = parameter.point ? { x: parameter.point.x, y: parameter.point.y } : null
+  if (!parameter.point) {
+    hoveredIndicatorValues.value = null
+    hoveredVolume.value = null
+    return
+  }
+  const values: Record<string, number> = {}
+  for (const [key, series] of indicatorSeries) {
+    const data = parameter.seriesData.get(series) as { value?: unknown } | undefined
+    if (typeof data?.value === 'number') values[key] = data.value
+  }
+  hoveredIndicatorValues.value = values
+  const volumeData = volume ? parameter.seriesData.get(volume) as { value?: unknown } | undefined : undefined
+  hoveredVolume.value = typeof volumeData?.value === 'number' ? volumeData.value : null
 }
 
 function removeStaleIndicatorSeries(): void {
@@ -273,17 +342,36 @@ async function renderIndicators(fromBarIndex: number, toBarIndex: number): Promi
       if (!series) {
         const paneIndex = output.pane === 'main' ? 0 : 1
         series = output.series_type === 'histogram'
-          ? chart?.addSeries(HistogramSeries, { priceLineVisible: false, lastValueVisible: false }, paneIndex)
-          : chart?.addSeries(LineSeries, { color: output.name === 'signal' ? '#f7a600' : '#2962ff', lineWidth: 2, priceLineVisible: false }, paneIndex)
-        if (series) indicatorSeries.set(key, series)
+          ? chart?.addCustomSeries(new MacdStickSeries(), { autoscaleInfoProvider: symmetricAutoscale, priceLineVisible: false, lastValueVisible: false }, paneIndex)
+          : chart?.addSeries(LineSeries, {
+            color: indicatorLineColor(source, output.name), lineWidth: 1, priceLineVisible: false,
+            ...(output.pane === 'indicator' ? { autoscaleInfoProvider: symmetricAutoscale } : {}),
+          }, paneIndex)
+        if (series) {
+          indicatorSeries.set(key, series)
+          if (output.pane === 'indicator') {
+            series.priceScale().applyOptions({ autoScale: true, scaleMargins: { top: 0.1, bottom: 0.1 } })
+          }
+          if (output.series_type === 'histogram') {
+            series.createPriceLine({
+              price: 0, color: '#8b2b31', lineWidth: 1, lineStyle: LineStyle.Dashed,
+              lineVisible: true, axisLabelVisible: true, title: '0',
+            })
+          }
+        }
       }
       const values = result.values[output.name] ?? []
-      series?.setData(result.bar_index.flatMap((barIndex, index) => {
+      const points = result.bar_index.flatMap((barIndex, index) => {
         if (props.replayCursor !== null && barIndex > props.replayCursor) return []
         const time = times.get(barIndex)
         const value = values[index]
-        return time === undefined || value === null || value === undefined ? [] : [{ time, value }]
-      }))
+        return time === undefined || value === null || value === undefined
+          ? []
+          : [{ time, value, ...(output.series_type === 'histogram' ? { color: histogramColor(value) } : {}) }]
+      })
+      series?.setData(points)
+      const lastValue = points.at(-1)?.value
+      if (typeof lastValue === 'number') latestIndicatorValues.value = { ...latestIndicatorValues.value, [key]: lastValue }
     })
   }))
 }
@@ -473,10 +561,19 @@ onMounted(() => {
     rightPriceScale: { borderColor: '#2a2e39' },
     timeScale: { borderColor: '#2a2e39', timeVisible: true, secondsVisible: false },
   })
-  candles = chart.addSeries(CandlestickSeries, { upColor: '#089981', downColor: '#f23645', borderVisible: false, wickUpColor: '#089981', wickDownColor: '#f23645' }, 0)
+  candles = chart.addSeries(CandlestickSeries, {
+    upColor: MARKET_COLORS.background,
+    downColor: MARKET_COLORS.falling,
+    borderVisible: true,
+    borderUpColor: MARKET_COLORS.rising,
+    borderDownColor: MARKET_COLORS.falling,
+    wickUpColor: MARKET_COLORS.rising,
+    wickDownColor: MARKET_COLORS.falling,
+  }, 0)
   candles.attachPrimitive(chanPrimitive)
   macdPlaceholder = chart.addSeries(HistogramSeries, { color: '#787b86', priceLineVisible: false, lastValueVisible: false }, 1)
-  volume = chart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' }, priceLineVisible: false, lastValueVisible: false }, 2)
+  volume = chart.addCustomSeries(new HollowVolumeSeries(), { priceFormat: { type: 'volume' }, priceLineVisible: false, lastValueVisible: false }, 2)
+  volume.priceScale().applyOptions({ autoScale: true, scaleMargins: { top: 0.15, bottom: 0.02 } })
   applyWeights()
   chart.timeScale().subscribeVisibleLogicalRangeChange(visibleRangeChanged)
   chart.subscribeCrosshairMove(crosshairMoved)
@@ -603,20 +700,40 @@ onBeforeUnmount(() => {
     <div v-if="loading" class="chart-status">正在加载尾部 3000 根…</div>
     <div v-if="error" class="chart-status chart-error">{{ error }}</div>
     <div class="pane-controls" aria-label="窗格控制">
-      <div v-for="(pane, index) in panes" :key="pane.id" class="pane-control" :data-pane-id="pane.id" :data-weight="pane.weight">
-        <strong>{{ pane.id === 'price' ? (dataset?.instrument.symbol ?? '主图') : pane.id.toUpperCase() }}</strong>
-        <button :disabled="pane.kind === 'price'" @click="toggleCollapse(pane.id)">{{ collapsed.has(pane.id) ? '展开' : '折叠' }}</button>
-        <button @click="toggleMaximize(pane.id)">{{ maximized === pane.id ? '还原' : '最大化' }}</button>
-        <button :disabled="pane.kind === 'price' || index === 1" @click="movePane(pane.id, -1)">上移</button>
-        <button :disabled="pane.kind === 'price' || index === panes.length - 1" @click="movePane(pane.id, 1)">下移</button>
-        <button :disabled="pane.kind === 'price'" @click="deletePane(pane.id)">删除</button>
+      <div
+        v-for="(pane, index) in panes" :key="pane.id" class="pane-control"
+        :style="{ top: paneControlTop(index) }" :data-pane-id="pane.id" :data-weight="pane.weight"
+      >
+        <strong v-if="pane.id === 'price'">{{ dataset?.instrument.symbol ?? '主图' }}</strong>
+        <strong v-else-if="pane.id === 'macd'" class="legend-macd-title">MACD({{ macdParameters() }})</strong>
+        <strong v-else>{{ pane.id.toUpperCase() }}</strong>
+        <template v-if="pane.id === 'price'">
+          <span v-for="item in maLegendItems" :key="item.key" class="legend-value" :style="{ color: item.color }">
+            MA{{ item.period }} {{ formatLegendValue(legendValue(item.key)) }}
+          </span>
+        </template>
+        <template v-else-if="pane.id === 'macd'">
+          <span class="legend-value legend-diff">DIFF {{ formatLegendValue(macdLegendValue('macd')) }}</span>
+          <span class="legend-value legend-dea">DEA {{ formatLegendValue(macdLegendValue('signal')) }}</span>
+          <span class="legend-value" :style="{ color: macdLegendValue('histogram') === null ? '#787b86' : histogramColor(macdLegendValue('histogram')!) }">
+            MACD {{ formatLegendValue(macdLegendValue('histogram')) }}
+          </span>
+        </template>
+        <span v-else-if="pane.id === 'volume'" class="legend-value legend-volume">成交量 {{ hoveredVolume ?? latestVolume ?? '--' }}</span>
+        <span class="pane-actions">
+          <button :disabled="pane.kind === 'price'" @click="toggleCollapse(pane.id)">{{ collapsed.has(pane.id) ? '展开' : '折叠' }}</button>
+          <button @click="toggleMaximize(pane.id)">{{ maximized === pane.id ? '还原' : '最大化' }}</button>
+          <button :disabled="pane.kind === 'price' || index === 1" @click="movePane(pane.id, -1)">上移</button>
+          <button :disabled="pane.kind === 'price' || index === panes.length - 1" @click="movePane(pane.id, 1)">下移</button>
+          <button :disabled="pane.kind === 'price'" @click="deletePane(pane.id)">删除</button>
+        </span>
       </div>
     </div>
     <button
       v-for="(top, index) in splitterPositions"
       :key="`splitter-${index}`"
       class="pane-splitter"
-      :style="{ top: `${top}%` }"
+      :style="{ top: `${top}px` }"
       :aria-label="`调整窗格 ${index + 1} 和 ${index + 2}`"
       @pointerdown="beginPaneResize(index, $event)"
       @dblclick="resetPanes"

@@ -2,6 +2,21 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "preflight: debug ports and versions",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoLogo",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/preflight-debug.ps1"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
       "label": "prepare: demo data",
       "type": "process",
       "command": "powershell.exe",
@@ -14,6 +29,15 @@
         "${workspaceFolder}/scripts/prepare-demo-data.ps1"
       ],
       "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "prepare: debug all services",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "preflight: debug ports and versions",
+        "prepare: demo data"
+      ],
       "problemMatcher": []
     },
     {

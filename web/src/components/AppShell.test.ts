@@ -1,7 +1,8 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { DatasetMeta } from '../types/api'
+import { ApiError } from '../api/client'
+import type { AlgorithmDefinition, DatasetMeta } from '../types/api'
 import AppShell from './AppShell.vue'
 
 const api = vi.hoisted(() => ({
@@ -32,6 +33,15 @@ const ChartStub = defineComponent({
   },
 })
 
+function indicatorDefinition(algorithmId: string): AlgorithmDefinition {
+  return {
+    kind: 'indicator', algorithm_id: algorithmId, algorithm_version: '1.0.0', source_hash: `sha256:${'a'.repeat(64)}`,
+    name: algorithmId.toUpperCase(), input_schema: 'bars.v1', causal: true,
+    parameter_schema: { type: 'object', additionalProperties: false, required: [], properties: {} },
+    outputs: [], warmup: { kind: 'formula', expression: '0' },
+  }
+}
+
 describe('AppShell', () => {
   beforeEach(() => vi.clearAllMocks())
   it('renders the empty TradingView-style workspace', () => {
@@ -56,6 +66,7 @@ describe('AppShell', () => {
       global: { stubs: { ChartGroup: { template: '<div />' }, DatasetPanel: { template: '<div />' } } },
     })
     expect(wrapper.get('.workspace-body').attributes('style')).toContain('320px')
+    expect(wrapper.get('.workspace-body').attributes('style')).toContain('1px')
     await wrapper.get('.dock-close').trigger('click')
     expect(wrapper.find('[aria-label="右侧面板"]').exists()).toBe(false)
     await wrapper.get('.reopen-right').trigger('click')
@@ -64,6 +75,24 @@ describe('AppShell', () => {
     await toggle?.trigger('click')
     expect(wrapper.get('.app-shell').attributes('style')).toContain('260px')
     expect(wrapper.get('.bottom-dock').classes()).toContain('expanded')
+  })
+
+  it('creates the Python MA20, MA60 and MACD defaults for a new workspace', async () => {
+    api.getLayout.mockRejectedValue(new ApiError('WORKSPACE_NOT_FOUND', 'missing', 'req-layout'))
+    api.getDrawings.mockRejectedValue(new ApiError('DRAWINGS_NOT_FOUND', 'missing', 'req-drawings'))
+    api.listAlgorithms.mockResolvedValue([indicatorDefinition('ma'), indicatorDefinition('macd')])
+    api.createCalculation.mockImplementation(async (_request: object) => ({ job_id: `job-${api.createCalculation.mock.calls.length}`, status: 'completed' }))
+    const wrapper = mount(AppShell, {
+      props: { health: 'ok' },
+      global: { stubs: { ChartGroup: ChartStub, DatasetPanel: true } },
+    })
+    wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset)
+    await flushPromises()
+    expect(api.createCalculation.mock.calls.map((call) => call[0])).toEqual([
+      expect.objectContaining({ parameters: { period: 20, source: 'close' }, calculation_mode: 'full_history' }),
+      expect.objectContaining({ parameters: { period: 60, source: 'close' }, calculation_mode: 'full_history' }),
+      expect.objectContaining({ parameters: { fast_period: 12, slow_period: 26, signal_period: 9, source: 'close' }, calculation_mode: 'full_history' }),
+    ])
   })
 
   it('restores and saves layout, drawings, panels and fixed anchors with optimistic revisions', async () => {

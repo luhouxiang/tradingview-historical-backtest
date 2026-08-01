@@ -81,13 +81,13 @@
     {
       "name": "Debug all services",
       "configurations": ["Go API (fast)", "Python engine (fast)", "Vue Vite (fast)"],
-      "preLaunchTask": "prepare: demo data",
+      "preLaunchTask": "prepare: debug all services",
       "stopAll": true
     },
     {
       "name": "Debug all services (checked)",
       "configurations": ["Go API (checked)", "Python engine (checked)", "Vue Vite (checked)"],
-      "preLaunchTask": "prepare: demo data",
+      "preLaunchTask": "prepare: debug all services",
       "stopAll": true
     }
   ]

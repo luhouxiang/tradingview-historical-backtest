@@ -70,6 +70,7 @@ trading-data/
 /out/
 *.exe
 *.exe~
+**/__debug_bin*
 *.dll
 *.so
 *.dylib

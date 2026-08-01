@@ -10,8 +10,10 @@ const chartMocks = vi.hoisted(() => {
     priceToCoordinate: vi.fn((price: number) => price * 10),
     coordinateToPrice: vi.fn((coordinate: number) => coordinate / 10),
   }
-  const macd = { setData: vi.fn(), applyOptions: vi.fn() }
-  const volume = { setData: vi.fn(), applyOptions: vi.fn() }
+  const macdScale = { applyOptions: vi.fn() }
+  const volumeScale = { applyOptions: vi.fn() }
+  const macd = { setData: vi.fn(), applyOptions: vi.fn(), priceScale: vi.fn(() => macdScale), createPriceLine: vi.fn() }
+  const volume = { setData: vi.fn(), applyOptions: vi.fn(), priceScale: vi.fn(() => volumeScale), createPriceLine: vi.fn() }
   const pane = () => ({ setStretchFactor: vi.fn() })
   const panes = [pane(), pane(), pane()]
   const timeScale = {
@@ -22,17 +24,18 @@ const chartMocks = vi.hoisted(() => {
   }
   const chart = {
     addSeries: vi.fn((_definition: unknown, _options: unknown, index: number) => [candle, macd, volume][index]),
+    addCustomSeries: vi.fn((_definition: unknown, _options: unknown, index: number) => index === 2 ? volume : macd),
     panes: vi.fn(() => panes), timeScale: vi.fn(() => timeScale), removeSeries: vi.fn(), swapPanes: vi.fn(), remove: vi.fn(),
     subscribeCrosshairMove: vi.fn(), unsubscribeCrosshairMove: vi.fn(),
   }
-  return { candle, macd, volume, panes, timeScale, chart, createChart: vi.fn(() => chart) }
+  return { candle, macd, volume, macdScale, volumeScale, panes, timeScale, chart, createChart: vi.fn(() => chart) }
 })
 
 const apiMocks = vi.hoisted(() => ({ getBars: vi.fn(), getCalculationResults: vi.fn(), createCalculation: vi.fn() }))
 
 vi.mock('lightweight-charts', () => ({
   CandlestickSeries: { type: 'candlestick' }, HistogramSeries: { type: 'histogram' }, LineSeries: { type: 'line' },
-  ColorType: { Solid: 'solid' }, CrosshairMode: { Normal: 0 }, createChart: chartMocks.createChart,
+  ColorType: { Solid: 'solid' }, CrosshairMode: { Normal: 0 }, LineStyle: { Dashed: 2 }, createChart: chartMocks.createChart,
 }))
 vi.mock('../api/client', () => apiMocks)
 
@@ -56,16 +59,19 @@ describe('ChartGroup', () => {
       request_id: 'req', dataset_id: 'SHFE.AO2609.5m', data_revision: revision, generation_id: generation,
       price_scale: 1, coverage: { first_bar_index: 0, last_bar_index: 1 }, has_more_before: false,
       checksum: `sha256:${'b'.repeat(64)}`,
-      bars: { bar_index: [0, 1], timestamp_utc: [1_700_000_000_000, 1_700_000_300_000], open_i64: [10, 11], high_i64: [12, 13], low_i64: [9, 10], close_i64: [11, 12], volume: [3, 4], open_interest: [null, 5] },
+      bars: { bar_index: [0, 1], timestamp_utc: [1_700_000_000_000, 1_700_000_300_000], open_i64: [10, 11], high_i64: [12, 13], low_i64: [9, 10], close_i64: [11, 10], volume: [3, 4], open_interest: [null, 5] },
     }))
   })
 
-  it('uses one chart instance with price, MACD placeholder, and volume panes at 6:1:1', () => {
+  it('uses one chart instance with price, MACD placeholder, and custom volume panes at 6:1:1', () => {
     const wrapper = mount(ChartGroup, { props: { dataset: null } })
     expect(chartMocks.createChart).toHaveBeenCalledTimes(1)
-    expect(chartMocks.chart.addSeries.mock.calls.map((call) => call[2])).toEqual([0, 1, 2])
+    expect(chartMocks.chart.addSeries.mock.calls.map((call) => call[2])).toEqual([0, 1])
+    expect(chartMocks.chart.addCustomSeries).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ priceFormat: { type: 'volume' } }), 2)
     expect(wrapper.findAll('.pane-control').map((item) => item.attributes('data-weight'))).toEqual(['6', '1', '1'])
     expect(wrapper.findAll('.pane-splitter')).toHaveLength(2)
+    expect(wrapper.findAll('.pane-splitter')[0]?.attributes('style')).toContain('top: 600px')
+    expect(wrapper.find('[data-pane-id="macd"]').attributes('style')).toContain('top: 605px')
     expect(wrapper.find('[data-pane-id="price"] button:last-child').attributes('disabled')).toBeDefined()
     wrapper.unmount()
   })
@@ -75,10 +81,21 @@ describe('ChartGroup', () => {
     await flushPromises()
     expect(apiMocks.getBars).toHaveBeenCalledWith('SHFE.AO2609.5m', revision, expect.stringMatching(/^gen-/), { tail: 3000 })
     expect(chartMocks.candle.setData).toHaveBeenCalledWith([
-      { time: 1_700_000_000, open: 10, high: 12, low: 9, close: 11 },
-      { time: 1_700_000_300, open: 11, high: 13, low: 10, close: 12 },
+      {
+        time: 1_700_000_000, open: 10, high: 12, low: 9, close: 11,
+        color: '#131722', borderColor: '#f23645', wickColor: '#f23645',
+      },
+      {
+        time: 1_700_000_300, open: 11, high: 13, low: 10, close: 10,
+        color: '#00b8a9', borderColor: '#00b8a9', wickColor: '#00b8a9',
+      },
     ])
-    expect(chartMocks.volume.setData).toHaveBeenCalledTimes(1)
+    expect(chartMocks.volume.setData).toHaveBeenCalledWith([
+      { time: 1_700_000_000, value: 3, rising: true },
+      { time: 1_700_000_300, value: 4, rising: false },
+    ])
+    expect(chartMocks.volumeScale.applyOptions).toHaveBeenCalledWith({ autoScale: true, scaleMargins: { top: 0.15, bottom: 0.02 } })
+    expect(wrapper.get('[data-pane-id="volume"]').text()).toContain('成交量 4')
     expect(chartMocks.timeScale.setVisibleLogicalRange).toHaveBeenCalledWith({ from: 0, to: 7 })
     wrapper.unmount()
   })
@@ -134,7 +151,51 @@ describe('ChartGroup', () => {
     await flushPromises()
     expect(apiMocks.getCalculationResults).toHaveBeenCalledWith('job-1', 0, 1)
     expect(apiMocks.createCalculation).not.toHaveBeenCalled()
+    expect(chartMocks.chart.addSeries).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ lineWidth: 1 }), 0)
     vi.useRealTimers()
+    wrapper.unmount()
+  })
+
+  it('renders MACD lines and sign-colored histogram values returned by Python', async () => {
+    apiMocks.getCalculationResults.mockResolvedValue({
+      result_kind: 'indicator', bar_index: [0, 1],
+      values: { macd: [-1, 2], signal: [-0.5, 1], histogram: [-0.5, 1] },
+      coverage: { returned_count: 2 },
+    })
+    const source = {
+      source_type: 'SeriesSource' as const, source_id: 'series-macd', job_id: 'job-macd', status: 'completed' as const,
+      parameters: { fast_period: 12, slow_period: 26, signal_period: 9, source: 'close' },
+      definition: {
+        kind: 'indicator' as const, algorithm_id: 'macd', algorithm_version: '1.0.0', source_hash: `sha256:${'c'.repeat(64)}`,
+        name: 'MACD', input_schema: 'bars.v1' as const, causal: true as const,
+        parameter_schema: { type: 'object' as const, additionalProperties: false as const, required: [], properties: {} },
+        outputs: [
+          { name: 'macd', display_name: 'DIFF', pane: 'indicator' as const, series_type: 'line' as const },
+          { name: 'signal', display_name: 'DEA', pane: 'indicator' as const, series_type: 'line' as const },
+          { name: 'histogram', display_name: 'MACD', pane: 'indicator' as const, series_type: 'histogram' as const },
+        ],
+        warmup: { kind: 'formula' as const, expression: 'slow_period + signal_period - 2' },
+      },
+    }
+    const wrapper = mount(ChartGroup, { props: { dataset: dataset(), indicatorSources: [source] } })
+    await flushPromises()
+    expect(apiMocks.getCalculationResults).toHaveBeenCalledWith('job-macd', 0, 1)
+    expect(chartMocks.chart.addSeries).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ color: '#e0e3eb' }), 1)
+    expect(chartMocks.chart.addSeries).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ color: '#f2d600' }), 1)
+    expect(chartMocks.chart.addCustomSeries).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ autoscaleInfoProvider: expect.any(Function) }), 1)
+    expect(chartMocks.macd.createPriceLine).toHaveBeenCalledWith(expect.objectContaining({ price: 0, title: '0' }))
+    const diffOptions = chartMocks.chart.addSeries.mock.calls.find((call) => (call[1] as { color?: string })?.color === '#e0e3eb')?.[1] as { autoscaleInfoProvider: (base: () => object) => object }
+    expect(diffOptions.autoscaleInfoProvider(() => ({ priceRange: { minValue: -3, maxValue: 5 } }))).toEqual({
+      priceRange: { minValue: -5, maxValue: 5 }, margins: { above: 6, below: 6 },
+    })
+    expect(chartMocks.macd.setData).toHaveBeenCalledWith([
+      { time: 1_700_000_000, value: -0.5, color: '#00b8a9' },
+      { time: 1_700_000_300, value: 1, color: '#f23645' },
+    ])
+    expect(wrapper.get('[data-pane-id="macd"]').text()).toContain('MACD(12,26,9)')
+    expect(wrapper.get('[data-pane-id="macd"]').text()).toContain('DIFF 2.00')
+    expect(wrapper.get('[data-pane-id="macd"]').text()).toContain('DEA 1.00')
+    expect(wrapper.get('[data-pane-id="macd"]').text()).toContain('MACD 1.00')
     wrapper.unmount()
   })
 
@@ -166,7 +227,7 @@ describe('ChartGroup', () => {
     const wrapper = mount(ChartGroup, { props: { dataset: dataset(), replayCursor: 0, replayObjects: { fractals: [], bi: [], zhongshu: [] } } })
     await flushPromises()
     expect(chartMocks.candle.setData).toHaveBeenLastCalledWith([
-      { time: 1_700_000_000, open: 10, high: 12, low: 9, close: 11 },
+      expect.objectContaining({ time: 1_700_000_000, open: 10, high: 12, low: 9, close: 11 }),
     ])
     await wrapper.setProps({ replayCursor: 1 })
     expect(chartMocks.candle.setData).toHaveBeenLastCalledWith(expect.arrayContaining([

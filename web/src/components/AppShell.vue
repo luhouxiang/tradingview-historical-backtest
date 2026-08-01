@@ -12,8 +12,9 @@ import BacktestPanel from './BacktestPanel.vue'
 import OptimizationPanel from './OptimizationPanel.vue'
 import { ApiError, createCalculation, getCalculation, getDrawings, getLayout, listAlgorithms, putDrawings, putLayout } from '../api/client'
 import { DrawingHistory, LayerManager, type DrawingObject, type DrawingType } from '../drawing/model'
+import { defaultIndicatorSpecs } from '../indicators/defaults'
 import type { ReplayObjects, ReplaySignal } from '../replay/eventIndex'
-import type { DatasetMeta, SeriesSource, StrategySource, WorkspaceLayout } from '../types/api'
+import type { AlgorithmDefinition, DatasetMeta, SeriesSource, StrategySource, WorkspaceLayout } from '../types/api'
 
 defineProps<{ health: string }>()
 
@@ -47,7 +48,7 @@ const layerManager = new LayerManager()
 const profileId = 'default'
 const layoutId = 'default-three-pane'
 const workspaceColumns = computed(() => rightOpen.value
-  ? `48px minmax(320px, 1fr) 8px ${rightWidth.value}px`
+  ? `48px minmax(320px, 1fr) 1px ${rightWidth.value}px`
   : '48px minmax(320px, 1fr)')
 const shellRows = computed(() => `44px minmax(0, 1fr) ${bottomOpen.value ? bottomHeight.value : 28}px`)
 
@@ -101,13 +102,43 @@ async function trackStrategyCalculation(source: StrategySource): Promise<void> {
   }
 }
 
+async function installDefaultIndicators(dataset: DatasetMeta, definitions?: AlgorithmDefinition[]): Promise<void> {
+  const specs = defaultIndicatorSpecs(definitions ?? await listAlgorithms())
+  const created = await Promise.all(specs.map(async (spec) => {
+    const accepted = await createCalculation({
+      dataset_id: dataset.dataset_id,
+      data_revision: dataset.data_revision,
+      algorithm: {
+        kind: spec.definition.kind,
+        algorithm_id: spec.definition.algorithm_id,
+        algorithm_version: spec.definition.algorithm_version,
+        source_hash: spec.definition.source_hash,
+      },
+      parameters: spec.parameters,
+      calculation_mode: 'full_history',
+    })
+    return {
+      source_type: 'SeriesSource' as const,
+      source_id: spec.sourceId,
+      definition: spec.definition,
+      parameters: spec.parameters,
+      job_id: accepted.job_id,
+      status: accepted.status,
+    }
+  }))
+  if (selectedDataset.value?.dataset_id !== dataset.dataset_id || selectedDataset.value.data_revision !== dataset.data_revision) return
+  indicatorSources.value = created
+  for (const source of created.filter((candidate) => candidate.status !== 'completed')) void trackCalculation(source)
+}
+
 async function restoreSources(layout: WorkspaceLayout, dataset: DatasetMeta): Promise<void> {
   const definitions = await listAlgorithms()
   const restored: SeriesSource[] = []
   const pending: SeriesSource[] = []
   const restoredStrategies: StrategySource[] = []
   const pendingStrategies: StrategySource[] = []
-  for (const saved of layout.series_sources.filter((item) => item.dataset_id === dataset.dataset_id && item.data_revision === dataset.data_revision)) {
+  const savedSeries = layout.series_sources.filter((item) => item.dataset_id === dataset.dataset_id && item.data_revision === dataset.data_revision)
+  for (const saved of savedSeries) {
     const definition = definitions.find((item) => item.algorithm_id === saved.algorithm.algorithm_id && item.source_hash === saved.algorithm.source_hash)
     if (!definition) continue
     const accepted = await createCalculation({
@@ -123,6 +154,7 @@ async function restoreSources(layout: WorkspaceLayout, dataset: DatasetMeta): Pr
   }
   indicatorSources.value = restored
   for (const source of pending) void trackCalculation(source)
+  if (savedSeries.length === 0) await installDefaultIndicators(dataset, definitions)
   for (const saved of (layout.strategy_sources ?? []).filter((item) => item.dataset_id === dataset.dataset_id && item.data_revision === dataset.data_revision)) {
     const definition = definitions.find((item) => item.kind === 'chan' && item.algorithm_id === saved.algorithm.algorithm_id && item.source_hash === saved.algorithm.source_hash)
     if (!definition) continue
@@ -170,6 +202,11 @@ async function selectDataset(dataset: DatasetMeta): Promise<void> {
     workspaceStatus.value = '布局恢复失败'
   } else {
     layoutRevision.value = 0
+    try {
+      await installDefaultIndicators(dataset)
+    } catch (error) {
+      workspaceStatus.value = error instanceof Error ? `基础指标创建失败：${error.message}` : '基础指标创建失败'
+    }
   }
   if (drawingResult.status === 'fulfilled' && drawingResult.value.data_revision === dataset.data_revision) {
     drawingRevision.value = drawingResult.value.revision

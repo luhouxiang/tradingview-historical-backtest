@@ -18,21 +18,22 @@ button:disabled { color: #787b86; }
 .health-dot { width: 8px; height: 8px; border-radius: 50%; background: #787b86; }
 .health-ok { background: #089981; }.health-degraded { background: #f7a600; }.health-unavailable { background: #f23645; }
 .health-label { min-width: 74px; color: #b2b5be; font-size: 12px; }
-.workspace-body { min-height: 0; display: grid; grid-template-columns: 48px minmax(320px, 1fr) 8px 320px; }
+.workspace-body { min-height: 0; display: grid; grid-template-columns: 48px minmax(320px, 1fr) 1px 320px; }
 .left-toolbar { display: flex; flex-direction: column; align-items: center; padding-top: 8px; border-right: 1px solid #2a2e39; background: #1e222d; }
 .left-toolbar button { width: 36px; height: 36px; font-size: 18px; }
 .drawing-toolbar { gap: 2px; overflow-y: auto; }
 .drawing-toolbar button.active { color: #fff; background: #2962ff; border-radius: 4px; }
 .drawing-toolbar span { width: 28px; border-top: 1px solid #363a45; }
-.chart-workspace { position: relative; min-width: 0; min-height: 0; overflow: auto; padding: 8px; background: #131722; }
+.chart-workspace { position: relative; min-width: 0; min-height: 0; overflow: auto; padding: 8px 0 8px 8px; background: #131722; }
 .empty-chart { position: relative; display: grid; place-content: center; height: 100%; overflow: hidden; border: 1px solid #2a2e39; background-image: linear-gradient(#1c2030 1px, transparent 1px), linear-gradient(90deg, #1c2030 1px, transparent 1px); background-size: 64px 48px; text-align: center; }
 .empty-chart p { margin: 0 0 8px; color: #b2b5be; }.empty-chart small { color: #5d606b; }
 .watermark { position: absolute; inset: 50% auto auto 50%; transform: translate(-50%, -50%); font-size: min(18vw, 180px); font-weight: 900; color: rgb(255 255 255 / 2.5%); }
-.right-dock { min-width: 280px; border-left: 1px solid #2a2e39; background: #1e222d; }
+.right-dock { min-width: 280px; background: #1e222d; }
 .right-dock nav { display: flex; height: 40px; border-bottom: 1px solid #2a2e39; }.right-dock .active, .bottom-dock .active { color: #fff; border-bottom: 2px solid #2962ff; border-radius: 0; }
 .right-dock .dock-close { margin-left: auto; color: #787b86; }
-.workspace-splitter { width: 8px; cursor: col-resize; background: #171b26; border-inline: 1px solid #2a2e39; }
-.workspace-splitter:hover { background: #363c4e; }
+.workspace-splitter { position: relative; z-index: 10; width: 1px; min-width: 1px; padding: 0; cursor: col-resize; background: #f23645; overflow: visible; }
+.workspace-splitter::before { content: ''; position: absolute; top: 0; bottom: 0; left: -4px; width: 9px; }
+.workspace-splitter:hover, .workspace-splitter:active { background: #ff5b67; box-shadow: 0 0 5px rgb(242 54 69 / 70%); }
 .reopen-right { position: absolute; z-index: 5; top: 12px; right: 16px; padding: 6px 10px; border: 1px solid #363a45; border-radius: 4px; background: #1e222d; cursor: pointer; }
 .empty-panel { padding: 24px; color: #787b86; text-align: center; }
 .dataset-panel { height: calc(100% - 40px); overflow: auto; padding: 10px; }
@@ -92,7 +93,9 @@ button:disabled { color: #787b86; }
 .optimization-table tr.selected { background: rgba(41, 98, 255, .16); }
 .equity-chart { width: 100%; height: 120px; background: #131722; }
 .equity-chart polyline { fill: none; stroke: #2962ff; stroke-width: 2; vector-effect: non-scaling-stroke; }
-.bottom-splitter { position: absolute; z-index: 10; top: -4px; left: 0; width: 100%; height: 8px; cursor: row-resize; }
+.bottom-dock .bottom-splitter { position: absolute; z-index: 10; top: -4px; left: 0; width: 100%; height: 9px; padding: 0; cursor: row-resize; background: transparent; }
+.bottom-dock .bottom-splitter::after { content: ''; position: absolute; top: 4px; left: 0; width: 100%; height: 1px; background: #f23645; }
+.bottom-dock .bottom-splitter:hover::after, .bottom-dock .bottom-splitter:active::after { top: 3px; height: 2px; background: #ff5b67; box-shadow: 0 0 5px rgb(242 54 69 / 70%); }
 
 .chart-group { position: relative; width: 100%; height: 100%; min-height: 430px; overflow: hidden; border: 1px solid #2a2e39; background: #131722; }
 .chart-host { position: absolute; inset: 0; }
@@ -110,14 +113,18 @@ button:disabled { color: #787b86; }
 .chart-empty p { margin: 0 0 8px; color: #b2b5be; }.chart-empty small { color: #5d606b; }
 .chart-status { position: absolute; z-index: 8; top: 8px; left: 50%; transform: translateX(-50%); padding: 5px 9px; border-radius: 4px; background: #1e222de6; color: #b2b5be; font-size: 11px; }
 .chart-error { color: #f23645; }
-.pane-controls { position: absolute; z-index: 6; top: 6px; left: 8px; display: grid; gap: 4px; pointer-events: none; }
-.pane-control { display: flex; align-items: center; gap: 2px; height: 24px; color: #787b86; font-size: 10px; pointer-events: auto; }
-.pane-control strong { min-width: 58px; color: #b2b5be; }
+.pane-controls { position: absolute; z-index: 6; inset: 0; pointer-events: none; }
+.pane-control { position: absolute; left: 8px; display: flex; align-items: center; gap: 6px; height: 20px; color: #787b86; font-size: 10px; pointer-events: auto; }
+.pane-control strong { color: #b2b5be; white-space: nowrap; }
+.pane-actions { display: inline-flex; gap: 2px; }
+.legend-value { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.legend-macd-title, .legend-dea, .legend-volume { color: #f2d600 !important; }
+.legend-diff { color: #e0e3eb; }
 .pane-control button { padding: 2px 4px; border-radius: 3px; background: #1e222dcc; cursor: pointer; }
 .pane-control button:hover:not(:disabled) { color: #fff; background: #2a2e39; }
-.pane-splitter { position: absolute; z-index: 7; left: 0; width: 100%; height: 8px; transform: translateY(-4px); cursor: row-resize; background: transparent; }
-.pane-splitter::after { content: ''; position: absolute; top: 3px; left: 0; width: 100%; height: 1px; background: #2a2e39; }
-.pane-splitter:hover::after { background: #787b86; }
+.pane-splitter { position: absolute; z-index: 7; left: 0; width: 100%; height: 9px; padding: 0; transform: translateY(-4px); cursor: row-resize; background: transparent; }
+.pane-splitter::after { content: ''; position: absolute; top: 4px; left: 0; width: 100%; height: 1px; background: #f23645; }
+.pane-splitter:hover::after, .pane-splitter:active::after { top: 3px; height: 2px; background: #ff5b67; box-shadow: 0 0 5px rgb(242 54 69 / 70%); }
 
 @media (max-width: 800px) {
   .workspace-body { grid-template-columns: 48px minmax(240px, 1fr); }
