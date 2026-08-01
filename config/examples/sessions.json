@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "templates": [
+    {
+      "id": "cn_futures_night_0100",
+      "timezone": "Asia/Shanghai",
+      "night_start": "21:00",
+      "night_end": "01:00",
+      "segments": [
+        {
+          "name": "night_before_midnight",
+          "start": "21:00",
+          "end": "24:00",
+          "calendar_date_rule": "night_session_date"
+        },
+        {
+          "name": "night_after_midnight",
+          "start": "00:00",
+          "end": "01:00",
+          "calendar_date_rule": "trading_day"
+        },
+        {
+          "name": "day_1",
+          "start": "09:00",
+          "end": "10:15",
+          "calendar_date_rule": "trading_day"
+        },
+        {
+          "name": "day_2",
+          "start": "10:30",
+          "end": "11:30",
+          "calendar_date_rule": "trading_day"
+        },
+        {
+          "name": "day_3",
+          "start": "13:30",
+          "end": "15:00",
+          "calendar_date_rule": "trading_day"
+        }
+      ]
+    }
+  ]
+}
+

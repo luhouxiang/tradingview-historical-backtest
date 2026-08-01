@@ -1,0 +1,16 @@
+{
+  "request_id": "req-example",
+  "job_id": "job-example",
+  "cache_key": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+  "dataset_id": "SHFE.AO2609.5m",
+  "data_revision": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "algorithm": {"kind": "chan", "algorithm_id": "chan_standard", "algorithm_version": "1.0.0", "source_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222"},
+  "result_kind": "chan",
+  "coverage": {"first_bar_index": 100, "last_bar_index": 200, "returned_count": 4},
+  "checksum": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+  "objects": {
+    "fractals": [{"object_id": "fractal-10", "bar_index": 110, "time": 1785502800000, "price_i64": 2386, "fractal_type": "top", "confirmed": true, "confirmed_at_bar_index": 112, "known_at_bar_index": 112, "object_revision": 1}],
+    "bi": [{"object_id": "bi-4", "start_bar_index": 110, "start_time": 1785502800000, "start_price_i64": 2386, "end_bar_index": 130, "end_time": 1785506400000, "end_price_i64": 2351, "direction": "down", "confirmed": true, "confirmed_at_bar_index": 135, "known_at_bar_index": 135, "object_revision": 2}],
+    "zhongshu": [{"object_id": "zhongshu-1", "start_bar_index": 130, "start_time": 1785506400000, "end_bar_index": 190, "end_time": 1785510600000, "zg_i64": 2380, "zd_i64": 2362, "confirmed": true, "confirmed_at_bar_index": 190, "status": "extended", "leave_direction": null, "known_at_bar_index": 190, "object_revision": 1}]
+  }
+}

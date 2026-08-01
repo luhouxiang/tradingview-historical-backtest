@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/drawings.schema.json",
+  "title": "DrawingDocument",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "profile_id", "layout_id", "dataset_id", "data_revision", "revision", "drawings", "updated_at"],
+  "properties": {
+    "request_id": {"type": "string"},
+    "schema_version": {"const": 1},
+    "profile_id": {"type": "string", "minLength": 1},
+    "layout_id": {"type": "string", "minLength": 1},
+    "dataset_id": {"type": "string", "minLength": 1},
+    "data_revision": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "revision": {"type": "integer", "minimum": 1},
+    "drawings": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/drawing"}
+    },
+    "updated_at": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["time", "price_i64", "price_scale"],
+      "properties": {
+        "time": {"type": "integer"},
+        "price_i64": {"type": "integer"},
+        "price_scale": {"type": "integer", "minimum": 1}
+      }
+    },
+    "drawing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "type", "pane_id", "visible", "locked", "z_band", "order_in_band", "style", "anchors", "revision", "created_at", "updated_at"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "type": {"enum": ["trend_line", "horizontal_line", "rectangle", "text", "measure"]},
+        "pane_id": {"type": "string", "minLength": 1},
+        "visible": {"type": "boolean"},
+        "locked": {"type": "boolean"},
+        "z_band": {"const": 600},
+        "order_in_band": {"type": "integer", "minimum": 0},
+        "style": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["color", "line_width", "fill_opacity"],
+          "properties": {
+            "color": {"type": "string", "pattern": "^#[0-9a-fA-F]{6}$"},
+            "line_width": {"type": "number", "minimum": 1, "maximum": 8},
+            "fill_opacity": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        },
+        "anchors": {"type": "array", "minItems": 1, "maxItems": 2, "items": {"$ref": "#/$defs/anchor"}},
+        "text": {"type": "string", "maxLength": 1000},
+        "revision": {"type": "integer", "minimum": 1},
+        "created_at": {"type": "string", "format": "date-time"},
+        "updated_at": {"type": "string", "format": "date-time"}
+      }
+    }
+  }
+}

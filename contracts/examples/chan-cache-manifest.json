@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "cache_key": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+  "dataset_id": "SHFE.AO2609.5m",
+  "data_revision": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "algorithm": {
+    "kind": "chan",
+    "algorithm_id": "chan_standard",
+    "algorithm_version": "1.0.0",
+    "source_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "parameters": {"min_fractal_gap": 5, "checkpoint_interval": 1024},
+  "calculation_mode": "causal_events",
+  "engine_version": "0.1.0",
+  "coverage": {"bar_count": 17017, "first_bar_index": 0, "last_bar_index": 17016},
+  "counts": {"merged_bars": 12000, "fractals": 2100, "bi": 540, "zhongshu": 24, "events": 6500},
+  "files": {
+    "fractals": {"path": "fractals.parquet", "row_count": 2100, "sha256": "sha256:4444444444444444444444444444444444444444444444444444444444444444"},
+    "bi": {"path": "bi.parquet", "row_count": 540, "sha256": "sha256:5555555555555555555555555555555555555555555555555555555555555555"},
+    "zhongshu": {"path": "zhongshu.parquet", "row_count": 24, "sha256": "sha256:7777777777777777777777777777777777777777777777777777777777777777"},
+    "events": {"path": "events.parquet", "row_count": 6500, "sha256": "sha256:8888888888888888888888888888888888888888888888888888888888888888"}
+  },
+  "checkpoint": {"format": "tvbt-chan-checkpoint-v1", "algorithm_version": "1.0.0", "interval_bars": 1024, "count": 17, "last_bar_index": 16383},
+  "created_at": "2026-08-01T00:00:00Z"
+}

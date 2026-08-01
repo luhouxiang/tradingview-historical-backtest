@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/layout.schema.json",
+  "title": "ChartLayout",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "layout_id",
+    "profile_id",
+    "revision",
+    "panes",
+    "right_panel",
+    "bottom_panel",
+    "object_order",
+    "series_sources",
+    "strategy_sources",
+    "updated_at"
+  ],
+  "properties": {
+    "request_id": {"type": "string"},
+    "schema_version": {"const": 1},
+    "layout_id": {"type": "string", "minLength": 1},
+    "profile_id": {"type": "string", "minLength": 1},
+    "revision": {"type": "integer", "minimum": 1},
+    "panes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "role",
+          "weight",
+          "min_height",
+          "visible",
+          "collapsed",
+          "order"
+        ],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "role": {"enum": ["price", "indicator"]},
+          "weight": {"type": "number", "exclusiveMinimum": 0},
+          "min_height": {"type": "integer", "minimum": 40},
+          "visible": {"type": "boolean"},
+          "collapsed": {"type": "boolean"},
+          "order": {"type": "integer", "minimum": 0},
+          "title": {"type": "string"}
+        }
+      }
+    },
+    "right_panel": {
+      "$ref": "#/$defs/side_panel"
+    },
+    "bottom_panel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["height", "collapsed", "active_tab"],
+      "properties": {
+        "height": {"type": "integer", "minimum": 160},
+        "collapsed": {"type": "boolean"},
+        "active_tab": {
+          "enum": ["replay", "backtest", "trades", "equity", "optimization", "tasks", "logs"]
+        }
+      }
+    },
+    "object_order": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "pane_id", "z_band", "order_in_band", "visible", "locked"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "pane_id": {"type": "string", "minLength": 1},
+          "z_band": {
+            "enum": [0, 100, 200, 300, 400, 500, 600, 700, 800, 900]
+          },
+          "order_in_band": {"type": "integer", "minimum": 0},
+          "visible": {"type": "boolean"},
+          "locked": {"type": "boolean"}
+        }
+      }
+    },
+    "series_sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_id", "name", "pane_id", "visible", "locked", "z_band", "order_in_band", "dataset_id", "data_revision", "algorithm", "parameters"],
+        "properties": {
+          "source_id": {"type": "string", "minLength": 1},
+          "name": {"type": "string", "minLength": 1},
+          "pane_id": {"type": "string", "minLength": 1},
+          "visible": {"type": "boolean"},
+          "locked": {"type": "boolean"},
+          "z_band": {"const": 400},
+          "order_in_band": {"type": "integer", "minimum": 0},
+          "dataset_id": {"type": "string", "minLength": 1},
+          "data_revision": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+          "algorithm": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "algorithm_id", "algorithm_version", "source_hash"],
+            "properties": {
+              "kind": {"const": "indicator"},
+              "algorithm_id": {"type": "string", "minLength": 1},
+              "algorithm_version": {"type": "string", "minLength": 1},
+              "source_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+            }
+          },
+          "parameters": {"type": "object"}
+        }
+      }
+    },
+    "strategy_sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_id", "name", "pane_id", "visible", "locked", "z_band", "order_in_band", "dataset_id", "data_revision", "algorithm", "parameters", "category_visibility"],
+        "properties": {
+          "source_id": {"type": "string", "minLength": 1},
+          "name": {"type": "string", "minLength": 1},
+          "pane_id": {"type": "string", "minLength": 1},
+          "visible": {"type": "boolean"},
+          "locked": {"type": "boolean"},
+          "z_band": {"const": 500},
+          "order_in_band": {"type": "integer", "minimum": 0},
+          "dataset_id": {"type": "string", "minLength": 1},
+          "data_revision": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+          "algorithm": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "algorithm_id", "algorithm_version", "source_hash"],
+            "properties": {
+              "kind": {"const": "chan"},
+              "algorithm_id": {"type": "string", "minLength": 1},
+              "algorithm_version": {"type": "string", "minLength": 1},
+              "source_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+            }
+          },
+          "parameters": {"type": "object"},
+          "category_visibility": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["fractals", "bi", "zhongshu"],
+            "properties": {
+              "fractals": {"type": "boolean"},
+              "bi": {"type": "boolean"},
+              "zhongshu": {"type": "boolean"}
+            }
+          }
+        }
+      }
+    },
+    "updated_at": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "side_panel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "collapsed", "active_tab"],
+      "properties": {
+        "width": {"type": "integer", "minimum": 280, "maximum": 600},
+        "collapsed": {"type": "boolean"},
+        "active_tab": {
+          "enum": ["watchlist", "object_tree", "data_window", "strategy_params"]
+        }
+      }
+    }
+  }
+}

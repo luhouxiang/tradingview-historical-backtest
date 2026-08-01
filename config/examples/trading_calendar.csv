@@ -1,0 +1,5 @@
+trading_day,night_session_date,is_open,note
+2025-09-16,2025-09-15,true,sample
+2025-09-17,2025-09-16,true,sample
+2025-09-22,2025-09-19,true,Monday uses Friday night date
+

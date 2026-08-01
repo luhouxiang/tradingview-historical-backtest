@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/dataset-meta.schema.json",
+  "title": "DatasetMeta",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "dataset_id",
+    "data_revision",
+    "instrument",
+    "timeframe",
+    "source",
+    "time",
+    "price",
+    "coverage",
+    "importer",
+    "quality",
+    "files",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "dataset_id": {
+      "type": "string",
+      "pattern": "^[A-Z0-9_]+\\.[A-Z0-9_]+\\.[0-9]+[smhdw]$"
+    },
+    "data_revision": {
+      "$ref": "#/$defs/sha256"
+    },
+    "instrument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exchange", "symbol", "product"],
+      "properties": {
+        "exchange": {"type": "string", "minLength": 1},
+        "symbol": {"type": "string", "minLength": 1},
+        "product": {"type": "string", "minLength": 1},
+        "display_name": {"type": "string"}
+      }
+    },
+    "timeframe": {
+      "type": "string",
+      "pattern": "^[0-9]+[smhdw]$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "encoding", "format"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relative_path"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "encoding": {"type": "string"},
+        "format": {"type": "string"},
+        "title": {"type": "string"},
+        "timestamp_semantics": {
+          "enum": ["bar_start", "bar_end"]
+        }
+      }
+    },
+    "time": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["timezone", "date_semantics", "trading_calendar_hash"],
+      "properties": {
+        "timezone": {"type": "string", "minLength": 1},
+        "date_semantics": {
+          "enum": ["trading_day", "calendar_date"]
+        },
+        "trading_calendar_hash": {"$ref": "#/$defs/sha256"},
+        "session_config_hash": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "price": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["price_decimals", "price_scale"],
+      "properties": {
+        "price_decimals": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 12
+        },
+        "price_scale": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "tick_size_i64": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bar_count",
+        "first_bar_index",
+        "last_bar_index",
+        "first_timestamp_utc",
+        "last_timestamp_utc",
+        "first_trading_day",
+        "last_trading_day"
+      ],
+      "properties": {
+        "bar_count": {"type": "integer", "minimum": 0},
+        "first_bar_index": {"type": "integer", "minimum": 0},
+        "last_bar_index": {"type": "integer", "minimum": 0},
+        "first_timestamp_utc": {"type": "integer"},
+        "last_timestamp_utc": {"type": "integer"},
+        "first_trading_day": {"type": "string", "format": "date"},
+        "last_trading_day": {"type": "string", "format": "date"}
+      }
+    },
+    "importer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "options_hash"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1},
+        "options_hash": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "duplicate_count",
+        "invalid_ohlc_count",
+        "zero_volume_count",
+        "gap_count",
+        "warning_count",
+        "error_count"
+      ],
+      "properties": {
+        "duplicate_count": {"type": "integer", "minimum": 0},
+        "invalid_ohlc_count": {"type": "integer", "minimum": 0},
+        "zero_volume_count": {"type": "integer", "minimum": 0},
+        "gap_count": {"type": "integer", "minimum": 0},
+        "warning_count": {"type": "integer", "minimum": 0},
+        "error_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "path", "sha256", "size_bytes"],
+        "properties": {
+          "role": {"type": "string"},
+          "path": {"$ref": "#/$defs/relative_path"},
+          "sha256": {"$ref": "#/$defs/sha256"},
+          "size_bytes": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "relative_path": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "anyOf": [
+          {"pattern": "^/"},
+          {"pattern": "^[A-Za-z]:"},
+          {"pattern": "(^|/)\\.\\.(/|$)"}
+        ]
+      }
+    }
+  }
+}
+

@@ -1,0 +1,1722 @@
+openapi: 3.1.0
+info:
+  title: TradingView-like Historical Backtest API
+  version: 1.0.0
+  description: >
+    Public Vue-to-Go API and loopback-only Go-to-Python control API.
+    Large tabular data is exchanged through referenced Parquet files, not internal JSON bodies.
+servers:
+  - url: http://127.0.0.1:8080
+    description: Go public API
+security: []
+tags:
+  - name: System
+  - name: Datasets
+  - name: Jobs
+  - name: Calculations
+  - name: Replays
+  - name: Backtests
+  - name: Workspaces
+  - name: Logs
+  - name: Python Internal
+paths:
+  /api/v1/health:
+    get:
+      tags: [System]
+      operationId: getHealth
+      summary: 获取 Go 与 Python 健康状态
+      responses:
+        "200":
+          description: Health of Go and Python engine
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /api/v1/datasets/scan:
+    post:
+      tags: [Datasets]
+      operationId: scanSourceFiles
+      summary: 扫描历史源文件目录
+      responses:
+        "202":
+          description: Scan accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobAccepted"
+
+  /api/v1/source-files:
+    get:
+      tags: [Datasets]
+      operationId: listSourceFiles
+      summary: 列出已识别和待修正的源文件
+      responses:
+        "200":
+          description: Detected and unresolved source files
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [request_id, items]
+                properties:
+                  request_id:
+                    type: string
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SourceFile"
+
+  /api/v1/datasets/import:
+    post:
+      tags: [Datasets]
+      operationId: importDataset
+      summary: 创建历史数据导入任务
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImportRequest"
+      responses:
+        "202":
+          description: Import accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobAccepted"
+        "422":
+          $ref: "#/components/responses/Unprocessable"
+
+  /api/v1/datasets:
+    get:
+      tags: [Datasets]
+      operationId: listDatasets
+      summary: 获取数据集目录
+      responses:
+        "200":
+          description: Catalog datasets
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [request_id, catalog_revision, datasets]
+                properties:
+                  request_id:
+                    type: string
+                  catalog_revision:
+                    type: integer
+                  datasets:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DatasetSummary"
+
+  /api/v1/datasets/{dataset_id}:
+    get:
+      tags: [Datasets]
+      operationId: getDataset
+      summary: 获取一个数据集的元数据
+      parameters:
+        - $ref: "#/components/parameters/DatasetId"
+        - $ref: "#/components/parameters/Revision"
+      responses:
+        "200":
+          description: Dataset metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/datasets/{dataset_id}/bars:
+    get:
+      tags: [Datasets]
+      operationId: getBars
+      summary: 按尾部或向左游标读取 K 线
+      parameters:
+        - $ref: "#/components/parameters/DatasetId"
+        - $ref: "#/components/parameters/Revision"
+        - name: generation_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: tail
+          in: query
+          description: 首次读取尾部数量；与 before_bar_index 二选一，未提供游标时默认 3000
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 5000
+            default: 3000
+        - name: before_bar_index
+          in: query
+          description: 返回 bar_index 严格小于此值的最近数据；不得与 tail 同时提供
+          schema:
+            type: integer
+            minimum: 1
+        - name: limit
+          in: query
+          description: before_bar_index 模式的返回上限
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5000
+            default: 1500
+      responses:
+        "200":
+          description: Columnar K-line range in ascending bar_index order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BarRangeResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/jobs/{job_id}:
+    get:
+      tags: [Jobs]
+      operationId: getJob
+      summary: 查询导入、扫描或计算等长任务状态
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Job status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobStatus"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/jobs/{job_id}/cancel:
+    post:
+      tags: [Jobs]
+      operationId: cancelJob
+      summary: 协作式取消长任务
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "202":
+          description: Cancellation requested
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobStatus"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/algorithms:
+    get:
+      tags: [Calculations]
+      operationId: listAlgorithms
+      summary: 获取可用指标、缠论与策略定义
+      responses:
+        "200":
+          description: Indicator, Chan and strategy definitions
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [request_id, algorithms]
+                properties:
+                  request_id:
+                    type: string
+                  algorithms:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AlgorithmDefinition"
+
+  /api/v1/calculations:
+    post:
+      tags: [Calculations]
+      operationId: createCalculation
+      summary: 创建或复用指标或缠论计算
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalculationRequest"
+      responses:
+        "200":
+          description: Existing cache hit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobStatus"
+        "202":
+          description: Calculation accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobAccepted"
+
+  /api/v1/calculations/{job_id}:
+    get:
+      tags: [Calculations]
+      operationId: getCalculation
+      summary: 查询计算状态
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Job status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobStatus"
+
+  /api/v1/calculations/{job_id}/cancel:
+    post:
+      tags: [Calculations]
+      operationId: cancelCalculation
+      summary: 取消计算
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "202":
+          description: Cancellation requested
+
+  /api/v1/calculations/{job_id}/results:
+    get:
+      tags: [Calculations]
+      operationId: getCalculationResults
+      summary: 按范围读取指标或结构对象
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+        - name: from_bar_index
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+        - name: to_bar_index
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        "200":
+          description: Dense indicator values or semantic object changes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalculationResults"
+
+  /api/v1/replays:
+    post:
+      tags: [Replays]
+      operationId: createReplay
+      summary: 创建或复用因果回放事件
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReplayRequest"
+      responses:
+        "200":
+          description: Existing replay cache hit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReplayStatus"
+        "202":
+          description: Replay event generation accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReplayStatus"
+
+  /api/v1/replays/{replay_id}:
+    get:
+      tags: [Replays]
+      operationId: getReplay
+      summary: 查询回放事件任务状态
+      parameters:
+        - $ref: "#/components/parameters/ReplayId"
+      responses:
+        "200":
+          description: Replay metadata and status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReplayStatus"
+
+  /api/v1/replays/{replay_id}/events:
+    get:
+      tags: [Replays]
+      operationId: getReplayEvents
+      summary: 按已知时间范围读取因果事件
+      parameters:
+        - $ref: "#/components/parameters/ReplayId"
+        - name: known_from_bar_index
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+        - name: known_to_bar_index
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        "200":
+          description: Causal events ordered by event_seq
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [request_id, replay_id, known_from_bar_index, known_to_bar_index, event_count, checksum, events]
+                properties:
+                  request_id:
+                    type: string
+                  replay_id:
+                    type: string
+                  known_from_bar_index:
+                    type: integer
+                    minimum: 0
+                  known_to_bar_index:
+                    type: integer
+                    minimum: 0
+                  event_count:
+                    type: integer
+                    minimum: 0
+                  checksum:
+                    type: string
+                    pattern: "^sha256:[0-9a-f]{64}$"
+                  events:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CausalEvent"
+
+  /api/v1/backtests:
+    post:
+      tags: [Backtests]
+      operationId: createBacktest
+      summary: 创建正式回测运行
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BacktestRequest"
+      responses:
+        "202":
+          description: Backtest accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunAccepted"
+
+  /api/v1/backtests/{run_id}:
+    get:
+      tags: [Backtests]
+      operationId: getBacktest
+      summary: 查询回测状态与清单
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+      responses:
+        "200":
+          description: Run status and manifest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunStatus"
+
+  /api/v1/backtests/{run_id}/cancel:
+    post:
+      tags: [Backtests]
+      operationId: cancelBacktest
+      summary: 取消回测运行
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+      responses:
+        "202":
+          description: Cancellation requested
+
+  /api/v1/backtests/{run_id}/summary:
+    get:
+      tags: [Backtests]
+      operationId: getBacktestSummary
+      summary: 获取回测汇总
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+      responses:
+        "200":
+          description: Backtest aggregate metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BacktestSummary"
+
+  /api/v1/backtests/{run_id}/trades:
+    get:
+      tags: [Backtests]
+      operationId: listBacktestTrades
+      summary: 分页获取回测交易
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: Paged trades
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedRows"
+
+  /api/v1/backtests/{run_id}/equity:
+    get:
+      tags: [Backtests]
+      operationId: getBacktestEquity
+      summary: 获取回测权益曲线
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+      responses:
+        "200":
+          description: Equity curve rows
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [request_id, run_id, rows]
+                properties:
+                  request_id: {type: string}
+                  run_id: {type: string}
+                  rows:
+                    type: array
+                    items: {$ref: "#/components/schemas/EquityRow"}
+
+  /api/v1/backtests/{run_id}/chart-events:
+    get:
+      tags: [Backtests]
+      operationId: getBacktestChartEvents
+      summary: 获取回测图上事件
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+      responses:
+        "200":
+          description: Trade and strategy overlays
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [request_id, run_id, events]
+                properties:
+                  request_id: {type: string}
+                  run_id: {type: string}
+                  events:
+                    type: array
+                    items: {$ref: "#/components/schemas/CausalEvent"}
+
+  /api/v1/studies:
+    post:
+      tags: [Optimization]
+      operationId: createStudy
+      summary: Create a deterministic parameter optimization study
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StudyRequest"
+      responses:
+        "202":
+          description: Study accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudyAccepted"
+
+  /api/v1/studies/{study_id}:
+    get:
+      tags: [Optimization]
+      operationId: getStudy
+      summary: Get study status and final manifest
+      parameters:
+        - $ref: "#/components/parameters/StudyId"
+      responses:
+        "200":
+          description: Study status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudyStatus"
+
+  /api/v1/studies/{study_id}/cancel:
+    post:
+      tags: [Optimization]
+      operationId: cancelStudy
+      summary: Cancel a running study
+      parameters:
+        - $ref: "#/components/parameters/StudyId"
+      responses:
+        "202":
+          description: Cancellation requested
+
+  /api/v1/studies/{study_id}/evaluations:
+    get:
+      tags: [Optimization]
+      operationId: listStudyEvaluations
+      summary: Get ranked train and validation evaluations
+      parameters:
+        - $ref: "#/components/parameters/StudyId"
+      responses:
+        "200":
+          description: Study evaluations and stability report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudyEvaluations"
+
+  /api/v1/workspaces/{profile_id}/layouts/{layout_id}:
+    get:
+      tags: [Workspaces]
+      operationId: getLayout
+      summary: 读取图表布局
+      parameters:
+        - $ref: "#/components/parameters/ProfileId"
+        - $ref: "#/components/parameters/LayoutId"
+      responses:
+        "200":
+          description: Layout document
+          content:
+            application/json:
+              schema:
+                $ref: "./schemas/layout.schema.json"
+    put:
+      tags: [Workspaces]
+      operationId: putLayout
+      summary: 带修订号保存图表布局
+      parameters:
+        - $ref: "#/components/parameters/ProfileId"
+        - $ref: "#/components/parameters/LayoutId"
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "./schemas/layout.schema.json"
+      responses:
+        "200":
+          description: Saved layout
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /api/v1/workspaces/{profile_id}/drawings/{layout_id}/{dataset_id}:
+    get:
+      tags: [Workspaces]
+      operationId: getDrawings
+      summary: 读取用户绘图
+      parameters:
+        - $ref: "#/components/parameters/ProfileId"
+        - $ref: "#/components/parameters/LayoutId"
+        - $ref: "#/components/parameters/DatasetId"
+      responses:
+        "200":
+          description: Drawing document
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+    put:
+      tags: [Workspaces]
+      operationId: putDrawings
+      summary: 带修订号保存用户绘图
+      parameters:
+        - $ref: "#/components/parameters/ProfileId"
+        - $ref: "#/components/parameters/LayoutId"
+        - $ref: "#/components/parameters/DatasetId"
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "./schemas/drawings.schema.json"
+      responses:
+        "200":
+          description: Saved drawings
+          content:
+            application/json:
+              schema:
+                $ref: "./schemas/drawings.schema.json"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /api/v1/client-logs:
+    post:
+      tags: [Logs]
+      operationId: ingestClientLogs
+      summary: 接收 Vue 客户端日志批次
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [events]
+              properties:
+                events:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  items:
+                    $ref: "./schemas/log-event.schema.json"
+      responses:
+        "202":
+          description: Batch accepted
+
+  /internal/v1/health:
+    get:
+      tags: [Python Internal]
+      operationId: getPythonHealth
+      summary: 获取 Python 引擎健康状态
+      servers:
+        - url: http://127.0.0.1:8091
+      responses:
+        "200":
+          description: Python engine health and contract version
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /internal/v1/algorithms:
+    get:
+      tags: [Python Internal]
+      operationId: listPythonAlgorithms
+      summary: 获取 Python 算法定义
+      servers:
+        - url: http://127.0.0.1:8091
+      responses:
+        "200":
+          description: Python algorithm definitions
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /internal/v1/job-submissions/{job_kind}:
+    post:
+      tags: [Python Internal]
+      operationId: submitPythonJob
+      summary: 向 Python 提交计算、回放或回测任务
+      servers:
+        - url: http://127.0.0.1:8091
+      parameters:
+        - name: job_kind
+          in: path
+          required: true
+          schema:
+            enum: [calculation, replay, backtest, optimization]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PythonJobRequest"
+      responses:
+        "202":
+          description: Python job accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobAccepted"
+
+  /internal/v1/jobs/{job_id}:
+    get:
+      tags: [Python Internal]
+      operationId: getPythonJob
+      summary: 查询 Python 任务状态
+      servers:
+        - url: http://127.0.0.1:8091
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Python job status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobStatus"
+
+  /internal/v1/jobs/{job_id}/cancel:
+    post:
+      tags: [Python Internal]
+      operationId: cancelPythonJob
+      summary: 取消 Python 任务
+      servers:
+        - url: http://127.0.0.1:8091
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "202":
+          description: Cancellation requested
+
+components:
+  parameters:
+    DatasetId:
+      name: dataset_id
+      in: path
+      required: true
+      schema:
+        type: string
+    Revision:
+      name: revision
+      in: query
+      required: true
+      schema:
+        type: string
+        pattern: "^sha256:[0-9a-f]{64}$"
+    JobId:
+      name: job_id
+      in: path
+      required: true
+      schema:
+        type: string
+    ReplayId:
+      name: replay_id
+      in: path
+      required: true
+      schema:
+        type: string
+    RunId:
+      name: run_id
+      in: path
+      required: true
+      schema:
+        type: string
+    StudyId:
+      name: study_id
+      in: path
+      required: true
+      schema:
+        type: string
+    ProfileId:
+      name: profile_id
+      in: path
+      required: true
+      schema:
+        type: string
+    LayoutId:
+      name: layout_id
+      in: path
+      required: true
+      schema:
+        type: string
+    Cursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      schema:
+        type: string
+
+  responses:
+    BadRequest:
+      description: Invalid query parameters
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: Revision or state conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unprocessable:
+      description: Invalid domain input
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, contract_version, services]
+      properties:
+        status:
+          enum: [ok, degraded, unavailable]
+        contract_version:
+          type: string
+        services:
+          type: object
+          additionalProperties:
+            type: object
+            required: [status]
+            properties:
+              status:
+                enum: [ok, degraded, unavailable]
+              version:
+                type: string
+
+    SourceFile:
+      type: object
+      required: [source_file_id, path, status]
+      properties:
+        source_file_id:
+          type: string
+        path:
+          type: string
+        status:
+          enum: [detected, needs_mapping, importable, imported, rejected]
+        detected:
+          type: object
+          additionalProperties: true
+        issues:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    ImportRequest:
+      type: object
+      required:
+        - source_file_id
+        - importer_id
+        - exchange
+        - instrument
+        - timeframe
+        - date_semantics
+        - timezone
+      properties:
+        source_file_id:
+          type: string
+        importer_id:
+          const: tdx_txt_v1
+        exchange:
+          type: string
+        instrument:
+          type: string
+        timeframe:
+          type: string
+        date_semantics:
+          enum: [trading_day, calendar_date]
+        timezone:
+          type: string
+        timestamp_semantics:
+          enum: [bar_start, bar_end]
+        options:
+          type: object
+          additionalProperties: true
+
+    DatasetSummary:
+      type: object
+      required:
+        - dataset_id
+        - active_revision
+        - instrument
+        - timeframe
+        - bar_count
+        - first_timestamp_utc
+        - last_timestamp_utc
+        - status
+      properties:
+        dataset_id:
+          type: string
+        active_revision:
+          type: string
+        instrument:
+          type: string
+        timeframe:
+          type: string
+        bar_count:
+          type: integer
+        first_timestamp_utc:
+          type: integer
+        last_timestamp_utc:
+          type: integer
+        status:
+          enum: [ready, importing, invalid]
+
+    BarColumns:
+      type: object
+      required:
+        - bar_index
+        - timestamp_utc
+        - open_i64
+        - high_i64
+        - low_i64
+        - close_i64
+        - volume
+      properties:
+        bar_index:
+          type: array
+          items: {type: integer}
+        timestamp_utc:
+          type: array
+          items: {type: integer}
+        open_i64:
+          type: array
+          items: {type: integer}
+        high_i64:
+          type: array
+          items: {type: integer}
+        low_i64:
+          type: array
+          items: {type: integer}
+        close_i64:
+          type: array
+          items: {type: integer}
+        volume:
+          type: array
+          items: {type: integer}
+        open_interest:
+          type: array
+          items:
+            type: [integer, "null"]
+
+    BarRangeResponse:
+      type: object
+      required:
+        - request_id
+        - dataset_id
+        - data_revision
+        - generation_id
+        - price_scale
+        - coverage
+        - has_more_before
+        - checksum
+        - bars
+      properties:
+        request_id:
+          type: string
+        dataset_id:
+          type: string
+        data_revision:
+          type: string
+        generation_id:
+          type: string
+        price_scale:
+          type: integer
+        coverage:
+          type: object
+          required: [first_bar_index, last_bar_index]
+          properties:
+            first_bar_index: {type: integer}
+            last_bar_index: {type: integer}
+        has_more_before:
+          type: boolean
+        checksum:
+          type: string
+          pattern: "^sha256:[0-9a-f]{64}$"
+        bars:
+          $ref: "#/components/schemas/BarColumns"
+
+    AlgorithmRef:
+      type: object
+      required: [kind, algorithm_id, algorithm_version, source_hash]
+      properties:
+        kind:
+          enum: [indicator, chan, strategy]
+        algorithm_id:
+          type: string
+        algorithm_version:
+          type: string
+        source_hash:
+          type: string
+          pattern: "^sha256:[0-9a-f]{64}$"
+
+    AlgorithmDefinition:
+      unevaluatedProperties: false
+      allOf:
+        - $ref: "#/components/schemas/AlgorithmRef"
+        - type: object
+          required: [name, input_schema, parameter_schema, outputs, warmup, causal]
+          properties:
+            name:
+              type: string
+            input_schema:
+              const: bars.v1
+            parameter_schema:
+              type: object
+              additionalProperties: true
+            outputs:
+              type: array
+              minItems: 1
+              items:
+                type: object
+                additionalProperties: false
+                required: [name, display_name, pane, series_type]
+                properties:
+                  name: {type: string, pattern: "^[a-z][a-z0-9_]*$"}
+                  display_name: {type: string, minLength: 1}
+                  pane: {enum: [main, indicator]}
+                  series_type: {enum: [line, histogram, semantic_objects]}
+                  object_type: {enum: [fractal, bi, zhongshu, strategy_state, stage_signal, trade_signal, chart_event]}
+            warmup:
+              type: object
+              additionalProperties: false
+              required: [kind, expression]
+              properties:
+                kind: {const: formula}
+                expression: {type: string, minLength: 1}
+            causal:
+              const: true
+
+    DatasetRef:
+      type: object
+      required: [dataset_id, data_revision, bars_path, meta_path]
+      properties:
+        dataset_id:
+          type: string
+        data_revision:
+          type: string
+        bars_path:
+          type: string
+        meta_path:
+          type: string
+
+    CalculationRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - dataset_id
+        - data_revision
+        - algorithm
+        - parameters
+        - calculation_mode
+      properties:
+        dataset_id:
+          type: string
+        data_revision:
+          type: string
+        algorithm:
+          $ref: "#/components/schemas/AlgorithmRef"
+        parameters:
+          type: object
+          additionalProperties: true
+        calculation_mode:
+          enum: [full_history, causal_events]
+        trace_id:
+          type: string
+
+    CalculationResults:
+      type: object
+      additionalProperties: false
+      required:
+        - request_id
+        - job_id
+        - cache_key
+        - dataset_id
+        - data_revision
+        - algorithm
+        - result_kind
+        - coverage
+        - checksum
+      properties:
+        request_id: {type: string}
+        job_id: {type: string}
+        cache_key:
+          type: string
+          pattern: "^sha256:[0-9a-f]{64}$"
+        dataset_id: {type: string}
+        data_revision:
+          type: string
+          pattern: "^sha256:[0-9a-f]{64}$"
+        algorithm:
+          $ref: "#/components/schemas/AlgorithmRef"
+        result_kind:
+          enum: [indicator, chan]
+        coverage:
+          type: object
+          additionalProperties: false
+          required: [first_bar_index, last_bar_index, returned_count]
+          properties:
+            first_bar_index: {type: integer, minimum: 0}
+            last_bar_index: {type: integer, minimum: 0}
+            returned_count: {type: integer, minimum: 0}
+        checksum:
+          type: string
+          pattern: "^sha256:[0-9a-f]{64}$"
+        bar_index:
+          type: array
+          items: {type: integer, minimum: 0}
+        values:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: [number, "null"]
+        objects:
+          $ref: "#/components/schemas/ChanObjects"
+      allOf:
+        - if:
+            properties: {result_kind: {const: indicator}}
+          then:
+            required: [bar_index, values]
+        - if:
+            properties: {result_kind: {const: chan}}
+          then:
+            required: [objects]
+
+    ChanObjects:
+      type: object
+      additionalProperties: false
+      required: [fractals, bi, zhongshu]
+      properties:
+        fractals:
+          type: array
+          items: {$ref: "#/components/schemas/ChanFractal"}
+        bi:
+          type: array
+          items: {$ref: "#/components/schemas/ChanLineObject"}
+        zhongshu:
+          type: array
+          items: {$ref: "#/components/schemas/ChanZhongshu"}
+
+    ChanFractal:
+      type: object
+      additionalProperties: false
+      required: [object_id, bar_index, time, price_i64, fractal_type, confirmed, confirmed_at_bar_index, known_at_bar_index, object_revision]
+      properties:
+        object_id: {type: string, minLength: 1}
+        bar_index: {type: integer, minimum: 0}
+        time: {type: integer}
+        price_i64: {type: integer}
+        fractal_type: {enum: [top, bottom]}
+        confirmed: {type: boolean}
+        confirmed_at_bar_index: {type: [integer, "null"], minimum: 0}
+        known_at_bar_index: {type: integer, minimum: 0}
+        object_revision: {type: integer, minimum: 1}
+
+    ChanLineObject:
+      type: object
+      additionalProperties: false
+      required: [object_id, start_bar_index, start_time, start_price_i64, end_bar_index, end_time, end_price_i64, direction, confirmed, confirmed_at_bar_index, known_at_bar_index, object_revision]
+      properties:
+        object_id: {type: string, minLength: 1}
+        start_bar_index: {type: integer, minimum: 0}
+        start_time: {type: integer}
+        start_price_i64: {type: integer}
+        end_bar_index: {type: integer, minimum: 0}
+        end_time: {type: integer}
+        end_price_i64: {type: integer}
+        direction: {enum: [up, down]}
+        confirmed: {type: boolean}
+        confirmed_at_bar_index: {type: [integer, "null"], minimum: 0}
+        known_at_bar_index: {type: integer, minimum: 0}
+        object_revision: {type: integer, minimum: 1}
+
+    ChanZhongshu:
+      type: object
+      additionalProperties: false
+      required: [object_id, start_bar_index, start_time, end_bar_index, end_time, zg_i64, zd_i64, confirmed, confirmed_at_bar_index, status, leave_direction, known_at_bar_index, object_revision]
+      properties:
+        object_id: {type: string, minLength: 1}
+        start_bar_index: {type: integer, minimum: 0}
+        start_time: {type: integer}
+        end_bar_index: {type: integer, minimum: 0}
+        end_time: {type: integer}
+        zg_i64: {type: integer}
+        zd_i64: {type: integer}
+        confirmed: {type: boolean}
+        confirmed_at_bar_index: {type: [integer, "null"], minimum: 0}
+        status: {type: string, enum: [confirmed, extended, left]}
+        leave_direction: {type: [string, "null"], enum: [up, down, null]}
+        known_at_bar_index: {type: integer, minimum: 0}
+        object_revision: {type: integer, minimum: 1}
+
+    ReplayRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - dataset_id
+        - data_revision
+        - strategy
+        - parameters
+        - from_bar_index
+        - to_bar_index
+        - warmup_from_bar_index
+      properties:
+        dataset_id:
+          type: string
+        data_revision:
+          type: string
+        strategy:
+          $ref: "#/components/schemas/AlgorithmRef"
+        parameters:
+          type: object
+          additionalProperties: true
+        from_bar_index:
+          type: integer
+          minimum: 0
+        to_bar_index:
+          type: integer
+          minimum: 0
+        warmup_from_bar_index:
+          type: integer
+          minimum: 0
+
+    ReplayStatus:
+      type: object
+      additionalProperties: false
+      required: [request_id, replay_id, status, progress]
+      properties:
+        request_id: {type: string}
+        replay_id: {type: string}
+        status:
+          enum: [queued, running, cancelling, completed, failed, cancelled, interrupted]
+        progress: {type: number, minimum: 0, maximum: 1}
+        result_ref: {type: string}
+        cache_key: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+        error:
+          $ref: "#/components/schemas/Error"
+
+    BacktestRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - dataset_id
+        - data_revision
+        - strategy
+        - parameters
+        - range
+        - execution
+        - capital
+        - random_seed
+      properties:
+        dataset_id:
+          type: string
+        data_revision:
+          type: string
+        strategy:
+          $ref: "#/components/schemas/AlgorithmRef"
+        parameters:
+          type: object
+          additionalProperties: true
+        range:
+          type: object
+          additionalProperties: false
+          required: [from_bar_index, to_bar_index, warmup_from_bar_index]
+          properties:
+            from_bar_index: {type: integer, minimum: 0}
+            to_bar_index: {type: integer, minimum: 0}
+            warmup_from_bar_index: {type: integer, minimum: 0}
+        execution:
+          type: object
+          additionalProperties: false
+          required: [signal_timing, fill_timing, commission, slippage, contract_multiplier, margin_ratio, intrabar_conflict_rule]
+          properties:
+            signal_timing: {const: bar_close}
+            fill_timing: {enum: [next_bar_open, bar_close]}
+            commission:
+              type: object
+              additionalProperties: true
+              required: [mode]
+              properties:
+                mode: {enum: [fixed_per_contract, proportional]}
+            slippage:
+              type: object
+              additionalProperties: true
+              required: [mode, value]
+              properties:
+                mode: {enum: [ticks, bps]}
+                value: {type: number, minimum: 0}
+            contract_multiplier: {type: number, exclusiveMinimum: 0}
+            margin_ratio: {type: number, exclusiveMinimum: 0, maximum: 1}
+            intrabar_conflict_rule: {enum: [stop_first, target_first, worst_case]}
+        capital:
+          type: object
+          additionalProperties: false
+          required: [initial_cash_i64, currency, money_scale]
+          properties:
+            initial_cash_i64: {type: integer, minimum: 0}
+            currency: {type: string, minLength: 3, maxLength: 3}
+            money_scale: {type: integer, minimum: 1}
+        random_seed:
+          type: integer
+        trace_id:
+          type: string
+
+    StudyRequest:
+      type: object
+      additionalProperties: false
+      required: [dataset_id, data_revision, strategy, base_parameters, search_space, objectives, constraints, search, ranges, execution, capital]
+      properties:
+        dataset_id: {type: string}
+        data_revision: {type: string}
+        strategy: {$ref: "#/components/schemas/AlgorithmRef"}
+        base_parameters:
+          type: object
+          additionalProperties: true
+        search_space:
+          type: array
+          minItems: 1
+          items: {$ref: "#/components/schemas/SearchParameter"}
+        objectives:
+          type: array
+          minItems: 1
+          items: {$ref: "#/components/schemas/StudyObjective"}
+        constraints:
+          type: array
+          items: {$ref: "#/components/schemas/StudyConstraint"}
+        search:
+          $ref: "#/components/schemas/SearchConfig"
+        ranges:
+          type: object
+          additionalProperties: false
+          required: [train, validation]
+          properties:
+            train: {$ref: "#/components/schemas/StudyRange"}
+            validation: {$ref: "#/components/schemas/StudyRange"}
+        execution:
+          type: object
+          additionalProperties: true
+        capital:
+          type: object
+          additionalProperties: true
+        trace_id: {type: string}
+
+    SearchParameter:
+      type: object
+      additionalProperties: false
+      required: [name, type]
+      properties:
+        name: {type: string, minLength: 1}
+        type: {enum: [integer, number, boolean, string]}
+        minimum: {type: number}
+        maximum: {type: number}
+        step: {type: number, exclusiveMinimum: 0}
+        candidates:
+          type: array
+          minItems: 1
+          items: {}
+    StudyObjective:
+      type: object
+      additionalProperties: false
+      required: [metric, direction]
+      properties:
+        metric: {enum: [total_return, sharpe, max_drawdown, win_rate, trade_count, profit_factor, expectancy_i64]}
+        direction: {enum: [maximize, minimize]}
+
+    StudyConstraint:
+      type: object
+      additionalProperties: false
+      required: [metric, operator, value]
+      properties:
+        metric: {enum: [total_return, sharpe, max_drawdown, win_rate, trade_count, profit_factor, expectancy_i64]}
+        operator: {enum: [">=", "<="]}
+        value: {type: number}
+
+    SearchConfig:
+      type: object
+      additionalProperties: false
+      required: [method, budget, random_seed]
+      properties:
+        method: {enum: [grid, random]}
+        budget: {type: integer, minimum: 1, maximum: 100}
+        random_seed: {type: integer}
+
+    StudyRange:
+      type: object
+      additionalProperties: false
+      required: [from_bar_index, to_bar_index, warmup_from_bar_index]
+      properties:
+        from_bar_index: {type: integer, minimum: 0}
+        to_bar_index: {type: integer, minimum: 0}
+        warmup_from_bar_index: {type: integer, minimum: 0}
+
+    StudyAccepted:
+      type: object
+      additionalProperties: false
+      required: [request_id, study_id, status]
+      properties:
+        request_id: {type: string}
+        study_id: {type: string}
+        status: {const: queued}
+
+    StudyStatus:
+      type: object
+      additionalProperties: false
+      required: [request_id, study_id, status, progress]
+      properties:
+        request_id: {type: string}
+        study_id: {type: string}
+        status: {enum: [queued, running, cancelling, completed, failed, cancelled, interrupted]}
+        progress: {type: number, minimum: 0, maximum: 1}
+        result_ref: {type: string}
+        manifest: {$ref: "./schemas/study-manifest.schema.json"}
+        error: {$ref: "#/components/schemas/Error"}
+
+    StudyEvaluation:
+      type: object
+      additionalProperties: false
+      required: [evaluation_index, parameters, constraints_satisfied, status, train_run_id, train_run_signature, validation_run_id, validation_run_signature, train_metrics, validation_metrics, train_rank, validation_rank]
+      properties:
+        evaluation_index: {type: integer, minimum: 0}
+        parameters: {type: object, additionalProperties: true}
+        constraints_satisfied: {type: boolean}
+        status: {const: completed}
+        train_run_id: {type: string}
+        train_run_signature: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+        validation_run_id: {type: string}
+        validation_run_signature: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+        train_metrics: {type: object, additionalProperties: true}
+        validation_metrics: {type: object, additionalProperties: true}
+        train_rank: {type: integer, minimum: 1}
+        validation_rank: {type: integer, minimum: 1}
+
+    StudyEvaluations:
+      type: object
+      additionalProperties: false
+      required: [request_id, study_id, evaluations, stability]
+      properties:
+        request_id: {type: string}
+        study_id: {type: string}
+        evaluations:
+          type: array
+          items: {$ref: "#/components/schemas/StudyEvaluation"}
+        stability:
+          type: object
+          additionalProperties: true
+
+    JobAccepted:
+      type: object
+      required: [request_id, job_id, status]
+      properties:
+        request_id:
+          type: string
+        job_id:
+          type: string
+        status:
+          const: queued
+
+    JobStatus:
+      type: object
+      required: [request_id, job_id, status, progress]
+      properties:
+        request_id:
+          type: string
+        job_id:
+          type: string
+        status:
+          enum: [queued, running, cancelling, completed, failed, cancelled, interrupted]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 1
+        result_ref:
+          type: string
+        error:
+          $ref: "#/components/schemas/Error"
+
+    RunAccepted:
+      type: object
+      required: [request_id, run_id, run_signature, status]
+      properties:
+        request_id:
+          type: string
+        run_id:
+          type: string
+        run_signature:
+          type: string
+        status:
+          const: queued
+
+    RunStatus:
+      type: object
+      required: [request_id, run_id, run_signature, status, progress]
+      properties:
+        request_id:
+          type: string
+        run_id:
+          type: string
+        run_signature:
+          type: string
+        status:
+          enum: [queued, running, cancelling, completed, failed, cancelled, interrupted]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 1
+        manifest:
+          $ref: "./schemas/run-manifest.schema.json"
+        error:
+          $ref: "#/components/schemas/Error"
+
+    BacktestSummary:
+      type: object
+      additionalProperties: true
+      required: [request_id, run_id, total_return, max_drawdown, trade_count, win_rate, total_commission_i64, total_slippage_i64]
+      properties:
+        request_id: {type: string}
+        run_id: {type: string}
+        total_return: {type: number}
+        annualized_return: {type: [number, "null"]}
+        max_drawdown: {type: number, minimum: 0}
+        sharpe: {type: [number, "null"]}
+        trade_count: {type: integer, minimum: 0}
+        win_rate: {type: [number, "null"], minimum: 0, maximum: 1}
+        average_win_i64: {type: [integer, "null"]}
+        average_loss_i64: {type: [integer, "null"]}
+        profit_loss_ratio: {type: [number, "null"]}
+        profit_factor: {type: [number, "null"]}
+        expectancy_i64: {type: [number, "null"]}
+        total_commission_i64: {type: integer, minimum: 0}
+        total_slippage_i64: {type: integer, minimum: 0}
+
+    EquityRow:
+      type: object
+      additionalProperties: false
+      required: [bar_index, timestamp_utc, equity_i64, cash_i64, available_i64, margin_i64, drawdown]
+      properties:
+        bar_index: {type: integer, minimum: 0}
+        timestamp_utc: {type: integer}
+        equity_i64: {type: integer}
+        cash_i64: {type: integer}
+        available_i64: {type: integer}
+        margin_i64: {type: integer, minimum: 0}
+        drawdown: {type: number, minimum: 0}
+
+    PythonJobRequest:
+      type: object
+      required:
+        - contract_version
+        - request_id
+        - trace_id
+        - job_id
+        - dataset
+        - algorithm
+        - parameters
+        - calculation_mode
+        - cache_key
+        - output_path
+      properties:
+        contract_version:
+          type: string
+        request_id:
+          type: string
+        trace_id:
+          type: string
+        job_id:
+          type: string
+        run_id:
+          type: string
+        dataset:
+          $ref: "#/components/schemas/DatasetRef"
+        algorithm:
+          $ref: "#/components/schemas/AlgorithmRef"
+        parameters:
+          type: object
+          additionalProperties: true
+        calculation_mode:
+          enum: [full_history, causal_events]
+        cache_key:
+          type: string
+          pattern: "^sha256:[0-9a-f]{64}$"
+        range:
+          type: object
+          additionalProperties: true
+        engine:
+          type: object
+          additionalProperties: true
+        output_path:
+          type: string
+
+    CausalEvent:
+      type: object
+      required:
+        - event_seq
+        - known_at_bar_index
+        - object_type
+        - object_id
+        - operation
+        - object_revision
+        - payload
+      properties:
+        event_seq:
+          type: integer
+        known_at_bar_index:
+          type: integer
+        object_type:
+          type: string
+        object_id:
+          type: string
+        operation:
+          enum: [upsert, delete]
+        object_revision:
+          type: integer
+        payload:
+          type: object
+          additionalProperties: true
+
+    PagedRows:
+      type: object
+      required: [request_id, rows]
+      properties:
+        request_id:
+          type: string
+        rows:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        next_cursor:
+          type: [string, "null"]
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          allOf:
+            - $ref: "#/components/schemas/Error"
+            - type: object
+              required: [request_id]
+              properties:
+                request_id:
+                  type: string

@@ -1,0 +1,2 @@
+# Runtime dependency lock for Python 3.14.
+pyarrow==25.0.0

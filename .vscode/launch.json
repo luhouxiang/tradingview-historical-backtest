@@ -1,0 +1,92 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Go API (fast)",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/cmd/chartd",
+      "args": ["-config", "${workspaceFolder}/config/app.yaml"],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole"
+    },
+    {
+      "name": "Go API (checked)",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/cmd/chartd",
+      "args": ["-config", "${workspaceFolder}/config/app.yaml"],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole",
+      "preLaunchTask": "build: go"
+    },
+    {
+      "name": "Python engine (fast)",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:\\ProgramData\\anaconda3\\envs\\pydev3.14\\python.exe",
+      "module": "tvbt",
+      "args": ["--config", "${workspaceFolder}/config/app.yaml"],
+      "cwd": "${workspaceFolder}/python",
+      "env": { "PYTHONPATH": "${workspaceFolder}/python/src" },
+      "console": "internalConsole"
+    },
+    {
+      "name": "Python engine (checked)",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "D:\\ProgramData\\anaconda3\\envs\\pydev3.14\\python.exe",
+      "module": "tvbt",
+      "args": ["--config", "${workspaceFolder}/config/app.yaml"],
+      "cwd": "${workspaceFolder}/python",
+      "env": { "PYTHONPATH": "${workspaceFolder}/python/src" },
+      "console": "internalConsole",
+      "preLaunchTask": "build: python tests"
+    },
+    {
+      "name": "Vue Vite (fast)",
+      "type": "pwa-node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["${workspaceFolder}/web/node_modules/vite/bin/vite.js", "--host", "127.0.0.1"],
+      "cwd": "${workspaceFolder}/web",
+      "console": "internalConsole",
+      "outputCapture": "std",
+      "serverReadyAction": {
+        "pattern": "Local:\\s+(https?://\\S+)",
+        "uriFormat": "%s",
+        "action": "debugWithChrome"
+      }
+    },
+    {
+      "name": "Vue Vite (checked)",
+      "type": "pwa-node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["${workspaceFolder}/web/node_modules/vite/bin/vite.js", "--host", "127.0.0.1"],
+      "cwd": "${workspaceFolder}/web",
+      "console": "internalConsole",
+      "outputCapture": "std",
+      "preLaunchTask": "build: web",
+      "serverReadyAction": {
+        "pattern": "Local:\\s+(https?://\\S+)",
+        "uriFormat": "%s",
+        "action": "debugWithChrome"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Debug all services (fast)",
+      "configurations": ["Go API (fast)", "Python engine (fast)", "Vue Vite (fast)"],
+      "stopAll": true
+    },
+    {
+      "name": "Debug all services (checked)",
+      "configurations": ["Go API (checked)", "Python engine (checked)", "Vue Vite (checked)"],
+      "stopAll": true
+    }
+  ]
+}

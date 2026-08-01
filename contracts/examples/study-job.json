@@ -1,0 +1,29 @@
+{
+  "dataset_id": "SHFE.AO2609.5m",
+  "data_revision": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "strategy": {
+    "kind": "strategy",
+    "algorithm_id": "ma20_retest_short",
+    "algorithm_version": "1.0.0",
+    "source_hash": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+  },
+  "base_parameters": {"ma_period": 20, "touch_tolerance_ticks": 1, "max_retest_bars": 20},
+  "search_space": [
+    {"name": "ma_period", "type": "integer", "minimum": 10, "maximum": 30, "step": 10},
+    {"name": "touch_tolerance_ticks", "type": "integer", "candidates": [0, 1]}
+  ],
+  "objectives": [{"metric": "total_return", "direction": "maximize"}],
+  "constraints": [{"metric": "trade_count", "operator": ">=", "value": 1}],
+  "search": {"method": "random", "budget": 4, "random_seed": 20260801},
+  "ranges": {
+    "train": {"warmup_from_bar_index": 0, "from_bar_index": 100, "to_bar_index": 10000},
+    "validation": {"warmup_from_bar_index": 0, "from_bar_index": 10001, "to_bar_index": 17016}
+  },
+  "execution": {
+    "signal_timing": "bar_close", "fill_timing": "next_bar_open",
+    "commission": {"mode": "fixed_per_contract", "amount_i64": 300, "money_scale": 100},
+    "slippage": {"mode": "ticks", "value": 1},
+    "contract_multiplier": 20, "margin_ratio": 0.12, "intrabar_conflict_rule": "worst_case"
+  },
+  "capital": {"initial_cash_i64": 100000000, "currency": "CNY", "money_scale": 100}
+}

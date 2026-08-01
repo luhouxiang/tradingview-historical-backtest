@@ -1,0 +1,17 @@
+{
+  "dataset_id": "SHFE.AO2609.5m",
+  "data_revision": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "algorithm": {
+    "kind": "indicator",
+    "algorithm_id": "ma",
+    "algorithm_version": "1.0.0",
+    "source_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "parameters": {
+    "period": 20,
+    "source": "close"
+  },
+  "calculation_mode": "full_history",
+  "trace_id": "01K1ABCXYZ"
+}
+

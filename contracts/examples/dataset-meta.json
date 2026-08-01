@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "dataset_id": "SHFE.AO2609.5m",
+  "data_revision": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "instrument": {
+    "exchange": "SHFE",
+    "symbol": "AO2609",
+    "product": "AO",
+    "display_name": "氧化铝2609"
+  },
+  "timeframe": "5m",
+  "source": {
+    "path": "history/30#AO2609.txt",
+    "sha256": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+    "encoding": "GB18030",
+    "format": "tdx_txt_v1",
+    "title": "AO2609 氧化铝2609 5分钟线 不复权",
+    "timestamp_semantics": "bar_end"
+  },
+  "time": {
+    "timezone": "Asia/Shanghai",
+    "date_semantics": "trading_day",
+    "trading_calendar_hash": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+    "session_config_hash": "sha256:6666666666666666666666666666666666666666666666666666666666666666"
+  },
+  "price": {
+    "price_decimals": 0,
+    "price_scale": 1,
+    "tick_size_i64": 1
+  },
+  "coverage": {
+    "bar_count": 17017,
+    "first_bar_index": 0,
+    "last_bar_index": 17016,
+    "first_timestamp_utc": 1757943900000,
+    "last_timestamp_utc": 1785104400000,
+    "first_trading_day": "2025-09-16",
+    "last_trading_day": "2026-07-27"
+  },
+  "importer": {
+    "id": "tdx_txt_v1",
+    "version": "1.0.0",
+    "options_hash": "sha256:7777777777777777777777777777777777777777777777777777777777777777"
+  },
+  "quality": {
+    "duplicate_count": 0,
+    "invalid_ohlc_count": 0,
+    "zero_volume_count": 1224,
+    "gap_count": 0,
+    "warning_count": 1224,
+    "error_count": 0
+  },
+  "files": [
+    {
+      "role": "bars",
+      "path": "normalized/SHFE.AO2609.5m/111111111111/bars.parquet",
+      "sha256": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+      "size_bytes": 123456
+    },
+    {
+      "role": "quality",
+      "path": "normalized/SHFE.AO2609.5m/111111111111/quality.json",
+      "sha256": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+      "size_bytes": 2048
+    }
+  ],
+  "created_at": "2026-08-01T10:00:00Z"
+}
+

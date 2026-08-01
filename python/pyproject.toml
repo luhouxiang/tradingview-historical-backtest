@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools==80.10.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tvbt-engine"
+version = "0.1.0"
+description = "Python 3.14 causal computation service for TVBT"
+requires-python = "==3.14.*"
+dependencies = ["pyarrow==25.0.0"]
+
+[project.optional-dependencies]
+dev = [
+  "debugpy==1.8.21",
+  "mypy==2.3.0",
+  "pytest==9.1.1",
+  "ruff==0.16.1",
+]
+
+[project.scripts]
+tvbt-engine = "tvbt.__main__:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+packages = ["tvbt"]
+mypy_path = "src"
+
+[[tool.mypy.overrides]]
+module = ["pyarrow", "pyarrow.*"]
+ignore_missing_imports = true

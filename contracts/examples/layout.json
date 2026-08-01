@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "layout_id": "default-three-pane",
+  "profile_id": "default",
+  "revision": 1,
+  "panes": [
+    {
+      "id": "main",
+      "role": "price",
+      "weight": 6,
+      "min_height": 240,
+      "visible": true,
+      "collapsed": false,
+      "order": 0,
+      "title": "AO2609 5m"
+    },
+    {
+      "id": "macd",
+      "role": "indicator",
+      "weight": 1,
+      "min_height": 80,
+      "visible": true,
+      "collapsed": false,
+      "order": 1,
+      "title": "MACD"
+    },
+    {
+      "id": "volume",
+      "role": "indicator",
+      "weight": 1,
+      "min_height": 80,
+      "visible": true,
+      "collapsed": false,
+      "order": 2,
+      "title": "成交量"
+    }
+  ],
+  "right_panel": {
+    "width": 320,
+    "collapsed": false,
+    "active_tab": "object_tree"
+  },
+  "bottom_panel": {
+    "height": 260,
+    "collapsed": true,
+    "active_tab": "replay"
+  },
+  "object_order": [
+    {
+      "id": "series-candles",
+      "pane_id": "main",
+      "z_band": 300,
+      "order_in_band": 0,
+      "visible": true,
+      "locked": true
+    }
+  ],
+  "series_sources": [],
+  "strategy_sources": [],
+  "updated_at": "2026-08-01T10:00:00Z"
+}

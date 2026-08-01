@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-01T10:32:18.265+08:00",
+  "level": "INFO",
+  "service": "python-engine",
+  "event": "strategy.trade_signal.generated",
+  "message": "MA20反抽失败交易信号生成",
+  "source_file": "strategies/ma20_retest.py",
+  "source_line": 238,
+  "source_function": "evaluate",
+  "request_id": "01K1REQXYZ",
+  "trace_id": "01K1ABCXYZ",
+  "run_id": "01K1RUNXYZ",
+  "dataset_id": "SHFE.AO2609.5m",
+  "data_revision": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "strategy_id": "ma20_retest_short",
+  "strategy_version": "1.0.0",
+  "bar_index": 10548,
+  "bar_time": 1785542400000,
+  "signal_id": "SIG-10548-SHORT",
+  "parent_signal_id": "STAGE-10542-RETEST",
+  "duration_ms": 2.41,
+  "fields": {
+    "side": "short",
+    "price_i64": 2350,
+    "reason_code": "RETEST_FAILED_BREAK_TOUCH_BAR_OPEN"
+  }
+}
+

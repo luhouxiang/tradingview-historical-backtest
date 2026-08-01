@@ -1,0 +1,12 @@
+{
+  "dataset_id": "SHFE.AO2609.5m",
+  "data_revision": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "algorithm": {
+    "kind": "chan",
+    "algorithm_id": "chan_standard",
+    "algorithm_version": "1.0.0",
+    "source_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "parameters": {"min_fractal_gap": 5, "checkpoint_interval": 1024},
+  "calculation_mode": "causal_events"
+}

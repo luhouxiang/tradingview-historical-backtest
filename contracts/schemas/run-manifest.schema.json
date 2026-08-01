@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/run-manifest.schema.json",
+  "title": "BacktestRunManifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "run_signature",
+    "trace_id",
+    "dataset",
+    "range",
+    "strategy",
+    "execution",
+    "capital",
+    "engine",
+    "random_seed",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "run_signature": {"$ref": "#/$defs/sha256"},
+    "trace_id": {"type": "string", "minLength": 1},
+    "dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dataset_id", "data_revision"],
+      "properties": {
+        "dataset_id": {"type": "string", "minLength": 1},
+        "data_revision": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["warmup_from_bar_index", "from_bar_index", "to_bar_index"],
+      "properties": {
+        "warmup_from_bar_index": {"type": "integer", "minimum": 0},
+        "from_bar_index": {"type": "integer", "minimum": 0},
+        "to_bar_index": {"type": "integer", "minimum": 0}
+      }
+    },
+    "strategy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strategy_id", "version", "source_hash", "parameters"],
+      "properties": {
+        "strategy_id": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1},
+        "source_hash": {"$ref": "#/$defs/sha256"},
+        "parameters": {"type": "object", "additionalProperties": true},
+        "indicator_dependencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["algorithm_id", "version", "source_hash"],
+            "properties": {
+              "algorithm_id": {"type": "string"},
+              "version": {"type": "string"},
+              "source_hash": {"$ref": "#/$defs/sha256"}
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "signal_timing",
+        "fill_timing",
+        "commission",
+        "slippage",
+        "contract_multiplier",
+        "margin_ratio"
+      ],
+      "properties": {
+        "signal_timing": {"enum": ["bar_close"]},
+        "fill_timing": {"enum": ["next_bar_open", "bar_close"]},
+        "commission": {"type": "object", "additionalProperties": true},
+        "slippage": {"type": "object", "additionalProperties": true},
+        "contract_multiplier": {"type": "number", "exclusiveMinimum": 0},
+        "margin_ratio": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+        "intrabar_conflict_rule": {
+          "enum": ["stop_first", "target_first", "worst_case"]
+        }
+      }
+    },
+    "capital": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["initial_cash_i64", "currency", "money_scale"],
+      "properties": {
+        "initial_cash_i64": {"type": "integer", "minimum": 0},
+        "currency": {"type": "string", "minLength": 3, "maxLength": 3},
+        "money_scale": {"type": "integer", "minimum": 1}
+      }
+    },
+    "engine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["engine_version", "python_version", "contract_version"],
+      "properties": {
+        "engine_version": {"type": "string"},
+        "python_version": {"const": "3.14"},
+        "contract_version": {"type": "string"}
+      }
+    },
+    "random_seed": {"type": "integer"},
+    "created_at": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    }
+  }
+}
+

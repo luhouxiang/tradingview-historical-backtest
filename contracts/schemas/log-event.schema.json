@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/log-event.schema.json",
+  "title": "StructuredLogEvent",
+  "type": "object",
+  "required": [
+    "timestamp",
+    "level",
+    "service",
+    "event",
+    "message",
+    "source_file",
+    "source_line",
+    "source_function"
+  ],
+  "properties": {
+    "timestamp": {"type": "string", "format": "date-time"},
+    "level": {"enum": ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"]},
+    "service": {"type": "string", "minLength": 1},
+    "event": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$"
+    },
+    "message": {"type": "string", "maxLength": 4096},
+    "source_file": {"type": "string", "minLength": 1},
+    "source_line": {"type": "integer", "minimum": 1},
+    "source_function": {"type": "string", "minLength": 1},
+    "request_id": {"type": "string"},
+    "trace_id": {"type": "string"},
+    "job_id": {"type": "string"},
+    "run_id": {"type": "string"},
+    "replay_id": {"type": "string"},
+    "dataset_id": {"type": "string"},
+    "data_revision": {"type": "string"},
+    "algorithm_id": {"type": "string"},
+    "algorithm_version": {"type": "string"},
+    "strategy_id": {"type": "string"},
+    "strategy_version": {"type": "string"},
+    "cache_key": {"type": "string"},
+    "bar_index": {"type": "integer", "minimum": 0},
+    "bar_time": {"type": "integer"},
+    "sequence": {"type": "integer", "minimum": 0},
+    "stage_signal_id": {"type": "string"},
+    "signal_id": {"type": "string"},
+    "parent_signal_id": {"type": "string"},
+    "duration_ms": {"type": "number", "minimum": 0},
+    "fields": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
+

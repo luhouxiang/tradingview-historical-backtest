@@ -1,0 +1,10 @@
+{
+  "python.defaultInterpreterPath": "D:\\ProgramData\\anaconda3\\envs\\pydev3.14\\python.exe",
+  "python.analysis.extraPaths": ["${workspaceFolder}/python/src"],
+  "go.toolsEnvVars": {
+    "GOTOOLCHAIN": "go1.25.7"
+  },
+  "typescript.tsdk": "web/node_modules/typescript/lib",
+  "python-envs.defaultEnvManager": "ms-python.python:conda",
+  "python-envs.defaultPackageManager": "ms-python.python:conda"
+}

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "cache_key": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+  "dataset_id": "SHFE.AO2609.5m",
+  "data_revision": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "algorithm": {
+    "kind": "indicator",
+    "algorithm_id": "ma",
+    "algorithm_version": "1.0.0",
+    "source_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "parameters": {"period": 20, "source": "close"},
+  "calculation_mode": "full_history",
+  "engine_version": "0.1.0",
+  "coverage": {"bar_count": 17017, "first_bar_index": 0, "last_bar_index": 17016},
+  "outputs": ["ma"],
+  "values_sha256": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+  "created_at": "2026-08-01T00:00:00Z"
+}

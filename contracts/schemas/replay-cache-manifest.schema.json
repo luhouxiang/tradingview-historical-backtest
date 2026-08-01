@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/replay-cache-manifest.schema.json",
+  "title": "ReplayCacheManifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "cache_key", "dataset_id", "data_revision", "strategy", "parameters", "range", "engine_version", "event_count", "events_sha256", "created_at"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "cache_key": {"$ref": "#/$defs/sha256"},
+    "dataset_id": {"type": "string", "minLength": 1},
+    "data_revision": {"$ref": "#/$defs/sha256"},
+    "strategy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "algorithm_id", "algorithm_version", "source_hash"],
+      "properties": {
+        "kind": {"enum": ["chan", "strategy"]},
+        "algorithm_id": {"type": "string", "minLength": 1},
+        "algorithm_version": {"type": "string", "minLength": 1},
+        "source_hash": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "parameters": {"type": "object"},
+    "range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from_bar_index", "to_bar_index", "warmup_from_bar_index"],
+      "properties": {
+        "from_bar_index": {"type": "integer", "minimum": 0},
+        "to_bar_index": {"type": "integer", "minimum": 0},
+        "warmup_from_bar_index": {"type": "integer", "minimum": 0}
+      }
+    },
+    "engine_version": {"type": "string", "minLength": 1},
+    "event_count": {"type": "integer", "minimum": 0},
+    "events_sha256": {"$ref": "#/$defs/sha256"},
+    "created_at": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {"sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}}
+}

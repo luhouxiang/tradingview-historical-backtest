@@ -1,0 +1,29 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build: go",
+      "type": "shell",
+      "command": "go build ./...",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$go"]
+    },
+    {
+      "label": "build: web",
+      "type": "shell",
+      "command": "npm run build",
+      "options": { "cwd": "${workspaceFolder}/web" },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "build: python tests",
+      "type": "shell",
+      "command": "D:\\ProgramData\\anaconda3\\envs\\pydev3.14\\python.exe -m pytest",
+      "options": {
+        "cwd": "${workspaceFolder}/python",
+        "env": { "PYTHONPATH": "${workspaceFolder}/python/src" }
+      },
+      "problemMatcher": []
+    }
+  ]
+}

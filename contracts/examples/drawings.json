@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "profile_id": "default",
+  "layout_id": "default-three-pane",
+  "dataset_id": "SHFE.AO2609.5m",
+  "data_revision": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "revision": 1,
+  "drawings": [
+    {
+      "id": "drawing-01",
+      "name": "矩形 1",
+      "type": "rectangle",
+      "pane_id": "main",
+      "visible": true,
+      "locked": false,
+      "z_band": 600,
+      "order_in_band": 0,
+      "style": {"color": "#2962ff", "line_width": 1, "fill_opacity": 0.15},
+      "anchors": [
+        {"time": 1785502800000, "price_i64": 235100, "price_scale": 100},
+        {"time": 1785510000000, "price_i64": 238600, "price_scale": 100}
+      ],
+      "revision": 1,
+      "created_at": "2026-08-01T10:00:00Z",
+      "updated_at": "2026-08-01T10:00:00Z"
+    }
+  ],
+  "updated_at": "2026-08-01T10:00:00Z"
+}
