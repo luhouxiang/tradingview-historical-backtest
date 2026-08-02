@@ -93,4 +93,32 @@ describe('IndicatorManagerPanel', () => {
     expect(wrapper.findAll('.indicator-current-card')).toHaveLength(1)
     expect(wrapper.get('.indicator-current-card').text()).toContain('工程缠论')
   })
+
+  it('applies staged styles from the More dialog without recalculating the indicator', async () => {
+    const macd = definition('macd')
+    api.listAlgorithms.mockResolvedValue([macd])
+    const indicatorSource: SeriesSource = {
+      source_type: 'SeriesSource', source_id: 'series-1', definition: macd,
+      parameters: { period: 20 }, job_id: 'job-1', status: 'completed',
+    }
+    const wrapper = mount(IndicatorManagerPanel, {
+      props: { dataset, indicatorSources: [indicatorSource], strategySources: [] },
+    })
+    await flushPromises()
+    await wrapper.get('[aria-label="指标范围"] button:nth-child(3)').trigger('click')
+    await wrapper.get('[aria-label="MACD 更多样式"]').trigger('click')
+    await wrapper.get('[aria-label="设置 MACD 样式"]').trigger('click')
+    await wrapper.get('[aria-label="选择颜色 #ab47bc"]').trigger('click')
+    await wrapper.get('[aria-label="线宽 3"]').trigger('click')
+    await wrapper.get('[aria-label="虚线"]').trigger('click')
+    expect(wrapper.emitted('update:indicator-sources')).toBeUndefined()
+    expect(api.createCalculation).not.toHaveBeenCalled()
+
+    await wrapper.get('.indicator-style-dialog footer .primary').trigger('click')
+    const sources = wrapper.emitted('update:indicator-sources')?.at(-1)?.[0] as SeriesSource[]
+    expect(sources[0]?.style?.outputs.macd).toMatchObject({
+      color: '#ab47bc', line_width: 3, line_style: 'dashed', visible: true,
+    })
+    expect(api.createCalculation).not.toHaveBeenCalled()
+  })
 })

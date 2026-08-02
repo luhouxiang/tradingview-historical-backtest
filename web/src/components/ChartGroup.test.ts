@@ -35,7 +35,7 @@ const apiMocks = vi.hoisted(() => ({ getBars: vi.fn(), getCalculationResults: vi
 
 vi.mock('lightweight-charts', () => ({
   CandlestickSeries: { type: 'candlestick' }, HistogramSeries: { type: 'histogram' }, LineSeries: { type: 'line' },
-  ColorType: { Solid: 'solid' }, CrosshairMode: { Normal: 0 }, LineStyle: { Dashed: 2 }, createChart: chartMocks.createChart,
+  ColorType: { Solid: 'solid' }, CrosshairMode: { Normal: 0 }, LineStyle: { Solid: 0, Dotted: 1, Dashed: 2 }, createChart: chartMocks.createChart,
 }))
 vi.mock('../api/client', () => apiMocks)
 
@@ -218,6 +218,34 @@ describe('ChartGroup', () => {
       horzLine: { labelBackgroundColor: '#8b2b31' },
     })
     expect(chartOptions.localization.timeFormatter(1_783_512_600)).toMatch(/^2026\/07\/\d{2} \d{2}:\d{2}~\d{2}:\d{2} [日一二三四五六]$/)
+    wrapper.unmount()
+  })
+
+  it('renders saved color, opacity, width and line style without recalculation', async () => {
+    apiMocks.getCalculationResults.mockResolvedValue({
+      result_kind: 'indicator', bar_index: [0, 1], values: { ma: [10, 11] }, coverage: { returned_count: 2 },
+    })
+    const source = {
+      source_type: 'SeriesSource' as const, source_id: 'series-styled', job_id: 'job-styled', status: 'completed' as const,
+      parameters: { period: 20 },
+      style: { outputs: { ma: { color: '#ab47bc', line_width: 3 as const, line_style: 'dashed' as const, opacity: 0.7, visible: true } } },
+      definition: {
+        kind: 'indicator' as const, algorithm_id: 'ma', algorithm_version: '1.0.0', source_hash: `sha256:${'c'.repeat(64)}`,
+        name: 'Moving Average', input_schema: 'bars.v1' as const, causal: true as const,
+        parameter_schema: { type: 'object' as const, additionalProperties: false as const, required: [], properties: {} },
+        outputs: [{ name: 'ma', display_name: 'MA', pane: 'main' as const, series_type: 'line' as const }],
+        warmup: { kind: 'formula' as const, expression: '0' },
+      },
+    }
+    const wrapper = mount(ChartGroup, { props: { dataset: dataset(), indicatorSources: [source] } })
+    await flushPromises()
+    expect(chartMocks.chart.addSeries).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      color: 'rgba(171, 71, 188, 0.7)', lineWidth: 3, lineStyle: 2,
+    }), 0)
+    expect(chartMocks.candle.applyOptions).toHaveBeenCalledWith(expect.objectContaining({
+      color: 'rgba(171, 71, 188, 0.7)', lineWidth: 3, lineStyle: 2,
+    }))
+    expect(apiMocks.createCalculation).not.toHaveBeenCalled()
     wrapper.unmount()
   })
 

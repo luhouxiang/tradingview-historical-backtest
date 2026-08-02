@@ -417,6 +417,7 @@ export interface SeriesSource {
   parameters: Record<string, string | number | boolean>
   job_id: string
   status: JobStatus['status']
+  style?: IndicatorStyle
   error?: string
 }
 
@@ -429,7 +430,22 @@ export interface StrategySource {
   status: JobStatus['status']
   visible: boolean
   category_visibility: { fractals: boolean; bi: boolean; zhongshu: boolean }
+  style?: IndicatorStyle
   error?: string
+}
+
+export type IndicatorLineStyleName = 'solid' | 'dashed' | 'dotted'
+
+export interface IndicatorOutputStyle {
+  color: string
+  line_width: 1 | 2 | 3 | 4
+  line_style: IndicatorLineStyleName
+  opacity: number
+  visible: boolean
+}
+
+export interface IndicatorStyle {
+  outputs: Record<string, IndicatorOutputStyle>
 }
 
 export interface WorkspacePane {
@@ -455,6 +471,7 @@ export interface PersistedSeriesSource {
   data_revision: string
   algorithm: AlgorithmRef
   parameters: Record<string, string | number | boolean>
+  style?: IndicatorStyle
 }
 
 export interface PersistedStrategySource {
@@ -470,6 +487,7 @@ export interface PersistedStrategySource {
   algorithm: AlgorithmRef & { kind: 'chan' }
   parameters: Record<string, string | number | boolean>
   category_visibility: { fractals: boolean; bi: boolean; zhongshu: boolean }
+  style?: IndicatorStyle
 }
 
 export interface WorkspaceLayout {

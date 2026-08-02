@@ -30,37 +30,16 @@ def definition() -> dict[str, Any]:
         "algorithm_id": "chan_engineering",
         "algorithm_version": ChanEngine.algorithm_version,
         "source_hash": _source_hash(),
-        "name": "Engineering Causal Chan",
+        "name": "Kline-chart Reference Chan",
         "input_schema": "bars.v1",
         "parameter_schema": {
             "type": "object",
             "additionalProperties": False,
             "properties": {
-                "fractal_left": {**integer, "maximum": 100, "default": 2},
-                "fractal_right": {**integer, "maximum": 100, "default": 2},
-                "min_stroke_bars": {**integer, "maximum": 10_000, "default": 5},
-                "min_stroke_atr": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 1_000,
-                    "default": 0.5,
-                },
-                "atr_period": {**integer, "maximum": 10_000, "default": 14},
                 "checkpoint_interval": {**integer, "default": 1024},
-                "initial_inclusion_direction": {
-                    "type": "string",
-                    "enum": ["up", "down"],
-                    "default": "up",
-                },
             },
             "required": [
-                "fractal_left",
-                "fractal_right",
-                "min_stroke_bars",
-                "min_stroke_atr",
-                "atr_period",
                 "checkpoint_interval",
-                "initial_inclusion_direction",
             ],
         },
         "outputs": [
@@ -77,7 +56,7 @@ def definition() -> dict[str, Any]:
                 ("zhongshu", "中枢"),
             )
         ],
-        "warmup": {"kind": "formula", "expression": "fractal_left + fractal_right + 2"},
+        "warmup": {"kind": "formula", "expression": "three independent bars; bi requires five"},
         "causal": True,
     }
 
@@ -129,13 +108,7 @@ def run_chan(
     ).to_pydict()
     runtime = ChanEngine(
         ChanParameters(
-            fractal_left=int(parameters["fractal_left"]),
-            fractal_right=int(parameters["fractal_right"]),
-            min_stroke_bars=int(parameters["min_stroke_bars"]),
-            min_stroke_atr=float(parameters["min_stroke_atr"]),
-            atr_period=int(parameters["atr_period"]),
             checkpoint_interval=int(parameters["checkpoint_interval"]),
-            initial_inclusion_direction=str(parameters["initial_inclusion_direction"]),  # type: ignore[arg-type]
         )
     )
     checkpoints: dict[int, bytes] = {}

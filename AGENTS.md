@@ -14,6 +14,9 @@
 
 - Go：go1.25.7。
 - Python：3.14。
+- 本仓库的 Python 命令、测试、类型检查和格式检查必须直接调用
+  `D:\ProgramData\anaconda3\envs\pydev3.14\python.exe`（项目 Codex 配置中的
+  `TVBT_PYTHON`）；不得使用 PATH 中的其他 `python` 或 `py`。
 - Vue：Vue 3 + Composition API + TypeScript。
 - 前端依赖使用包管理器锁文件；Python 使用锁文件；Go 提交 go.mod 和 go.sum。
 - CI 和本地版本必须一致。版本不满足时应明确失败，不得静默降级。

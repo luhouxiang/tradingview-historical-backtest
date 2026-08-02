@@ -1376,8 +1376,17 @@ type PutLayoutJSONBody struct {
 		PaneId       string                 `json:"pane_id"`
 		Parameters   map[string]interface{} `json:"parameters"`
 		SourceId     string                 `json:"source_id"`
-		Visible      bool                   `json:"visible"`
-		ZBand        interface{}            `json:"z_band"`
+		Style        *struct {
+			Outputs map[string]struct {
+				Color     string      `json:"color"`
+				LineStyle interface{} `json:"line_style"`
+				LineWidth int         `json:"line_width"`
+				Opacity   float32     `json:"opacity"`
+				Visible   bool        `json:"visible"`
+			} `json:"outputs"`
+		} `json:"style,omitempty"`
+		Visible bool        `json:"visible"`
+		ZBand   interface{} `json:"z_band"`
 	} `json:"series_sources"`
 	StrategySources []struct {
 		Algorithm struct {
@@ -1399,8 +1408,17 @@ type PutLayoutJSONBody struct {
 		PaneId       string                 `json:"pane_id"`
 		Parameters   map[string]interface{} `json:"parameters"`
 		SourceId     string                 `json:"source_id"`
-		Visible      bool                   `json:"visible"`
-		ZBand        interface{}            `json:"z_band"`
+		Style        *struct {
+			Outputs map[string]struct {
+				Color     string      `json:"color"`
+				LineStyle interface{} `json:"line_style"`
+				LineWidth int         `json:"line_width"`
+				Opacity   float32     `json:"opacity"`
+				Visible   bool        `json:"visible"`
+			} `json:"outputs"`
+		} `json:"style,omitempty"`
+		Visible bool        `json:"visible"`
+		ZBand   interface{} `json:"z_band"`
 	} `json:"strategy_sources"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

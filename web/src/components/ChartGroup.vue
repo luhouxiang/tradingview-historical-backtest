@@ -24,6 +24,7 @@ import { HollowVolumeSeries } from '../chart/hollowVolumeSeries'
 import { MacdStickSeries } from '../chart/macdStickSeries'
 import { defaultPaneLayout, enforceMinimumHeights, removePane, resizeAdjacent, type PaneLayout } from '../chart/layout'
 import { histogramColor, indicatorLineColor, MARKET_COLORS } from '../chart/marketStyle'
+import { colorWithOpacity, resolvedOutputStyle } from '../indicators/style'
 import { logger } from '../logging/logger'
 import type { ReplayObjects, ReplaySignal } from '../replay/eventIndex'
 import type { ChanCalculationResults, DatasetMeta, SeriesSource, StrategySource } from '../types/api'
@@ -125,7 +126,10 @@ const maLegendItems = computed(() => props.indicatorSources
   .map((source) => ({
     key: `${source.source_id}:ma`,
     period: Number(source.parameters.period),
-    color: indicatorLineColor(source, 'ma'),
+    color: (() => {
+      const output = source.definition.outputs.find((item) => item.name === 'ma')
+      return output ? colorWithOpacity(resolvedOutputStyle(source, output).color, resolvedOutputStyle(source, output).opacity) : indicatorLineColor(source, 'ma')
+    })(),
   }))
   .sort((left, right) => left.period - right.period))
 const macdSource = computed(() => props.indicatorSources.find((source) => source.status === 'completed' && source.definition.algorithm_id === 'macd') ?? null)
@@ -176,6 +180,12 @@ function symmetricAutoscale(baseImplementation: () => AutoscaleInfo | null): Aut
     priceRange: { minValue: -extent, maxValue: extent },
     margins: { above: 6, below: 6 },
   }
+}
+
+function chartLineStyle(value: 'solid' | 'dashed' | 'dotted'): LineStyle {
+  if (value === 'dashed') return LineStyle.Dashed
+  if (value === 'dotted') return LineStyle.Dotted
+  return LineStyle.Solid
 }
 
 function applyWeights(): void {
@@ -353,12 +363,20 @@ async function renderIndicators(fromBarIndex: number, toBarIndex: number): Promi
     source.definition.outputs.forEach((output) => {
       const key = `${source.source_id}:${output.name}`
       let series = indicatorSeries.get(key)
+      const outputStyle = output.series_type === 'line' ? resolvedOutputStyle(source, output) : null
+      if (outputStyle && !outputStyle.visible) {
+        series?.setData([])
+        return
+      }
       if (!series) {
         const paneIndex = output.pane === 'main' ? 0 : 1
         series = output.series_type === 'histogram'
           ? chart?.addCustomSeries(new MacdStickSeries(), { autoscaleInfoProvider: symmetricAutoscale, priceLineVisible: false, lastValueVisible: false }, paneIndex)
           : chart?.addSeries(LineSeries, {
-            color: indicatorLineColor(source, output.name), lineWidth: 1, priceLineVisible: false,
+            color: outputStyle ? colorWithOpacity(outputStyle.color, outputStyle.opacity) : indicatorLineColor(source, output.name),
+            lineWidth: outputStyle?.line_width ?? 1,
+            lineStyle: chartLineStyle(outputStyle?.line_style ?? 'solid'),
+            priceLineVisible: false,
             ...(output.pane === 'indicator' ? { autoscaleInfoProvider: symmetricAutoscale } : {}),
           }, paneIndex)
         if (series) {
@@ -373,6 +391,13 @@ async function renderIndicators(fromBarIndex: number, toBarIndex: number): Promi
             })
           }
         }
+      }
+      if (outputStyle && output.series_type === 'line') {
+        ;(series as ISeriesApi<'Line'> | undefined)?.applyOptions({
+          color: colorWithOpacity(outputStyle.color, outputStyle.opacity),
+          lineWidth: outputStyle.line_width,
+          lineStyle: chartLineStyle(outputStyle.line_style),
+        })
       }
       const values = result.values[output.name] ?? []
       const points = result.bar_index.flatMap((barIndex, index) => {
@@ -396,6 +421,7 @@ async function renderChan(fromBarIndex: number, toBarIndex: number): Promise<voi
   if (!props.dataset || toBarIndex < fromBarIndex) return
   if (props.replayObjects !== null) {
     const source = props.strategySources.find((value) => value.status === 'completed')
+    chanPrimitive.setStyle(source?.style)
     const filtered: ReplayObjects = {
       fractals: source?.visible && source.category_visibility.fractals ? props.replayObjects.fractals : [],
       bi: source?.visible && source.category_visibility.bi ? props.replayObjects.bi : [],
@@ -406,6 +432,7 @@ async function renderChan(fromBarIndex: number, toBarIndex: number): Promise<voi
     return
   }
   const sources = props.strategySources.filter((source) => source.status === 'completed' && source.visible)
+  chanPrimitive.setStyle(sources[0]?.style)
   const merged: ChanCalculationResults['objects'] = { fractals: [], bi: [], zhongshu: [] }
   await Promise.all(sources.map(async (source) => {
     const result = await getCalculationResults(source.job_id, fromBarIndex, toBarIndex)

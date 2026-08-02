@@ -83,11 +83,14 @@ button:disabled { color: #787b86; }
 .indicator-source-status { color: #787b86; font-size: 9px; }
 .indicator-source-status.completed { color: #26a69a; }
 .indicator-source-status.failed, .indicator-source-status.cancelled, .indicator-source-status.interrupted { color: #f23645; }
-.indicator-parameters { display: grid; gap: 7px; padding: 9px; }
-.indicator-parameters label { display: grid; grid-template-columns: minmax(0, 1fr) minmax(80px, 42%); align-items: center; gap: 7px; }
+.indicator-settings-body { display: grid; grid-template-columns: minmax(0, 1fr) 34px; align-items: start; gap: 5px; }
+.indicator-parameters { display: grid; gap: 7px; min-width: 0; padding: 9px 0 9px 9px; }
+.indicator-parameters label { display: grid; grid-template-columns: minmax(0, 1fr) minmax(68px, 38%); align-items: center; gap: 7px; }
 .indicator-parameters label span { overflow: hidden; color: #9598a1; font-size: 10px; text-overflow: ellipsis; }
-.indicator-parameters input:not([type='checkbox']), .indicator-parameters select { min-width: 0; height: 24px; border: 1px solid #363a45; border-radius: 3px; background: #131722; color: #d1d4dc; }
+.indicator-parameters input:not([type='checkbox']), .indicator-parameters select { width: 100%; min-width: 0; height: 24px; padding: 0 4px; border: 1px solid #363a45; border-radius: 3px; background: #131722; color: #d1d4dc; }
 .indicator-parameters input[type='checkbox'] { justify-self: end; }
+.indicator-style-more { width: 30px; height: 26px !important; margin-top: 8px; padding: 0 !important; border: 1px solid #363a45 !important; border-radius: 4px !important; background: #242833 !important; color: #b2b5be; font-size: 18px; line-height: 18px; cursor: pointer; }
+.indicator-style-more:hover { border-color: #2962ff !important; color: #fff; }
 .indicator-current-actions { display: flex; gap: 6px; padding: 0 9px 9px; }
 .indicator-current-actions button { height: 27px !important; border: 1px solid #363a45; background: #2a2e39; cursor: pointer; }
 .indicator-current-actions .danger { color: #ff7b85; }
@@ -98,6 +101,42 @@ button:disabled { color: #787b86; }
 .indicator-card header, .indicator-card label { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .indicator-card header span, .indicator-card label span { color: #787b86; font-size: 11px; }
 .indicator-card div { display: flex; gap: 6px; }
+.indicator-style-backdrop { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; padding: 18px; background: rgb(0 0 0 / 58%); }
+.indicator-style-dialog { width: min(390px, calc(100vw - 36px)); max-height: min(720px, calc(100vh - 36px)); overflow: visible; border: 1px solid #434651; border-radius: 6px; background: #1e222d; box-shadow: 0 16px 48px rgb(0 0 0 / 55%); color: #d1d4dc; }
+.indicator-style-dialog > header { display: flex; align-items: center; justify-content: space-between; height: 48px; padding: 0 14px; border-bottom: 1px solid #2a2e39; }
+.indicator-style-dialog > header strong { color: #f0f3fa; font-size: 20px; }
+.indicator-style-dialog > header button { width: 30px; height: 30px; color: #b2b5be; font-size: 24px; cursor: pointer; }
+.indicator-style-tab { position: relative; width: 74px; margin: 0 auto; padding: 12px 0 10px; border-bottom: 3px solid #d1d4dc; color: #f0f3fa; font-size: 13px; font-weight: 700; text-align: center; }
+.indicator-style-rows { padding: 14px; }
+.indicator-style-row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 78px; align-items: center; min-height: 46px; border-bottom: 1px solid #2a2e39; }
+.indicator-style-row > label { display: flex; align-items: center; gap: 8px; min-width: 0; font-weight: 650; }
+.indicator-style-row > label span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.indicator-style-preview { display: grid; grid-template-columns: 24px 1fr; align-items: center; gap: 7px; height: 34px; padding: 4px 7px; border: 1px solid #434651; border-radius: 5px; background: #181c27; cursor: pointer; }
+.indicator-style-preview i { width: 24px; height: 24px; border-radius: 3px; }
+.indicator-style-preview span { width: 30px; height: 0; border-top: 1px solid currentColor; }
+.indicator-color-popover { position: absolute; z-index: 3; top: 42px; right: 0; display: grid; gap: 12px; width: 254px; padding: 10px; border: 1px solid #434651; border-radius: 5px; background: #f8f9fb; box-shadow: 0 10px 28px rgb(0 0 0 / 45%); color: #434651; }
+.indicator-color-custom { display: flex; align-items: center; gap: 8px; }
+.indicator-color-custom input { width: 38px; height: 30px; padding: 0; border: 1px solid #9ca3af; border-radius: 4px; background: transparent; }
+.indicator-color-custom code { color: #434651; font-size: 11px; }
+.indicator-color-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.indicator-color-grid button { aspect-ratio: 1; min-width: 0; border: 2px solid transparent; border-radius: 2px; cursor: pointer; }
+.indicator-color-grid button.selected { border-color: #fff; outline: 2px solid #2962ff; }
+.indicator-opacity { display: grid; grid-template-columns: 1fr 100px 42px; align-items: center; gap: 8px; font-size: 11px; }
+.indicator-opacity input { width: 100%; accent-color: #5e35b1; }
+.indicator-opacity output { padding: 4px; border: 1px solid #d1d4dc; border-radius: 3px; background: #fff; text-align: center; }
+.indicator-color-popover fieldset { margin: 0; padding: 0; border: 0; }
+.indicator-color-popover legend { margin-bottom: 5px; color: #787b86; font-size: 10px; }
+.indicator-width-options, .indicator-line-options { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid #d1d4dc; border-radius: 4px; overflow: hidden; }
+.indicator-line-options { grid-template-columns: repeat(3, 1fr); }
+.indicator-width-options button, .indicator-line-options button { display: grid; place-content: center; height: 34px; border-right: 1px solid #d1d4dc; background: #fff; cursor: pointer; }
+.indicator-width-options button:last-child, .indicator-line-options button:last-child { border-right: 0; }
+.indicator-width-options button.selected, .indicator-line-options button.selected { background: #363a45; }
+.indicator-width-options span, .indicator-line-options span { width: 30px; border-top: 1px solid #363a45; }
+.indicator-width-options button.selected span, .indicator-line-options button.selected span { border-top-color: #fff; }
+.indicator-style-empty { padding: 24px 8px; color: #787b86; font-size: 11px; text-align: center; }
+.indicator-style-dialog > footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 14px 14px; border-top: 1px solid #2a2e39; }
+.indicator-style-dialog > footer button { height: 34px; padding: 0 14px; border: 1px solid #434651; border-radius: 5px; background: #242833; cursor: pointer; }
+.indicator-style-dialog > footer .primary { border-color: #2962ff; background: #2962ff; color: #fff; }
 .object-tree h3 { color: #787b86; font-size: 12px; }
 .object-node { margin: 4px 0; padding: 8px; border-left: 2px solid #2962ff; background: #181c27; font-size: 12px; }
 .drawing-node { display: grid; gap: 5px; cursor: pointer; }

@@ -32,4 +32,18 @@ describe('ChanPrimitive', () => {
     const geometry = buildChanGeometry(objects(3), 10, (time) => Number(time) === 0 ? null : Number(time), (price) => price)
     expect(geometry.fractals.map((item) => item.x)).toEqual([60, 120])
   })
+
+  it('updates semantic object rendering styles as one primitive', () => {
+    const primitive = new ChanPrimitive()
+    primitive.setStyle({ outputs: {
+      fractal: { color: '#ff5252', line_width: 1, line_style: 'solid', opacity: 0.8, visible: false },
+      bi: { color: '#ab47bc', line_width: 3, line_style: 'dashed', opacity: 0.7, visible: true },
+      zhongshu: { color: '#00b8d4', line_width: 2, line_style: 'dotted', opacity: 0.6, visible: true },
+    } })
+    expect(primitive.renderStyle()).toEqual({
+      fractal: { color: '#ff5252', line_width: 1, line_style: 'solid', opacity: 0.8, visible: false },
+      bi: { color: '#ab47bc', line_width: 3, line_style: 'dashed', opacity: 0.7, visible: true },
+      zhongshu: { color: '#00b8d4', line_width: 2, line_style: 'dotted', opacity: 0.6, visible: true },
+    })
+  })
 })

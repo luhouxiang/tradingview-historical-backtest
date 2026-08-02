@@ -110,7 +110,8 @@
               "source_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
             }
           },
-          "parameters": {"type": "object"}
+          "parameters": {"type": "object"},
+          "style": {"$ref": "#/$defs/indicator_style"}
         }
       }
     },
@@ -142,6 +143,7 @@
             }
           },
           "parameters": {"type": "object"},
+          "style": {"$ref": "#/$defs/indicator_style"},
           "category_visibility": {
             "type": "object",
             "additionalProperties": false,
@@ -158,6 +160,28 @@
     "updated_at": {"type": "string", "format": "date-time"}
   },
   "$defs": {
+    "indicator_style": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outputs"],
+      "properties": {
+        "outputs": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["color", "line_width", "line_style", "opacity", "visible"],
+            "properties": {
+              "color": {"type": "string", "pattern": "^#[0-9a-fA-F]{6}$"},
+              "line_width": {"type": "integer", "minimum": 1, "maximum": 4},
+              "line_style": {"enum": ["solid", "dashed", "dotted"]},
+              "opacity": {"type": "number", "minimum": 0.1, "maximum": 1},
+              "visible": {"type": "boolean"}
+            }
+          }
+        }
+      }
+    },
     "side_panel": {
       "type": "object",
       "additionalProperties": false,

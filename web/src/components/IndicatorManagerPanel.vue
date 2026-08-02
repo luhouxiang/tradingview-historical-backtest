@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { createCalculation, getCalculation, listAlgorithms } from '../api/client'
+import IndicatorStyleDialog from './IndicatorStyleDialog.vue'
 import {
   indicatorCategory, indicatorCategoryLabels, indicatorLocation, matchesIndicator, parameterSummary,
   type IndicatorCategory,
 } from '../indicators/catalog'
-import type { AlgorithmDefinition, DatasetMeta, SeriesSource, StrategySource } from '../types/api'
+import type { AlgorithmDefinition, DatasetMeta, IndicatorStyle, SeriesSource, StrategySource } from '../types/api'
 
 type ManagerTab = 'common' | 'all' | 'current'
 type ActiveEntry =
@@ -31,6 +32,7 @@ const selectedCategory = ref<'all' | IndicatorCategory>('all')
 const favoriteIds = ref<string[]>([])
 const status = ref('')
 const busyAlgorithmId = ref('')
+const styleEntry = ref<ActiveEntry | null>(null)
 
 function readFavorites(): string[] {
   try {
@@ -126,6 +128,7 @@ async function submit(definition: AlgorithmDefinition, parameters: Record<string
         source_type: 'StrategySource', source_id: id, definition, parameters,
         job_id: accepted.job_id, status: accepted.status, visible: existing?.visible ?? true,
         category_visibility: existing?.category_visibility ?? { fractals: false, bi: true, zhongshu: true },
+        style: existing?.style,
       }
       emit('update:strategy-sources', existing
         ? props.strategySources.map((item) => item.source_id === id ? source : item)
@@ -133,9 +136,10 @@ async function submit(definition: AlgorithmDefinition, parameters: Record<string
       if (accepted.status !== 'completed') void waitForStrategy(id, accepted.job_id)
     } else {
       const id = sourceId ?? `series-${crypto.randomUUID()}`
+      const existing = props.indicatorSources.find((source) => source.source_id === id)
       const source: SeriesSource = {
         source_type: 'SeriesSource', source_id: id, definition, parameters,
-        job_id: accepted.job_id, status: accepted.status,
+        job_id: accepted.job_id, status: accepted.status, style: existing?.style,
       }
       emit('update:indicator-sources', props.indicatorSources.some((item) => item.source_id === id)
         ? props.indicatorSources.map((item) => item.source_id === id ? source : item)
@@ -163,6 +167,29 @@ function updateParameter(entry: ActiveEntry, name: string, value: string | boole
 function remove(entry: ActiveEntry): void {
   if (entry.sourceType === 'chan') emit('update:strategy-sources', props.strategySources.filter((source) => source.source_id !== entry.source.source_id))
   else emit('update:indicator-sources', props.indicatorSources.filter((source) => source.source_id !== entry.source.source_id))
+}
+
+function applyStyle(style: IndicatorStyle): void {
+  const entry = styleEntry.value
+  if (!entry) return
+  if (entry.sourceType === 'indicator') {
+    emit('update:indicator-sources', props.indicatorSources.map((source) => source.source_id === entry.source.source_id
+      ? { ...source, style }
+      : source))
+  } else {
+    const categoryVisibility = { ...entry.source.category_visibility }
+    for (const output of entry.source.definition.outputs) {
+      const visible = style.outputs[output.name]?.visible
+      if (visible === undefined) continue
+      if (output.object_type === 'fractal') categoryVisibility.fractals = visible
+      else if (output.object_type === 'bi') categoryVisibility.bi = visible
+      else if (output.object_type === 'zhongshu') categoryVisibility.zhongshu = visible
+    }
+    emit('update:strategy-sources', props.strategySources.map((source) => source.source_id === entry.source.source_id
+      ? { ...source, style, category_visibility: categoryVisibility }
+      : source))
+  }
+  styleEntry.value = null
 }
 
 function useTab(tab: ManagerTab): void {
@@ -221,15 +248,18 @@ onMounted(async () => {
           <span class="indicator-current-copy"><strong>{{ entry.source.definition.name }}</strong><small>{{ parameterSummary(entry.source.parameters) }} · {{ indicatorLocation(entry.source.definition) }}</small></span>
           <span class="indicator-source-status" :class="entry.source.status">{{ entry.source.status }}</span>
         </summary>
-        <div class="indicator-parameters">
-          <label v-for="(rule, name) in entry.source.definition.parameter_schema.properties" :key="name">
-            <span>{{ name }}</span>
-            <select v-if="rule.enum" :value="entry.source.parameters[name]" @change="updateParameter(entry, name, ($event.target as HTMLSelectElement).value)">
-              <option v-for="value in rule.enum" :key="value">{{ value }}</option>
-            </select>
-            <input v-else-if="rule.type === 'boolean'" type="checkbox" :checked="Boolean(entry.source.parameters[name])" @change="updateParameter(entry, name, ($event.target as HTMLInputElement).checked)" />
-            <input v-else :type="rule.type === 'string' ? 'text' : 'number'" :min="rule.minimum" :max="rule.maximum" :value="entry.source.parameters[name]" @input="updateParameter(entry, name, ($event.target as HTMLInputElement).value)" />
-          </label>
+        <div class="indicator-settings-body">
+          <div class="indicator-parameters">
+            <label v-for="(rule, name) in entry.source.definition.parameter_schema.properties" :key="name">
+              <span>{{ name }}</span>
+              <select v-if="rule.enum" :value="entry.source.parameters[name]" @change="updateParameter(entry, name, ($event.target as HTMLSelectElement).value)">
+                <option v-for="value in rule.enum" :key="value">{{ value }}</option>
+              </select>
+              <input v-else-if="rule.type === 'boolean'" type="checkbox" :checked="Boolean(entry.source.parameters[name])" @change="updateParameter(entry, name, ($event.target as HTMLInputElement).checked)" />
+              <input v-else :type="rule.type === 'string' ? 'text' : 'number'" :min="rule.minimum" :max="rule.maximum" :value="entry.source.parameters[name]" @input="updateParameter(entry, name, ($event.target as HTMLInputElement).value)" />
+            </label>
+          </div>
+          <button type="button" class="indicator-style-more" :aria-label="`${entry.source.definition.name} 更多样式`" title="更多" @click="styleEntry = entry">…</button>
         </div>
         <div class="indicator-current-actions">
           <button @click="submit(entry.source.definition, entry.source.parameters, entry.source.source_id)">应用参数</button>
@@ -239,5 +269,7 @@ onMounted(async () => {
       </details>
       <div v-if="visibleActiveEntries.length === 0" class="indicator-empty">{{ query ? '当前指标中没有匹配项' : '当前没有使用指标' }}</div>
     </div>
+
+    <IndicatorStyleDialog v-if="styleEntry" :source="styleEntry.source" @confirm="applyStyle" @cancel="styleEntry = null" />
   </section>
 </template>

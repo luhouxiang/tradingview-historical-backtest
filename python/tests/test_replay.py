@@ -37,7 +37,6 @@ def test_replay_writes_only_causal_events_through_requested_end(tmp_path: Path) 
     parameters = {
         name: rule["default"] for name, rule in algorithm["parameter_schema"]["properties"].items()
     }
-    parameters["min_stroke_atr"] = 0
     payload = {
         "cache_key": "sha256:" + "4" * 64,
         "dataset": {

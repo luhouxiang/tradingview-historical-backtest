@@ -89,7 +89,6 @@ def test_chan_calculation_writes_causal_structure_cache(tmp_path: Path) -> None:
     parameters = {
         name: rule["default"] for name, rule in definition["parameter_schema"]["properties"].items()
     }
-    parameters["min_stroke_atr"] = 0
     parameters["checkpoint_interval"] = 4
     payload = {
         "cache_key": "sha256:" + "4" * 64,

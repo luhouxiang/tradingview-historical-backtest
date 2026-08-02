@@ -9,6 +9,7 @@ from tvbt.chan.events import EventEmitter
 
 Direction = Literal["up", "down", "unknown"]
 FractalKind = Literal["top", "bottom"]
+REFERENCE_MIN_INDEPENDENT_BARS = 5
 
 
 def _stable_id(prefix: str, *parts: object) -> str:
@@ -88,25 +89,15 @@ class LineObject:
 
 @dataclass(frozen=True)
 class ChanParameters:
-    fractal_left: int = 2
-    fractal_right: int = 2
-    min_stroke_bars: int = 5
-    min_stroke_atr: float = 0.5
-    atr_period: int = 14
     checkpoint_interval: int = 1024
-    initial_inclusion_direction: Literal["up", "down"] = "up"
 
     def __post_init__(self) -> None:
-        if self.fractal_left < 1 or self.fractal_right < 1:
-            raise ValueError("fractal window sides must be positive")
-        if self.min_stroke_bars < 1 or self.atr_period < 1 or self.checkpoint_interval < 1:
+        if self.checkpoint_interval < 1:
             raise ValueError("bar-count parameters must be positive")
-        if self.min_stroke_atr < 0:
-            raise ValueError("min_stroke_atr must not be negative")
 
 
 class ChanEngine:
-    algorithm_version = "1.0.0"
+    algorithm_version = "2.1.0"
 
     def __init__(self, parameters: ChanParameters | None = None) -> None:
         self.parameters = parameters or ChanParameters()
@@ -115,11 +106,8 @@ class ChanEngine:
         self.fractals: list[Fractal] = []
         self.bi: list[LineObject] = []
         self._stroke_start: Fractal | None = None
+        self._pending_fractals: list[Fractal] = []
         self._provisional_bi_id: str | None = None
-        self._atr_values: dict[int, float | None] = {}
-        self._previous_close: int | None = None
-        self._atr_seed: list[int] = []
-        self._atr_current: float | None = None
         self.emitter = EventEmitter()
 
     def update(self, bar: RawBar) -> None:
@@ -130,8 +118,8 @@ class ChanEngine:
         if bar.low_i64 > bar.high_i64:
             raise ValueError("raw bar low exceeds high")
         self.raw_bars.append(bar)
-        self._update_atr(bar)
         appended = self._update_inclusion(bar)
+        bi_count = len(self.bi)
         if appended:
             fractal = self._seal_fractal()
             if fractal is not None:
@@ -144,26 +132,8 @@ class ChanEngine:
                 )
                 self._consume_fractal(fractal)
         self._update_provisional_bi(bar.bar_index)
-        self._update_centers()
-
-    def _update_atr(self, bar: RawBar) -> None:
-        previous = self._previous_close
-        true_range = bar.high_i64 - bar.low_i64
-        if previous is not None:
-            true_range = max(
-                true_range,
-                abs(bar.high_i64 - previous),
-                abs(bar.low_i64 - previous),
-            )
-        self._previous_close = bar.close_i64
-        period = self.parameters.atr_period
-        if self._atr_current is None:
-            self._atr_seed.append(true_range)
-            if len(self._atr_seed) == period:
-                self._atr_current = sum(self._atr_seed) / period
-        else:
-            self._atr_current = ((period - 1) * self._atr_current + true_range) / period
-        self._atr_values[bar.bar_index] = self._atr_current
+        if len(self.bi) != bi_count:
+            self._update_centers()
 
     def _update_inclusion(self, bar: RawBar) -> bool:
         current = IncludedBar(
@@ -177,7 +147,7 @@ class ChanEngine:
             high_raw_index=bar.bar_index,
             low_raw_index=bar.bar_index,
             confirm_time=bar.time,
-            direction="unknown",
+            direction="down",
             source_raw_indices=[bar.bar_index],
         )
         if not self.included:
@@ -193,16 +163,22 @@ class ChanEngine:
             self.included.append(current)
             return True
         direction = previous.direction
-        if direction == "unknown":
-            direction = next(
-                (
-                    item.direction
-                    for item in reversed(self.included[:-1])
-                    if item.direction != "unknown"
-                ),
-                self.parameters.initial_inclusion_direction,
+        first_pair = len(self.included) == 1 and previous.start_raw_index == previous.end_raw_index
+        if first_pair:
+            right_contains = (
+                current.high_i64 > previous.high_i64 or current.low_i64 < previous.low_i64
             )
-        if direction == "up":
+            if right_contains:
+                high = current.high_i64
+                low = previous.low_i64
+                high_from_current = current.high_i64 != previous.high_i64
+                low_from_current = False
+            else:
+                high = previous.high_i64
+                low = current.low_i64
+                high_from_current = False
+                low_from_current = current.low_i64 != previous.low_i64
+        elif direction == "up":
             high_from_current = current.high_i64 > previous.high_i64
             low_from_current = current.low_i64 > previous.low_i64
             high = max(previous.high_i64, current.high_i64)
@@ -229,13 +205,14 @@ class ChanEngine:
         return False
 
     def _seal_fractal(self) -> Fractal | None:
-        left, right = self.parameters.fractal_left, self.parameters.fractal_right
-        index = len(self.included) - right - 2
-        if index < left:
+        # kline-chart/c_bi.py defines a strict fractal from exactly three independent
+        # bars. The newly appended independent bar seals the middle bar immediately.
+        index = len(self.included) - 2
+        if index < 1:
             return None
         center = self.included[index]
-        window = self.included[index - left : index + right + 1]
-        others = [*window[:left], *window[left + 1 :]]
+        window = self.included[index - 1 : index + 2]
+        others = [window[0], window[2]]
         top = all(
             center.high_i64 > item.high_i64 and center.low_i64 > item.low_i64 for item in others
         )
@@ -248,7 +225,7 @@ class ChanEngine:
         pivot_index = center.high_raw_index if top else center.low_raw_index
         pivot_time = center.high_time if top else center.low_time
         price = center.high_i64 if top else center.low_i64
-        confirmed_at = self.included[index + right + 1].end_raw_index
+        confirmed_at = self.included[index + 1].end_raw_index
         return Fractal(
             object_id=_stable_id("fractal", kind, pivot_time, confirmed_at, price),
             fractal_type=kind,
@@ -261,73 +238,131 @@ class ChanEngine:
         )
 
     def _consume_fractal(self, endpoint: Fractal) -> None:
-        start = self._stroke_start
-        if start is None:
+        self._pending_fractals.append(endpoint)
+        if self._stroke_start is None:
             self._stroke_start = endpoint
-            return
-        if endpoint.fractal_type == start.fractal_type:
-            endpoint_was_used = bool(self.bi and self.bi[-1].end.object_id == start.object_id)
-            more_extreme = (
-                endpoint.fractal_type == "top" and endpoint.price_i64 > start.price_i64
-            ) or (endpoint.fractal_type == "bottom" and endpoint.price_i64 < start.price_i64)
-            if not endpoint_was_used and more_extreme:
-                self._stroke_start = endpoint
-            return
-        raw_span = endpoint.bar_index - start.bar_index + 1
-        if raw_span < self.parameters.min_stroke_bars:
-            return
-        amplitude = abs(endpoint.price_i64 - start.price_i64)
-        atr = self._atr_values.get(start.bar_index)
-        if self.parameters.min_stroke_atr > 0 and (
-            atr is None or atr <= 0 or amplitude / atr < self.parameters.min_stroke_atr
-        ):
-            return
-        direction: Literal["up", "down"] = "up" if start.fractal_type == "bottom" else "down"
-        line = LineObject(
-            object_id=_stable_id("bi", start.object_id, endpoint.object_id),
-            start=start,
-            end=endpoint,
-            direction=direction,
-            confirmed_at_bar_index=endpoint.confirmed_at_bar_index,
-            known_at_bar_index=endpoint.known_at_bar_index,
+        while len(self._pending_fractals) >= 3:
+            selection = self._reference_selection()
+            if selection is None:
+                return
+            endpoint_position, known_at = selection
+            if known_at is None:
+                return
+            # One newly sealed fractal can release several pending lines.  None of
+            # those lines was knowable before the fractal that released the batch,
+            # and their causal timestamps must not move backwards within the batch.
+            known_at = max(
+                known_at,
+                endpoint.known_at_bar_index,
+                self.bi[-1].known_at_bar_index if self.bi else 0,
+            )
+            start = self._pending_fractals[0]
+            selected = self._pending_fractals[endpoint_position]
+            direction: Literal["up", "down"] = "up" if start.fractal_type == "bottom" else "down"
+            if self.bi and self.bi[-1].direction == direction:
+                raise AssertionError("reference bi directions must alternate")
+            line = LineObject(
+                object_id=_stable_id("bi", start.object_id, selected.object_id),
+                start=start,
+                end=selected,
+                direction=direction,
+                confirmed_at_bar_index=known_at,
+                known_at_bar_index=known_at,
+            )
+            if self._provisional_bi_id is not None:
+                self.emitter.delete(known_at, "bi", self._provisional_bi_id)
+                self._provisional_bi_id = None
+            self.bi.append(line)
+            self.emitter.upsert(known_at, "bi", line.object_id, line.payload())
+            self._pending_fractals = self._pending_fractals[endpoint_position:]
+            self._stroke_start = selected
+
+    def _reference_selection(self) -> tuple[int, int | None] | None:
+        """Port of kline-chart c_bi.get_node/satisfy_the_number for one pending base."""
+        values = self._pending_fractals
+        if len(values) < 2:
+            return None
+        base = values[0]
+        next_position = next(
+            (
+                position
+                for position in range(1, len(values))
+                if values[position].fractal_type != base.fractal_type
+            ),
+            -1,
         )
-        if self._provisional_bi_id is not None:
-            self.emitter.delete(endpoint.known_at_bar_index, "bi", self._provisional_bi_id)
-            self._provisional_bi_id = None
-        self.bi.append(line)
-        self.emitter.upsert(line.known_at_bar_index, "bi", line.object_id, line.payload())
-        self._stroke_start = endpoint
+        while next_position >= 0:
+            independent_count = values[next_position].normalized_index - base.normalized_index + 1
+            if independent_count < REFERENCE_MIN_INDEPENDENT_BARS:
+                next_position += 1
+                while (
+                    next_position < len(values)
+                    and values[next_position].fractal_type == base.fractal_type
+                ):
+                    next_position += 1
+                if next_position >= len(values):
+                    return None
+                continue
+            return self._reference_satisfy(next_position)
+        return None
+
+    def _reference_satisfy(self, endpoint_position: int) -> tuple[int, int | None]:
+        values = self._pending_fractals
+        base_is_top = values[0].fractal_type == "top"
+        baseline_position = endpoint_position
+        cursor = endpoint_position + 1
+        while cursor < len(values):
+            candidate = values[cursor]
+            endpoint = values[endpoint_position]
+            if candidate.fractal_type == endpoint.fractal_type:
+                candidate_bar = self.included[candidate.normalized_index]
+                endpoint_bar = self.included[endpoint.normalized_index]
+                more_extreme = (base_is_top and candidate_bar.low_i64 < endpoint_bar.low_i64) or (
+                    not base_is_top and candidate_bar.high_i64 > endpoint_bar.high_i64
+                )
+                if more_extreme:
+                    endpoint_position = cursor
+                    baseline_position = cursor
+                cursor += 1
+                continue
+            independent_count = (
+                candidate.normalized_index - values[baseline_position].normalized_index + 1
+            )
+            if independent_count < REFERENCE_MIN_INDEPENDENT_BARS:
+                cursor += 1
+                continue
+            candidate_bar = self.included[candidate.normalized_index]
+            endpoint_bar = self.included[values[endpoint_position].normalized_index]
+            separated = (
+                candidate_bar.low_i64 > endpoint_bar.high_i64
+                if base_is_top
+                else candidate_bar.high_i64 < endpoint_bar.low_i64
+            )
+            if separated:
+                return endpoint_position, candidate.known_at_bar_index
+            cursor += 1
+        # The reference batch renderer includes this final, not-yet-validated endpoint.
+        return endpoint_position, None
 
     def _update_provisional_bi(self, known_at_bar_index: int) -> None:
-        start = self._stroke_start
-        if start is None or not self.included:
+        selection = self._reference_selection()
+        if selection is None or selection[1] is not None:
+            if self._provisional_bi_id is not None:
+                self.emitter.delete(known_at_bar_index, "bi", self._provisional_bi_id)
+                self._provisional_bi_id = None
             return
-        current = self.included[-1]
-        upward = start.fractal_type == "bottom"
-        end_price = current.high_i64 if upward else current.low_i64
-        end_time = current.high_time if upward else current.low_time
-        end_index = current.high_raw_index if upward else current.low_raw_index
-        if end_index <= start.bar_index:
-            return
+        endpoint_position, _ = selection
+        start = self._pending_fractals[0]
+        endpoint = self._pending_fractals[endpoint_position]
         provisional_id = _stable_id("bi-provisional", start.object_id)
         if self._provisional_bi_id is not None and self._provisional_bi_id != provisional_id:
             self.emitter.delete(known_at_bar_index, "bi", self._provisional_bi_id)
         self._provisional_bi_id = provisional_id
-        endpoint = Fractal(
-            object_id="provisional-end",
-            fractal_type="top" if upward else "bottom",
-            normalized_index=current.normalized_index,
-            bar_index=end_index,
-            time=end_time,
-            price_i64=end_price,
-            confirmed_at_bar_index=known_at_bar_index,
-            known_at_bar_index=known_at_bar_index,
-        )
         line = LineObject(
             provisional_id,
             start,
             endpoint,
-            "up" if upward else "down",
+            "up" if start.fractal_type == "bottom" else "down",
             known_at_bar_index,
             known_at_bar_index,
         )
@@ -354,11 +389,8 @@ class ChanEngine:
             "fractals": [asdict(item) for item in self.fractals],
             "bi": [_line_state(item) for item in self.bi],
             "stroke_start_id": self._stroke_start.object_id if self._stroke_start else None,
+            "pending_fractal_ids": [item.object_id for item in self._pending_fractals],
             "provisional_bi_id": self._provisional_bi_id,
-            "atr_values": {str(key): value for key, value in self._atr_values.items()},
-            "previous_close": self._previous_close,
-            "atr_seed": self._atr_seed,
-            "atr_current": self._atr_current,
             "emitter": self.emitter.state(),
         }
 
@@ -372,11 +404,8 @@ class ChanEngine:
         engine.bi = [_line_from_state(item, fractals) for item in state["bi"]]
         start_id = state["stroke_start_id"]
         engine._stroke_start = fractals.get(start_id)
+        engine._pending_fractals = [fractals[value] for value in state["pending_fractal_ids"]]
         engine._provisional_bi_id = state["provisional_bi_id"]
-        engine._atr_values = {int(key): value for key, value in state["atr_values"].items()}
-        engine._previous_close = state["previous_close"]
-        engine._atr_seed = [int(value) for value in state["atr_seed"]]
-        engine._atr_current = state["atr_current"]
         engine.emitter = EventEmitter.from_state(state["emitter"])
         return engine
 
@@ -404,47 +433,62 @@ def _line_from_state(value: dict[str, Any], fractals: dict[str, Fractal]) -> Lin
 
 
 def _centers(lines: list[LineObject]) -> list[tuple[str, dict[str, Any], int]]:
+    """Build non-overlapping centers with the kline-chart confirmation cadence.
+
+    The line at ``entry_index`` only enters the candidate and is not part of its
+    price intersection.  The following three lines define the rectangle.  A
+    fourth participating line must return to that rectangle before the center is
+    published.  Once a line leaves the rectangle it becomes the entry line for
+    the next search, so two emitted centers never reuse a participating line.
+    """
     centers: list[tuple[str, dict[str, Any], int]] = []
-    start = 0
-    while start + 2 < len(lines):
-        seed = lines[start : start + 3]
+    entry_index = 1
+    while entry_index + 4 < len(lines):
+        seed = lines[entry_index + 1 : entry_index + 4]
         low = max(min(item.start.price_i64, item.end.price_i64) for item in seed)
         high = min(max(item.start.price_i64, item.end.price_i64) for item in seed)
         if low >= high:
-            start += 1
+            entry_index += 2
             continue
+
+        confirmation_line = lines[entry_index + 4]
+        confirmation_low, confirmation_high = sorted(
+            (confirmation_line.start.price_i64, confirmation_line.end.price_i64)
+        )
+        if confirmation_high < low or confirmation_low > high:
+            entry_index += 2
+            continue
+
         center_id = _stable_id("zhongshu", *(item.object_id for item in seed))
-        end_line = seed[-1]
+        formed_at = confirmation_line.confirmed_at_bar_index
         payload: dict[str, Any] = {
             "start_bar_index": seed[0].start.bar_index,
             "start_time": seed[0].start.time,
-            "end_bar_index": end_line.end.bar_index,
-            "end_time": end_line.end.time,
+            "end_bar_index": confirmation_line.end.bar_index,
+            "end_time": confirmation_line.end.time,
             "zg_i64": high,
             "zd_i64": low,
             "confirmed": True,
-            "confirmed_at_bar_index": end_line.confirmed_at_bar_index,
+            "confirmed_at_bar_index": formed_at,
             "status": "confirmed",
             "leave_direction": None,
         }
-        known_at = end_line.known_at_bar_index
-        cursor = start + 3
+        known_at = max(item.known_at_bar_index for item in [*seed, confirmation_line])
+        cursor = entry_index + 5
         while cursor < len(lines):
-            line = lines[cursor]
-            range_low, range_high = sorted((line.start.price_i64, line.end.price_i64))
-            if range_high > low and range_low < high:
-                payload["end_bar_index"] = line.end.bar_index
-                payload["end_time"] = line.end.time
-                payload["confirmed_at_bar_index"] = line.confirmed_at_bar_index
+            current = lines[cursor]
+            range_low, range_high = sorted((current.start.price_i64, current.end.price_i64))
+            if range_high >= low and range_low <= high:
+                payload["end_bar_index"] = current.end.bar_index
+                payload["end_time"] = current.end.time
                 payload["status"] = "extended"
-                known_at = line.known_at_bar_index
+                known_at = max(known_at, current.known_at_bar_index)
                 cursor += 1
                 continue
-            payload["confirmed_at_bar_index"] = line.confirmed_at_bar_index
             payload["status"] = "left"
             payload["leave_direction"] = "up" if range_low >= high else "down"
-            known_at = line.known_at_bar_index
+            known_at = max(known_at, current.known_at_bar_index)
             break
         centers.append((center_id, payload, known_at))
-        start = cursor - 2 if cursor < len(lines) else len(lines)
+        entry_index = cursor if cursor < len(lines) else len(lines)
     return centers

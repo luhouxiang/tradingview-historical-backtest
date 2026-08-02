@@ -8,6 +8,8 @@ import type {
   UTCTimestamp,
 } from 'lightweight-charts'
 import type { ChanCalculationResults, ChanFractal, ChanLineObject, ChanZhongshu } from '../types/api'
+import type { IndicatorOutputStyle, IndicatorStyle } from '../types/api'
+import { canvasDash, colorWithOpacity } from '../indicators/style'
 
 type ChanObjects = ChanCalculationResults['objects']
 type Point = { x: number; y: number }
@@ -19,6 +21,17 @@ export interface ChanGeometry {
   fractals: FractalPoint[]
   bi: Line[]
   zhongshu: Region[]
+}
+
+interface ChanRenderStyle {
+  fractal?: IndicatorOutputStyle
+  bi: IndicatorOutputStyle
+  zhongshu: IndicatorOutputStyle
+}
+
+const defaultChanRenderStyle: ChanRenderStyle = {
+  bi: { color: '#2962ff', line_width: 2, line_style: 'solid', opacity: 1, visible: true },
+  zhongshu: { color: '#ab47bc', line_width: 1, line_style: 'solid', opacity: 1, visible: true },
 }
 
 export function buildChanGeometry(
@@ -63,8 +76,8 @@ class ChanRenderer implements IPrimitivePaneRenderer {
     target.useBitmapCoordinateSpace(({ context, horizontalPixelRatio, verticalPixelRatio }) => {
       context.save()
       context.scale(horizontalPixelRatio, verticalPixelRatio)
-      if (this.layer === 'fill') drawRegions(context, geometry.zhongshu, true)
-      else drawOverlay(context, geometry)
+      if (this.layer === 'fill') drawRegions(context, geometry.zhongshu, true, this.source.renderStyle().zhongshu)
+      else drawOverlay(context, geometry, this.source.renderStyle())
       context.restore()
     })
   }
@@ -85,6 +98,7 @@ export class ChanPrimitive implements ISeriesPrimitive<Time> {
   private attachment: SeriesAttachedParameter<Time> | null = null
   private objects: ChanObjects = { fractals: [], bi: [], zhongshu: [] }
   private priceScale = 1
+  private style: ChanRenderStyle = defaultChanRenderStyle
   private readonly views: readonly IPrimitivePaneView[] = [
     new ChanView(this, 'bottom', 'fill'),
     new ChanView(this, 'normal', 'overlay'),
@@ -101,6 +115,17 @@ export class ChanPrimitive implements ISeriesPrimitive<Time> {
     this.attachment?.requestUpdate()
   }
 
+  setStyle(style?: IndicatorStyle): void {
+    this.style = {
+      fractal: style?.outputs.fractal ?? style?.outputs.fractals,
+      bi: style?.outputs.bi ?? defaultChanRenderStyle.bi,
+      zhongshu: style?.outputs.zhongshu ?? defaultChanRenderStyle.zhongshu,
+    }
+    this.attachment?.requestUpdate()
+  }
+
+  renderStyle(): ChanRenderStyle { return this.style }
+
   geometry(): ChanGeometry {
     const attachment = this.attachment
     if (!attachment) return { fractals: [], bi: [], zhongshu: [] }
@@ -113,7 +138,8 @@ export class ChanPrimitive implements ISeriesPrimitive<Time> {
   }
 }
 
-function drawRegions(context: CanvasRenderingContext2D, regions: Region[], fillOnly: boolean): void {
+function drawRegions(context: CanvasRenderingContext2D, regions: Region[], fillOnly: boolean, style: IndicatorOutputStyle): void {
+  if (!style.visible) return
   context.beginPath()
   for (const region of regions) {
     const left = Math.min(region.left, region.right)
@@ -121,16 +147,19 @@ function drawRegions(context: CanvasRenderingContext2D, regions: Region[], fillO
     context.rect(left, top, Math.abs(region.right - region.left), Math.abs(region.bottom - region.top))
   }
   if (fillOnly) {
-    context.fillStyle = '#ab47bc1f'
+    context.fillStyle = colorWithOpacity(style.color, Math.max(0.1, style.opacity * 0.18))
     context.fill()
   } else {
-    context.strokeStyle = '#ab47bc'
-    context.lineWidth = 1
+    context.strokeStyle = colorWithOpacity(style.color, style.opacity)
+    context.lineWidth = style.line_width
+    context.setLineDash(canvasDash(style.line_style, style.line_width))
     context.stroke()
+    context.setLineDash([])
   }
 }
 
-function drawLines(context: CanvasRenderingContext2D, lines: Line[], color: string, width: number): void {
+function drawLines(context: CanvasRenderingContext2D, lines: Line[], style: IndicatorOutputStyle): void {
+  if (!style.visible) return
   for (const confirmed of [true, false]) {
     context.beginPath()
     for (const line of lines) {
@@ -138,27 +167,30 @@ function drawLines(context: CanvasRenderingContext2D, lines: Line[], color: stri
       context.moveTo(line.start.x, line.start.y)
       context.lineTo(line.end.x, line.end.y)
     }
-    context.strokeStyle = color
-    context.lineWidth = width
+    context.strokeStyle = colorWithOpacity(style.color, style.opacity)
+    context.lineWidth = style.line_width
     context.globalAlpha = confirmed ? 1 : 0.55
-    context.setLineDash(confirmed ? [] : [5, 4])
+    context.setLineDash(confirmed ? canvasDash(style.line_style, style.line_width) : [5, 4])
     context.stroke()
   }
   context.globalAlpha = 1
   context.setLineDash([])
 }
 
-function drawOverlay(context: CanvasRenderingContext2D, geometry: ChanGeometry): void {
-  drawRegions(context, geometry.zhongshu, false)
-  drawLines(context, geometry.bi, '#2962ff', 1.5)
+function drawOverlay(context: CanvasRenderingContext2D, geometry: ChanGeometry, style: ChanRenderStyle): void {
+  drawRegions(context, geometry.zhongshu, false, style.zhongshu)
+  drawLines(context, geometry.bi, style.bi)
   for (const fractal of geometry.fractals) {
+    if (style.fractal && !style.fractal.visible) continue
     const direction = fractal.fractal_type === 'top' ? -1 : 1
     context.beginPath()
     context.moveTo(fractal.x, fractal.y)
     context.lineTo(fractal.x - 4, fractal.y + direction * 7)
     context.lineTo(fractal.x + 4, fractal.y + direction * 7)
     context.closePath()
-    context.fillStyle = fractal.fractal_type === 'top' ? '#f23645' : '#089981'
+    context.fillStyle = style.fractal
+      ? colorWithOpacity(style.fractal.color, style.fractal.opacity)
+      : fractal.fractal_type === 'top' ? '#f23645' : '#089981'
     context.globalAlpha = fractal.confirmed ? 1 : 0.5
     context.fill()
   }

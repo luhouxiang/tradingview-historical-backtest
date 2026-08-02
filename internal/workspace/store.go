@@ -49,6 +49,18 @@ type ObjectOrder struct {
 	Locked      bool   `json:"locked"`
 }
 
+type IndicatorOutputStyle struct {
+	Color     string  `json:"color"`
+	LineWidth int     `json:"line_width"`
+	LineStyle string  `json:"line_style"`
+	Opacity   float64 `json:"opacity"`
+	Visible   bool    `json:"visible"`
+}
+
+type IndicatorStyle struct {
+	Outputs map[string]IndicatorOutputStyle `json:"outputs"`
+}
+
 type SeriesSource struct {
 	SourceID     string                    `json:"source_id"`
 	Name         string                    `json:"name"`
@@ -61,6 +73,7 @@ type SeriesSource struct {
 	DataRevision string                    `json:"data_revision"`
 	Algorithm    pythonclient.AlgorithmRef `json:"algorithm"`
 	Parameters   map[string]any            `json:"parameters"`
+	Style        *IndicatorStyle           `json:"style,omitempty"`
 }
 
 type CategoryVisibility struct {
@@ -82,6 +95,7 @@ type StrategySource struct {
 	Algorithm          pythonclient.AlgorithmRef `json:"algorithm"`
 	Parameters         map[string]any            `json:"parameters"`
 	CategoryVisibility CategoryVisibility        `json:"category_visibility"`
+	Style              *IndicatorStyle           `json:"style,omitempty"`
 }
 
 type Layout struct {
@@ -263,6 +277,9 @@ func validateLayout(document Layout) error {
 		if !validID(source.SourceID) || source.Name == "" || !paneIDs[source.PaneID] || source.ZBand != 400 || source.OrderInBand < 0 || !validDatasetID(source.DatasetID) || !sha256Pattern.MatchString(source.DataRevision) || algorithm.Kind != "indicator" || algorithm.AlgorithmID == "" || algorithm.AlgorithmVersion == "" || !sha256Pattern.MatchString(algorithm.SourceHash) || source.Parameters == nil || objectIDs[source.SourceID] {
 			return ErrInvalid
 		}
+		if err := validateIndicatorStyle(source.Style); err != nil {
+			return err
+		}
 		objectIDs[source.SourceID] = true
 	}
 	for _, source := range document.StrategySources {
@@ -270,7 +287,23 @@ func validateLayout(document Layout) error {
 		if !validID(source.SourceID) || source.Name == "" || !paneIDs[source.PaneID] || source.ZBand != 500 || source.OrderInBand < 0 || !validDatasetID(source.DatasetID) || !sha256Pattern.MatchString(source.DataRevision) || algorithm.Kind != "chan" || algorithm.AlgorithmID == "" || algorithm.AlgorithmVersion == "" || !sha256Pattern.MatchString(algorithm.SourceHash) || source.Parameters == nil || objectIDs[source.SourceID] {
 			return ErrInvalid
 		}
+		if err := validateIndicatorStyle(source.Style); err != nil {
+			return err
+		}
 		objectIDs[source.SourceID] = true
+	}
+	return nil
+}
+
+func validateIndicatorStyle(style *IndicatorStyle) error {
+	if style == nil {
+		return nil
+	}
+	colorPattern := regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
+	for output, value := range style.Outputs {
+		if output == "" || !colorPattern.MatchString(value.Color) || value.LineWidth < 1 || value.LineWidth > 4 || !member(value.LineStyle, "solid", "dashed", "dotted") || value.Opacity < 0.1 || value.Opacity > 1 {
+			return ErrInvalid
+		}
 	}
 	return nil
 }

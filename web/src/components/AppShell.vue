@@ -174,6 +174,7 @@ async function restoreSources(layout: WorkspaceLayout, dataset: DatasetMeta): Pr
     const source: SeriesSource = {
       source_type: 'SeriesSource', source_id: saved.source_id, definition,
       parameters: saved.parameters, job_id: accepted.job_id, status: accepted.status,
+      style: saved.style,
     }
     restored.push(source)
     if (accepted.status !== 'completed') pending.push(source)
@@ -191,7 +192,7 @@ async function restoreSources(layout: WorkspaceLayout, dataset: DatasetMeta): Pr
     const source: StrategySource = {
       source_type: 'StrategySource', source_id: saved.source_id, definition,
       parameters: saved.parameters, job_id: accepted.job_id, status: accepted.status,
-      visible: saved.visible, category_visibility: saved.category_visibility,
+      visible: saved.visible, category_visibility: saved.category_visibility, style: saved.style,
     }
     restoredStrategies.push(source)
     if (accepted.status !== 'completed') pendingStrategies.push(source)
@@ -280,7 +281,7 @@ async function saveWorkspace(): Promise<void> {
       algorithm: {
         kind: source.definition.kind, algorithm_id: source.definition.algorithm_id,
         algorithm_version: source.definition.algorithm_version, source_hash: source.definition.source_hash,
-      }, parameters: source.parameters,
+      }, parameters: source.parameters, style: source.style,
     })),
     strategy_sources: strategySources.value.map((source, order) => ({
       source_id: source.source_id, name: source.definition.name, pane_id: 'price',
@@ -289,7 +290,7 @@ async function saveWorkspace(): Promise<void> {
       algorithm: {
         kind: 'chan' as const, algorithm_id: source.definition.algorithm_id,
         algorithm_version: source.definition.algorithm_version, source_hash: source.definition.source_hash,
-      }, parameters: source.parameters, category_visibility: source.category_visibility,
+      }, parameters: source.parameters, category_visibility: source.category_visibility, style: source.style,
     })),
   }
   try {

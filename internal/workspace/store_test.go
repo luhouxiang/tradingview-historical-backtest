@@ -82,6 +82,38 @@ func TestAtomicSaveReadAndRevisionConflict(t *testing.T) {
 	}
 }
 
+func TestIndicatorStylePersistenceAndValidation(t *testing.T) {
+	guard, _ := storage.NewPathGuard(t.TempDir())
+	store := NewStore(guard)
+	style := &IndicatorStyle{Outputs: map[string]IndicatorOutputStyle{
+		"ma": {Color: "#ab47bc", LineWidth: 3, LineStyle: "dashed", Opacity: 0.7, Visible: true},
+	}}
+	layout := testLayout()
+	layout.SeriesSources = []SeriesSource{{
+		SourceID: "ma-1", Name: "MA", PaneID: "main", Visible: true, ZBand: 400,
+		DatasetID: "SHFE.AO2609.5m", DataRevision: "sha256:" + repeat("1", 64),
+		Algorithm:  pythonclient.AlgorithmRef{Kind: "indicator", AlgorithmID: "ma", AlgorithmVersion: "1.0.0", SourceHash: "sha256:" + repeat("2", 64)},
+		Parameters: map[string]any{"period": 20}, Style: style,
+	}}
+	saved, err := store.PutLayout("default", "layout-1", 0, layout)
+	if err != nil || saved.SeriesSources[0].Style.Outputs["ma"].LineWidth != 3 {
+		t.Fatalf("save indicator style: %#v %v", saved.SeriesSources, err)
+	}
+	read, err := store.GetLayout("default", "layout-1")
+	if err != nil || read.SeriesSources[0].Style.Outputs["ma"].LineStyle != "dashed" {
+		t.Fatalf("read indicator style: %#v %v", read.SeriesSources, err)
+	}
+
+	invalid := testLayout()
+	invalid.SeriesSources = layout.SeriesSources
+	invalid.SeriesSources[0].Style = &IndicatorStyle{Outputs: map[string]IndicatorOutputStyle{
+		"ma": {Color: "purple", LineWidth: 8, LineStyle: "wave", Opacity: 2, Visible: true},
+	}}
+	if _, err := store.PutLayout("default", "invalid-style", 0, invalid); !errors.Is(err, ErrInvalid) {
+		t.Fatalf("expected invalid indicator style, got %v", err)
+	}
+}
+
 func TestDrawingSaveUsesAnchorsAndRejectsEscapes(t *testing.T) {
 	guard, _ := storage.NewPathGuard(t.TempDir())
 	store := NewStore(guard)

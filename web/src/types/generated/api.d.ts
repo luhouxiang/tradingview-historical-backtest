@@ -1284,6 +1284,18 @@ export interface components {
             /** @enum {unknown} */
             active_tab: "watchlist" | "object_tree" | "data_window" | "strategy_params";
         };
+        indicator_style: {
+            outputs: {
+                [key: string]: {
+                    color: string;
+                    line_width: number;
+                    /** @enum {unknown} */
+                    line_style: "solid" | "dashed" | "dotted";
+                    opacity: number;
+                    visible: boolean;
+                };
+            };
+        };
         /** ChartLayout */
         "layout.schema": {
             request_id?: string;
@@ -1338,6 +1350,7 @@ export interface components {
                     source_hash: string;
                 };
                 parameters: Record<string, never>;
+                style?: components["schemas"]["indicator_style"];
             }[];
             strategy_sources: {
                 source_id: string;
@@ -1358,6 +1371,7 @@ export interface components {
                     source_hash: string;
                 };
                 parameters: Record<string, never>;
+                style?: components["schemas"]["indicator_style"];
                 category_visibility: {
                     fractals: boolean;
                     bi: boolean;
@@ -1367,6 +1381,18 @@ export interface components {
             /** Format: date-time */
             updated_at: string;
             $defs: {
+                indicator_style: {
+                    outputs: {
+                        [key: string]: {
+                            color: string;
+                            line_width: number;
+                            /** @enum {unknown} */
+                            line_style: "solid" | "dashed" | "dotted";
+                            opacity: number;
+                            visible: boolean;
+                        };
+                    };
+                };
                 side_panel: {
                     width: number;
                     collapsed: boolean;
