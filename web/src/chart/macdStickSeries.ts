@@ -43,7 +43,7 @@ class MacdStickRenderer implements ICustomSeriesPaneRenderer {
         const top = Math.min(valueY, baseline)
         const height = Math.max(1, Math.abs(valueY - baseline))
         const center = Math.round(bar.x * horizontalPixelRatio)
-        context.fillStyle = bar.originalData.color
+        context.fillStyle = bar.barColor
         context.fillRect(center - Math.floor(width / 2), top, width, height)
       }
     })

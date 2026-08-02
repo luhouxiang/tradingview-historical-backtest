@@ -10,6 +10,7 @@ import ChartGroup from './ChartGroup.vue'
 import ReplayPanel from './ReplayPanel.vue'
 import BacktestPanel from './BacktestPanel.vue'
 import OptimizationPanel from './OptimizationPanel.vue'
+import KeyboardInstrumentPicker from './KeyboardInstrumentPicker.vue'
 import { ApiError, createCalculation, getCalculation, getDrawings, getLayout, listAlgorithms, putDrawings, putLayout } from '../api/client'
 import { DrawingHistory, LayerManager, type DrawingObject, type DrawingType } from '../drawing/model'
 import { defaultIndicatorSpecs } from '../indicators/defaults'
@@ -154,7 +155,7 @@ async function restoreSources(layout: WorkspaceLayout, dataset: DatasetMeta): Pr
   }
   indicatorSources.value = restored
   for (const source of pending) void trackCalculation(source)
-  if (savedSeries.length === 0) await installDefaultIndicators(dataset, definitions)
+  if (restored.length === 0) await installDefaultIndicators(dataset, definitions)
   for (const saved of (layout.strategy_sources ?? []).filter((item) => item.dataset_id === dataset.dataset_id && item.data_revision === dataset.data_revision)) {
     const definition = definitions.find((item) => item.kind === 'chan' && item.algorithm_id === saved.algorithm.algorithm_id && item.source_hash === saved.algorithm.source_hash)
     if (!definition) continue
@@ -346,7 +347,7 @@ function resizeBottom(event: PointerEvent): void {
           <button :class="{ active: rightTab === 'objects' }" @click="rightTab = 'objects'">对象树</button>
           <button class="dock-close" @click="rightOpen = false">收起</button>
         </nav>
-        <DatasetPanel v-if="rightTab === 'datasets'" @selected="selectDataset" />
+        <DatasetPanel v-if="rightTab === 'datasets'" :selected-dataset="selectedDataset" @selected="selectDataset" />
         <IndicatorPanel v-else-if="rightTab === 'indicators'" :dataset="selectedDataset" :sources="indicatorSources" @update:sources="indicatorSources = $event" />
         <ChanPanel v-else-if="rightTab === 'strategies'" :dataset="selectedDataset" :sources="strategySources" @update:sources="strategySources = $event" />
         <ObjectTreePanel
@@ -373,5 +374,6 @@ function resizeBottom(event: PointerEvent): void {
       </div>
       <span v-else>{{ workspaceStatus || '底部面板已收起' }}</span>
     </footer>
+    <KeyboardInstrumentPicker @selected="selectDataset" />
   </main>
 </template>

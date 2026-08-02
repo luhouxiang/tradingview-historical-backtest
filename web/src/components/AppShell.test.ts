@@ -11,6 +11,8 @@ const api = vi.hoisted(() => ({
   createReplay: vi.fn(), getReplay: vi.fn(), getReplayEvents: vi.fn(),
   createBacktest: vi.fn(), getBacktest: vi.fn(), getBacktestSummary: vi.fn(), getBacktestTrades: vi.fn(), getBacktestEquity: vi.fn(),
   createStudy: vi.fn(), getStudy: vi.fn(), getStudyEvaluations: vi.fn(),
+  getDataset: vi.fn(), getJob: vi.fn(), getSourceFiles: vi.fn(), importSource: vi.fn(),
+  listDatasets: vi.fn(), startDatasetScan: vi.fn(),
 }))
 vi.mock('../api/client', () => ({
   ...api,
@@ -43,7 +45,11 @@ function indicatorDefinition(algorithmId: string): AlgorithmDefinition {
 }
 
 describe('AppShell', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    api.getSourceFiles.mockResolvedValue([])
+    api.listDatasets.mockResolvedValue({ catalog_revision: 0, datasets: [] })
+  })
   it('renders the empty TradingView-style workspace', () => {
     const wrapper = mount(AppShell, {
       props: { health: 'ok' },
@@ -93,6 +99,30 @@ describe('AppShell', () => {
       expect.objectContaining({ parameters: { period: 60, source: 'close' }, calculation_mode: 'full_history' }),
       expect.objectContaining({ parameters: { fast_period: 12, slow_period: 26, signal_period: 9, source: 'close' }, calculation_mode: 'full_history' }),
     ])
+  })
+
+  it('recreates defaults when a saved indicator algorithm revision is no longer published', async () => {
+    api.getLayout.mockResolvedValue({
+      schema_version: 1, profile_id: 'default', layout_id: 'default-three-pane', revision: 1,
+      panes: [{ id: 'price', role: 'price', weight: 6, min_height: 240, visible: true, collapsed: false, order: 0 }],
+      right_panel: { width: 320, collapsed: false, active_tab: 'dataset' },
+      bottom_panel: { height: 260, collapsed: true, active_tab: 'replay' }, object_order: [], strategy_sources: [], updated_at: '2026-08-01T00:00:00Z',
+      series_sources: [{
+        source_id: 'series-default-macd-12-26-9', dataset_id: dataset.dataset_id, data_revision: dataset.data_revision,
+        algorithm: { kind: 'indicator', algorithm_id: 'macd', algorithm_version: '1.0.0', source_hash: `sha256:${'f'.repeat(64)}` },
+        parameters: { fast_period: 12, slow_period: 26, signal_period: 9, source: 'close' }, visible: true, order: 0,
+      }],
+    })
+    api.getDrawings.mockRejectedValue(new ApiError('DRAWINGS_NOT_FOUND', 'missing', 'req-drawings'))
+    api.listAlgorithms.mockResolvedValue([indicatorDefinition('ma'), { ...indicatorDefinition('macd'), algorithm_version: '1.1.0' }])
+    api.createCalculation.mockImplementation(async () => ({ job_id: `job-${api.createCalculation.mock.calls.length}`, status: 'completed' }))
+    const wrapper = mount(AppShell, {
+      props: { health: 'ok' },
+      global: { stubs: { ChartGroup: ChartStub, DatasetPanel: true } },
+    })
+    wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset)
+    await flushPromises()
+    expect(api.createCalculation).toHaveBeenCalledTimes(3)
   })
 
   it('restores and saves layout, drawings, panels and fixed anchors with optimistic revisions', async () => {

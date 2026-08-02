@@ -18,6 +18,7 @@ def test_definitions_are_immutable_and_complete() -> None:
         assert definition["source_hash"].startswith("sha256:")
         assert definition["causal"] is True
         assert definition["input_schema"] == "bars.v1"
+    assert available["macd"]["algorithm_version"] == "1.1.0"
 
 
 def test_ma_golden_values_and_warmup() -> None:
@@ -38,7 +39,7 @@ def test_macd_golden_values() -> None:
     assert result["macd"][:5] == [None] * 5
     assert result["macd"][5] == pytest.approx(0.7678755144)
     assert result["signal"][5] == pytest.approx(0.70996227709)
-    assert result["histogram"][5] == pytest.approx(0.05791323731)
+    assert result["histogram"][5] == pytest.approx(0.11582647462)
 
 
 def test_atr_wilder_golden_values() -> None:

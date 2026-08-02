@@ -4,7 +4,7 @@
     {
       "exchange": "SHFE",
       "product": "AO",
-      "symbol_pattern": "^AO[0-9]{4}$",
+      "symbol_pattern": "^AO(?:[0-9]{4}|L9)$",
       "display_name": "氧化铝",
       "timezone": "Asia/Shanghai",
       "price_decimals": 0,

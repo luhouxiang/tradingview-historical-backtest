@@ -77,10 +77,10 @@ describe('fullStackReadyPlugin', () => {
 })
 
 describe('createDemoDatasetReadyCheck', () => {
-  it('leaves an existing catalog unchanged', async () => {
+  it('leaves an existing preferred demo dataset unchanged', async () => {
     const fetchImpl = vi.fn()
       .mockResolvedValueOnce(response({ status: 'ok' }))
-      .mockResolvedValueOnce(response({ datasets: [{ dataset_id: 'existing' }] }))
+      .mockResolvedValueOnce(response({ datasets: [{ dataset_id: 'SHFE.AOL9.5m' }] }))
     const checkReady = createDemoDatasetReadyCheck({
       apiBaseUrl: 'http://127.0.0.1:8080',
       fetchImpl,
@@ -91,7 +91,7 @@ describe('createDemoDatasetReadyCheck', () => {
     expect(fetchImpl).not.toHaveBeenCalledWith(expect.stringContaining('/datasets/scan'), expect.anything())
   })
 
-  it('scans and imports only the prepared AO2609 sample when the catalog is empty', async () => {
+  it('scans and imports only the prepared AOL9 sample when the preferred dataset is absent', async () => {
     const fetchImpl = vi.fn()
       .mockResolvedValueOnce(response({ status: 'ok' }))
       .mockResolvedValueOnce(response({ datasets: [] }))
@@ -104,7 +104,7 @@ describe('createDemoDatasetReadyCheck', () => {
           status: 'importable',
           detected: {
             exchange: 'SHFE',
-            symbol: 'AO2609',
+            symbol: 'AOL9',
             timeframe: '5m',
             date_semantics: 'trading_day',
             timezone: 'Asia/Shanghai',
@@ -114,7 +114,7 @@ describe('createDemoDatasetReadyCheck', () => {
       }))
       .mockResolvedValueOnce(response({ job_id: 'import-1' }))
       .mockResolvedValueOnce(response({ job_id: 'import-1', status: 'completed' }))
-      .mockResolvedValueOnce(response({ datasets: [{ dataset_id: 'ao2609' }] }))
+      .mockResolvedValueOnce(response({ datasets: [{ dataset_id: 'SHFE.AOL9.5m' }] }))
     const checkReady = createDemoDatasetReadyCheck({
       apiBaseUrl: 'http://127.0.0.1:8080',
       fetchImpl,
@@ -126,7 +126,7 @@ describe('createDemoDatasetReadyCheck', () => {
     expect(importCall).toBeDefined()
     expect(JSON.parse(String(importCall?.[1]?.body))).toMatchObject({
       source_file_id: 'source-1',
-      instrument: 'AO2609',
+      instrument: 'AOL9',
       importer_id: 'tdx_txt_v1',
     })
   })

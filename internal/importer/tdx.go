@@ -26,7 +26,7 @@ const (
 	FlagDuplicateResolved    uint32 = 1 << 5
 )
 
-var titlePattern = regexp.MustCompile(`^([A-Za-z]+[0-9]{4})\s+(.+?)\s+([0-9]+)分钟线\s+不复权$`)
+var titlePattern = regexp.MustCompile(`^([A-Za-z]+(?:[0-9]{4}|L[0-9]))\s+(.+?)\s+([0-9]+)分钟线\s+不复权$`)
 
 type Detection struct {
 	Symbol      string `json:"symbol"`

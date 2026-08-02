@@ -35,6 +35,9 @@ interface SourceFile {
   }
 }
 
+const preferredDemoDatasetId = 'SHFE.AOL9.5m'
+const preferredDemoSymbol = 'AOL9'
+
 async function jsonRequest<T>(
   fetchImpl: typeof fetch,
   url: string,
@@ -105,7 +108,10 @@ export function createDemoDatasetReadyCheck(options: DemoDatasetReadyOptions): (
         undefined,
         requestTimeoutMs,
       )
-      if ((catalog.datasets?.length ?? 0) > 0) return true
+      if (catalog.datasets?.some((dataset) => (
+        typeof dataset === 'object' && dataset !== null
+        && 'dataset_id' in dataset && dataset.dataset_id === preferredDemoDatasetId
+      ))) return true
       if (bootstrapAttempted) return false
 
       const scan = await jsonRequest<{ job_id: string }>(fetchImpl, `${apiBaseUrl}/api/v1/datasets/scan`, {
@@ -120,7 +126,10 @@ export function createDemoDatasetReadyCheck(options: DemoDatasetReadyOptions): (
         undefined,
         requestTimeoutMs,
       )
-      if ((catalog.datasets?.length ?? 0) > 0) return true
+      if (catalog.datasets?.some((dataset) => (
+        typeof dataset === 'object' && dataset !== null
+        && 'dataset_id' in dataset && dataset.dataset_id === preferredDemoDatasetId
+      ))) return true
 
       const sourceResponse = await jsonRequest<{ items?: SourceFile[] }>(
         fetchImpl,
@@ -129,7 +138,7 @@ export function createDemoDatasetReadyCheck(options: DemoDatasetReadyOptions): (
         requestTimeoutMs,
       )
       const source = sourceResponse.items?.find((item) => (
-        item.status === 'importable' && item.detected?.symbol === 'AO2609'
+        item.status === 'importable' && item.detected?.symbol === preferredDemoSymbol
       ))
       if (!source?.detected) return false
 
@@ -155,7 +164,10 @@ export function createDemoDatasetReadyCheck(options: DemoDatasetReadyOptions): (
         undefined,
         requestTimeoutMs,
       )
-      return (catalog.datasets?.length ?? 0) > 0
+      return catalog.datasets?.some((dataset) => (
+        typeof dataset === 'object' && dataset !== null
+        && 'dataset_id' in dataset && dataset.dataset_id === preferredDemoDatasetId
+      )) ?? false
     } catch {
       return false
     }

@@ -20,12 +20,13 @@ def _definition(
     outputs: list[dict[str, str]],
     warmup_expression: str,
     compute: Compute,
+    algorithm_version: str = "1.0.0",
 ) -> tuple[dict[str, Any], Compute]:
     return (
         {
             "kind": "indicator",
             "algorithm_id": algorithm_id,
-            "algorithm_version": "1.0.0",
+            "algorithm_version": algorithm_version,
             "source_hash": _source_hash(),
             "name": name,
             "input_schema": "bars.v1",
@@ -69,7 +70,9 @@ def _macd(values: list[float], parameters: dict[str, Any]) -> dict[str, Series]:
     slow_values = _ema(values, slow)
     macd_values = [left - right for left, right in zip(fast_values, slow_values, strict=True)]
     signal_values = _ema(macd_values, signal_period)
-    histogram = [left - right for left, right in zip(macd_values, signal_values, strict=True)]
+    histogram = [
+        2.0 * (left - right) for left, right in zip(macd_values, signal_values, strict=True)
+    ]
     warmup = slow + signal_period - 2
 
     def masked(series: list[float]) -> Series:
@@ -161,6 +164,7 @@ _REGISTRY: dict[str, tuple[dict[str, Any], Compute]] = {
         ],
         "slow_period + signal_period - 2",
         lambda columns, parameters: _macd(columns[str(parameters["source"])], parameters),
+        algorithm_version="1.1.0",
     ),
     "atr": _definition(
         "atr",

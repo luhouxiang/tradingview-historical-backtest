@@ -29,7 +29,7 @@
       "python": "D:\\ProgramData\\anaconda3\\envs\\pydev3.14\\python.exe",
       "module": "tvbt",
       "args": ["--config", "${workspaceFolder}/config/app.yaml"],
-      "cwd": "${workspaceFolder}/python",
+      "cwd": "${workspaceFolder}",
       "env": { "PYTHONPATH": "${workspaceFolder}/python/src" },
       "console": "internalConsole"
     },
@@ -40,7 +40,7 @@
       "python": "D:\\ProgramData\\anaconda3\\envs\\pydev3.14\\python.exe",
       "module": "tvbt",
       "args": ["--config", "${workspaceFolder}/config/app.yaml"],
-      "cwd": "${workspaceFolder}/python",
+      "cwd": "${workspaceFolder}",
       "env": { "PYTHONPATH": "${workspaceFolder}/python/src" },
       "console": "internalConsole",
       "preLaunchTask": "build: python tests"

@@ -3,7 +3,7 @@ import type { PaneRendererCustomData, Time } from 'lightweight-charts'
 import { MacdStickSeries, type MacdStickData } from './macdStickSeries'
 
 describe('MacdStickSeries', () => {
-  it('draws each positive and negative MACD value as a one-pixel stick from the zero axis', () => {
+  it('draws positive and negative MACD values as wick-like thin lines from the zero axis', () => {
     const fillRect = vi.fn()
     const target = {
       useBitmapCoordinateSpace: (draw: (scope: object) => void) => draw({
@@ -12,8 +12,8 @@ describe('MacdStickSeries', () => {
     }
     const data = {
       bars: [
-        { x: 10, time: 0, barColor: '#f23645', originalData: { time: 1 as Time, value: 2, color: '#f23645' } },
-        { x: 20, time: 1, barColor: '#00b8a9', originalData: { time: 2 as Time, value: -3, color: '#00b8a9' } },
+        { x: 10, time: 0, barColor: '#f23645', originalData: { time: 1 as Time, value: 2, color: '#000000' } },
+        { x: 20, time: 1, barColor: '#00b8a9', originalData: { time: 2 as Time, value: -3, color: '#000000' } },
       ],
       barSpacing: 8, visibleRange: { from: 0, to: 2 }, conflationFactor: 1,
     } as PaneRendererCustomData<Time, MacdStickData>

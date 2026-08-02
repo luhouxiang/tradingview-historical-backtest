@@ -167,14 +167,14 @@ npm ci
 ./scripts/smoke-milestone0.ps1
 ~~~
 
-一键入口只在缺失时复制 `samples/30#AO2609.txt` 和运行配置，不覆盖已有历史文件；随后扫描、
-导入并让前端自动选择第一个就绪数据集，因此页面打开后直接显示 K 线。底部选择“回测”并点击
+一键入口只在缺失时复制 `samples/30#AOL9.txt`，并以原子合并方式补充该样例所需的品种与交易日历配置，不覆盖已有历史文件；随后扫描、
+导入并让前端优先选择 AOL9 数据集，因此页面打开后直接显示 K 线。底部选择“回测”并点击
 “开始正式回测”即可完成回测。Ctrl+C 会停止本次启动的精确进程树。
 
 VS Code 提供“Debug all services (fast)”和“Debug all services (checked)”两个复合启动项。
 Go、Python、Vite 的调试输出进入 Debug Console；构建门禁任务使用 Terminal。Vite 会等待 Go 的
 统一健康检查确认 Go/Python 均已就绪；若 catalog 为空，调试启动项只准备并通过 Go 扫描、导入
-AO2609 样例。首个数据集就绪后，VS Code 调用系统默认浏览器打开 K 线页面；浏览器尚未运行时
+AOL9 样例。AOL9 数据集就绪后，VS Code 调用系统默认浏览器打开 K 线页面；浏览器尚未运行时
 会启动浏览器，已经运行时会再次打开一个新标签页。
 复合启动会先统一检查 5173、8080、8091 三个端口；若旧实例仍占用端口，会在启动任何子服务前
 列出端口、服务名和 PID 并终止本次启动，避免只留下部分调试进程。
@@ -213,6 +213,7 @@ K 线接口为 `GET /api/v1/datasets/{dataset_id}/bars`。`revision` 与
 
 前端使用一个 Lightweight Charts 5.2.0 实例承载价格主图、MACD 占位副图和成交量副图。
 三个 pane 共享时间轴、逻辑范围和垂直十字线，纵轴独立，默认比例 6:1:1；
+非文本输入状态下直接键入代码会在右下角打开键盘精灵，候选来自 Go 扫描到的 history 源文件；支持模糊匹配、方向键选择和 Enter 导入或加载标的。
 分隔线仅调整相邻 pane，双击恢复默认。右侧和底部 dock 参与网格布局并压缩图表。
 缩放和尺寸变化只重绘，只有接近左缓存边界时才向 Go 预取，不调用 Python。
 
@@ -230,6 +231,7 @@ Python 发布不可变的 MA、MACD、ATR 定义与参数 Schema，读取 Go 指
 Parquet 并将完整历史结果写入 `cache/indicators/{cache_key}/`。目录包含
 `values.parquet`、`manifest.json`，最后写 `_SUCCESS`。缓存键覆盖数据修订、算法种类、
 ID、版本、source hash、规范参数、计算模式与引擎版本；相同键的并发请求只提交一次 Python 任务。
+MACD 1.1.0 的柱值使用 `2 × (DIFF - DEA)`，算法版本及 source hash 参与缓存键，旧定义的缓存不会复用。
 
 Vue 的指标面板创建、编辑和删除独立 `SeriesSource`。MA 叠加主图，MACD 与 ATR 使用
 指标副图；可视范围变化只查询已完成缓存，不重新创建计算任务。公共接口为：

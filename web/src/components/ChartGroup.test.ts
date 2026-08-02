@@ -196,6 +196,28 @@ describe('ChartGroup', () => {
     expect(wrapper.get('[data-pane-id="macd"]').text()).toContain('DIFF 2.00')
     expect(wrapper.get('[data-pane-id="macd"]').text()).toContain('DEA 1.00')
     expect(wrapper.get('[data-pane-id="macd"]').text()).toContain('MACD 1.00')
+    expect(wrapper.get('[data-pane-id="price"]').text()).toContain('开 11 高 13 低 10 收 10')
+    expect(wrapper.get('[data-pane-id="volume"]').text()).toContain('成交量 4')
+    const crosshairHandler = chartMocks.chart.subscribeCrosshairMove.mock.calls[0][0] as (parameter: object) => void
+    crosshairHandler({ point: { x: 25, y: 40 }, logical: 0.2, seriesData: new Map() })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.get('[data-pane-id="price"]').text()).toContain('开 10 高 12 低 9 收 11')
+    expect(wrapper.get('[data-pane-id="volume"]').text()).toContain('成交量 3')
+    expect(wrapper.get('[data-pane-id="macd"]').text()).toContain('DIFF -1.00')
+    expect(wrapper.get('[data-pane-id="macd"]').text()).toContain('DEA -0.50')
+    expect(wrapper.get('[data-pane-id="macd"]').text()).toContain('MACD -0.50')
+    expect(wrapper.find('.drawing-crosshair').exists()).toBe(false)
+    const createChartCalls = chartMocks.createChart.mock.calls as unknown as [unknown, unknown][]
+    const chartOptions = createChartCalls[0]?.[1] as {
+      crosshair: { mode: number; vertLine: { labelBackgroundColor: string }; horzLine: { labelBackgroundColor: string } }
+      localization: { timeFormatter: (time: number) => string }
+    }
+    expect(chartOptions.crosshair).toMatchObject({
+      mode: 0,
+      vertLine: { labelBackgroundColor: '#8b2b31' },
+      horzLine: { labelBackgroundColor: '#8b2b31' },
+    })
+    expect(chartOptions.localization.timeFormatter(1_783_512_600)).toMatch(/^2026\/07\/\d{2} \d{2}:\d{2}~\d{2}:\d{2} [日一二三四五六]$/)
     wrapper.unmount()
   })
 

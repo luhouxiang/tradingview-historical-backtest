@@ -59,7 +59,7 @@ export interface DatasetMeta {
   data_revision: string
   instrument: { exchange: string; symbol: string; product: string; display_name?: string }
   timeframe: string
-  source: { path: string; encoding: string; format: string; title?: string }
+  source: { path: string; encoding: string; format: string; title?: string; timestamp_semantics?: 'bar_start' | 'bar_end' }
   time: { timezone: string; date_semantics: string }
   price: { price_decimals: number; price_scale: number; tick_size_i64?: number }
   coverage: {

@@ -13,10 +13,12 @@ import {
   type LogicalRange,
   type MouseEventParams,
   type AutoscaleInfo,
+  type Time,
   type UTCTimestamp,
 } from 'lightweight-charts'
 import { getCalculationResults } from '../api/client'
-import { ChartSession } from '../chart/session'
+import { barAtLogicalIndex, formatBarTimeRange } from '../chart/crosshair'
+import { ChartSession, type CachedBar } from '../chart/session'
 import { ChanPrimitive } from '../chart/chanPrimitive'
 import { HollowVolumeSeries } from '../chart/hollowVolumeSeries'
 import { MacdStickSeries } from '../chart/macdStickSeries'
@@ -69,11 +71,11 @@ const chartHeight = ref(800)
 const projectedDrawings = ref<ProjectedDrawing[]>([])
 const pendingAnchor = ref<DrawingAnchor | null>(null)
 const previewPoint = ref<{ x: number; y: number } | null>(null)
-const crosshairPoint = ref<{ x: number; y: number } | null>(null)
 const latestIndicatorValues = ref<Record<string, number>>({})
-const hoveredIndicatorValues = ref<Record<string, number> | null>(null)
 const latestVolume = ref<number | null>(null)
-const hoveredVolume = ref<number | null>(null)
+const latestBar = ref<CachedBar | null>(null)
+const hoveredBar = ref<CachedBar | null>(null)
+const crosshairActive = ref(false)
 const session = new ChartSession()
 const layerManager = new LayerManager()
 let chart: IChartApi | null = null
@@ -87,6 +89,7 @@ let savedWeights: number[] | null = null
 let resizeObserver: ResizeObserver | null = null
 let dragDrawings: DrawingObject[] | null = null
 const indicatorSeries = new Map<string, ISeriesApi<'Line'> | ISeriesApi<'Histogram'> | ISeriesApi<'Custom'>>()
+const indicatorValuesByBarIndex = new Map<number, Record<string, number>>()
 const chanPrimitive = new ChanPrimitive()
 const pendingProjected = computed(() => {
   if (!pendingAnchor.value || !chart || !candles) return null
@@ -131,7 +134,11 @@ function paneControlTop(index: number): string {
 }
 
 function legendValue(key: string): number | null {
-  return hoveredIndicatorValues.value?.[key] ?? latestIndicatorValues.value[key] ?? null
+  if (crosshairActive.value) {
+    if (!hoveredBar.value) return null
+    return indicatorValuesByBarIndex.get(hoveredBar.value.barIndex)?.[key] ?? null
+  }
+  return latestIndicatorValues.value[key] ?? null
 }
 
 function formatLegendValue(value: number | null): string {
@@ -147,6 +154,15 @@ function macdParameters(): string {
 
 function macdLegendValue(outputName: string): number | null {
   return macdSource.value ? legendValue(`${macdSource.value.source_id}:${outputName}`) : null
+}
+
+function legendBar(): CachedBar | null {
+  return crosshairActive.value ? hoveredBar.value : latestBar.value
+}
+
+function formatPrice(value: number | undefined): string {
+  if (value === undefined || !props.dataset) return '--'
+  return (value / props.dataset.price.price_scale).toFixed(props.dataset.price.price_decimals)
 }
 
 function symmetricAutoscale(baseImplementation: () => AutoscaleInfo | null): AutoscaleInfo | null {
@@ -191,6 +207,7 @@ function renderBars(): void {
     rising: bar.closeI64 >= bar.openI64,
   })))
   latestVolume.value = bars.at(-1)?.volume ?? null
+  latestBar.value = bars.at(-1) ?? null
   projectDrawings()
 }
 
@@ -302,20 +319,15 @@ function beginHandleDrag(drawing: DrawingObject, handle: number, event: PointerE
 }
 
 function crosshairMoved(parameter: MouseEventParams): void {
-  crosshairPoint.value = parameter.point ? { x: parameter.point.x, y: parameter.point.y } : null
-  if (!parameter.point) {
-    hoveredIndicatorValues.value = null
-    hoveredVolume.value = null
+  crosshairActive.value = parameter.point !== undefined
+  if (!crosshairActive.value) {
+    hoveredBar.value = null
     return
   }
-  const values: Record<string, number> = {}
-  for (const [key, series] of indicatorSeries) {
-    const data = parameter.seriesData.get(series) as { value?: unknown } | undefined
-    if (typeof data?.value === 'number') values[key] = data.value
-  }
-  hoveredIndicatorValues.value = values
-  const volumeData = volume ? parameter.seriesData.get(volume) as { value?: unknown } | undefined : undefined
-  hoveredVolume.value = typeof volumeData?.value === 'number' ? volumeData.value : null
+  const bars = props.replayCursor === null
+    ? session.bars
+    : session.bars.filter((bar) => bar.barIndex <= props.replayCursor!)
+  hoveredBar.value = barAtLogicalIndex(bars, parameter.logical === undefined ? null : Number(parameter.logical))
 }
 
 function removeStaleIndicatorSeries(): void {
@@ -365,9 +377,11 @@ async function renderIndicators(fromBarIndex: number, toBarIndex: number): Promi
         if (props.replayCursor !== null && barIndex > props.replayCursor) return []
         const time = times.get(barIndex)
         const value = values[index]
-        return time === undefined || value === null || value === undefined
-          ? []
-          : [{ time, value, ...(output.series_type === 'histogram' ? { color: histogramColor(value) } : {}) }]
+        if (time === undefined || value === null || value === undefined) return []
+        const row = indicatorValuesByBarIndex.get(barIndex) ?? {}
+        row[key] = value
+        indicatorValuesByBarIndex.set(barIndex, row)
+        return [{ time, value, ...(output.series_type === 'histogram' ? { color: histogramColor(value) } : {}) }]
       })
       series?.setData(points)
       const lastValue = points.at(-1)?.value
@@ -418,6 +432,10 @@ function scheduleIndicatorRange(range: LogicalRange): void {
 async function openDataset(meta: DatasetMeta): Promise<void> {
   loading.value = true
   error.value = ''
+  indicatorValuesByBarIndex.clear()
+  latestIndicatorValues.value = {}
+  hoveredBar.value = null
+  crosshairActive.value = false
   try {
     await session.open(meta)
     if (session.meta?.dataset_id !== meta.dataset_id || session.meta.data_revision !== meta.data_revision) return
@@ -557,7 +575,27 @@ onMounted(() => {
       panes: { enableResize: false, separatorColor: '#2a2e39', separatorHoverColor: '#363c4e' },
     },
     grid: { vertLines: { color: '#1c2030' }, horzLines: { color: '#1c2030' } },
-    crosshair: { mode: CrosshairMode.Normal },
+    crosshair: {
+      mode: CrosshairMode.Normal,
+      vertLine: {
+        color: '#758696', width: 1, style: LineStyle.Dashed,
+        visible: true, labelVisible: true, labelBackgroundColor: '#8b2b31',
+      },
+      horzLine: {
+        color: '#758696', width: 1, style: LineStyle.Dashed,
+        visible: true, labelVisible: true, labelBackgroundColor: '#8b2b31',
+      },
+    },
+    localization: {
+      timeFormatter: (time: Time) => typeof time === 'number' && props.dataset
+        ? formatBarTimeRange(
+          time * 1000,
+          props.dataset.timeframe,
+          props.dataset.time.timezone,
+          props.dataset.source.timestamp_semantics ?? 'bar_end',
+        )
+        : '',
+    },
     rightPriceScale: { borderColor: '#2a2e39' },
     timeScale: { borderColor: '#2a2e39', timeVisible: true, secondsVisible: false },
   })
@@ -687,10 +725,6 @@ onBeforeUnmount(() => {
           @pointerdown="beginHandleDrag(item.drawing, handle, $event)"
         />
       </template>
-      <g v-if="crosshairPoint" class="drawing-crosshair">
-        <line :x1="crosshairPoint.x" y1="0" :x2="crosshairPoint.x" y2="100%" />
-        <line x1="0" :y1="crosshairPoint.y" x2="100%" :y2="crosshairPoint.y" />
-      </g>
     </svg>
     <div v-if="!dataset" class="chart-empty">
       <div class="watermark">TVBT</div>
@@ -708,6 +742,10 @@ onBeforeUnmount(() => {
         <strong v-else-if="pane.id === 'macd'" class="legend-macd-title">MACD({{ macdParameters() }})</strong>
         <strong v-else>{{ pane.id.toUpperCase() }}</strong>
         <template v-if="pane.id === 'price'">
+          <span class="legend-value legend-ohlc">
+            开 {{ formatPrice(legendBar()?.openI64) }} 高 {{ formatPrice(legendBar()?.highI64) }}
+            低 {{ formatPrice(legendBar()?.lowI64) }} 收 {{ formatPrice(legendBar()?.closeI64) }}
+          </span>
           <span v-for="item in maLegendItems" :key="item.key" class="legend-value" :style="{ color: item.color }">
             MA{{ item.period }} {{ formatLegendValue(legendValue(item.key)) }}
           </span>
@@ -719,7 +757,7 @@ onBeforeUnmount(() => {
             MACD {{ formatLegendValue(macdLegendValue('histogram')) }}
           </span>
         </template>
-        <span v-else-if="pane.id === 'volume'" class="legend-value legend-volume">成交量 {{ hoveredVolume ?? latestVolume ?? '--' }}</span>
+        <span v-else-if="pane.id === 'volume'" class="legend-value legend-volume">成交量 {{ crosshairActive ? (hoveredBar?.volume ?? '--') : (latestVolume ?? '--') }}</span>
         <span class="pane-actions">
           <button :disabled="pane.kind === 'price'" @click="toggleCollapse(pane.id)">{{ collapsed.has(pane.id) ? '展开' : '折叠' }}</button>
           <button @click="toggleMaximize(pane.id)">{{ maximized === pane.id ? '还原' : '最大化' }}</button>

@@ -99,15 +99,16 @@ try {
     $scan = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/v1/datasets/scan' -Method Post
     Wait-Job -JobId $scan.job_id -Deadline ((Get-Date).AddSeconds(60))
     $catalog = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/v1/datasets'
-    if (@($catalog.datasets).Count -eq 0) {
+    $preferredDataset = @($catalog.datasets | Where-Object { $_.dataset_id -eq 'SHFE.AOL9.5m' })[0]
+    if (-not $preferredDataset) {
         $sources = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/v1/source-files'
-        $source = @($sources.items | Where-Object { $_.status -eq 'importable' -and $_.detected.symbol -eq 'AO2609' })[0]
-        if (-not $source) { throw 'Prepared AO2609 sample was not detected as importable.' }
+        $source = @($sources.items | Where-Object { $_.status -eq 'importable' -and $_.detected.symbol -eq 'AOL9' })[0]
+        if (-not $source) { throw 'Prepared AOL9 sample was not detected as importable.' }
         $body = @{
             source_file_id = $source.source_file_id
             importer_id = 'tdx_txt_v1'
             exchange = 'SHFE'
-            instrument = 'AO2609'
+            instrument = 'AOL9'
             timeframe = '5m'
             date_semantics = 'trading_day'
             timezone = 'Asia/Shanghai'
@@ -117,14 +118,15 @@ try {
             -Method Post -ContentType 'application/json' -Body $body
         Wait-Job -JobId $import.job_id -Deadline ((Get-Date).AddSeconds(120))
         $catalog = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/v1/datasets'
+        $preferredDataset = @($catalog.datasets | Where-Object { $_.dataset_id -eq 'SHFE.AOL9.5m' })[0]
     }
-    if (@($catalog.datasets).Count -eq 0) { throw 'No ready dataset is available after demo import.' }
+    if (-not $preferredDataset) { throw 'The AOL9 demo dataset is not available after import.' }
 
     Write-Host ''
     Write-Host 'TVBT is ready: http://127.0.0.1:5173/' -ForegroundColor Green
     Write-Host "Python: $PythonExecutable"
-    Write-Host "Dataset: $($catalog.datasets[0].dataset_id), $($catalog.datasets[0].bar_count) bars"
-    Write-Host 'The first dataset is selected automatically. Open the bottom Backtest tab and click Start formal backtest.'
+    Write-Host "Dataset: $($preferredDataset.dataset_id), $($preferredDataset.bar_count) bars"
+    Write-Host 'The AOL9 dataset is selected automatically. Open the bottom Backtest tab and click Start formal backtest.'
     Write-Host 'Press Ctrl+C in this window to stop the exact service process trees.'
     if (-not $NoBrowser) { Start-Process 'http://127.0.0.1:5173/' }
 

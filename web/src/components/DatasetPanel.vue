@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import {
   getDataset,
   getJob,
@@ -12,12 +12,17 @@ import { logger } from '../logging/logger'
 import type { DatasetMeta, DatasetSummary, SourceFile } from '../types/api'
 
 const emit = defineEmits<{ selected: [dataset: DatasetMeta] }>()
+const props = defineProps<{ selectedDataset?: DatasetMeta | null }>()
 
 const sources = ref<SourceFile[]>([])
 const datasets = ref<DatasetSummary[]>([])
-const selected = ref<DatasetMeta | null>(null)
+const selected = ref<DatasetMeta | null>(props.selectedDataset ?? null)
 const busy = ref(false)
 const status = ref('')
+
+watch(() => props.selectedDataset, (dataset) => {
+  if (dataset) selected.value = dataset
+})
 
 async function waitForJob(jobId: string): Promise<void> {
   for (;;) {
@@ -76,7 +81,8 @@ async function selectDataset(item: DatasetSummary): Promise<void> {
 onMounted(async () => {
   try {
     await refresh()
-    if (datasets.value.length > 0) await selectDataset(datasets.value[0]!)
+    const preferred = datasets.value.find((dataset) => dataset.dataset_id === 'SHFE.AOL9.5m') ?? datasets.value[0]
+    if (preferred) await selectDataset(preferred)
   } catch {
     // An empty catalog before the Go service starts is a recoverable shell state.
   }

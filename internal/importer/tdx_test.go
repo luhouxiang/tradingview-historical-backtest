@@ -32,6 +32,22 @@ func TestDetectFullSample(t *testing.T) {
 	}
 }
 
+func TestDetectContinuousContractSample(t *testing.T) {
+	data, err := simplifiedchinese.GB18030.NewEncoder().Bytes([]byte(
+		"AOL9 氧化铝加权 5分钟线 不复权\n日期 时间 开盘 最高 最低 收盘 成交量 持仓量 结算价\n2026/08/03,0100,2650,2652,2648,2651,1832,567435,0\n",
+	))
+	if err != nil {
+		t.Fatal(err)
+	}
+	detection, err := DetectTdx(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if detection.Symbol != "AOL9" || detection.DisplayName != "氧化铝加权" || detection.Timeframe != "5m" {
+		t.Fatalf("unexpected detection: %#v", detection)
+	}
+}
+
 func TestFullSampleImportsToParquetWithinTarget(t *testing.T) {
 	data, err := os.ReadFile(filepath.Join("..", "..", "samples", "30#AO2609.txt"))
 	if err != nil {
