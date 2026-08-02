@@ -76,6 +76,7 @@ const latestVolume = ref<number | null>(null)
 const latestBar = ref<CachedBar | null>(null)
 const hoveredBar = ref<CachedBar | null>(null)
 const crosshairActive = ref(false)
+const chanVisibleCounts = ref({ bi: 0, zhongshu: 0 })
 const session = new ChartSession()
 const layerManager = new LayerManager()
 let chart: IChartApi | null = null
@@ -128,6 +129,7 @@ const maLegendItems = computed(() => props.indicatorSources
   }))
   .sort((left, right) => left.period - right.period))
 const macdSource = computed(() => props.indicatorSources.find((source) => source.status === 'completed' && source.definition.algorithm_id === 'macd') ?? null)
+const chanSource = computed(() => props.strategySources.find((source) => source.visible) ?? null)
 
 function paneControlTop(index: number): string {
   return index === 0 ? '6px' : `${(splitterPositions.value[index - 1] ?? 0) + 5}px`
@@ -400,6 +402,7 @@ async function renderChan(fromBarIndex: number, toBarIndex: number): Promise<voi
       zhongshu: source?.visible && source.category_visibility.zhongshu ? props.replayObjects.zhongshu : [],
     }
     chanPrimitive.setData(filtered, props.dataset.price.price_scale)
+    chanVisibleCounts.value = { bi: filtered.bi.length, zhongshu: filtered.zhongshu.length }
     return
   }
   const sources = props.strategySources.filter((source) => source.status === 'completed' && source.visible)
@@ -412,6 +415,7 @@ async function renderChan(fromBarIndex: number, toBarIndex: number): Promise<voi
     if (source.category_visibility.zhongshu) merged.zhongshu.push(...result.objects.zhongshu)
   }))
   chanPrimitive.setData(merged, props.dataset.price.price_scale)
+  chanVisibleCounts.value = { bi: merged.bi.length, zhongshu: merged.zhongshu.length }
 }
 
 function scheduleIndicatorRange(range: LogicalRange): void {
@@ -436,6 +440,7 @@ async function openDataset(meta: DatasetMeta): Promise<void> {
   latestIndicatorValues.value = {}
   hoveredBar.value = null
   crosshairActive.value = false
+  chanVisibleCounts.value = { bi: 0, zhongshu: 0 }
   try {
     await session.open(meta)
     if (session.meta?.dataset_id !== meta.dataset_id || session.meta.data_revision !== meta.data_revision) return
@@ -748,6 +753,9 @@ onBeforeUnmount(() => {
           </span>
           <span v-for="item in maLegendItems" :key="item.key" class="legend-value" :style="{ color: item.color }">
             MA{{ item.period }} {{ formatLegendValue(legendValue(item.key)) }}
+          </span>
+          <span v-if="chanSource" class="legend-value legend-chan">
+            缠论 {{ chanSource.status === 'completed' ? `笔 ${chanVisibleCounts.bi} 中枢 ${chanVisibleCounts.zhongshu}` : chanSource.status }}
           </span>
         </template>
         <template v-else-if="pane.id === 'macd'">

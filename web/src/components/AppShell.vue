@@ -2,8 +2,7 @@
 import { computed, nextTick, ref } from 'vue'
 import TopToolbar from './TopToolbar.vue'
 import DatasetPanel from './DatasetPanel.vue'
-import IndicatorPanel from './IndicatorPanel.vue'
-import ChanPanel from './ChanPanel.vue'
+import IndicatorManagerPanel from './IndicatorManagerPanel.vue'
 import DrawingToolbar from './DrawingToolbar.vue'
 import ObjectTreePanel from './ObjectTreePanel.vue'
 import ChartGroup from './ChartGroup.vue'
@@ -14,6 +13,7 @@ import KeyboardInstrumentPicker from './KeyboardInstrumentPicker.vue'
 import { ApiError, createCalculation, getCalculation, getDrawings, getLayout, listAlgorithms, putDrawings, putLayout } from '../api/client'
 import { DrawingHistory, LayerManager, type DrawingObject, type DrawingType } from '../drawing/model'
 import { defaultIndicatorSpecs } from '../indicators/defaults'
+import { defaultChanSpec } from '../chan/defaults'
 import type { ReplayObjects, ReplaySignal } from '../replay/eventIndex'
 import type { AlgorithmDefinition, DatasetMeta, SeriesSource, StrategySource, WorkspaceLayout } from '../types/api'
 
@@ -132,6 +132,31 @@ async function installDefaultIndicators(dataset: DatasetMeta, definitions?: Algo
   for (const source of created.filter((candidate) => candidate.status !== 'completed')) void trackCalculation(source)
 }
 
+async function installDefaultChan(dataset: DatasetMeta, definitions?: AlgorithmDefinition[]): Promise<void> {
+  const spec = defaultChanSpec(definitions ?? await listAlgorithms())
+  if (!spec) return
+  const accepted = await createCalculation({
+    dataset_id: dataset.dataset_id,
+    data_revision: dataset.data_revision,
+    algorithm: {
+      kind: spec.definition.kind,
+      algorithm_id: spec.definition.algorithm_id,
+      algorithm_version: spec.definition.algorithm_version,
+      source_hash: spec.definition.source_hash,
+    },
+    parameters: spec.parameters,
+    calculation_mode: 'causal_events',
+  })
+  if (selectedDataset.value?.dataset_id !== dataset.dataset_id || selectedDataset.value.data_revision !== dataset.data_revision) return
+  const source: StrategySource = {
+    source_type: 'StrategySource', source_id: spec.sourceId, definition: spec.definition,
+    parameters: spec.parameters, job_id: accepted.job_id, status: accepted.status,
+    visible: true, category_visibility: { fractals: false, bi: true, zhongshu: true },
+  }
+  strategySources.value = [source]
+  if (source.status !== 'completed') void trackStrategyCalculation(source)
+}
+
 async function restoreSources(layout: WorkspaceLayout, dataset: DatasetMeta): Promise<void> {
   const definitions = await listAlgorithms()
   const restored: SeriesSource[] = []
@@ -173,6 +198,7 @@ async function restoreSources(layout: WorkspaceLayout, dataset: DatasetMeta): Pr
   }
   strategySources.value = restoredStrategies
   for (const source of pendingStrategies) void trackStrategyCalculation(source)
+  if (restoredStrategies.length === 0) await installDefaultChan(dataset, definitions)
 }
 
 async function selectDataset(dataset: DatasetMeta): Promise<void> {
@@ -195,7 +221,7 @@ async function selectDataset(dataset: DatasetMeta): Promise<void> {
     bottomHeight.value = layout.bottom_panel.height
     bottomOpen.value = !layout.bottom_panel.collapsed
     bottomTab.value = layout.bottom_panel.active_tab
-    rightTab.value = layout.right_panel.active_tab === 'object_tree' ? 'objects' : layout.right_panel.active_tab === 'strategy_params' ? 'strategies' : 'datasets'
+    rightTab.value = layout.right_panel.active_tab === 'object_tree' ? 'objects' : layout.right_panel.active_tab === 'strategy_params' ? 'indicators' : 'datasets'
     await nextTick()
     chartRef.value?.restoreLayout({ panes: layout.panes.map((pane) => ({ id: pane.id, kind: pane.role, weight: pane.weight, minHeight: pane.min_height, collapsed: pane.collapsed })) })
     await restoreSources(layout, dataset)
@@ -204,9 +230,10 @@ async function selectDataset(dataset: DatasetMeta): Promise<void> {
   } else {
     layoutRevision.value = 0
     try {
-      await installDefaultIndicators(dataset)
+      const definitions = await listAlgorithms()
+      await Promise.all([installDefaultIndicators(dataset, definitions), installDefaultChan(dataset, definitions)])
     } catch (error) {
-      workspaceStatus.value = error instanceof Error ? `基础指标创建失败：${error.message}` : '基础指标创建失败'
+      workspaceStatus.value = error instanceof Error ? `默认指标创建失败：${error.message}` : '默认指标创建失败'
     }
   }
   if (drawingResult.status === 'fulfilled' && drawingResult.value.data_revision === dataset.data_revision) {
@@ -348,8 +375,12 @@ function resizeBottom(event: PointerEvent): void {
           <button class="dock-close" @click="rightOpen = false">收起</button>
         </nav>
         <DatasetPanel v-if="rightTab === 'datasets'" :selected-dataset="selectedDataset" @selected="selectDataset" />
-        <IndicatorPanel v-else-if="rightTab === 'indicators'" :dataset="selectedDataset" :sources="indicatorSources" @update:sources="indicatorSources = $event" />
-        <ChanPanel v-else-if="rightTab === 'strategies'" :dataset="selectedDataset" :sources="strategySources" @update:sources="strategySources = $event" />
+        <IndicatorManagerPanel
+          v-else-if="rightTab === 'indicators'" :dataset="selectedDataset"
+          :indicator-sources="indicatorSources" :strategy-sources="strategySources"
+          @update:indicator-sources="indicatorSources = $event" @update:strategy-sources="strategySources = $event"
+        />
+        <div v-else-if="rightTab === 'strategies'" class="empty-panel">交易策略参数在回放、回测和优化面板中管理。</div>
         <ObjectTreePanel
           v-else :drawings="drawings" :sources="indicatorSources" :strategy-sources="strategySources" :selected-id="selectedDrawingId"
           @patch-drawing="patchDrawing" @remove-drawing="removeDrawing" @reorder-drawing="reorderDrawing" @select-drawing="selectedDrawingId = $event"

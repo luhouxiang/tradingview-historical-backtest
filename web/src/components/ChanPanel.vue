@@ -38,7 +38,7 @@ async function submit(definition: AlgorithmDefinition, parameters: Record<string
   const source: StrategySource = {
     source_type: 'StrategySource', source_id: sourceId, definition, parameters,
     job_id: accepted.job_id, status: accepted.status, visible: existing?.visible ?? true,
-    category_visibility: existing?.category_visibility ?? { fractals: true, bi: true, zhongshu: true },
+    category_visibility: existing?.category_visibility ?? { fractals: false, bi: true, zhongshu: true },
   }
   emit('update:sources', existing
     ? props.sources.map((item) => item.source_id === sourceId ? source : item)
@@ -75,12 +75,12 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section class="indicator-panel" aria-label="缠论参数">
+  <section class="indicator-panel chan-indicator-panel" aria-label="缠论指标">
     <div class="indicator-add">
       <select v-model="selectedId" aria-label="缠论算法">
         <option v-for="algorithm in algorithms" :key="algorithm.algorithm_id" :value="algorithm.algorithm_id">{{ algorithm.name }}</option>
       </select>
-      <button :disabled="!dataset || !selectedId" @click="add">添加缠论</button>
+      <button :disabled="!dataset || !selectedId" @click="add">添加到主图</button>
     </div>
     <small v-if="status" class="issue">{{ status }}</small>
     <article v-for="source in sources" :key="source.source_id" class="indicator-card" data-source-type="StrategySource">

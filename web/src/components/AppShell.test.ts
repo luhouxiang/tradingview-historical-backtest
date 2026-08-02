@@ -26,6 +26,7 @@ const dataset = {
 
 const ChartStub = defineComponent({
   name: 'ChartGroup',
+  props: { strategySources: { type: Array, default: () => [] } },
   setup(_, { expose }) {
     expose({
       snapshotLayout: () => ({ panes: [{ id: 'price', kind: 'price', weight: 6, minHeight: 240, visible: true, collapsed: false, order: 0 }] }),
@@ -41,6 +42,22 @@ function indicatorDefinition(algorithmId: string): AlgorithmDefinition {
     name: algorithmId.toUpperCase(), input_schema: 'bars.v1', causal: true,
     parameter_schema: { type: 'object', additionalProperties: false, required: [], properties: {} },
     outputs: [], warmup: { kind: 'formula', expression: '0' },
+  }
+}
+
+function chanDefinition(): AlgorithmDefinition {
+  return {
+    kind: 'chan', algorithm_id: 'chan_engineering', algorithm_version: '1.0.0', source_hash: `sha256:${'b'.repeat(64)}`,
+    name: 'Engineering Causal Chan', input_schema: 'bars.v1', causal: true,
+    parameter_schema: {
+      type: 'object', additionalProperties: false, required: ['min_stroke_bars'],
+      properties: { min_stroke_bars: { type: 'integer', default: 5 } },
+    },
+    outputs: [
+      { name: 'bi', display_name: '笔', pane: 'main', series_type: 'semantic_objects', object_type: 'bi' },
+      { name: 'zhongshu', display_name: '中枢', pane: 'main', series_type: 'semantic_objects', object_type: 'zhongshu' },
+    ],
+    warmup: { kind: 'formula', expression: 'full history causal state' },
   }
 }
 
@@ -98,6 +115,29 @@ describe('AppShell', () => {
       expect.objectContaining({ parameters: { period: 20, source: 'close' }, calculation_mode: 'full_history' }),
       expect.objectContaining({ parameters: { period: 60, source: 'close' }, calculation_mode: 'full_history' }),
       expect.objectContaining({ parameters: { fast_period: 12, slow_period: 26, signal_period: 9, source: 'close' }, calculation_mode: 'full_history' }),
+    ])
+  })
+
+  it('creates one default Chan overlay showing bi and zhongshu on a new workspace', async () => {
+    api.getLayout.mockRejectedValue(new ApiError('WORKSPACE_NOT_FOUND', 'missing', 'req-layout'))
+    api.getDrawings.mockRejectedValue(new ApiError('DRAWINGS_NOT_FOUND', 'missing', 'req-drawings'))
+    api.listAlgorithms.mockResolvedValue([chanDefinition()])
+    api.createCalculation.mockResolvedValue({ job_id: 'job-chan-default', status: 'completed' })
+    const wrapper = mount(AppShell, {
+      props: { health: 'ok' },
+      global: { stubs: { ChartGroup: ChartStub, DatasetPanel: true } },
+    })
+    wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset)
+    await flushPromises()
+    expect(api.createCalculation).toHaveBeenCalledWith(expect.objectContaining({
+      calculation_mode: 'causal_events', parameters: { min_stroke_bars: 5 },
+    }))
+    const chart = wrapper.findComponent(ChartStub)
+    expect(chart.props('strategySources')).toEqual([
+      expect.objectContaining({
+        source_type: 'StrategySource', visible: true,
+        category_visibility: { fractals: false, bi: true, zhongshu: true },
+      }),
     ])
   })
 

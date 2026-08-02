@@ -48,6 +48,49 @@ button:disabled { color: #787b86; }
 .dataset-meta { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 6px; margin: 14px 0; font-size: 11px; }
 .dataset-meta dt { color: #787b86; }.dataset-meta dd { margin: 0; overflow-wrap: anywhere; color: #b2b5be; }
 .indicator-panel, .object-tree { height: calc(100% - 40px); overflow: auto; padding: 10px; }
+.indicator-manager { display: flex; flex-direction: column; height: calc(100% - 40px); min-height: 0; }
+.indicator-manager-header { display: grid; gap: 10px; padding: 12px 12px 10px; border-bottom: 1px solid #2a2e39; }
+.indicator-manager-header > div { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.indicator-manager-header strong { color: #e0e3eb; font-size: 14px; }
+.indicator-manager-header small { color: #787b86; font-size: 10px; }
+.indicator-manager-header input { width: 100%; height: 32px; padding: 0 10px 0 30px; border: 1px solid #363a45; border-radius: 4px; outline: none; background: #131722; color: #d1d4dc; }
+.indicator-manager-header input:focus { border-color: #2962ff; box-shadow: 0 0 0 1px #2962ff; }
+.indicator-manager-tabs { display: grid !important; grid-template-columns: repeat(3, 1fr); height: 38px !important; padding: 0 8px; border-bottom: 1px solid #2a2e39; }
+.indicator-manager-tabs button { height: 38px !important; padding: 0 4px !important; color: #9598a1; font-size: 12px; }
+.indicator-manager-tabs button span { margin-left: 3px; color: #5d606b; font-size: 10px; }
+.indicator-manager-tabs button.active span { color: #90a4da; }
+.indicator-manager-status { padding: 8px 12px 0; }
+.indicator-categories { display: flex; gap: 5px; padding: 9px 10px 5px; overflow-x: auto; }
+.indicator-categories button { flex: 0 0 auto; height: 25px !important; padding: 0 8px !important; border: 1px solid #363a45; border-radius: 12px !important; color: #9598a1; font-size: 10px; }
+.indicator-categories button.active { border-color: #2962ff; background: rgb(41 98 255 / 15%); color: #dbe4ff; }
+.indicator-catalog, .indicator-current-list { flex: 1; min-height: 0; overflow-y: auto; padding: 5px 8px 12px; }
+.indicator-catalog-row { display: grid; grid-template-columns: 26px minmax(0, 1fr) 34px; align-items: center; gap: 6px; min-height: 52px; padding: 5px 3px; border-bottom: 1px solid #2a2e39; }
+.indicator-catalog-row:hover { background: #242833; }
+.indicator-favorite { width: 26px; height: 28px !important; padding: 0 !important; color: #5d606b; font-size: 16px; }
+.indicator-favorite.selected { color: #f7a600; }
+.indicator-catalog-copy, .indicator-current-copy { min-width: 0; display: grid; gap: 3px; }
+.indicator-catalog-copy strong, .indicator-current-copy strong { overflow: hidden; color: #d1d4dc; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.indicator-catalog-copy small, .indicator-current-copy small { overflow: hidden; color: #787b86; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.indicator-add-button { width: 28px; height: 28px !important; padding: 0 !important; border: 1px solid #2962ff !important; border-radius: 50% !important; color: #7ca2ff; font-size: 17px; cursor: pointer; }
+.indicator-add-button:hover:not(:disabled) { background: #2962ff; color: #fff; }
+.indicator-empty { padding: 36px 14px; color: #787b86; font-size: 11px; text-align: center; }
+.indicator-current-card { margin: 5px 0; border: 1px solid #2a2e39; border-radius: 4px; background: #181c27; }
+.indicator-current-card summary { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 7px; min-height: 52px; padding: 6px 8px; cursor: pointer; list-style: none; }
+.indicator-current-card summary::-webkit-details-marker { display: none; }
+.indicator-current-card[open] summary { border-bottom: 1px solid #2a2e39; }
+.indicator-kind-mark { display: grid; place-content: center; width: 25px; height: 25px; border-radius: 4px; background: rgb(41 98 255 / 18%); color: #7ca2ff; font-size: 10px; }
+.indicator-kind-mark.chan { background: rgb(156 39 176 / 18%); color: #ce93d8; }
+.indicator-source-status { color: #787b86; font-size: 9px; }
+.indicator-source-status.completed { color: #26a69a; }
+.indicator-source-status.failed, .indicator-source-status.cancelled, .indicator-source-status.interrupted { color: #f23645; }
+.indicator-parameters { display: grid; gap: 7px; padding: 9px; }
+.indicator-parameters label { display: grid; grid-template-columns: minmax(0, 1fr) minmax(80px, 42%); align-items: center; gap: 7px; }
+.indicator-parameters label span { overflow: hidden; color: #9598a1; font-size: 10px; text-overflow: ellipsis; }
+.indicator-parameters input:not([type='checkbox']), .indicator-parameters select { min-width: 0; height: 24px; border: 1px solid #363a45; border-radius: 3px; background: #131722; color: #d1d4dc; }
+.indicator-parameters input[type='checkbox'] { justify-self: end; }
+.indicator-current-actions { display: flex; gap: 6px; padding: 0 9px 9px; }
+.indicator-current-actions button { height: 27px !important; border: 1px solid #363a45; background: #2a2e39; cursor: pointer; }
+.indicator-current-actions .danger { color: #ff7b85; }
 .indicator-add { display: flex; gap: 6px; }
 .indicator-add select, .indicator-card input, .indicator-card select { min-width: 0; border: 1px solid #363a45; border-radius: 3px; background: #131722; color: #d1d4dc; }
 .indicator-add button, .indicator-card button { padding: 5px 8px; border: 1px solid #363a45; border-radius: 3px; background: #2a2e39; cursor: pointer; }
@@ -120,6 +163,7 @@ button:disabled { color: #787b86; }
 .legend-ohlc { color: #b2b5be; }
 .legend-macd-title, .legend-dea, .legend-volume { color: #f2d600 !important; }
 .legend-diff { color: #e0e3eb; }
+.legend-chan { color: #64b5f6; }
 .pane-control button { padding: 2px 4px; border-radius: 3px; background: #1e222dcc; cursor: pointer; }
 .pane-control button:hover:not(:disabled) { color: #fff; background: #2a2e39; }
 .pane-splitter { position: absolute; z-index: 7; left: 0; width: 100%; height: 9px; padding: 0; transform: translateY(-4px); cursor: row-resize; background: transparent; }

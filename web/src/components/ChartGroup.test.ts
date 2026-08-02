@@ -223,12 +223,16 @@ describe('ChartGroup', () => {
 
   it('queries a completed StrategySource into the single Chan primitive without recalculation', async () => {
     apiMocks.getCalculationResults.mockResolvedValue({
-      result_kind: 'chan', objects: { fractals: [], bi: [], zhongshu: [] },
-      coverage: { first_bar_index: 0, last_bar_index: 1, returned_count: 0 },
+      result_kind: 'chan', objects: {
+        fractals: [],
+        bi: [{ object_id: 'bi-1', start_time: 1_700_000_000_000, start_price_i64: 10, end_time: 1_700_000_300_000, end_price_i64: 12, confirmed: true }],
+        zhongshu: [{ object_id: 'zs-1', start_time: 1_700_000_000_000, end_time: 1_700_000_300_000, zg_i64: 12, zd_i64: 10, confirmed: true }],
+      },
+      coverage: { first_bar_index: 0, last_bar_index: 1, returned_count: 2 },
     })
     const source = {
       source_type: 'StrategySource' as const, source_id: 'strategy-1', job_id: 'job-chan', status: 'completed' as const,
-      visible: true, category_visibility: { fractals: true, bi: true, zhongshu: true }, parameters: { min_fractal_gap: 5 },
+      visible: true, category_visibility: { fractals: false, bi: true, zhongshu: true }, parameters: { min_fractal_gap: 5 },
       definition: {
         kind: 'chan' as const, algorithm_id: 'chan_standard', algorithm_version: '1.0.0', source_hash: `sha256:${'c'.repeat(64)}`,
         name: '标准缠论', input_schema: 'bars.v1' as const, causal: true as const,
@@ -242,6 +246,7 @@ describe('ChartGroup', () => {
     expect(apiMocks.getCalculationResults).toHaveBeenCalledWith('job-chan', 0, 1)
     expect(chartMocks.candle.attachPrimitive).toHaveBeenCalledTimes(1)
     expect(apiMocks.createCalculation).not.toHaveBeenCalled()
+    expect(wrapper.get('[data-pane-id="price"]').text()).toContain('缠论 笔 1 中枢 1')
     wrapper.unmount()
   })
 
