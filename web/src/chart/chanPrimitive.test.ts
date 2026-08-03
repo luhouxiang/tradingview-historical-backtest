@@ -9,7 +9,7 @@ function objects(count: number): ChanCalculationResults['objects'] {
       fractal_type: index % 2 ? 'top' as const : 'bottom' as const, confirmed: index % 3 !== 0,
       confirmed_at_bar_index: index + 2, known_at_bar_index: index + 2, object_revision: 1,
     })),
-    bi: [], zhongshu: [],
+    bi: [], segments: [], zhongshu: [],
   }
 }
 
@@ -38,11 +38,13 @@ describe('ChanPrimitive', () => {
     primitive.setStyle({ outputs: {
       fractal: { color: '#ff5252', line_width: 1, line_style: 'solid', opacity: 0.8, visible: false },
       bi: { color: '#ab47bc', line_width: 3, line_style: 'dashed', opacity: 0.7, visible: true },
+      segment: { color: '#ffeb3b', line_width: 3, line_style: 'solid', opacity: 1, visible: true },
       zhongshu: { color: '#00b8d4', line_width: 2, line_style: 'dotted', opacity: 0.6, visible: true },
     } })
     expect(primitive.renderStyle()).toEqual({
       fractal: { color: '#ff5252', line_width: 1, line_style: 'solid', opacity: 0.8, visible: false },
       bi: { color: '#ab47bc', line_width: 3, line_style: 'dashed', opacity: 0.7, visible: true },
+      segment: { color: '#ffeb3b', line_width: 3, line_style: 'solid', opacity: 1, visible: true },
       zhongshu: { color: '#00b8d4', line_width: 2, line_style: 'dotted', opacity: 0.6, visible: true },
     })
   })

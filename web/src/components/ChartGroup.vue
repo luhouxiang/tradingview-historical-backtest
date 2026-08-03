@@ -77,7 +77,7 @@ const latestVolume = ref<number | null>(null)
 const latestBar = ref<CachedBar | null>(null)
 const hoveredBar = ref<CachedBar | null>(null)
 const crosshairActive = ref(false)
-const chanVisibleCounts = ref({ bi: 0, zhongshu: 0 })
+const chanVisibleCounts = ref({ bi: 0, segments: 0, zhongshu: 0 })
 const session = new ChartSession()
 const layerManager = new LayerManager()
 let chart: IChartApi | null = null
@@ -425,24 +425,26 @@ async function renderChan(fromBarIndex: number, toBarIndex: number): Promise<voi
     const filtered: ReplayObjects = {
       fractals: source?.visible && source.category_visibility.fractals ? props.replayObjects.fractals : [],
       bi: source?.visible && source.category_visibility.bi ? props.replayObjects.bi : [],
+      segments: source?.visible && source.category_visibility.segments ? props.replayObjects.segments : [],
       zhongshu: source?.visible && source.category_visibility.zhongshu ? props.replayObjects.zhongshu : [],
     }
     chanPrimitive.setData(filtered, props.dataset.price.price_scale)
-    chanVisibleCounts.value = { bi: filtered.bi.length, zhongshu: filtered.zhongshu.length }
+    chanVisibleCounts.value = { bi: filtered.bi.length, segments: filtered.segments.length, zhongshu: filtered.zhongshu.length }
     return
   }
   const sources = props.strategySources.filter((source) => source.status === 'completed' && source.visible)
   chanPrimitive.setStyle(sources[0]?.style)
-  const merged: ChanCalculationResults['objects'] = { fractals: [], bi: [], zhongshu: [] }
+  const merged: ChanCalculationResults['objects'] = { fractals: [], bi: [], segments: [], zhongshu: [] }
   await Promise.all(sources.map(async (source) => {
     const result = await getCalculationResults(source.job_id, fromBarIndex, toBarIndex)
     if (result.result_kind !== 'chan') return
     if (source.category_visibility.fractals) merged.fractals.push(...result.objects.fractals)
     if (source.category_visibility.bi) merged.bi.push(...result.objects.bi)
+    if (source.category_visibility.segments) merged.segments.push(...result.objects.segments)
     if (source.category_visibility.zhongshu) merged.zhongshu.push(...result.objects.zhongshu)
   }))
   chanPrimitive.setData(merged, props.dataset.price.price_scale)
-  chanVisibleCounts.value = { bi: merged.bi.length, zhongshu: merged.zhongshu.length }
+  chanVisibleCounts.value = { bi: merged.bi.length, segments: merged.segments.length, zhongshu: merged.zhongshu.length }
 }
 
 function scheduleIndicatorRange(range: LogicalRange): void {
@@ -467,7 +469,7 @@ async function openDataset(meta: DatasetMeta): Promise<void> {
   latestIndicatorValues.value = {}
   hoveredBar.value = null
   crosshairActive.value = false
-  chanVisibleCounts.value = { bi: 0, zhongshu: 0 }
+  chanVisibleCounts.value = { bi: 0, segments: 0, zhongshu: 0 }
   try {
     await session.open(meta)
     if (session.meta?.dataset_id !== meta.dataset_id || session.meta.data_revision !== meta.data_revision) return
@@ -782,7 +784,7 @@ onBeforeUnmount(() => {
             MA{{ item.period }} {{ formatLegendValue(legendValue(item.key)) }}
           </span>
           <span v-if="chanSource" class="legend-value legend-chan">
-            缠论 {{ chanSource.status === 'completed' ? `笔 ${chanVisibleCounts.bi} 中枢 ${chanVisibleCounts.zhongshu}` : chanSource.status }}
+            缠论 {{ chanSource.status === 'completed' ? `笔 ${chanVisibleCounts.bi} 段 ${chanVisibleCounts.segments} 中枢 ${chanVisibleCounts.zhongshu}` : chanSource.status }}
           </span>
         </template>
         <template v-else-if="pane.id === 'macd'">

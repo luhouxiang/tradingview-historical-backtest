@@ -41,11 +41,12 @@
     "counts": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["merged_bars", "fractals", "bi", "zhongshu", "events"],
+      "required": ["merged_bars", "fractals", "bi", "segments", "zhongshu", "events"],
       "properties": {
         "merged_bars": {"type": "integer", "minimum": 0},
         "fractals": {"type": "integer", "minimum": 0},
         "bi": {"type": "integer", "minimum": 0},
+        "segments": {"type": "integer", "minimum": 0},
         "zhongshu": {"type": "integer", "minimum": 0},
         "events": {"type": "integer", "minimum": 0}
       }
@@ -53,10 +54,11 @@
     "files": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fractals", "bi", "zhongshu", "events"],
+      "required": ["fractals", "bi", "segments", "zhongshu", "events"],
       "properties": {
         "fractals": {"$ref": "#/$defs/file"},
         "bi": {"$ref": "#/$defs/file"},
+        "segments": {"$ref": "#/$defs/file"},
         "zhongshu": {"$ref": "#/$defs/file"},
         "events": {"$ref": "#/$defs/file"}
       }

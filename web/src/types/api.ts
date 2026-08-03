@@ -109,7 +109,7 @@ export interface AlgorithmOutput {
   display_name: string
   pane: 'main' | 'indicator'
   series_type: 'line' | 'histogram' | 'semantic_objects'
-  object_type?: 'fractal' | 'bi' | 'zhongshu' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event'
+  object_type?: 'fractal' | 'bi' | 'segment' | 'zhongshu' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event'
 }
 
 export interface AlgorithmDefinition extends AlgorithmRef {
@@ -205,6 +205,7 @@ export interface ChanCalculationResults extends CalculationResultBase {
   objects: {
     fractals: ChanFractal[]
     bi: ChanLineObject[]
+    segments: ChanLineObject[]
     zhongshu: ChanZhongshu[]
   }
 }
@@ -234,7 +235,7 @@ export interface ReplayStatus {
 export interface CausalEvent {
   event_seq: number
   known_at_bar_index: number
-  object_type: 'fractal' | 'bi' | 'zhongshu' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event'
+  object_type: 'fractal' | 'bi' | 'segment' | 'zhongshu' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event'
   object_id: string
   operation: 'upsert' | 'delete'
   object_revision: number
@@ -429,7 +430,7 @@ export interface StrategySource {
   job_id: string
   status: JobStatus['status']
   visible: boolean
-  category_visibility: { fractals: boolean; bi: boolean; zhongshu: boolean }
+  category_visibility: { fractals: boolean; bi: boolean; segments: boolean; zhongshu: boolean }
   style?: IndicatorStyle
   error?: string
 }
@@ -486,7 +487,7 @@ export interface PersistedStrategySource {
   data_revision: string
   algorithm: AlgorithmRef & { kind: 'chan' }
   parameters: Record<string, string | number | boolean>
-  category_visibility: { fractals: boolean; bi: boolean; zhongshu: boolean }
+  category_visibility: { fractals: boolean; bi: boolean; segments?: boolean; zhongshu: boolean }
   style?: IndicatorStyle
 }
 

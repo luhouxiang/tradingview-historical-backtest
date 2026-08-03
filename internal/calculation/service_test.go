@@ -242,7 +242,7 @@ func TestChanCacheHitAndSemanticRangeRead(t *testing.T) {
 	fractals := []ChanFractal{{ObjectID: "fractal-1", BarIndex: 10, Time: 1000, PriceI64: 110, FractalType: "top", Confirmed: true, ConfirmedAtBarIndex: &confirmedAt, KnownAtBarIndex: 12, ObjectRevision: 1}}
 	lines := []ChanLineObject{{ObjectID: "bi-1", StartBarIndex: 10, StartTime: 1000, StartPriceI64: 110, EndBarIndex: 20, EndTime: 2000, EndPriceI64: 90, Direction: "down", Confirmed: true, ConfirmedAtBarIndex: &confirmedAt, KnownAtBarIndex: 14, ObjectRevision: 2}}
 	centres := []ChanZhongshu{{ObjectID: "zhongshu-1", StartBarIndex: 18, StartTime: 1800, EndBarIndex: 30, EndTime: 3000, ZGI64: 105, ZDI64: 95, Confirmed: false, KnownAtBarIndex: 30, ObjectRevision: 1}}
-	for name, value := range map[string]any{"fractals.parquet": fractals, "bi.parquet": lines, "zhongshu.parquet": centres, "events.parquet": []chanEventTestRow{}} {
+	for name, value := range map[string]any{"fractals.parquet": fractals, "bi.parquet": lines, "segments.parquet": lines, "zhongshu.parquet": centres, "events.parquet": []chanEventTestRow{}} {
 		var err error
 		switch rows := value.(type) {
 		case []ChanFractal:
@@ -270,7 +270,7 @@ func TestChanCacheHitAndSemanticRangeRead(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.ResultKind != "chan" || result.Objects == nil || len(result.Objects.Fractals) != 0 || len(result.Objects.Bi) != 1 || len(result.Objects.Zhongshu) != 1 || result.Coverage.ReturnedCount != 2 {
+	if result.ResultKind != "chan" || result.Objects == nil || len(result.Objects.Fractals) != 0 || len(result.Objects.Bi) != 1 || len(result.Objects.Segments) != 1 || len(result.Objects.Zhongshu) != 1 || result.Coverage.ReturnedCount != 3 {
 		t.Fatalf("unexpected Chan range result: %#v", result)
 	}
 }

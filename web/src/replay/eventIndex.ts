@@ -27,14 +27,16 @@ export class ReplayEventIndex {
       this.position += 1
     }
     this.cursor = cursor
-    const result: ReplayObjects = { fractals: [], bi: [], zhongshu: [] }
+    const result: ReplayObjects = { fractals: [], bi: [], segments: [], zhongshu: [] }
     for (const [key, payload] of this.objects) {
       if (key.startsWith('fractal:')) result.fractals.push(payload as unknown as ReplayObjects['fractals'][number])
       else if (key.startsWith('bi:')) result.bi.push(payload as unknown as ReplayObjects['bi'][number])
+      else if (key.startsWith('segment:')) result.segments.push(payload as unknown as ReplayObjects['segments'][number])
       else if (key.startsWith('zhongshu:')) result.zhongshu.push(payload as unknown as ReplayObjects['zhongshu'][number])
     }
     result.fractals.sort((left, right) => left.bar_index - right.bar_index)
     result.bi.sort((left, right) => left.start_bar_index - right.start_bar_index)
+    result.segments.sort((left, right) => left.start_bar_index - right.start_bar_index)
     result.zhongshu.sort((left, right) => left.start_bar_index - right.start_bar_index)
     return result
   }

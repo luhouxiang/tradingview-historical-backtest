@@ -719,7 +719,7 @@ export interface components {
                 /** @enum {unknown} */
                 series_type: "line" | "histogram" | "semantic_objects";
                 /** @enum {unknown} */
-                object_type?: "fractal" | "bi" | "zhongshu" | "strategy_state" | "stage_signal" | "trade_signal" | "chart_event";
+                object_type?: "fractal" | "bi" | "segment" | "zhongshu" | "strategy_state" | "stage_signal" | "trade_signal" | "chart_event";
             }[];
             warmup: {
                 /** @constant */
@@ -770,6 +770,7 @@ export interface components {
         ChanObjects: {
             fractals: components["schemas"]["ChanFractal"][];
             bi: components["schemas"]["ChanLineObject"][];
+            segments: components["schemas"]["ChanLineObject"][];
             zhongshu: components["schemas"]["ChanZhongshu"][];
         };
         ChanFractal: {
@@ -1375,6 +1376,7 @@ export interface components {
                 category_visibility: {
                     fractals: boolean;
                     bi: boolean;
+                    segments?: boolean;
                     zhongshu: boolean;
                 };
             }[];

@@ -69,7 +69,7 @@ describe('IndicatorManagerPanel', () => {
     expect(indicatorSources[0]).toMatchObject({ source_type: 'SeriesSource', parameters: { period: 20 } })
     expect(strategySources[0]).toMatchObject({
       source_type: 'StrategySource', parameters: { period: 20 },
-      category_visibility: { fractals: false, bi: true, zhongshu: true },
+      category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true },
     })
   })
 
@@ -82,7 +82,7 @@ describe('IndicatorManagerPanel', () => {
     }
     const strategySource: StrategySource = {
       source_type: 'StrategySource', source_id: 'strategy-1', definition: chan, parameters: { period: 5 }, job_id: 'job-2', status: 'completed',
-      visible: true, category_visibility: { fractals: false, bi: true, zhongshu: true },
+      visible: true, category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true },
     }
     const wrapper = mount(IndicatorManagerPanel, { props: { dataset, indicatorSources: [indicatorSource], strategySources: [strategySource] } })
     await flushPromises()

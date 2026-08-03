@@ -14,6 +14,7 @@ function definition(kind: 'indicator' | 'chan'): AlgorithmDefinition {
     parameter_schema: { type: 'object', additionalProperties: false, required: [], properties: {} },
     outputs: kind === 'chan'
       ? [
+          { name: 'segment', display_name: '段', pane: 'main', series_type: 'semantic_objects', object_type: 'segment' },
           { name: 'fractal', display_name: '分型', pane: 'main', series_type: 'semantic_objects', object_type: 'fractal' },
           { name: 'bi', display_name: '笔', pane: 'main', series_type: 'semantic_objects', object_type: 'bi' },
           { name: 'zhongshu', display_name: '中枢', pane: 'main', series_type: 'semantic_objects', object_type: 'zhongshu' },
@@ -42,11 +43,12 @@ describe('indicator styles', () => {
     const source: StrategySource = {
       source_type: 'StrategySource', source_id: 'strategy-1', definition: definition('chan'),
       parameters: {}, job_id: 'job-1', status: 'completed', visible: true,
-      category_visibility: { fractals: false, bi: true, zhongshu: true },
+      category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true },
     }
     const style = completeIndicatorStyle(source)
     expect(style.outputs.fractal).toMatchObject({ color: '#f23645', visible: false })
     expect(style.outputs.bi).toMatchObject({ color: '#2962ff', line_width: 2, visible: true })
+    expect(style.outputs.segment).toMatchObject({ color: '#f2d600', line_width: 2, visible: true })
     expect(style.outputs.zhongshu).toMatchObject({ color: '#ab47bc', visible: true })
   })
 

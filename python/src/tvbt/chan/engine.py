@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
 from tvbt.chan.events import EventEmitter
+from tvbt.chan.reference import reference_centers, reference_segments
 
 Direction = Literal["up", "down", "unknown"]
 FractalKind = Literal["top", "bottom"]
@@ -97,7 +98,7 @@ class ChanParameters:
 
 
 class ChanEngine:
-    algorithm_version = "2.1.0"
+    algorithm_version = "3.0.0"
 
     def __init__(self, parameters: ChanParameters | None = None) -> None:
         self.parameters = parameters or ChanParameters()
@@ -133,7 +134,7 @@ class ChanEngine:
                 self._consume_fractal(fractal)
         self._update_provisional_bi(bar.bar_index)
         if len(self.bi) != bi_count:
-            self._update_centers()
+            self._update_structures(bar.bar_index)
 
     def _update_inclusion(self, bar: RawBar) -> bool:
         current = IncludedBar(
@@ -368,14 +369,92 @@ class ChanEngine:
         )
         self.emitter.upsert(known_at_bar_index, "bi", provisional_id, line.payload(confirmed=False))
 
-    def _update_centers(self) -> None:
-        for object_id, payload, known_at in _centers(self.bi):
-            self.emitter.upsert(known_at, "zhongshu", object_id, payload)
+    def _update_structures(self, known_at_bar_index: int) -> None:
+        centers: list[tuple[str, dict[str, Any], int]] = []
+        for center in reference_centers(self.bi):
+            object_id = _stable_id(
+                "zhongshu",
+                self.bi[center.base_index].object_id,
+                self.bi[center.seed_end_index].object_id,
+            )
+            centers.append(
+                (
+                    object_id,
+                    {
+                        "start_bar_index": center.start_bar_index,
+                        "start_time": center.start_time,
+                        "end_bar_index": center.end_bar_index,
+                        "end_time": center.end_time,
+                        "zg_i64": center.zg_i64,
+                        "zd_i64": center.zd_i64,
+                        "confirmed": True,
+                        "confirmed_at_bar_index": center.known_at_bar_index,
+                        "status": center.status,
+                        "leave_direction": center.leave_direction,
+                    },
+                    center.known_at_bar_index,
+                )
+            )
+        segments: list[tuple[str, dict[str, Any], int]] = []
+        for segment in reference_segments(self.bi, self.raw_bars):
+            object_id = _stable_id(
+                "segment",
+                self.bi[segment.start_index].object_id,
+                "up" if segment.up else "down",
+            )
+            segments.append(
+                (
+                    object_id,
+                    {
+                        "start_bar_index": segment.start_bar_index,
+                        "start_time": segment.start_time,
+                        "start_price_i64": segment.start_price_i64,
+                        "end_bar_index": segment.end_bar_index,
+                        "end_time": segment.end_time,
+                        "end_price_i64": segment.end_price_i64,
+                        "direction": "up" if segment.up else "down",
+                        "confirmed": segment.confirmed,
+                        "confirmed_at_bar_index": (
+                            segment.known_at_bar_index if segment.confirmed else None
+                        ),
+                    },
+                    segment.known_at_bar_index,
+                )
+            )
+        self._sync_objects("zhongshu", centers, known_at_bar_index)
+        self._sync_objects("segment", segments, known_at_bar_index)
+
+    def _sync_objects(
+        self,
+        object_type: str,
+        values: list[tuple[str, dict[str, Any], int]],
+        known_at_bar_index: int,
+    ) -> None:
+        current_values = {
+            str(item["object_id"]): item for item in self.emitter.current(object_type)
+        }
+        desired = {object_id for object_id, _, _ in values}
+        for object_id in sorted(current_values.keys() - desired):
+            self.emitter.delete(known_at_bar_index, object_type, object_id)
+        for object_id, payload, known_at in values:
+            previous = current_values.get(object_id)
+            if previous is not None and all(
+                previous.get(name) == value for name, value in payload.items()
+            ):
+                continue
+            # A structure can be discovered only after a later line changes the
+            # reference scan's base position.  Its event must record discovery
+            # time, never a historical formation index that was not yet known.
+            event_known_at = max(known_at, known_at_bar_index)
+            self.emitter.upsert(event_known_at, object_type, object_id, payload)
 
     def result_rows(self) -> dict[str, list[dict[str, Any]]]:
         return {
             "fractals": sorted(self.emitter.current("fractal"), key=lambda item: item["bar_index"]),
             "bi": sorted(self.emitter.current("bi"), key=lambda item: item["start_bar_index"]),
+            "segments": sorted(
+                self.emitter.current("segment"), key=lambda item: item["start_bar_index"]
+            ),
             "zhongshu": sorted(
                 self.emitter.current("zhongshu"), key=lambda item: item["start_bar_index"]
             ),
@@ -430,65 +509,3 @@ def _line_from_state(value: dict[str, Any], fractals: dict[str, Fractal]) -> Lin
         confirmed_at_bar_index=value["confirmed_at_bar_index"],
         known_at_bar_index=value["known_at_bar_index"],
     )
-
-
-def _centers(lines: list[LineObject]) -> list[tuple[str, dict[str, Any], int]]:
-    """Build non-overlapping centers with the kline-chart confirmation cadence.
-
-    The line at ``entry_index`` only enters the candidate and is not part of its
-    price intersection.  The following three lines define the rectangle.  A
-    fourth participating line must return to that rectangle before the center is
-    published.  Once a line leaves the rectangle it becomes the entry line for
-    the next search, so two emitted centers never reuse a participating line.
-    """
-    centers: list[tuple[str, dict[str, Any], int]] = []
-    entry_index = 1
-    while entry_index + 4 < len(lines):
-        seed = lines[entry_index + 1 : entry_index + 4]
-        low = max(min(item.start.price_i64, item.end.price_i64) for item in seed)
-        high = min(max(item.start.price_i64, item.end.price_i64) for item in seed)
-        if low >= high:
-            entry_index += 2
-            continue
-
-        confirmation_line = lines[entry_index + 4]
-        confirmation_low, confirmation_high = sorted(
-            (confirmation_line.start.price_i64, confirmation_line.end.price_i64)
-        )
-        if confirmation_high < low or confirmation_low > high:
-            entry_index += 2
-            continue
-
-        center_id = _stable_id("zhongshu", *(item.object_id for item in seed))
-        formed_at = confirmation_line.confirmed_at_bar_index
-        payload: dict[str, Any] = {
-            "start_bar_index": seed[0].start.bar_index,
-            "start_time": seed[0].start.time,
-            "end_bar_index": confirmation_line.end.bar_index,
-            "end_time": confirmation_line.end.time,
-            "zg_i64": high,
-            "zd_i64": low,
-            "confirmed": True,
-            "confirmed_at_bar_index": formed_at,
-            "status": "confirmed",
-            "leave_direction": None,
-        }
-        known_at = max(item.known_at_bar_index for item in [*seed, confirmation_line])
-        cursor = entry_index + 5
-        while cursor < len(lines):
-            current = lines[cursor]
-            range_low, range_high = sorted((current.start.price_i64, current.end.price_i64))
-            if range_high >= low and range_low <= high:
-                payload["end_bar_index"] = current.end.bar_index
-                payload["end_time"] = current.end.time
-                payload["status"] = "extended"
-                known_at = max(known_at, current.known_at_bar_index)
-                cursor += 1
-                continue
-            payload["status"] = "left"
-            payload["leave_direction"] = "up" if range_low >= high else "down"
-            known_at = max(known_at, current.known_at_bar_index)
-            break
-        centers.append((center_id, payload, known_at))
-        entry_index = cursor if cursor < len(lines) else len(lines)
-    return centers

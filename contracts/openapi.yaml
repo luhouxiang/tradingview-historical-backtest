@@ -1084,7 +1084,7 @@ components:
                   display_name: {type: string, minLength: 1}
                   pane: {enum: [main, indicator]}
                   series_type: {enum: [line, histogram, semantic_objects]}
-                  object_type: {enum: [fractal, bi, zhongshu, strategy_state, stage_signal, trade_signal, chart_event]}
+                  object_type: {enum: [fractal, bi, segment, zhongshu, strategy_state, stage_signal, trade_signal, chart_event]}
             warmup:
               type: object
               additionalProperties: false
@@ -1194,12 +1194,15 @@ components:
     ChanObjects:
       type: object
       additionalProperties: false
-      required: [fractals, bi, zhongshu]
+      required: [fractals, bi, segments, zhongshu]
       properties:
         fractals:
           type: array
           items: {$ref: "#/components/schemas/ChanFractal"}
         bi:
+          type: array
+          items: {$ref: "#/components/schemas/ChanLineObject"}
+        segments:
           type: array
           items: {$ref: "#/components/schemas/ChanLineObject"}
         zhongshu:

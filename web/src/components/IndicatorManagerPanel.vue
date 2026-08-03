@@ -127,7 +127,7 @@ async function submit(definition: AlgorithmDefinition, parameters: Record<string
       const source: StrategySource = {
         source_type: 'StrategySource', source_id: id, definition, parameters,
         job_id: accepted.job_id, status: accepted.status, visible: existing?.visible ?? true,
-        category_visibility: existing?.category_visibility ?? { fractals: false, bi: true, zhongshu: true },
+        category_visibility: existing?.category_visibility ?? { fractals: false, bi: true, segments: true, zhongshu: true },
         style: existing?.style,
       }
       emit('update:strategy-sources', existing
@@ -183,6 +183,7 @@ function applyStyle(style: IndicatorStyle): void {
       if (visible === undefined) continue
       if (output.object_type === 'fractal') categoryVisibility.fractals = visible
       else if (output.object_type === 'bi') categoryVisibility.bi = visible
+      else if (output.object_type === 'segment') categoryVisibility.segments = visible
       else if (output.object_type === 'zhongshu') categoryVisibility.zhongshu = visible
     }
     emit('update:strategy-sources', props.strategySources.map((source) => source.source_id === entry.source.source_id

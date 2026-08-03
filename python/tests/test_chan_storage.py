@@ -80,8 +80,14 @@ def test_chan_cache_writes_typed_tables_checkpoints_and_success_last(tmp_path: P
         "known_at_bar_index",
         "object_revision",
     ]
+    assert (
+        pq.read_table(directory / "segments.parquet").schema.names
+        == pq.read_table(directory / "bi.parquet").schema.names
+    )
     manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["counts"]["events"] == 1
+    assert manifest["counts"]["segments"] == 0
+    assert manifest["files"]["segments"]["path"] == "segments.parquet"
     assert manifest["checkpoint"]["last_bar_index"] == 4
     assert all(value["sha256"].startswith("sha256:") for value in manifest["files"].values())
 

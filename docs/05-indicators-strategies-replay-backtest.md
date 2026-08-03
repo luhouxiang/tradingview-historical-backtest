@@ -4,7 +4,7 @@
 
 ~~~mermaid
 flowchart TD
-    D["标准 K 线"] --> I["Indicator<br/>MA、MACD、ATR、分型、笔、中枢"]
+    D["标准 K 线"] --> I["Indicator<br/>MA、MACD、ATR、分型、笔、段、中枢"]
     I --> S["Strategy<br/>组合指标与状态机"]
     S --> E["Event Stream<br/>阶段信号、交易信号、图形事件"]
     E --> X["Execution Model<br/>订单、成交、持仓"]
@@ -51,6 +51,7 @@ flowchart TD
 - fractal_detector：分型。
 - bi_builder：笔。
 - zhongshu_builder：中枢。
+- segment_builder：段。
 - checkpoint：连续状态序列化。
 - event_emitter：upsert/delete 事件。
 
@@ -60,10 +61,9 @@ flowchart TD
 - 分型由左、中、右三根去包含后的独立 K 线构成，中间 K 线的高低点同时严格高于两侧为顶、同时严格低于两侧为底；右侧独立 K 线出现即封存。
 - 笔至少跨越 5 根独立 K 线；端点选择必须执行参考算法的同类分型极值替换及后继异类分型区间确认，不使用 ATR 振幅门槛。
 - 相邻笔必须共享端点且方向严格交替，不允许连续两笔向上或连续两笔向下。
-- 中枢扫描时进入笔不参与计算；随后三笔的严格价格交集确定 ZD/ZG，第四笔必须回到该矩形后才发布确认事件。
-- 后续与 ZD/ZG 相交的笔只延长中枢时间范围；离开笔作为下一轮进入笔，禁止复用前一中枢的参与笔，输出中枢时间范围不得重叠。
-- “三段重叠”来自原文定义；“第四笔后才发布”是本项目参照 `kline-chart` 采用的因果确认门槛。
-- 按 C-015 不实现也不输出线段。
+- 笔中枢按 `algo-ui` 的 `compute_bi_pivots/process_down_up` 扫描同奇偶位置笔的区间交集；后续同奇偶笔相交时延长时间范围而不改变 ZD/ZG。
+- 段按 `algo-ui` 的 `_NCHDUAN` 及其首段发现、正反向确认、临时段修订函数计算。
+- 笔中枢和段的完整规则、金样与因果约束见 `docs/13-chan-bi-center-segment-algorithm.md`。
 
 Python 输出时间、价格、确认状态和修订，不输出像素。
 

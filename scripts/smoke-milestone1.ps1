@@ -359,16 +359,14 @@ try {
         if ($chanResults.result_kind -ne 'chan' -or $chanResults.checksum -notmatch '^sha256:[0-9a-f]{64}$' -or $chanResults.PSObject.Properties['bar_index'] -or $chanResults.PSObject.Properties['values']) {
             throw 'Chan range response did not use the semantic-object contract.'
         }
-        if ($chanResults.objects.PSObject.Properties['segments']) { throw 'Chan response unexpectedly advertises line segments.' }
-        $chanObjectCount = @($chanResults.objects.fractals).Count + @($chanResults.objects.bi).Count + @($chanResults.objects.zhongshu).Count
-        if (@($chanResults.objects.bi).Count -lt 1 -or @($chanResults.objects.zhongshu).Count -lt 1) {
-            throw "Full sample did not produce both bi and zhongshu objects: $($chanResults.objects | ConvertTo-Json -Depth 4 -Compress)"
+        $chanObjectCount = @($chanResults.objects.fractals).Count + @($chanResults.objects.bi).Count + @($chanResults.objects.segments).Count + @($chanResults.objects.zhongshu).Count
+        if (@($chanResults.objects.bi).Count -lt 1 -or @($chanResults.objects.segments).Count -lt 1 -or @($chanResults.objects.zhongshu).Count -lt 1) {
+            throw "Full sample did not produce bi, segment and zhongshu objects: $($chanResults.objects | ConvertTo-Json -Depth 4 -Compress)"
         }
         $chanCachePath = Join-Path $dataRoot $chanCompleted.result_ref
-        foreach ($name in @('manifest.json', 'fractals.parquet', 'bi.parquet', 'zhongshu.parquet', 'events.parquet', '_SUCCESS')) {
+        foreach ($name in @('manifest.json', 'fractals.parquet', 'bi.parquet', 'segments.parquet', 'zhongshu.parquet', 'events.parquet', '_SUCCESS')) {
             if (-not (Test-Path -LiteralPath (Join-Path $chanCachePath $name))) { throw "Chan cache is missing $name." }
         }
-        if (Test-Path -LiteralPath (Join-Path $chanCachePath 'segments.parquet')) { throw 'Chan cache unexpectedly contains segments.parquet.' }
         node "$projectRoot/web/scripts/validate-chan-cache.mjs" "$chanCachePath/manifest.json"
         if ($LASTEXITCODE -ne 0) { throw 'Chan cache manifest failed schema validation.' }
         $chanAudit = & $PythonExecutable "$projectRoot/python/scripts/validate_chan_cache.py" $chanCachePath

@@ -136,7 +136,7 @@ describe('AppShell', () => {
     expect(chart.props('strategySources')).toEqual([
       expect.objectContaining({
         source_type: 'StrategySource', visible: true,
-        category_visibility: { fractals: false, bi: true, zhongshu: true },
+        category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true },
       }),
     ])
   })

@@ -151,6 +151,7 @@
             "properties": {
               "fractals": {"type": "boolean"},
               "bi": {"type": "boolean"},
+              "segments": {"type": "boolean"},
               "zhongshu": {"type": "boolean"}
             }
           }

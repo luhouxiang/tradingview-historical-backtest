@@ -32,12 +32,12 @@ describe('ObjectTreePanel', () => {
     const strategy = {
       source_type: 'StrategySource', source_id: 'chan-1', definition: { name: '标准缠论' },
       parameters: {}, job_id: 'job-1', status: 'completed', visible: true,
-      category_visibility: { fractals: true, bi: true, zhongshu: true },
+      category_visibility: { fractals: true, bi: true, segments: true, zhongshu: true },
     }
     const wrapper = mount(ObjectTreePanel, { props: { drawings: [], sources: [], strategySources: [strategy] as never, selectedId: null } })
     expect(wrapper.findAll('[data-object-type="StrategySource"]')).toHaveLength(1)
     expect(wrapper.findAll('[data-object-type="ChanObject"]')).toHaveLength(0)
-    expect(wrapper.findAll('.strategy-node label')).toHaveLength(3)
+    expect(wrapper.findAll('.strategy-node label')).toHaveLength(4)
     await wrapper.get('.strategy-node label input').trigger('change')
     expect(wrapper.emitted('patchStrategy')?.at(-1)?.[0]).toBe('chan-1')
   })

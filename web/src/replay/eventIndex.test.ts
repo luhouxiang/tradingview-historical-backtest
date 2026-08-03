@@ -8,11 +8,13 @@ describe('ReplayEventIndex', () => {
       { event_seq: 1, known_at_bar_index: 4, object_type: 'fractal', object_id: 'f-1', operation: 'upsert', object_revision: 1, payload: { object_id: 'f-1', bar_index: 2 } },
       { event_seq: 2, known_at_bar_index: 6, object_type: 'bi', object_id: 'b-1', operation: 'upsert', object_revision: 1, payload: { object_id: 'b-1', start_bar_index: 2 } },
       { event_seq: 3, known_at_bar_index: 8, object_type: 'bi', object_id: 'b-1', operation: 'delete', object_revision: 2, payload: {} },
+      { event_seq: 4, known_at_bar_index: 9, object_type: 'segment', object_id: 's-1', operation: 'upsert', object_revision: 1, payload: { object_id: 's-1', start_bar_index: 2 } },
     ]
     const index = new ReplayEventIndex(events)
     expect(index.seek(3).fractals).toHaveLength(0)
     expect(index.seek(6).bi).toHaveLength(1)
     expect(index.seek(8).bi).toHaveLength(0)
+    expect(index.seek(9).segments).toHaveLength(1)
     expect(index.seek(5).fractals).toHaveLength(1)
     expect(index.seek(5).bi).toHaveLength(0)
   })

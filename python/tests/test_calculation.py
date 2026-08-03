@@ -112,11 +112,13 @@ def test_chan_calculation_writes_causal_structure_cache(tmp_path: Path) -> None:
     assert (output / "_SUCCESS").is_file()
     assert pq.read_table(output / "fractals.parquet").num_rows > 0
     assert pq.read_table(output / "bi.parquet").num_rows > 0
+    assert (output / "segments.parquet").is_file()
     assert (
         pq.read_table(output / "events.parquet").num_rows
         > pq.read_table(output / "bi.parquet").num_rows
     )
     manifest = json.loads((output / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["algorithm"]["kind"] == "chan"
+    assert manifest["counts"]["segments"] >= 0
     assert manifest["checkpoint"]["count"] == 6
     assert len(list((output / "checkpoints").glob("*.bin"))) == 6

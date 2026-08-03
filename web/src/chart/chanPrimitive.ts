@@ -20,17 +20,20 @@ type Region = { left: number; right: number; top: number; bottom: number; confir
 export interface ChanGeometry {
   fractals: FractalPoint[]
   bi: Line[]
+  segments: Line[]
   zhongshu: Region[]
 }
 
 interface ChanRenderStyle {
   fractal?: IndicatorOutputStyle
   bi: IndicatorOutputStyle
+  segment: IndicatorOutputStyle
   zhongshu: IndicatorOutputStyle
 }
 
 const defaultChanRenderStyle: ChanRenderStyle = {
   bi: { color: '#2962ff', line_width: 2, line_style: 'solid', opacity: 1, visible: true },
+  segment: { color: '#f2d600', line_width: 2, line_style: 'solid', opacity: 1, visible: true },
   zhongshu: { color: '#ab47bc', line_width: 1, line_style: 'solid', opacity: 1, visible: true },
 }
 
@@ -56,6 +59,7 @@ export function buildChanGeometry(
       return projected ? [{ ...projected, fractal_type: value.fractal_type, confirmed: value.confirmed }] : []
     }),
     bi: lines(objects.bi),
+    segments: lines(objects.segments),
     zhongshu: objects.zhongshu.flatMap((value: ChanZhongshu) => {
       const left = timeToX(Math.floor(value.start_time / 1000) as UTCTimestamp)
       const right = timeToX(Math.floor(value.end_time / 1000) as UTCTimestamp)
@@ -96,7 +100,7 @@ class ChanView implements IPrimitivePaneView {
 
 export class ChanPrimitive implements ISeriesPrimitive<Time> {
   private attachment: SeriesAttachedParameter<Time> | null = null
-  private objects: ChanObjects = { fractals: [], bi: [], zhongshu: [] }
+  private objects: ChanObjects = { fractals: [], bi: [], segments: [], zhongshu: [] }
   private priceScale = 1
   private style: ChanRenderStyle = defaultChanRenderStyle
   private readonly views: readonly IPrimitivePaneView[] = [
@@ -119,6 +123,7 @@ export class ChanPrimitive implements ISeriesPrimitive<Time> {
     this.style = {
       fractal: style?.outputs.fractal ?? style?.outputs.fractals,
       bi: style?.outputs.bi ?? defaultChanRenderStyle.bi,
+      segment: style?.outputs.segment ?? style?.outputs.segments ?? defaultChanRenderStyle.segment,
       zhongshu: style?.outputs.zhongshu ?? defaultChanRenderStyle.zhongshu,
     }
     this.attachment?.requestUpdate()
@@ -128,7 +133,7 @@ export class ChanPrimitive implements ISeriesPrimitive<Time> {
 
   geometry(): ChanGeometry {
     const attachment = this.attachment
-    if (!attachment) return { fractals: [], bi: [], zhongshu: [] }
+    if (!attachment) return { fractals: [], bi: [], segments: [], zhongshu: [] }
     return buildChanGeometry(
       this.objects,
       this.priceScale,
@@ -180,6 +185,7 @@ function drawLines(context: CanvasRenderingContext2D, lines: Line[], style: Indi
 function drawOverlay(context: CanvasRenderingContext2D, geometry: ChanGeometry, style: ChanRenderStyle): void {
   drawRegions(context, geometry.zhongshu, false, style.zhongshu)
   drawLines(context, geometry.bi, style.bi)
+  drawLines(context, geometry.segments, style.segment)
   for (const fractal of geometry.fractals) {
     if (style.fractal && !style.fractal.visible) continue
     const direction = fractal.fractal_type === 'top' ? -1 : 1

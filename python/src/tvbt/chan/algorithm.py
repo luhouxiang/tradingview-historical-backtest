@@ -17,7 +17,14 @@ from tvbt.storage.path_guard import PathGuard
 def _source_hash() -> str:
     digest = hashlib.sha256()
     directory = Path(__file__).parent
-    for name in ("algorithm.py", "checkpoint.py", "engine.py", "events.py", "storage.py"):
+    for name in (
+        "algorithm.py",
+        "checkpoint.py",
+        "engine.py",
+        "events.py",
+        "reference.py",
+        "storage.py",
+    ):
         digest.update(name.encode())
         digest.update((directory / name).read_bytes())
     return "sha256:" + digest.hexdigest()
@@ -30,7 +37,7 @@ def definition() -> dict[str, Any]:
         "algorithm_id": "chan_engineering",
         "algorithm_version": ChanEngine.algorithm_version,
         "source_hash": _source_hash(),
-        "name": "Kline-chart Reference Chan",
+        "name": "Algo-ui Reference Chan",
         "input_schema": "bars.v1",
         "parameter_schema": {
             "type": "object",
@@ -53,6 +60,7 @@ def definition() -> dict[str, Any]:
             for object_type, display_name in (
                 ("fractal", "分型"),
                 ("bi", "笔"),
+                ("segment", "段"),
                 ("zhongshu", "中枢"),
             )
         ],
@@ -71,6 +79,7 @@ def calculate_chan(payload: dict[str, Any], guard: PathGuard, cancelled: threadi
         merged_bar_count=len(runtime.included),
         fractals=rows["fractals"],
         bi=rows["bi"],
+        segments=rows["segments"],
         zhongshu=rows["zhongshu"],
         events=[event.row() for event in runtime.emitter.events],
         checkpoints=checkpoints,

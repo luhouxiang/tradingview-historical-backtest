@@ -77,9 +77,10 @@ type SeriesSource struct {
 }
 
 type CategoryVisibility struct {
-	Fractals bool `json:"fractals"`
-	Bi       bool `json:"bi"`
-	Zhongshu bool `json:"zhongshu"`
+	Fractals bool  `json:"fractals"`
+	Bi       bool  `json:"bi"`
+	Segments *bool `json:"segments,omitempty"`
+	Zhongshu bool  `json:"zhongshu"`
 }
 
 type StrategySource struct {

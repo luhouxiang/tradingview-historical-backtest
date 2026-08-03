@@ -277,15 +277,15 @@ PUT 必须携带 `If-Match` 当前 revision；首次创建使用 0。Go 在 `dat
 
 ## 13. 里程碑 5：缠论
 
-Python 缠论引擎按 `E:\work\py\kline-chart\klinechart\algo\chanlun\c_bi.py` 的规则实现包含关系、三独立 K 线严格分型、笔和中枢；笔端点逐项遵循参考算法的独立 K 线计数、同类极值替换及后继分型区间确认，相邻笔首尾相接并严格上下交替；按 C-015 不实现线段。
+Python 缠论引擎按 `E:\work\py\algo-ui\common\chanlun\c_bi.py` 的规则实现包含关系、三独立 K 线严格分型、笔、笔中枢和段；笔端点逐项遵循参考算法的独立 K 线计数、同类极值替换及后继分型区间确认，相邻笔首尾相接并严格上下交替。算法细节见 `docs/13-chan-bi-center-segment-algorithm.md`。
 计算使用 `causal_events` 模式，所有对象携带稳定 ID、修订号、确认位置和
-`known_at_bar_index`。笔中枢跳过进入笔，以随后三笔的严格交集确定矩形，并等待第四笔回到矩形后才确认；离开笔作为下一轮进入笔，中枢之间不复用参与笔且时间范围不重叠。中枢保留 confirmed、extended、left 生命周期及离开方向。
+`known_at_bar_index`。笔中枢按参考实现扫描同奇偶位置的笔并延长固定 ZD/ZG 区间；段按 `_NCHDUAN` 的首段发现、正反向确认和临时段修订规则生成。
 
 结果原子写入 `cache/chan/{cache_key}/`：`fractals.parquet`、`bi.parquet`、
-`zhongshu.parquet`、`events.parquet`、版本化检查点、`manifest.json` 和最后提交的
-`_SUCCESS`。Vue 将每个缠论算法实例作为一个 `StrategySource`，对象树只建立分型、笔、
-中枢三个类别节点；图表使用单个批量 `ChanPrimitive`，范围变化只向 Go 查询既有缓存。
-缠论同时出现在“指标”面板中并叠加到 K 线主图；新数据集默认创建一个缠论源，默认画笔和中枢，分型可在对象树中另行开启。
+`segments.parquet`、`zhongshu.parquet`、`events.parquet`、版本化检查点、`manifest.json` 和最后提交的
+`_SUCCESS`。Vue 将每个缠论算法实例作为一个 `StrategySource`，对象树只建立分型、笔、段、
+中枢四个类别节点；图表使用单个批量 `ChanPrimitive`，范围变化只向 Go 查询既有缓存。
+缠论同时出现在“指标”面板中并叠加到 K 线主图；新数据集默认创建一个缠论源，默认画蓝色笔、黄色段和紫色中枢，分型可在对象树中另行开启。
 指标面板使用统一指标管理器承载大规模算法目录：常用指标支持收藏，全部指标支持分类与模糊搜索，当前使用指标以可展开的紧凑实例卡管理参数、状态和删除操作。
 当前使用卡片的参数输入区为样式入口预留右侧空间；点击 `…` 可按输出线设置颜色、透明度、线宽、实线/虚线/点线及可见性，确认后即时刷新并随工作区保存，且不会触发指标重算。
 
@@ -296,7 +296,7 @@ Python 缠论引擎按 `E:\work\py\kline-chart\klinechart\algo\chanlun\c_bi.py` 
 ~~~
 
 该脚本验证缠论任务、范围对象查询、事件序号和对象修订、检查点版本、缓存命中、
-StrategySource 工作区恢复，并拒绝任何 `segments.parquet` 线段产物。前缀不变性、检查点
+StrategySource 工作区恢复，并校验 `segments.parquet` 段产物。前缀不变性、检查点
 恢复一致性和 10,000 对象批量几何构建另由 Python/Vue 自动测试覆盖。
 
 ## 14. 里程碑 6：回放

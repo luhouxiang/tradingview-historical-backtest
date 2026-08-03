@@ -186,6 +186,7 @@ type ChanZhongshu struct {
 type ChanObjects struct {
 	Fractals []ChanFractal    `json:"fractals"`
 	Bi       []ChanLineObject `json:"bi"`
+	Segments []ChanLineObject `json:"segments"`
 	Zhongshu []ChanZhongshu   `json:"zhongshu"`
 }
 
@@ -198,6 +199,10 @@ func readChanResults(directory, jobID, cacheKey string, meta manifest, from, to 
 	if err != nil {
 		return Results{}, err
 	}
+	segments, err := parquet.ReadFile[ChanLineObject](filepath.Join(directory, "segments.parquet"))
+	if err != nil {
+		return Results{}, err
+	}
 	zhongshu, err := parquet.ReadFile[ChanZhongshu](filepath.Join(directory, "zhongshu.parquet"))
 	if err != nil {
 		return Results{}, err
@@ -205,9 +210,10 @@ func readChanResults(directory, jobID, cacheKey string, meta manifest, from, to 
 	objects := ChanObjects{
 		Fractals: filterFractals(fractals, from, to),
 		Bi:       filterLines(bi, from, to),
+		Segments: filterLines(segments, from, to),
 		Zhongshu: filterZhongshu(zhongshu, from, to),
 	}
-	returned := len(objects.Fractals) + len(objects.Bi) + len(objects.Zhongshu)
+	returned := len(objects.Fractals) + len(objects.Bi) + len(objects.Segments) + len(objects.Zhongshu)
 	checksumPayload, _ := json.Marshal(objects)
 	digest := sha256.Sum256(checksumPayload)
 	return Results{

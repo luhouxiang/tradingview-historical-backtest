@@ -151,7 +151,7 @@ async function installDefaultChan(dataset: DatasetMeta, definitions?: AlgorithmD
   const source: StrategySource = {
     source_type: 'StrategySource', source_id: spec.sourceId, definition: spec.definition,
     parameters: spec.parameters, job_id: accepted.job_id, status: accepted.status,
-    visible: true, category_visibility: { fractals: false, bi: true, zhongshu: true },
+    visible: true, category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true },
   }
   strategySources.value = [source]
   if (source.status !== 'completed') void trackStrategyCalculation(source)
@@ -192,7 +192,9 @@ async function restoreSources(layout: WorkspaceLayout, dataset: DatasetMeta): Pr
     const source: StrategySource = {
       source_type: 'StrategySource', source_id: saved.source_id, definition,
       parameters: saved.parameters, job_id: accepted.job_id, status: accepted.status,
-      visible: saved.visible, category_visibility: saved.category_visibility, style: saved.style,
+      visible: saved.visible,
+      category_visibility: { ...saved.category_visibility, segments: saved.category_visibility.segments ?? true },
+      style: saved.style,
     }
     restoredStrategies.push(source)
     if (accepted.status !== 'completed') pendingStrategies.push(source)

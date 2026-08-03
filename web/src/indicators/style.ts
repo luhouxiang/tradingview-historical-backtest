@@ -13,6 +13,7 @@ export type StyleSource = SeriesSource | StrategySource
 const chanDefaults: Record<string, Pick<IndicatorOutputStyle, 'color' | 'line_width'>> = {
   fractal: { color: '#f23645', line_width: 1 },
   bi: { color: '#2962ff', line_width: 2 },
+  segment: { color: '#f2d600', line_width: 2 },
   zhongshu: { color: '#ab47bc', line_width: 1 },
 }
 
@@ -32,12 +33,13 @@ export function styleableOutputs(source: StyleSource): AlgorithmOutput[] {
     return source.definition.outputs.filter((output) => output.series_type === 'line')
   }
   return source.definition.outputs.filter((output) =>
-    output.object_type === 'fractal' || output.object_type === 'bi' || output.object_type === 'zhongshu')
+    output.object_type === 'fractal' || output.object_type === 'bi' || output.object_type === 'segment' || output.object_type === 'zhongshu')
 }
 
 function chanVisibility(source: StrategySource, output: AlgorithmOutput): boolean {
   if (output.object_type === 'fractal') return source.category_visibility.fractals
   if (output.object_type === 'bi') return source.category_visibility.bi
+  if (output.object_type === 'segment') return source.category_visibility.segments
   if (output.object_type === 'zhongshu') return source.category_visibility.zhongshu
   return true
 }

@@ -372,6 +372,20 @@ type CalculationResults struct {
 			PriceI64            int         `json:"price_i64"`
 			Time                int         `json:"time"`
 		} `json:"fractals"`
+		Segments []struct {
+			Confirmed           bool        `json:"confirmed"`
+			ConfirmedAtBarIndex *int        `json:"confirmed_at_bar_index"`
+			Direction           interface{} `json:"direction"`
+			EndBarIndex         int         `json:"end_bar_index"`
+			EndPriceI64         int         `json:"end_price_i64"`
+			EndTime             int         `json:"end_time"`
+			KnownAtBarIndex     int         `json:"known_at_bar_index"`
+			ObjectId            string      `json:"object_id"`
+			ObjectRevision      int         `json:"object_revision"`
+			StartBarIndex       int         `json:"start_bar_index"`
+			StartPriceI64       int         `json:"start_price_i64"`
+			StartTime           int         `json:"start_time"`
+		} `json:"segments"`
 		Zhongshu []struct {
 			Confirmed           bool                                             `json:"confirmed"`
 			ConfirmedAtBarIndex *int                                             `json:"confirmed_at_bar_index"`
@@ -466,6 +480,20 @@ type ChanObjects struct {
 		PriceI64            int         `json:"price_i64"`
 		Time                int         `json:"time"`
 	} `json:"fractals"`
+	Segments []struct {
+		Confirmed           bool        `json:"confirmed"`
+		ConfirmedAtBarIndex *int        `json:"confirmed_at_bar_index"`
+		Direction           interface{} `json:"direction"`
+		EndBarIndex         int         `json:"end_bar_index"`
+		EndPriceI64         int         `json:"end_price_i64"`
+		EndTime             int         `json:"end_time"`
+		KnownAtBarIndex     int         `json:"known_at_bar_index"`
+		ObjectId            string      `json:"object_id"`
+		ObjectRevision      int         `json:"object_revision"`
+		StartBarIndex       int         `json:"start_bar_index"`
+		StartPriceI64       int         `json:"start_price_i64"`
+		StartTime           int         `json:"start_time"`
+	} `json:"segments"`
 	Zhongshu []struct {
 		Confirmed           bool                               `json:"confirmed"`
 		ConfirmedAtBarIndex *int                               `json:"confirmed_at_bar_index"`
@@ -1396,9 +1424,10 @@ type PutLayoutJSONBody struct {
 			SourceHash       string      `json:"source_hash"`
 		} `json:"algorithm"`
 		CategoryVisibility struct {
-			Bi       bool `json:"bi"`
-			Fractals bool `json:"fractals"`
-			Zhongshu bool `json:"zhongshu"`
+			Bi       bool  `json:"bi"`
+			Fractals bool  `json:"fractals"`
+			Segments *bool `json:"segments,omitempty"`
+			Zhongshu bool  `json:"zhongshu"`
 		} `json:"category_visibility"`
 		DataRevision string                 `json:"data_revision"`
 		DatasetId    string                 `json:"dataset_id"`

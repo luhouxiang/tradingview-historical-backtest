@@ -83,6 +83,7 @@ class ChanResult:
     merged_bar_count: int
     fractals: list[dict[str, Any]] = field(default_factory=list)
     bi: list[dict[str, Any]] = field(default_factory=list)
+    segments: list[dict[str, Any]] = field(default_factory=list)
     zhongshu: list[dict[str, Any]] = field(default_factory=list)
     events: list[dict[str, Any]] = field(default_factory=list)
     checkpoints: dict[int, bytes] = field(default_factory=dict)
@@ -110,6 +111,7 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
         tables = {
             "fractals": (result.fractals, FRACTAL_SCHEMA),
             "bi": (result.bi, LINE_SCHEMA),
+            "segments": (result.segments, LINE_SCHEMA),
             "zhongshu": (result.zhongshu, ZHONGSHU_SCHEMA),
             "events": (result.events, EVENT_SCHEMA),
         }
@@ -142,6 +144,7 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
                 "merged_bars": result.merged_bar_count,
                 "fractals": len(result.fractals),
                 "bi": len(result.bi),
+                "segments": len(result.segments),
                 "zhongshu": len(result.zhongshu),
                 "events": len(result.events),
             },

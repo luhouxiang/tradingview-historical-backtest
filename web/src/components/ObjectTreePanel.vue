@@ -26,7 +26,7 @@ const emit = defineEmits<{
         <button @click="emit('patchStrategy', source.source_id, { visible: !source.visible })">{{ source.visible ? '◉' : '○' }}</button>
         <button @click="emit('removeStrategy', source.source_id)">×</button>
       </header>
-      <label v-for="category in (['fractals', 'bi', 'zhongshu'] as const)" :key="category">
+      <label v-for="category in (['fractals', 'bi', 'segments', 'zhongshu'] as const)" :key="category">
         <input
           type="checkbox" :checked="source.category_visibility[category]"
           @change="emit('patchStrategy', source.source_id, { category_visibility: { ...source.category_visibility, [category]: !source.category_visibility[category] } })"

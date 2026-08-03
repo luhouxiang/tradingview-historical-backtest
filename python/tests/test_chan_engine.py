@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from dataclasses import replace
 from itertools import pairwise
+from pathlib import Path
 
-from tvbt.chan.engine import ChanEngine, ChanParameters, Fractal, LineObject, RawBar, _centers
+from tvbt.chan.engine import ChanEngine, ChanParameters, Fractal, LineObject, RawBar
+from tvbt.chan.reference import reference_centers
 
 
 def bar(index: int, high: int, low: int) -> RawBar:
@@ -175,7 +177,36 @@ def test_kline_chart_reference_complex_endpoint_sequence_is_exact() -> None:
     assert all(left["direction"] != right["direction"] for left, right in pairwise(rows))
 
 
-def test_reference_center_revisions_extend_then_leave_up() -> None:
+def test_algo_ui_segment_golden_for_aol9_prefix_is_exact() -> None:
+    sample = Path(__file__).parents[2] / "samples" / "30#AOL9.txt"
+    runtime = engine()
+    rows = sample.read_text(encoding="gb18030").splitlines()[2:302]
+    for index, raw in enumerate(rows):
+        fields = [value.strip() for value in raw.split(",")]
+        runtime.update(
+            RawBar(
+                index,
+                1_700_000_000_000 + index * 300_000,
+                int(fields[3]),
+                int(fields[4]),
+                int(fields[5]),
+            )
+        )
+    segments = runtime.result_rows()["segments"]
+    assert [
+        (
+            value["start_bar_index"],
+            value["end_bar_index"],
+            value["start_price_i64"],
+            value["end_price_i64"],
+            value["direction"],
+        )
+        for value in segments
+    ] == [(141, 237, 2706, 2826, "up")]
+    assert all(left["direction"] != right["direction"] for left, right in pairwise(segments))
+
+
+def test_algo_ui_center_starts_from_three_same_parity_lines_and_extends() -> None:
     lines = [
         line(0, 15, 20),
         line(1, 20, 0),
@@ -185,21 +216,21 @@ def test_reference_center_revisions_extend_then_leave_up() -> None:
         line(5, 8, 4),
         line(6, 4, 12),
         line(7, 12, 9),
+        line(8, 9, 20),
+        line(9, 20, 12),
     ]
-    assert _centers(lines[:5]) == []
-    _, confirmed, _ = _centers(lines[:6])[0]
-    _, extended, _ = _centers(lines[:7])[0]
-    _, left, known_at = _centers(lines)[0]
-    assert confirmed["status"] == "confirmed"
-    assert (confirmed["zd_i64"], confirmed["zg_i64"]) == (2, 8)
-    assert extended["status"] == "extended"
-    assert left["status"] == "left"
-    assert left["leave_direction"] == "up"
-    assert left["confirmed_at_bar_index"] == 6
-    assert known_at == 8
+    confirmed = reference_centers(lines[:5])[0]
+    extended = reference_centers(lines[:7])[0]
+    left = reference_centers(lines)[0]
+    assert confirmed.status == "confirmed"
+    assert (confirmed.zd_i64, confirmed.zg_i64) == (2, 10)
+    assert extended.status == "extended"
+    assert left.status == "left"
+    assert left.leave_direction == "up"
+    assert left.known_at_bar_index == 8
 
 
-def test_center_requires_fourth_participating_line_to_return_to_seed_rectangle() -> None:
+def test_algo_ui_center_does_not_require_a_fourth_return_line() -> None:
     lines = [
         line(0, 15, 20),
         line(1, 20, 0),
@@ -208,10 +239,12 @@ def test_center_requires_fourth_participating_line_to_return_to_seed_rectangle()
         line(4, 2, 12),
         line(5, 12, 11),
     ]
-    assert _centers(lines) == []
+    centers = reference_centers(lines)
+    assert len(centers) == 1
+    assert (centers[0].zd_i64, centers[0].zg_i64) == (2, 10)
 
 
-def test_centers_do_not_share_participating_lines_or_time_ranges() -> None:
+def test_algo_ui_center_base_progression_matches_reference_semantics() -> None:
     lines = [
         line(0, 15, 20),
         line(1, 20, 0),
@@ -226,12 +259,15 @@ def test_centers_do_not_share_participating_lines_or_time_ranges() -> None:
         line(10, 12, 18),
         line(11, 18, 14),
     ]
-    centers = [payload for _, payload, _ in _centers(lines)]
-    assert len(centers) == 2
-    assert centers[0]["end_bar_index"] < centers[1]["start_bar_index"]
+    centers = reference_centers(lines)
+    assert [(value.base_index, value.seed_end_index) for value in centers] == [
+        (1, 3),
+        (7, 9),
+        (9, 11),
+    ]
 
 
-def test_center_revision_known_at_never_precedes_formation() -> None:
+def test_center_known_at_is_the_latest_participating_line() -> None:
     lines = [
         line(0, 15, 20),
         line(1, 20, 0),
@@ -242,9 +278,8 @@ def test_center_revision_known_at_never_precedes_formation() -> None:
         line(6, 4, 12),
         line(7, 12, 9),
     ]
-    _, center, known_at = _centers(lines)[0]
-    assert center["confirmed_at_bar_index"] == 20
-    assert known_at == 20
+    center = reference_centers(lines)[0]
+    assert center.known_at_bar_index == 20
 
 
 def test_chan_event_stream_is_prefix_invariant_for_multiple_cutoffs() -> None:
