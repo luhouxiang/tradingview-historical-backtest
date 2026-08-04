@@ -24,10 +24,10 @@ import { HollowVolumeSeries } from '../chart/hollowVolumeSeries'
 import { MacdStickSeries } from '../chart/macdStickSeries'
 import { defaultPaneLayout, enforceMinimumHeights, removePane, resizeAdjacent, type PaneLayout } from '../chart/layout'
 import { histogramColor, indicatorLineColor, MARKET_COLORS } from '../chart/marketStyle'
-import { colorWithOpacity, resolvedOutputStyle } from '../indicators/style'
+import { chanStyleForRendering, colorWithOpacity, resolvedOutputStyle } from '../indicators/style'
 import { logger } from '../logging/logger'
 import type { ReplayObjects, ReplaySignal } from '../replay/eventIndex'
-import type { ChanCalculationResults, DatasetMeta, SeriesSource, StrategySource } from '../types/api'
+import type { ChanCalculationResults, ChanSignalPoint, DatasetMeta, SeriesSource, StrategySource } from '../types/api'
 import { cloneDrawings, LayerManager, type DrawingAnchor, type DrawingObject, type DrawingType, type ProjectedDrawing } from '../drawing/model'
 
 const props = withDefaults(defineProps<{
@@ -39,6 +39,8 @@ const props = withDefaults(defineProps<{
   replaySignals?: ReplaySignal[]
   drawings?: DrawingObject[]
   selectedDrawingId?: string | null
+  selectedSignal?: ChanSignalPoint | null
+  signalLocked?: boolean
   drawingTool?: DrawingType | 'cursor'
   magnet?: boolean
   keepDrawingMode?: boolean
@@ -50,6 +52,8 @@ const props = withDefaults(defineProps<{
   replaySignals: () => [],
   drawings: () => [],
   selectedDrawingId: null,
+  selectedSignal: null,
+  signalLocked: false,
   drawingTool: 'cursor',
   magnet: false,
   keepDrawingMode: false,
@@ -66,6 +70,7 @@ const loading = ref(false)
 const error = ref('')
 const cacheFirstIndex = ref<number | null>(null)
 const cacheBarCount = ref(0)
+const projectionRevision = ref(0)
 const collapsed = ref(new Set<string>())
 const maximized = ref<string | null>(null)
 const chartHeight = ref(800)
@@ -77,7 +82,7 @@ const latestVolume = ref<number | null>(null)
 const latestBar = ref<CachedBar | null>(null)
 const hoveredBar = ref<CachedBar | null>(null)
 const crosshairActive = ref(false)
-const chanVisibleCounts = ref({ bi: 0, segments: 0, zhongshu: 0 })
+const chanVisibleCounts = ref({ bi: 0, segments: 0, zhongshu: 0, segmentZhongshu: 0, divergences: 0, tradePoints: 0 })
 const session = new ChartSession()
 const layerManager = new LayerManager()
 let chart: IChartApi | null = null
@@ -108,6 +113,23 @@ const projectedReplaySignals = computed(() => props.replaySignals.flatMap((signa
   const y = candles.priceToCoordinate(price / props.dataset.price.price_scale)
   return x === null || y === null ? [] : [{ x, y, type: String(signal.event_type), id: signal.object_id }]
 }))
+const projectedSelectedSignal = computed(() => {
+  projectionRevision.value
+  const signal = props.selectedSignal
+  if (!signal || !chart || !candles || !props.dataset) return null
+  const startX = chart.timeScale().timeToCoordinate(Math.floor(signal.time / 1000) as UTCTimestamp)
+  const y = candles.priceToCoordinate(signal.price_i64 / props.dataset.price.price_scale)
+  if (startX === null || y === null) return null
+  const width = host.value?.clientWidth ?? 0
+  if (width > 0 && (startX < 0 || startX > width)) return null
+  const confirmedBar = signal.confirmed_at_bar_index === null
+    ? null
+    : session.bars.find((bar) => bar.barIndex === signal.confirmed_at_bar_index)
+  const confirmedX = confirmedBar
+    ? chart.timeScale().timeToCoordinate(Math.floor(confirmedBar.timestampUtc / 1000) as UTCTimestamp)
+    : null
+  return { startX, endX: confirmedX === null || confirmedX === startX ? startX + 12 : confirmedX, y }
+})
 
 const effectivePanes = computed(() => enforceMinimumHeights(panes.value.map((pane) => ({
   ...pane,
@@ -221,6 +243,7 @@ function renderBars(): void {
   latestVolume.value = bars.at(-1)?.volume ?? null
   latestBar.value = bars.at(-1) ?? null
   projectDrawings()
+  projectionRevision.value += 1
 }
 
 function activeDrawings(): DrawingObject[] { return dragDrawings ?? props.drawings }
@@ -421,20 +444,23 @@ async function renderChan(fromBarIndex: number, toBarIndex: number): Promise<voi
   if (!props.dataset || toBarIndex < fromBarIndex) return
   if (props.replayObjects !== null) {
     const source = props.strategySources.find((value) => value.status === 'completed')
-    chanPrimitive.setStyle(source?.style)
+    chanPrimitive.setStyle(chanStyleForRendering(source))
     const filtered: ReplayObjects = {
       fractals: source?.visible && source.category_visibility.fractals ? props.replayObjects.fractals : [],
       bi: source?.visible && source.category_visibility.bi ? props.replayObjects.bi : [],
       segments: source?.visible && source.category_visibility.segments ? props.replayObjects.segments : [],
       zhongshu: source?.visible && source.category_visibility.zhongshu ? props.replayObjects.zhongshu : [],
+      segment_zhongshu: source?.visible && source.category_visibility.segment_zhongshu ? props.replayObjects.segment_zhongshu : [],
+      divergences: source?.visible && source.category_visibility.divergences ? props.replayObjects.divergences : [],
+      trade_points: source?.visible && source.category_visibility.trade_points ? props.replayObjects.trade_points : [],
     }
     chanPrimitive.setData(filtered, props.dataset.price.price_scale)
-    chanVisibleCounts.value = { bi: filtered.bi.length, segments: filtered.segments.length, zhongshu: filtered.zhongshu.length }
+    chanVisibleCounts.value = { bi: filtered.bi.length, segments: filtered.segments.length, zhongshu: filtered.zhongshu.length, segmentZhongshu: filtered.segment_zhongshu.length, divergences: filtered.divergences.length, tradePoints: filtered.trade_points.length }
     return
   }
   const sources = props.strategySources.filter((source) => source.status === 'completed' && source.visible)
-  chanPrimitive.setStyle(sources[0]?.style)
-  const merged: ChanCalculationResults['objects'] = { fractals: [], bi: [], segments: [], zhongshu: [] }
+  chanPrimitive.setStyle(chanStyleForRendering(sources[0]))
+  const merged: ChanCalculationResults['objects'] = { fractals: [], bi: [], segments: [], zhongshu: [], segment_zhongshu: [], divergences: [], trade_points: [] }
   await Promise.all(sources.map(async (source) => {
     const result = await getCalculationResults(source.job_id, fromBarIndex, toBarIndex)
     if (result.result_kind !== 'chan') return
@@ -442,9 +468,12 @@ async function renderChan(fromBarIndex: number, toBarIndex: number): Promise<voi
     if (source.category_visibility.bi) merged.bi.push(...result.objects.bi)
     if (source.category_visibility.segments) merged.segments.push(...result.objects.segments)
     if (source.category_visibility.zhongshu) merged.zhongshu.push(...result.objects.zhongshu)
+    if (source.category_visibility.segment_zhongshu) merged.segment_zhongshu.push(...result.objects.segment_zhongshu)
+    if (source.category_visibility.divergences) merged.divergences.push(...result.objects.divergences)
+    if (source.category_visibility.trade_points) merged.trade_points.push(...result.objects.trade_points)
   }))
   chanPrimitive.setData(merged, props.dataset.price.price_scale)
-  chanVisibleCounts.value = { bi: merged.bi.length, segments: merged.segments.length, zhongshu: merged.zhongshu.length }
+  chanVisibleCounts.value = { bi: merged.bi.length, segments: merged.segments.length, zhongshu: merged.zhongshu.length, segmentZhongshu: merged.segment_zhongshu.length, divergences: merged.divergences.length, tradePoints: merged.trade_points.length }
 }
 
 function scheduleIndicatorRange(range: LogicalRange): void {
@@ -469,7 +498,7 @@ async function openDataset(meta: DatasetMeta): Promise<void> {
   latestIndicatorValues.value = {}
   hoveredBar.value = null
   crosshairActive.value = false
-  chanVisibleCounts.value = { bi: 0, segments: 0, zhongshu: 0 }
+  chanVisibleCounts.value = { bi: 0, segments: 0, zhongshu: 0, segmentZhongshu: 0, divergences: 0, tradePoints: 0 }
   try {
     await session.open(meta)
     if (session.meta?.dataset_id !== meta.dataset_id || session.meta.data_revision !== meta.data_revision) return
@@ -490,9 +519,49 @@ async function openDataset(meta: DatasetMeta): Promise<void> {
   }
 }
 
+async function focusSignal(signal: ChanSignalPoint): Promise<void> {
+  if (!props.dataset || session.meta?.dataset_id !== props.dataset.dataset_id) return
+  const currentBars = session.bars
+  const currentIndex = currentBars.findIndex((bar) => bar.barIndex === signal.bar_index)
+  const currentRange = chart?.timeScale().getVisibleLogicalRange()
+  if (currentIndex >= 0 && currentRange && currentIndex >= currentRange.from && currentIndex <= currentRange.to) {
+    projectionRevision.value += 1
+    return
+  }
+  loading.value = true
+  error.value = ''
+  try {
+    const confirmationDistance = signal.confirmed_at_bar_index === null ? 0 : Math.abs(signal.confirmed_at_bar_index - signal.bar_index)
+    const radius = confirmationDistance <= 2300 ? Math.max(120, confirmationDistance + 30) : 120
+    await session.loadAround(signal.bar_index, radius, true)
+    renderBars()
+    const bars = session.bars
+    const start = bars.findIndex((bar) => bar.barIndex === signal.bar_index)
+    const confirmed = signal.confirmed_at_bar_index === null
+      ? start
+      : bars.findIndex((bar) => bar.barIndex === signal.confirmed_at_bar_index)
+    if (start < 0) throw new Error('信号对应的 K 线未能加载')
+    const left = Math.max(0, Math.min(start, confirmed < 0 ? start : confirmed) - 30)
+    const right = Math.min(bars.length - 1, Math.max(start, confirmed < 0 ? start : confirmed) + 30)
+    chart?.timeScale().setVisibleLogicalRange({ from: left, to: right })
+    projectionRevision.value += 1
+    const fromBarIndex = bars[left]?.barIndex
+    const toBarIndex = bars[right]?.barIndex
+    if (fromBarIndex !== undefined && toBarIndex !== undefined) {
+      await Promise.all([renderIndicators(fromBarIndex, toBarIndex), renderChan(fromBarIndex, toBarIndex)])
+    }
+  } catch (cause) {
+    error.value = cause instanceof Error ? cause.message : '信号定位失败'
+    logger.error('ui.error', 'Signal focus failed', { object_id: signal.object_id, reason: error.value })
+  } finally {
+    loading.value = false
+  }
+}
+
 function visibleRangeChanged(range: LogicalRange | null): void {
   if (!range) return
   projectDrawings()
+  projectionRevision.value += 1
   scheduleIndicatorRange(range)
   if (props.replayCursor !== null || !session.hasMoreBefore) return
   const screen = Math.max(1, range.to - range.from)
@@ -685,6 +754,7 @@ watch(() => [props.replayCursor, props.replayObjects], () => {
 watch(() => props.drawings, () => projectDrawings(), { deep: true })
 
 defineExpose({
+  focusSignal,
   snapshotLayout: () => ({
     panes: panes.value.map((pane, order) => ({ ...pane, order, visible: true, collapsed: collapsed.value.has(pane.id) })),
   }),
@@ -723,6 +793,11 @@ onBeforeUnmount(() => {
       <g v-for="signal in projectedReplaySignals" :key="signal.id" class="replay-signal" :class="signal.type">
         <path :d="`M ${signal.x} ${signal.y} l -5 9 h 10 z`" />
         <text :x="signal.x + 7" :y="signal.y + 9">{{ signal.type }}</text>
+      </g>
+      <g v-if="projectedSelectedSignal" class="signal-selection" :class="{ locked: signalLocked }" data-selected-signal="true">
+        <line :x1="projectedSelectedSignal.startX" :y1="projectedSelectedSignal.y" :x2="projectedSelectedSignal.endX" :y2="projectedSelectedSignal.y" />
+        <circle :cx="projectedSelectedSignal.startX" :cy="projectedSelectedSignal.y" r="7" />
+        <circle :cx="projectedSelectedSignal.endX" :cy="projectedSelectedSignal.y" r="7" />
       </g>
       <g v-for="item in projectedDrawings" :key="item.drawing.id" class="drawing-object" :data-drawing-id="item.drawing.id" @pointerdown="selectDrawing(item.drawing, $event)">
         <rect
@@ -784,7 +859,7 @@ onBeforeUnmount(() => {
             MA{{ item.period }} {{ formatLegendValue(legendValue(item.key)) }}
           </span>
           <span v-if="chanSource" class="legend-value legend-chan">
-            缠论 {{ chanSource.status === 'completed' ? `笔 ${chanVisibleCounts.bi} 段 ${chanVisibleCounts.segments} 中枢 ${chanVisibleCounts.zhongshu}` : chanSource.status }}
+            缠论 {{ chanSource.status === 'completed' ? `笔 ${chanVisibleCounts.bi} 段 ${chanVisibleCounts.segments} 笔中枢 ${chanVisibleCounts.zhongshu} 段中枢 ${chanVisibleCounts.segmentZhongshu} 背驰 ${chanVisibleCounts.divergences} 买卖点 ${chanVisibleCounts.tradePoints}` : chanSource.status }}
           </span>
         </template>
         <template v-else-if="pane.id === 'macd'">

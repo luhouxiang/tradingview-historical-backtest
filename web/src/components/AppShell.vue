@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import TopToolbar from './TopToolbar.vue'
 import DatasetPanel from './DatasetPanel.vue'
 import IndicatorManagerPanel from './IndicatorManagerPanel.vue'
@@ -10,12 +10,12 @@ import ReplayPanel from './ReplayPanel.vue'
 import BacktestPanel from './BacktestPanel.vue'
 import OptimizationPanel from './OptimizationPanel.vue'
 import KeyboardInstrumentPicker from './KeyboardInstrumentPicker.vue'
-import { ApiError, createCalculation, getCalculation, getDrawings, getLayout, listAlgorithms, putDrawings, putLayout } from '../api/client'
+import { ApiError, createCalculation, getCalculation, getCalculationResults, getDrawings, getLayout, listAlgorithms, putDrawings, putLayout } from '../api/client'
 import { DrawingHistory, LayerManager, type DrawingObject, type DrawingType } from '../drawing/model'
 import { defaultIndicatorSpecs } from '../indicators/defaults'
 import { defaultChanSpec } from '../chan/defaults'
 import type { ReplayObjects, ReplaySignal } from '../replay/eventIndex'
-import type { AlgorithmDefinition, DatasetMeta, SeriesSource, StrategySource, WorkspaceLayout } from '../types/api'
+import type { AlgorithmDefinition, ChanSignalPoint, DatasetMeta, SeriesSource, StrategySource, WorkspaceLayout } from '../types/api'
 
 defineProps<{ health: string }>()
 
@@ -30,6 +30,10 @@ const indicatorSources = ref<SeriesSource[]>([])
 const strategySources = ref<StrategySource[]>([])
 const drawings = ref<DrawingObject[]>([])
 const selectedDrawingId = ref<string | null>(null)
+const signalObjectsBySource = ref<Record<string, ChanSignalPoint[]>>({})
+const selectedSignal = ref<ChanSignalPoint | null>(null)
+const lockedSignalId = ref<string | null>(null)
+const signalLoading = ref(false)
 const drawingTool = ref<DrawingType | 'cursor'>('cursor')
 const magnet = ref(false)
 const keepDrawingMode = ref(false)
@@ -43,11 +47,13 @@ const replaySource = computed(() => strategySources.value.find((source) => sourc
 const chartRef = ref<{
   snapshotLayout: () => { panes: Array<{ id: string; kind: 'price' | 'indicator'; weight: number; minHeight: number; visible: boolean; collapsed: boolean; order: number }> }
   restoreLayout: (value: { panes: Array<{ id: string; kind: 'price' | 'indicator'; weight: number; minHeight: number; collapsed?: boolean }> }) => void
+  focusSignal: (signal: ChanSignalPoint) => Promise<void>
 } | null>(null)
 const drawingHistory = new DrawingHistory()
 const layerManager = new LayerManager()
 const profileId = 'default'
 const layoutId = 'default-three-pane'
+let signalLoadGeneration = 0
 const workspaceColumns = computed(() => rightOpen.value
   ? `48px minmax(320px, 1fr) 1px ${rightWidth.value}px`
   : '48px minmax(320px, 1fr)')
@@ -103,6 +109,74 @@ async function trackStrategyCalculation(source: StrategySource): Promise<void> {
   }
 }
 
+async function loadSignalObjects(): Promise<void> {
+  const dataset = selectedDataset.value
+  const sources = strategySources.value.filter((source) => source.status === 'completed')
+  const generation = ++signalLoadGeneration
+  if (!dataset || sources.length === 0) {
+    signalObjectsBySource.value = {}
+    selectedSignal.value = null
+    lockedSignalId.value = null
+    return
+  }
+  signalLoading.value = true
+  try {
+    const results = await Promise.all(sources.map(async (source) => {
+      const signals: ChanSignalPoint[] = []
+      for (let from = dataset.coverage.first_bar_index; from <= dataset.coverage.last_bar_index; from += 5000) {
+        const to = Math.min(dataset.coverage.last_bar_index, from + 4999)
+        const result = await getCalculationResults(source.job_id, from, to)
+        if (result.result_kind === 'chan') signals.push(...result.objects.divergences, ...result.objects.trade_points)
+      }
+      return { source, signals }
+    }))
+    if (generation !== signalLoadGeneration) return
+    const byId = new Map<string, ChanSignalPoint>()
+    const bySource: Record<string, ChanSignalPoint[]> = {}
+    for (const { source, signals } of results) {
+      const sourceSignals = new Map<string, ChanSignalPoint>()
+      for (const signal of signals) {
+        const current = sourceSignals.get(signal.object_id)
+        if (!current || signal.object_revision >= current.object_revision) sourceSignals.set(signal.object_id, signal)
+      }
+      bySource[source.source_id] = [...sourceSignals.values()]
+      for (const signal of sourceSignals.values()) byId.set(signal.object_id, signal)
+    }
+    signalObjectsBySource.value = bySource
+    if (selectedSignal.value) selectedSignal.value = byId.get(selectedSignal.value.object_id) ?? null
+    if (lockedSignalId.value && !byId.has(lockedSignalId.value)) lockedSignalId.value = null
+  } catch (cause) {
+    if (generation === signalLoadGeneration) workspaceStatus.value = cause instanceof Error ? `信号对象读取失败：${cause.message}` : '信号对象读取失败'
+  } finally {
+    if (generation === signalLoadGeneration) signalLoading.value = false
+  }
+}
+
+watch(
+  () => `${selectedDataset.value?.dataset_id ?? ''}:${selectedDataset.value?.data_revision ?? ''}:${strategySources.value.map((source) => `${source.job_id}:${source.status}`).join('|')}`,
+  () => { void loadSignalObjects() },
+)
+
+function selectSignal(signal: ChanSignalPoint): void {
+  selectedDrawingId.value = null
+  selectedSignal.value = signal
+}
+
+function selectDrawingObject(id: string): void {
+  selectedSignal.value = null
+  selectedDrawingId.value = id
+}
+
+function toggleSignalLock(signal: ChanSignalPoint): void {
+  selectSignal(signal)
+  if (lockedSignalId.value === signal.object_id) {
+    lockedSignalId.value = null
+    return
+  }
+  lockedSignalId.value = signal.object_id
+  void chartRef.value?.focusSignal(signal)
+}
+
 async function installDefaultIndicators(dataset: DatasetMeta, definitions?: AlgorithmDefinition[]): Promise<void> {
   const specs = defaultIndicatorSpecs(definitions ?? await listAlgorithms())
   const created = await Promise.all(specs.map(async (spec) => {
@@ -151,7 +225,7 @@ async function installDefaultChan(dataset: DatasetMeta, definitions?: AlgorithmD
   const source: StrategySource = {
     source_type: 'StrategySource', source_id: spec.sourceId, definition: spec.definition,
     parameters: spec.parameters, job_id: accepted.job_id, status: accepted.status,
-    visible: true, category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true },
+    visible: true, category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true, segment_zhongshu: true, divergences: true, trade_points: true },
   }
   strategySources.value = [source]
   if (source.status !== 'completed') void trackStrategyCalculation(source)
@@ -193,7 +267,13 @@ async function restoreSources(layout: WorkspaceLayout, dataset: DatasetMeta): Pr
       source_type: 'StrategySource', source_id: saved.source_id, definition,
       parameters: saved.parameters, job_id: accepted.job_id, status: accepted.status,
       visible: saved.visible,
-      category_visibility: { ...saved.category_visibility, segments: saved.category_visibility.segments ?? true },
+      category_visibility: {
+        ...saved.category_visibility,
+        segments: saved.category_visibility.segments ?? true,
+        segment_zhongshu: saved.category_visibility.segment_zhongshu ?? true,
+        divergences: saved.category_visibility.divergences ?? true,
+        trade_points: saved.category_visibility.trade_points ?? true,
+      },
       style: saved.style,
     }
     restoredStrategies.push(source)
@@ -212,6 +292,9 @@ async function selectDataset(dataset: DatasetMeta): Promise<void> {
   replayObjects.value = null
   replaySignals.value = []
   selectedDrawingId.value = null
+  signalObjectsBySource.value = {}
+  selectedSignal.value = null
+  lockedSignalId.value = null
   workspaceStatus.value = ''
   const [layoutResult, drawingResult] = await Promise.allSettled([
     getLayout(profileId, layoutId), getDrawings<DrawingObject>(profileId, layoutId, dataset.dataset_id),
@@ -363,6 +446,7 @@ function resizeBottom(event: PointerEvent): void {
           ref="chartRef" :dataset="selectedDataset" :indicator-sources="indicatorSources"
           :strategy-sources="strategySources" :replay-cursor="replayCursor" :replay-objects="replayObjects" :replay-signals="replaySignals"
           :drawings="drawings" :selected-drawing-id="selectedDrawingId" :drawing-tool="drawingTool"
+          :selected-signal="selectedSignal" :signal-locked="lockedSignalId === selectedSignal?.object_id"
           :magnet="magnet" :keep-drawing-mode="keepDrawingMode"
           @update:drawings="commitDrawings" @update:selected-drawing-id="selectedDrawingId = $event" @update:drawing-tool="drawingTool = $event"
         />
@@ -385,9 +469,11 @@ function resizeBottom(event: PointerEvent): void {
         />
         <div v-else-if="rightTab === 'strategies'" class="empty-panel">交易策略参数在回放、回测和优化面板中管理。</div>
         <ObjectTreePanel
-          v-else :drawings="drawings" :sources="indicatorSources" :strategy-sources="strategySources" :selected-id="selectedDrawingId"
-          @patch-drawing="patchDrawing" @remove-drawing="removeDrawing" @reorder-drawing="reorderDrawing" @select-drawing="selectedDrawingId = $event"
-          @patch-strategy="patchStrategy" @remove-strategy="removeStrategy"
+          v-else :dataset="selectedDataset" :drawings="drawings" :sources="indicatorSources" :strategy-sources="strategySources"
+          :signals-by-source="signalObjectsBySource" :signals-loading="signalLoading"
+          :selected-id="selectedDrawingId" :selected-signal-id="selectedSignal?.object_id ?? null" :locked-signal-id="lockedSignalId"
+          @patch-drawing="patchDrawing" @remove-drawing="removeDrawing" @reorder-drawing="reorderDrawing" @select-drawing="selectDrawingObject"
+          @patch-strategy="patchStrategy" @remove-strategy="removeStrategy" @select-signal="selectSignal" @lock-signal="toggleSignalLock"
         />
       </aside>
     </section>

@@ -77,10 +77,13 @@ type SeriesSource struct {
 }
 
 type CategoryVisibility struct {
-	Fractals bool  `json:"fractals"`
-	Bi       bool  `json:"bi"`
-	Segments *bool `json:"segments,omitempty"`
-	Zhongshu bool  `json:"zhongshu"`
+	Fractals        bool  `json:"fractals"`
+	Bi              bool  `json:"bi"`
+	Segments        *bool `json:"segments,omitempty"`
+	Zhongshu        bool  `json:"zhongshu"`
+	SegmentZhongshu *bool `json:"segment_zhongshu,omitempty"`
+	Divergences     *bool `json:"divergences,omitempty"`
+	TradePoints     *bool `json:"trade_points,omitempty"`
 }
 
 type StrategySource struct {

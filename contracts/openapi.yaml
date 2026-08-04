@@ -1084,7 +1084,7 @@ components:
                   display_name: {type: string, minLength: 1}
                   pane: {enum: [main, indicator]}
                   series_type: {enum: [line, histogram, semantic_objects]}
-                  object_type: {enum: [fractal, bi, segment, zhongshu, strategy_state, stage_signal, trade_signal, chart_event]}
+                  object_type: {enum: [fractal, bi, segment, zhongshu, segment_zhongshu, divergence, trade_point, strategy_state, stage_signal, trade_signal, chart_event]}
             warmup:
               type: object
               additionalProperties: false
@@ -1194,7 +1194,7 @@ components:
     ChanObjects:
       type: object
       additionalProperties: false
-      required: [fractals, bi, segments, zhongshu]
+      required: [fractals, bi, segments, zhongshu, segment_zhongshu, divergences, trade_points]
       properties:
         fractals:
           type: array
@@ -1208,6 +1208,15 @@ components:
         zhongshu:
           type: array
           items: {$ref: "#/components/schemas/ChanZhongshu"}
+        segment_zhongshu:
+          type: array
+          items: {$ref: "#/components/schemas/ChanZhongshu"}
+        divergences:
+          type: array
+          items: {$ref: "#/components/schemas/ChanSignalPoint"}
+        trade_points:
+          type: array
+          items: {$ref: "#/components/schemas/ChanSignalPoint"}
 
     ChanFractal:
       type: object
@@ -1258,6 +1267,27 @@ components:
         confirmed_at_bar_index: {type: [integer, "null"], minimum: 0}
         status: {type: string, enum: [confirmed, extended, left]}
         leave_direction: {type: [string, "null"], enum: [up, down, null]}
+        known_at_bar_index: {type: integer, minimum: 0}
+        object_revision: {type: integer, minimum: 1}
+
+    ChanSignalPoint:
+      type: object
+      additionalProperties: false
+      required: [object_id, bar_index, time, price_i64, signal_type, divergence_kind, signal_class, strength, reference_object_id, macd_area_reference, macd_area_current, confirmed, confirmed_at_bar_index, known_at_bar_index, object_revision]
+      properties:
+        object_id: {type: string, minLength: 1}
+        bar_index: {type: integer, minimum: 0}
+        time: {type: integer}
+        price_i64: {type: integer}
+        signal_type: {type: string, enum: [bottom_divergence, top_divergence, buy_1, buy_2, buy_3, sell_1, sell_2, sell_3, class_buy_1, class_buy_2, class_buy_3, class_sell_1, class_sell_2, class_sell_3]}
+        divergence_kind: {type: [string, "null"], enum: [trend, consolidation, null]}
+        signal_class: {type: [string, "null"], enum: [standard, class_like, null]}
+        strength: {type: [string, "null"], enum: [strongest, normal, weakest, null]}
+        reference_object_id: {type: [string, "null"]}
+        macd_area_reference: {type: [number, "null"]}
+        macd_area_current: {type: [number, "null"]}
+        confirmed: {type: boolean}
+        confirmed_at_bar_index: {type: [integer, "null"], minimum: 0}
         known_at_bar_index: {type: integer, minimum: 0}
         object_revision: {type: integer, minimum: 1}
 

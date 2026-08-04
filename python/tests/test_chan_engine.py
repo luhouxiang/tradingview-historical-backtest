@@ -206,6 +206,34 @@ def test_algo_ui_segment_golden_for_aol9_prefix_is_exact() -> None:
     assert all(left["direction"] != right["direction"] for left, right in pairwise(segments))
 
 
+def test_standard_segment_centers_and_third_points_are_causal_on_aol9() -> None:
+    sample = Path(__file__).parents[2] / "samples" / "30#AOL9.txt"
+    runtime = engine()
+    rows = sample.read_text(encoding="gb18030").splitlines()[2:5002]
+    for index, raw in enumerate(rows):
+        fields = [value.strip() for value in raw.split(",")]
+        runtime.update(
+            RawBar(
+                index,
+                1_700_000_000_000 + index * 300_000,
+                int(fields[3]),
+                int(fields[4]),
+                int(fields[5]),
+            )
+        )
+    result = runtime.result_rows()
+    assert len(result["segment_zhongshu"]) == 4
+    assert all(value["zd_i64"] < value["zg_i64"] for value in result["segment_zhongshu"])
+    assert [(value["signal_type"], value["bar_index"]) for value in result["trade_points"]] == [
+        ("buy_3", 4206),
+        ("buy_3", 4689),
+    ]
+    assert all(
+        value["known_at_bar_index"] >= value["confirmed_at_bar_index"]
+        for value in [*result["divergences"], *result["trade_points"]]
+    )
+
+
 def test_algo_ui_center_starts_from_three_same_parity_lines_and_extends() -> None:
     lines = [
         line(0, 15, 20),

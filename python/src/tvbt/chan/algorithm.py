@@ -23,6 +23,7 @@ def _source_hash() -> str:
         "engine.py",
         "events.py",
         "reference.py",
+        "signals.py",
         "storage.py",
     ):
         digest.update(name.encode())
@@ -61,7 +62,10 @@ def definition() -> dict[str, Any]:
                 ("fractal", "分型"),
                 ("bi", "笔"),
                 ("segment", "段"),
-                ("zhongshu", "中枢"),
+                ("zhongshu", "笔中枢"),
+                ("segment_zhongshu", "标准线段中枢"),
+                ("divergence", "背驰"),
+                ("trade_point", "买卖点"),
             )
         ],
         "warmup": {"kind": "formula", "expression": "three independent bars; bi requires five"},
@@ -81,6 +85,9 @@ def calculate_chan(payload: dict[str, Any], guard: PathGuard, cancelled: threadi
         bi=rows["bi"],
         segments=rows["segments"],
         zhongshu=rows["zhongshu"],
+        segment_zhongshu=rows["segment_zhongshu"],
+        divergences=rows["divergences"],
+        trade_points=rows["trade_points"],
         events=[event.row() for event in runtime.emitter.events],
         checkpoints=checkpoints,
     )

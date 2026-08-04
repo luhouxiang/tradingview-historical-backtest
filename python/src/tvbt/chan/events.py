@@ -4,7 +4,17 @@ import json
 from dataclasses import asdict, dataclass
 from typing import Any
 
-OBJECT_TYPES = frozenset({"fractal", "bi", "segment", "zhongshu"})
+OBJECT_TYPES = frozenset(
+    {
+        "fractal",
+        "bi",
+        "segment",
+        "zhongshu",
+        "segment_zhongshu",
+        "divergence",
+        "trade_point",
+    }
+)
 
 
 @dataclass(frozen=True)

@@ -183,11 +183,32 @@ type ChanZhongshu struct {
 	ObjectRevision      int64   `json:"object_revision" parquet:"object_revision"`
 }
 
+type ChanSignalPoint struct {
+	ObjectID            string   `json:"object_id" parquet:"object_id"`
+	BarIndex            int64    `json:"bar_index" parquet:"bar_index"`
+	Time                int64    `json:"time" parquet:"time"`
+	PriceI64            int64    `json:"price_i64" parquet:"price_i64"`
+	SignalType          string   `json:"signal_type" parquet:"signal_type"`
+	DivergenceKind      *string  `json:"divergence_kind" parquet:"divergence_kind,optional"`
+	SignalClass         *string  `json:"signal_class" parquet:"signal_class,optional"`
+	Strength            *string  `json:"strength" parquet:"strength,optional"`
+	ReferenceObjectID   *string  `json:"reference_object_id" parquet:"reference_object_id,optional"`
+	MACDAreaReference   *float64 `json:"macd_area_reference" parquet:"macd_area_reference,optional"`
+	MACDAreaCurrent     *float64 `json:"macd_area_current" parquet:"macd_area_current,optional"`
+	Confirmed           bool     `json:"confirmed" parquet:"confirmed"`
+	ConfirmedAtBarIndex *int64   `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index,optional"`
+	KnownAtBarIndex     int64    `json:"known_at_bar_index" parquet:"known_at_bar_index"`
+	ObjectRevision      int64    `json:"object_revision" parquet:"object_revision"`
+}
+
 type ChanObjects struct {
-	Fractals []ChanFractal    `json:"fractals"`
-	Bi       []ChanLineObject `json:"bi"`
-	Segments []ChanLineObject `json:"segments"`
-	Zhongshu []ChanZhongshu   `json:"zhongshu"`
+	Fractals        []ChanFractal     `json:"fractals"`
+	Bi              []ChanLineObject  `json:"bi"`
+	Segments        []ChanLineObject  `json:"segments"`
+	Zhongshu        []ChanZhongshu    `json:"zhongshu"`
+	SegmentZhongshu []ChanZhongshu    `json:"segment_zhongshu"`
+	Divergences     []ChanSignalPoint `json:"divergences"`
+	TradePoints     []ChanSignalPoint `json:"trade_points"`
 }
 
 func readChanResults(directory, jobID, cacheKey string, meta manifest, from, to int64) (Results, error) {
@@ -207,13 +228,28 @@ func readChanResults(directory, jobID, cacheKey string, meta manifest, from, to 
 	if err != nil {
 		return Results{}, err
 	}
-	objects := ChanObjects{
-		Fractals: filterFractals(fractals, from, to),
-		Bi:       filterLines(bi, from, to),
-		Segments: filterLines(segments, from, to),
-		Zhongshu: filterZhongshu(zhongshu, from, to),
+	segmentZhongshu, err := parquet.ReadFile[ChanZhongshu](filepath.Join(directory, "segment_zhongshu.parquet"))
+	if err != nil {
+		return Results{}, err
 	}
-	returned := len(objects.Fractals) + len(objects.Bi) + len(objects.Segments) + len(objects.Zhongshu)
+	divergences, err := parquet.ReadFile[ChanSignalPoint](filepath.Join(directory, "divergences.parquet"))
+	if err != nil {
+		return Results{}, err
+	}
+	tradePoints, err := parquet.ReadFile[ChanSignalPoint](filepath.Join(directory, "trade_points.parquet"))
+	if err != nil {
+		return Results{}, err
+	}
+	objects := ChanObjects{
+		Fractals:        filterFractals(fractals, from, to),
+		Bi:              filterLines(bi, from, to),
+		Segments:        filterLines(segments, from, to),
+		Zhongshu:        filterZhongshu(zhongshu, from, to),
+		SegmentZhongshu: filterZhongshu(segmentZhongshu, from, to),
+		Divergences:     filterSignalPoints(divergences, from, to),
+		TradePoints:     filterSignalPoints(tradePoints, from, to),
+	}
+	returned := len(objects.Fractals) + len(objects.Bi) + len(objects.Segments) + len(objects.Zhongshu) + len(objects.SegmentZhongshu) + len(objects.Divergences) + len(objects.TradePoints)
 	checksumPayload, _ := json.Marshal(objects)
 	digest := sha256.Sum256(checksumPayload)
 	return Results{
@@ -221,6 +257,16 @@ func readChanResults(directory, jobID, cacheKey string, meta manifest, from, to 
 		Algorithm: meta.Algorithm, ResultKind: "chan", Coverage: Coverage{FirstBarIndex: from, LastBarIndex: to, ReturnedCount: returned},
 		Checksum: "sha256:" + hex.EncodeToString(digest[:]), Objects: &objects,
 	}, nil
+}
+
+func filterSignalPoints(values []ChanSignalPoint, from, to int64) []ChanSignalPoint {
+	result := make([]ChanSignalPoint, 0)
+	for _, value := range values {
+		if value.BarIndex >= from && value.BarIndex <= to {
+			result = append(result, value)
+		}
+	}
+	return result
 }
 
 func filterFractals(values []ChanFractal, from, to int64) []ChanFractal {

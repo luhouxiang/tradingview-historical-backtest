@@ -256,12 +256,13 @@ describe('ChartGroup', () => {
         bi: [{ object_id: 'bi-1', start_time: 1_700_000_000_000, start_price_i64: 10, end_time: 1_700_000_300_000, end_price_i64: 12, confirmed: true }],
         segments: [{ object_id: 'segment-1', start_time: 1_700_000_000_000, start_price_i64: 10, end_time: 1_700_000_300_000, end_price_i64: 12, confirmed: true }],
         zhongshu: [{ object_id: 'zs-1', start_time: 1_700_000_000_000, end_time: 1_700_000_300_000, zg_i64: 12, zd_i64: 10, confirmed: true }],
+        segment_zhongshu: [], divergences: [], trade_points: [],
       },
       coverage: { first_bar_index: 0, last_bar_index: 1, returned_count: 2 },
     })
     const source = {
       source_type: 'StrategySource' as const, source_id: 'strategy-1', job_id: 'job-chan', status: 'completed' as const,
-      visible: true, category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true }, parameters: { min_fractal_gap: 5 },
+      visible: true, category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true, segment_zhongshu: true, divergences: true, trade_points: true }, parameters: { min_fractal_gap: 5 },
       definition: {
         kind: 'chan' as const, algorithm_id: 'chan_standard', algorithm_version: '1.0.0', source_hash: `sha256:${'c'.repeat(64)}`,
         name: '标准缠论', input_schema: 'bars.v1' as const, causal: true as const,
@@ -275,12 +276,12 @@ describe('ChartGroup', () => {
     expect(apiMocks.getCalculationResults).toHaveBeenCalledWith('job-chan', 0, 1)
     expect(chartMocks.candle.attachPrimitive).toHaveBeenCalledTimes(1)
     expect(apiMocks.createCalculation).not.toHaveBeenCalled()
-    expect(wrapper.get('[data-pane-id="price"]').text()).toContain('缠论 笔 1 段 1 中枢 1')
+    expect(wrapper.get('[data-pane-id="price"]').text()).toContain('缠论 笔 1 段 1 笔中枢 1 段中枢 0 背驰 0 买卖点 0')
     wrapper.unmount()
   })
 
   it('hides future bars when replay cursor moves without creating calculations', async () => {
-    const wrapper = mount(ChartGroup, { props: { dataset: dataset(), replayCursor: 0, replayObjects: { fractals: [], bi: [], segments: [], zhongshu: [] } } })
+    const wrapper = mount(ChartGroup, { props: { dataset: dataset(), replayCursor: 0, replayObjects: { fractals: [], bi: [], segments: [], zhongshu: [], segment_zhongshu: [], divergences: [], trade_points: [] } } })
     await flushPromises()
     expect(chartMocks.candle.setData).toHaveBeenLastCalledWith([
       expect.objectContaining({ time: 1_700_000_000, open: 10, high: 12, low: 9, close: 11 }),
@@ -307,6 +308,29 @@ describe('ChartGroup', () => {
     ])
     expect(emitted[0]?.anchors[0]).not.toHaveProperty('x')
     expect(emitted[0]?.anchors[0]).not.toHaveProperty('y')
+    wrapper.unmount()
+  })
+
+  it('draws two endpoint handles for a selected signal and focuses it when requested', async () => {
+    const selectedSignal = {
+      object_id: 'signal-1', bar_index: 0, time: 1_700_000_000_000, price_i64: 11,
+      signal_type: 'buy_1' as const, divergence_kind: null, signal_class: 'standard' as const, strength: null,
+      reference_object_id: null, macd_area_reference: null, macd_area_current: null,
+      confirmed: true, confirmed_at_bar_index: 1, known_at_bar_index: 1, object_revision: 1,
+    }
+    const wrapper = mount(ChartGroup, { props: { dataset: dataset(), selectedSignal, signalLocked: true } })
+    await flushPromises()
+    expect(wrapper.find('[data-selected-signal="true"]').classes()).toContain('locked')
+    expect(wrapper.findAll('.signal-selection circle')).toHaveLength(2)
+    chartMocks.timeScale.getVisibleLogicalRange.mockReturnValueOnce({ from: 0, to: 1 })
+    await (wrapper.vm as unknown as { focusSignal: (signal: typeof selectedSignal) => Promise<void> }).focusSignal(selectedSignal)
+    expect(apiMocks.getBars).toHaveBeenCalledTimes(1)
+    await (wrapper.vm as unknown as { focusSignal: (signal: typeof selectedSignal) => Promise<void> }).focusSignal(selectedSignal)
+    await flushPromises()
+    expect(apiMocks.getBars).toHaveBeenLastCalledWith(
+      'SHFE.AO2609.5m', revision, expect.stringMatching(/^gen-/), { beforeBarIndex: 2, limit: 2 },
+    )
+    expect(chartMocks.timeScale.setVisibleLogicalRange).toHaveBeenLastCalledWith({ from: 0, to: 1 })
     wrapper.unmount()
   })
 

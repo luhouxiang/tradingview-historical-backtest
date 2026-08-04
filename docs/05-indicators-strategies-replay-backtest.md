@@ -4,7 +4,7 @@
 
 ~~~mermaid
 flowchart TD
-    D["标准 K 线"] --> I["Indicator<br/>MA、MACD、ATR、分型、笔、段、中枢"]
+    D["标准 K 线"] --> I["Indicator<br/>MA、MACD、ATR、分型、笔、段、中枢、背驰、买卖点"]
     I --> S["Strategy<br/>组合指标与状态机"]
     S --> E["Event Stream<br/>阶段信号、交易信号、图形事件"]
     E --> X["Execution Model<br/>订单、成交、持仓"]
@@ -52,6 +52,8 @@ flowchart TD
 - bi_builder：笔。
 - zhongshu_builder：中枢。
 - segment_builder：段。
+- segment_zhongshu_builder：标准线段中枢。
+- divergence_and_trade_point_builder：趋势/盘整背驰和一二三类买卖点。
 - checkpoint：连续状态序列化。
 - event_emitter：upsert/delete 事件。
 
@@ -64,6 +66,7 @@ flowchart TD
 - 笔中枢按 `algo-ui` 的 `compute_bi_pivots/process_down_up` 扫描同奇偶位置笔的区间交集；后续同奇偶笔相交时延长时间范围而不改变 ZD/ZG。
 - 段按 `algo-ui` 的 `_NCHDUAN` 及其首段发现、正反向确认、临时段修订函数计算。
 - 笔中枢和段的完整规则、金样与因果约束见 `docs/13-chan-bi-center-segment-algorithm.md`。
+- 标准线段中枢只接受正宽重叠；背驰、MACD 力度和一二三类买卖点的完整口径见 `docs/14-chan-108-segment-center-divergence-trade-points.md`。
 
 Python 输出时间、价格、确认状态和修订，不输出像素。
 

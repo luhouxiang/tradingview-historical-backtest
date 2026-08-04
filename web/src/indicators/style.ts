@@ -10,11 +10,14 @@ import type {
 
 export type StyleSource = SeriesSource | StrategySource
 
-const chanDefaults: Record<string, Pick<IndicatorOutputStyle, 'color' | 'line_width'>> = {
-  fractal: { color: '#f23645', line_width: 1 },
-  bi: { color: '#2962ff', line_width: 2 },
-  segment: { color: '#f2d600', line_width: 2 },
-  zhongshu: { color: '#ab47bc', line_width: 1 },
+const chanDefaults: Record<string, Pick<IndicatorOutputStyle, 'color' | 'line_width' | 'line_style'>> = {
+  fractal: { color: '#f23645', line_width: 1, line_style: 'solid' },
+  bi: { color: '#2962ff', line_width: 2, line_style: 'solid' },
+  segment: { color: '#f2d600', line_width: 2, line_style: 'solid' },
+  zhongshu: { color: '#64b5f6', line_width: 1, line_style: 'solid' },
+  segment_zhongshu: { color: '#fff176', line_width: 2, line_style: 'solid' },
+  divergence: { color: '#ff9800', line_width: 1, line_style: 'solid' },
+  trade_point: { color: '#ffffff', line_width: 1, line_style: 'solid' },
 }
 
 export const indicatorPalette = [
@@ -33,7 +36,7 @@ export function styleableOutputs(source: StyleSource): AlgorithmOutput[] {
     return source.definition.outputs.filter((output) => output.series_type === 'line')
   }
   return source.definition.outputs.filter((output) =>
-    output.object_type === 'fractal' || output.object_type === 'bi' || output.object_type === 'segment' || output.object_type === 'zhongshu')
+    output.object_type === 'fractal' || output.object_type === 'bi' || output.object_type === 'segment' || output.object_type === 'zhongshu' || output.object_type === 'segment_zhongshu' || output.object_type === 'divergence' || output.object_type === 'trade_point')
 }
 
 function chanVisibility(source: StrategySource, output: AlgorithmOutput): boolean {
@@ -41,6 +44,9 @@ function chanVisibility(source: StrategySource, output: AlgorithmOutput): boolea
   if (output.object_type === 'bi') return source.category_visibility.bi
   if (output.object_type === 'segment') return source.category_visibility.segments
   if (output.object_type === 'zhongshu') return source.category_visibility.zhongshu
+  if (output.object_type === 'segment_zhongshu') return source.category_visibility.segment_zhongshu
+  if (output.object_type === 'divergence') return source.category_visibility.divergences
+  if (output.object_type === 'trade_point') return source.category_visibility.trade_points
   return true
 }
 
@@ -52,7 +58,7 @@ export function defaultOutputStyle(source: StyleSource, output: AlgorithmOutput)
   return {
     color: chan?.color ?? indicatorLineColor(source as SeriesSource, output.name),
     line_width: chan?.line_width ?? 1,
-    line_style: 'solid',
+    line_style: chan?.line_style ?? 'solid',
     opacity: 1,
     visible,
   }
@@ -68,6 +74,25 @@ export function completeIndicatorStyle(source: StyleSource): IndicatorStyle {
       output.name,
       { ...resolvedOutputStyle(source, output) },
     ])),
+  }
+}
+
+/**
+ * Chan category visibility is the authoritative render switch.  Older
+ * workspaces can contain a style-level `visible` value that no longer agrees
+ * with the object-tree checkbox; normalize it at the rendering boundary so a
+ * checked category cannot remain invisibly suppressed by stale style data.
+ */
+export function chanStyleForRendering(source?: StrategySource): IndicatorStyle | undefined {
+  if (!source?.style) return undefined
+  return {
+    outputs: Object.fromEntries(Object.entries(source.style.outputs).map(([name, style]) => {
+      const output = source.definition.outputs.find((candidate) => candidate.name === name)
+      return [name, {
+        ...style,
+        visible: output ? chanVisibility(source, output) : style.visible,
+      }]
+    })),
   }
 }
 

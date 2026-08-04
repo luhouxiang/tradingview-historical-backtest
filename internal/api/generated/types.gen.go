@@ -9,6 +9,288 @@ import (
 	"time"
 )
 
+// Defines values for CalculationResultsObjectsDivergencesDivergenceKind.
+const (
+	CalculationResultsObjectsDivergencesDivergenceKindConsolidation CalculationResultsObjectsDivergencesDivergenceKind = "consolidation"
+	CalculationResultsObjectsDivergencesDivergenceKindLessThannil   CalculationResultsObjectsDivergencesDivergenceKind = "<nil>"
+	CalculationResultsObjectsDivergencesDivergenceKindTrend         CalculationResultsObjectsDivergencesDivergenceKind = "trend"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsDivergencesDivergenceKind enum.
+func (e CalculationResultsObjectsDivergencesDivergenceKind) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsDivergencesDivergenceKindConsolidation:
+		return true
+	case CalculationResultsObjectsDivergencesDivergenceKindLessThannil:
+		return true
+	case CalculationResultsObjectsDivergencesDivergenceKindTrend:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsDivergencesSignalClass.
+const (
+	CalculationResultsObjectsDivergencesSignalClassClassLike   CalculationResultsObjectsDivergencesSignalClass = "class_like"
+	CalculationResultsObjectsDivergencesSignalClassLessThannil CalculationResultsObjectsDivergencesSignalClass = "<nil>"
+	CalculationResultsObjectsDivergencesSignalClassStandard    CalculationResultsObjectsDivergencesSignalClass = "standard"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsDivergencesSignalClass enum.
+func (e CalculationResultsObjectsDivergencesSignalClass) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsDivergencesSignalClassClassLike:
+		return true
+	case CalculationResultsObjectsDivergencesSignalClassLessThannil:
+		return true
+	case CalculationResultsObjectsDivergencesSignalClassStandard:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsDivergencesSignalType.
+const (
+	CalculationResultsObjectsDivergencesSignalTypeBottomDivergence CalculationResultsObjectsDivergencesSignalType = "bottom_divergence"
+	CalculationResultsObjectsDivergencesSignalTypeBuy1             CalculationResultsObjectsDivergencesSignalType = "buy_1"
+	CalculationResultsObjectsDivergencesSignalTypeBuy2             CalculationResultsObjectsDivergencesSignalType = "buy_2"
+	CalculationResultsObjectsDivergencesSignalTypeBuy3             CalculationResultsObjectsDivergencesSignalType = "buy_3"
+	CalculationResultsObjectsDivergencesSignalTypeClassBuy1        CalculationResultsObjectsDivergencesSignalType = "class_buy_1"
+	CalculationResultsObjectsDivergencesSignalTypeClassBuy2        CalculationResultsObjectsDivergencesSignalType = "class_buy_2"
+	CalculationResultsObjectsDivergencesSignalTypeClassBuy3        CalculationResultsObjectsDivergencesSignalType = "class_buy_3"
+	CalculationResultsObjectsDivergencesSignalTypeClassSell1       CalculationResultsObjectsDivergencesSignalType = "class_sell_1"
+	CalculationResultsObjectsDivergencesSignalTypeClassSell2       CalculationResultsObjectsDivergencesSignalType = "class_sell_2"
+	CalculationResultsObjectsDivergencesSignalTypeClassSell3       CalculationResultsObjectsDivergencesSignalType = "class_sell_3"
+	CalculationResultsObjectsDivergencesSignalTypeSell1            CalculationResultsObjectsDivergencesSignalType = "sell_1"
+	CalculationResultsObjectsDivergencesSignalTypeSell2            CalculationResultsObjectsDivergencesSignalType = "sell_2"
+	CalculationResultsObjectsDivergencesSignalTypeSell3            CalculationResultsObjectsDivergencesSignalType = "sell_3"
+	CalculationResultsObjectsDivergencesSignalTypeTopDivergence    CalculationResultsObjectsDivergencesSignalType = "top_divergence"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsDivergencesSignalType enum.
+func (e CalculationResultsObjectsDivergencesSignalType) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsDivergencesSignalTypeBottomDivergence:
+		return true
+	case CalculationResultsObjectsDivergencesSignalTypeBuy1:
+		return true
+	case CalculationResultsObjectsDivergencesSignalTypeBuy2:
+		return true
+	case CalculationResultsObjectsDivergencesSignalTypeBuy3:
+		return true
+	case CalculationResultsObjectsDivergencesSignalTypeClassBuy1:
+		return true
+	case CalculationResultsObjectsDivergencesSignalTypeClassBuy2:
+		return true
+	case CalculationResultsObjectsDivergencesSignalTypeClassBuy3:
+		return true
+	case CalculationResultsObjectsDivergencesSignalTypeClassSell1:
+		return true
+	case CalculationResultsObjectsDivergencesSignalTypeClassSell2:
+		return true
+	case CalculationResultsObjectsDivergencesSignalTypeClassSell3:
+		return true
+	case CalculationResultsObjectsDivergencesSignalTypeSell1:
+		return true
+	case CalculationResultsObjectsDivergencesSignalTypeSell2:
+		return true
+	case CalculationResultsObjectsDivergencesSignalTypeSell3:
+		return true
+	case CalculationResultsObjectsDivergencesSignalTypeTopDivergence:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsDivergencesStrength.
+const (
+	CalculationResultsObjectsDivergencesStrengthLessThannil CalculationResultsObjectsDivergencesStrength = "<nil>"
+	CalculationResultsObjectsDivergencesStrengthNormal      CalculationResultsObjectsDivergencesStrength = "normal"
+	CalculationResultsObjectsDivergencesStrengthStrongest   CalculationResultsObjectsDivergencesStrength = "strongest"
+	CalculationResultsObjectsDivergencesStrengthWeakest     CalculationResultsObjectsDivergencesStrength = "weakest"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsDivergencesStrength enum.
+func (e CalculationResultsObjectsDivergencesStrength) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsDivergencesStrengthLessThannil:
+		return true
+	case CalculationResultsObjectsDivergencesStrengthNormal:
+		return true
+	case CalculationResultsObjectsDivergencesStrengthStrongest:
+		return true
+	case CalculationResultsObjectsDivergencesStrengthWeakest:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsSegmentZhongshuLeaveDirection.
+const (
+	CalculationResultsObjectsSegmentZhongshuLeaveDirectionDown        CalculationResultsObjectsSegmentZhongshuLeaveDirection = "down"
+	CalculationResultsObjectsSegmentZhongshuLeaveDirectionLessThannil CalculationResultsObjectsSegmentZhongshuLeaveDirection = "<nil>"
+	CalculationResultsObjectsSegmentZhongshuLeaveDirectionUp          CalculationResultsObjectsSegmentZhongshuLeaveDirection = "up"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsSegmentZhongshuLeaveDirection enum.
+func (e CalculationResultsObjectsSegmentZhongshuLeaveDirection) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsSegmentZhongshuLeaveDirectionDown:
+		return true
+	case CalculationResultsObjectsSegmentZhongshuLeaveDirectionLessThannil:
+		return true
+	case CalculationResultsObjectsSegmentZhongshuLeaveDirectionUp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsSegmentZhongshuStatus.
+const (
+	CalculationResultsObjectsSegmentZhongshuStatusConfirmed CalculationResultsObjectsSegmentZhongshuStatus = "confirmed"
+	CalculationResultsObjectsSegmentZhongshuStatusExtended  CalculationResultsObjectsSegmentZhongshuStatus = "extended"
+	CalculationResultsObjectsSegmentZhongshuStatusLeft      CalculationResultsObjectsSegmentZhongshuStatus = "left"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsSegmentZhongshuStatus enum.
+func (e CalculationResultsObjectsSegmentZhongshuStatus) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsSegmentZhongshuStatusConfirmed:
+		return true
+	case CalculationResultsObjectsSegmentZhongshuStatusExtended:
+		return true
+	case CalculationResultsObjectsSegmentZhongshuStatusLeft:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsTradePointsDivergenceKind.
+const (
+	CalculationResultsObjectsTradePointsDivergenceKindConsolidation CalculationResultsObjectsTradePointsDivergenceKind = "consolidation"
+	CalculationResultsObjectsTradePointsDivergenceKindLessThannil   CalculationResultsObjectsTradePointsDivergenceKind = "<nil>"
+	CalculationResultsObjectsTradePointsDivergenceKindTrend         CalculationResultsObjectsTradePointsDivergenceKind = "trend"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsTradePointsDivergenceKind enum.
+func (e CalculationResultsObjectsTradePointsDivergenceKind) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsTradePointsDivergenceKindConsolidation:
+		return true
+	case CalculationResultsObjectsTradePointsDivergenceKindLessThannil:
+		return true
+	case CalculationResultsObjectsTradePointsDivergenceKindTrend:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsTradePointsSignalClass.
+const (
+	CalculationResultsObjectsTradePointsSignalClassClassLike   CalculationResultsObjectsTradePointsSignalClass = "class_like"
+	CalculationResultsObjectsTradePointsSignalClassLessThannil CalculationResultsObjectsTradePointsSignalClass = "<nil>"
+	CalculationResultsObjectsTradePointsSignalClassStandard    CalculationResultsObjectsTradePointsSignalClass = "standard"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsTradePointsSignalClass enum.
+func (e CalculationResultsObjectsTradePointsSignalClass) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsTradePointsSignalClassClassLike:
+		return true
+	case CalculationResultsObjectsTradePointsSignalClassLessThannil:
+		return true
+	case CalculationResultsObjectsTradePointsSignalClassStandard:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsTradePointsSignalType.
+const (
+	CalculationResultsObjectsTradePointsSignalTypeBottomDivergence CalculationResultsObjectsTradePointsSignalType = "bottom_divergence"
+	CalculationResultsObjectsTradePointsSignalTypeBuy1             CalculationResultsObjectsTradePointsSignalType = "buy_1"
+	CalculationResultsObjectsTradePointsSignalTypeBuy2             CalculationResultsObjectsTradePointsSignalType = "buy_2"
+	CalculationResultsObjectsTradePointsSignalTypeBuy3             CalculationResultsObjectsTradePointsSignalType = "buy_3"
+	CalculationResultsObjectsTradePointsSignalTypeClassBuy1        CalculationResultsObjectsTradePointsSignalType = "class_buy_1"
+	CalculationResultsObjectsTradePointsSignalTypeClassBuy2        CalculationResultsObjectsTradePointsSignalType = "class_buy_2"
+	CalculationResultsObjectsTradePointsSignalTypeClassBuy3        CalculationResultsObjectsTradePointsSignalType = "class_buy_3"
+	CalculationResultsObjectsTradePointsSignalTypeClassSell1       CalculationResultsObjectsTradePointsSignalType = "class_sell_1"
+	CalculationResultsObjectsTradePointsSignalTypeClassSell2       CalculationResultsObjectsTradePointsSignalType = "class_sell_2"
+	CalculationResultsObjectsTradePointsSignalTypeClassSell3       CalculationResultsObjectsTradePointsSignalType = "class_sell_3"
+	CalculationResultsObjectsTradePointsSignalTypeSell1            CalculationResultsObjectsTradePointsSignalType = "sell_1"
+	CalculationResultsObjectsTradePointsSignalTypeSell2            CalculationResultsObjectsTradePointsSignalType = "sell_2"
+	CalculationResultsObjectsTradePointsSignalTypeSell3            CalculationResultsObjectsTradePointsSignalType = "sell_3"
+	CalculationResultsObjectsTradePointsSignalTypeTopDivergence    CalculationResultsObjectsTradePointsSignalType = "top_divergence"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsTradePointsSignalType enum.
+func (e CalculationResultsObjectsTradePointsSignalType) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsTradePointsSignalTypeBottomDivergence:
+		return true
+	case CalculationResultsObjectsTradePointsSignalTypeBuy1:
+		return true
+	case CalculationResultsObjectsTradePointsSignalTypeBuy2:
+		return true
+	case CalculationResultsObjectsTradePointsSignalTypeBuy3:
+		return true
+	case CalculationResultsObjectsTradePointsSignalTypeClassBuy1:
+		return true
+	case CalculationResultsObjectsTradePointsSignalTypeClassBuy2:
+		return true
+	case CalculationResultsObjectsTradePointsSignalTypeClassBuy3:
+		return true
+	case CalculationResultsObjectsTradePointsSignalTypeClassSell1:
+		return true
+	case CalculationResultsObjectsTradePointsSignalTypeClassSell2:
+		return true
+	case CalculationResultsObjectsTradePointsSignalTypeClassSell3:
+		return true
+	case CalculationResultsObjectsTradePointsSignalTypeSell1:
+		return true
+	case CalculationResultsObjectsTradePointsSignalTypeSell2:
+		return true
+	case CalculationResultsObjectsTradePointsSignalTypeSell3:
+		return true
+	case CalculationResultsObjectsTradePointsSignalTypeTopDivergence:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsTradePointsStrength.
+const (
+	CalculationResultsObjectsTradePointsStrengthLessThannil CalculationResultsObjectsTradePointsStrength = "<nil>"
+	CalculationResultsObjectsTradePointsStrengthNormal      CalculationResultsObjectsTradePointsStrength = "normal"
+	CalculationResultsObjectsTradePointsStrengthStrongest   CalculationResultsObjectsTradePointsStrength = "strongest"
+	CalculationResultsObjectsTradePointsStrengthWeakest     CalculationResultsObjectsTradePointsStrength = "weakest"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsTradePointsStrength enum.
+func (e CalculationResultsObjectsTradePointsStrength) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsTradePointsStrengthLessThannil:
+		return true
+	case CalculationResultsObjectsTradePointsStrengthNormal:
+		return true
+	case CalculationResultsObjectsTradePointsStrengthStrongest:
+		return true
+	case CalculationResultsObjectsTradePointsStrengthWeakest:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CalculationResultsObjectsZhongshuLeaveDirection.
 const (
 	CalculationResultsObjectsZhongshuLeaveDirectionDown        CalculationResultsObjectsZhongshuLeaveDirection = "down"
@@ -45,6 +327,288 @@ func (e CalculationResultsObjectsZhongshuStatus) Valid() bool {
 	case CalculationResultsObjectsZhongshuStatusExtended:
 		return true
 	case CalculationResultsObjectsZhongshuStatusLeft:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsDivergencesDivergenceKind.
+const (
+	ChanObjectsDivergencesDivergenceKindConsolidation ChanObjectsDivergencesDivergenceKind = "consolidation"
+	ChanObjectsDivergencesDivergenceKindLessThannil   ChanObjectsDivergencesDivergenceKind = "<nil>"
+	ChanObjectsDivergencesDivergenceKindTrend         ChanObjectsDivergencesDivergenceKind = "trend"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsDivergencesDivergenceKind enum.
+func (e ChanObjectsDivergencesDivergenceKind) Valid() bool {
+	switch e {
+	case ChanObjectsDivergencesDivergenceKindConsolidation:
+		return true
+	case ChanObjectsDivergencesDivergenceKindLessThannil:
+		return true
+	case ChanObjectsDivergencesDivergenceKindTrend:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsDivergencesSignalClass.
+const (
+	ChanObjectsDivergencesSignalClassClassLike   ChanObjectsDivergencesSignalClass = "class_like"
+	ChanObjectsDivergencesSignalClassLessThannil ChanObjectsDivergencesSignalClass = "<nil>"
+	ChanObjectsDivergencesSignalClassStandard    ChanObjectsDivergencesSignalClass = "standard"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsDivergencesSignalClass enum.
+func (e ChanObjectsDivergencesSignalClass) Valid() bool {
+	switch e {
+	case ChanObjectsDivergencesSignalClassClassLike:
+		return true
+	case ChanObjectsDivergencesSignalClassLessThannil:
+		return true
+	case ChanObjectsDivergencesSignalClassStandard:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsDivergencesSignalType.
+const (
+	ChanObjectsDivergencesSignalTypeBottomDivergence ChanObjectsDivergencesSignalType = "bottom_divergence"
+	ChanObjectsDivergencesSignalTypeBuy1             ChanObjectsDivergencesSignalType = "buy_1"
+	ChanObjectsDivergencesSignalTypeBuy2             ChanObjectsDivergencesSignalType = "buy_2"
+	ChanObjectsDivergencesSignalTypeBuy3             ChanObjectsDivergencesSignalType = "buy_3"
+	ChanObjectsDivergencesSignalTypeClassBuy1        ChanObjectsDivergencesSignalType = "class_buy_1"
+	ChanObjectsDivergencesSignalTypeClassBuy2        ChanObjectsDivergencesSignalType = "class_buy_2"
+	ChanObjectsDivergencesSignalTypeClassBuy3        ChanObjectsDivergencesSignalType = "class_buy_3"
+	ChanObjectsDivergencesSignalTypeClassSell1       ChanObjectsDivergencesSignalType = "class_sell_1"
+	ChanObjectsDivergencesSignalTypeClassSell2       ChanObjectsDivergencesSignalType = "class_sell_2"
+	ChanObjectsDivergencesSignalTypeClassSell3       ChanObjectsDivergencesSignalType = "class_sell_3"
+	ChanObjectsDivergencesSignalTypeSell1            ChanObjectsDivergencesSignalType = "sell_1"
+	ChanObjectsDivergencesSignalTypeSell2            ChanObjectsDivergencesSignalType = "sell_2"
+	ChanObjectsDivergencesSignalTypeSell3            ChanObjectsDivergencesSignalType = "sell_3"
+	ChanObjectsDivergencesSignalTypeTopDivergence    ChanObjectsDivergencesSignalType = "top_divergence"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsDivergencesSignalType enum.
+func (e ChanObjectsDivergencesSignalType) Valid() bool {
+	switch e {
+	case ChanObjectsDivergencesSignalTypeBottomDivergence:
+		return true
+	case ChanObjectsDivergencesSignalTypeBuy1:
+		return true
+	case ChanObjectsDivergencesSignalTypeBuy2:
+		return true
+	case ChanObjectsDivergencesSignalTypeBuy3:
+		return true
+	case ChanObjectsDivergencesSignalTypeClassBuy1:
+		return true
+	case ChanObjectsDivergencesSignalTypeClassBuy2:
+		return true
+	case ChanObjectsDivergencesSignalTypeClassBuy3:
+		return true
+	case ChanObjectsDivergencesSignalTypeClassSell1:
+		return true
+	case ChanObjectsDivergencesSignalTypeClassSell2:
+		return true
+	case ChanObjectsDivergencesSignalTypeClassSell3:
+		return true
+	case ChanObjectsDivergencesSignalTypeSell1:
+		return true
+	case ChanObjectsDivergencesSignalTypeSell2:
+		return true
+	case ChanObjectsDivergencesSignalTypeSell3:
+		return true
+	case ChanObjectsDivergencesSignalTypeTopDivergence:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsDivergencesStrength.
+const (
+	ChanObjectsDivergencesStrengthLessThannil ChanObjectsDivergencesStrength = "<nil>"
+	ChanObjectsDivergencesStrengthNormal      ChanObjectsDivergencesStrength = "normal"
+	ChanObjectsDivergencesStrengthStrongest   ChanObjectsDivergencesStrength = "strongest"
+	ChanObjectsDivergencesStrengthWeakest     ChanObjectsDivergencesStrength = "weakest"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsDivergencesStrength enum.
+func (e ChanObjectsDivergencesStrength) Valid() bool {
+	switch e {
+	case ChanObjectsDivergencesStrengthLessThannil:
+		return true
+	case ChanObjectsDivergencesStrengthNormal:
+		return true
+	case ChanObjectsDivergencesStrengthStrongest:
+		return true
+	case ChanObjectsDivergencesStrengthWeakest:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsSegmentZhongshuLeaveDirection.
+const (
+	ChanObjectsSegmentZhongshuLeaveDirectionDown        ChanObjectsSegmentZhongshuLeaveDirection = "down"
+	ChanObjectsSegmentZhongshuLeaveDirectionLessThannil ChanObjectsSegmentZhongshuLeaveDirection = "<nil>"
+	ChanObjectsSegmentZhongshuLeaveDirectionUp          ChanObjectsSegmentZhongshuLeaveDirection = "up"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsSegmentZhongshuLeaveDirection enum.
+func (e ChanObjectsSegmentZhongshuLeaveDirection) Valid() bool {
+	switch e {
+	case ChanObjectsSegmentZhongshuLeaveDirectionDown:
+		return true
+	case ChanObjectsSegmentZhongshuLeaveDirectionLessThannil:
+		return true
+	case ChanObjectsSegmentZhongshuLeaveDirectionUp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsSegmentZhongshuStatus.
+const (
+	ChanObjectsSegmentZhongshuStatusConfirmed ChanObjectsSegmentZhongshuStatus = "confirmed"
+	ChanObjectsSegmentZhongshuStatusExtended  ChanObjectsSegmentZhongshuStatus = "extended"
+	ChanObjectsSegmentZhongshuStatusLeft      ChanObjectsSegmentZhongshuStatus = "left"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsSegmentZhongshuStatus enum.
+func (e ChanObjectsSegmentZhongshuStatus) Valid() bool {
+	switch e {
+	case ChanObjectsSegmentZhongshuStatusConfirmed:
+		return true
+	case ChanObjectsSegmentZhongshuStatusExtended:
+		return true
+	case ChanObjectsSegmentZhongshuStatusLeft:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsTradePointsDivergenceKind.
+const (
+	ChanObjectsTradePointsDivergenceKindConsolidation ChanObjectsTradePointsDivergenceKind = "consolidation"
+	ChanObjectsTradePointsDivergenceKindLessThannil   ChanObjectsTradePointsDivergenceKind = "<nil>"
+	ChanObjectsTradePointsDivergenceKindTrend         ChanObjectsTradePointsDivergenceKind = "trend"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsTradePointsDivergenceKind enum.
+func (e ChanObjectsTradePointsDivergenceKind) Valid() bool {
+	switch e {
+	case ChanObjectsTradePointsDivergenceKindConsolidation:
+		return true
+	case ChanObjectsTradePointsDivergenceKindLessThannil:
+		return true
+	case ChanObjectsTradePointsDivergenceKindTrend:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsTradePointsSignalClass.
+const (
+	ChanObjectsTradePointsSignalClassClassLike   ChanObjectsTradePointsSignalClass = "class_like"
+	ChanObjectsTradePointsSignalClassLessThannil ChanObjectsTradePointsSignalClass = "<nil>"
+	ChanObjectsTradePointsSignalClassStandard    ChanObjectsTradePointsSignalClass = "standard"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsTradePointsSignalClass enum.
+func (e ChanObjectsTradePointsSignalClass) Valid() bool {
+	switch e {
+	case ChanObjectsTradePointsSignalClassClassLike:
+		return true
+	case ChanObjectsTradePointsSignalClassLessThannil:
+		return true
+	case ChanObjectsTradePointsSignalClassStandard:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsTradePointsSignalType.
+const (
+	ChanObjectsTradePointsSignalTypeBottomDivergence ChanObjectsTradePointsSignalType = "bottom_divergence"
+	ChanObjectsTradePointsSignalTypeBuy1             ChanObjectsTradePointsSignalType = "buy_1"
+	ChanObjectsTradePointsSignalTypeBuy2             ChanObjectsTradePointsSignalType = "buy_2"
+	ChanObjectsTradePointsSignalTypeBuy3             ChanObjectsTradePointsSignalType = "buy_3"
+	ChanObjectsTradePointsSignalTypeClassBuy1        ChanObjectsTradePointsSignalType = "class_buy_1"
+	ChanObjectsTradePointsSignalTypeClassBuy2        ChanObjectsTradePointsSignalType = "class_buy_2"
+	ChanObjectsTradePointsSignalTypeClassBuy3        ChanObjectsTradePointsSignalType = "class_buy_3"
+	ChanObjectsTradePointsSignalTypeClassSell1       ChanObjectsTradePointsSignalType = "class_sell_1"
+	ChanObjectsTradePointsSignalTypeClassSell2       ChanObjectsTradePointsSignalType = "class_sell_2"
+	ChanObjectsTradePointsSignalTypeClassSell3       ChanObjectsTradePointsSignalType = "class_sell_3"
+	ChanObjectsTradePointsSignalTypeSell1            ChanObjectsTradePointsSignalType = "sell_1"
+	ChanObjectsTradePointsSignalTypeSell2            ChanObjectsTradePointsSignalType = "sell_2"
+	ChanObjectsTradePointsSignalTypeSell3            ChanObjectsTradePointsSignalType = "sell_3"
+	ChanObjectsTradePointsSignalTypeTopDivergence    ChanObjectsTradePointsSignalType = "top_divergence"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsTradePointsSignalType enum.
+func (e ChanObjectsTradePointsSignalType) Valid() bool {
+	switch e {
+	case ChanObjectsTradePointsSignalTypeBottomDivergence:
+		return true
+	case ChanObjectsTradePointsSignalTypeBuy1:
+		return true
+	case ChanObjectsTradePointsSignalTypeBuy2:
+		return true
+	case ChanObjectsTradePointsSignalTypeBuy3:
+		return true
+	case ChanObjectsTradePointsSignalTypeClassBuy1:
+		return true
+	case ChanObjectsTradePointsSignalTypeClassBuy2:
+		return true
+	case ChanObjectsTradePointsSignalTypeClassBuy3:
+		return true
+	case ChanObjectsTradePointsSignalTypeClassSell1:
+		return true
+	case ChanObjectsTradePointsSignalTypeClassSell2:
+		return true
+	case ChanObjectsTradePointsSignalTypeClassSell3:
+		return true
+	case ChanObjectsTradePointsSignalTypeSell1:
+		return true
+	case ChanObjectsTradePointsSignalTypeSell2:
+		return true
+	case ChanObjectsTradePointsSignalTypeSell3:
+		return true
+	case ChanObjectsTradePointsSignalTypeTopDivergence:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsTradePointsStrength.
+const (
+	ChanObjectsTradePointsStrengthLessThannil ChanObjectsTradePointsStrength = "<nil>"
+	ChanObjectsTradePointsStrengthNormal      ChanObjectsTradePointsStrength = "normal"
+	ChanObjectsTradePointsStrengthStrongest   ChanObjectsTradePointsStrength = "strongest"
+	ChanObjectsTradePointsStrengthWeakest     ChanObjectsTradePointsStrength = "weakest"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsTradePointsStrength enum.
+func (e ChanObjectsTradePointsStrength) Valid() bool {
+	switch e {
+	case ChanObjectsTradePointsStrengthLessThannil:
+		return true
+	case ChanObjectsTradePointsStrengthNormal:
+		return true
+	case ChanObjectsTradePointsStrengthStrongest:
+		return true
+	case ChanObjectsTradePointsStrengthWeakest:
 		return true
 	default:
 		return false
@@ -93,6 +657,126 @@ func (e ChanObjectsZhongshuStatus) Valid() bool {
 	}
 }
 
+// Defines values for ChanSignalPointDivergenceKind.
+const (
+	ChanSignalPointDivergenceKindConsolidation ChanSignalPointDivergenceKind = "consolidation"
+	ChanSignalPointDivergenceKindLessThannil   ChanSignalPointDivergenceKind = "<nil>"
+	ChanSignalPointDivergenceKindTrend         ChanSignalPointDivergenceKind = "trend"
+)
+
+// Valid indicates whether the value is a known member of the ChanSignalPointDivergenceKind enum.
+func (e ChanSignalPointDivergenceKind) Valid() bool {
+	switch e {
+	case ChanSignalPointDivergenceKindConsolidation:
+		return true
+	case ChanSignalPointDivergenceKindLessThannil:
+		return true
+	case ChanSignalPointDivergenceKindTrend:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanSignalPointSignalClass.
+const (
+	ChanSignalPointSignalClassClassLike   ChanSignalPointSignalClass = "class_like"
+	ChanSignalPointSignalClassLessThannil ChanSignalPointSignalClass = "<nil>"
+	ChanSignalPointSignalClassStandard    ChanSignalPointSignalClass = "standard"
+)
+
+// Valid indicates whether the value is a known member of the ChanSignalPointSignalClass enum.
+func (e ChanSignalPointSignalClass) Valid() bool {
+	switch e {
+	case ChanSignalPointSignalClassClassLike:
+		return true
+	case ChanSignalPointSignalClassLessThannil:
+		return true
+	case ChanSignalPointSignalClassStandard:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanSignalPointSignalType.
+const (
+	ChanSignalPointSignalTypeBottomDivergence ChanSignalPointSignalType = "bottom_divergence"
+	ChanSignalPointSignalTypeBuy1             ChanSignalPointSignalType = "buy_1"
+	ChanSignalPointSignalTypeBuy2             ChanSignalPointSignalType = "buy_2"
+	ChanSignalPointSignalTypeBuy3             ChanSignalPointSignalType = "buy_3"
+	ChanSignalPointSignalTypeClassBuy1        ChanSignalPointSignalType = "class_buy_1"
+	ChanSignalPointSignalTypeClassBuy2        ChanSignalPointSignalType = "class_buy_2"
+	ChanSignalPointSignalTypeClassBuy3        ChanSignalPointSignalType = "class_buy_3"
+	ChanSignalPointSignalTypeClassSell1       ChanSignalPointSignalType = "class_sell_1"
+	ChanSignalPointSignalTypeClassSell2       ChanSignalPointSignalType = "class_sell_2"
+	ChanSignalPointSignalTypeClassSell3       ChanSignalPointSignalType = "class_sell_3"
+	ChanSignalPointSignalTypeSell1            ChanSignalPointSignalType = "sell_1"
+	ChanSignalPointSignalTypeSell2            ChanSignalPointSignalType = "sell_2"
+	ChanSignalPointSignalTypeSell3            ChanSignalPointSignalType = "sell_3"
+	ChanSignalPointSignalTypeTopDivergence    ChanSignalPointSignalType = "top_divergence"
+)
+
+// Valid indicates whether the value is a known member of the ChanSignalPointSignalType enum.
+func (e ChanSignalPointSignalType) Valid() bool {
+	switch e {
+	case ChanSignalPointSignalTypeBottomDivergence:
+		return true
+	case ChanSignalPointSignalTypeBuy1:
+		return true
+	case ChanSignalPointSignalTypeBuy2:
+		return true
+	case ChanSignalPointSignalTypeBuy3:
+		return true
+	case ChanSignalPointSignalTypeClassBuy1:
+		return true
+	case ChanSignalPointSignalTypeClassBuy2:
+		return true
+	case ChanSignalPointSignalTypeClassBuy3:
+		return true
+	case ChanSignalPointSignalTypeClassSell1:
+		return true
+	case ChanSignalPointSignalTypeClassSell2:
+		return true
+	case ChanSignalPointSignalTypeClassSell3:
+		return true
+	case ChanSignalPointSignalTypeSell1:
+		return true
+	case ChanSignalPointSignalTypeSell2:
+		return true
+	case ChanSignalPointSignalTypeSell3:
+		return true
+	case ChanSignalPointSignalTypeTopDivergence:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanSignalPointStrength.
+const (
+	ChanSignalPointStrengthLessThannil ChanSignalPointStrength = "<nil>"
+	ChanSignalPointStrengthNormal      ChanSignalPointStrength = "normal"
+	ChanSignalPointStrengthStrongest   ChanSignalPointStrength = "strongest"
+	ChanSignalPointStrengthWeakest     ChanSignalPointStrength = "weakest"
+)
+
+// Valid indicates whether the value is a known member of the ChanSignalPointStrength enum.
+func (e ChanSignalPointStrength) Valid() bool {
+	switch e {
+	case ChanSignalPointStrengthLessThannil:
+		return true
+	case ChanSignalPointStrengthNormal:
+		return true
+	case ChanSignalPointStrengthStrongest:
+		return true
+	case ChanSignalPointStrengthWeakest:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ChanZhongshuLeaveDirection.
 const (
 	ChanZhongshuLeaveDirectionDown        ChanZhongshuLeaveDirection = "down"
@@ -129,6 +813,288 @@ func (e ChanZhongshuStatus) Valid() bool {
 	case ChanZhongshuStatusExtended:
 		return true
 	case ChanZhongshuStatusLeft:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKind.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKindConsolidation GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKind = "consolidation"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKindLessThannil   GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKind = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKindTrend         GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKind = "trend"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKind enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKind) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKindConsolidation:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKindLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKindTrend:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalClass.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalClassClassLike   GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalClass = "class_like"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalClassLessThannil GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalClass = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalClassStandard    GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalClass = "standard"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalClass enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalClass) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalClassClassLike:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalClassLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalClassStandard:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeBottomDivergence GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType = "bottom_divergence"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeBuy1             GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType = "buy_1"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeBuy2             GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType = "buy_2"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeBuy3             GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType = "buy_3"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeClassBuy1        GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType = "class_buy_1"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeClassBuy2        GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType = "class_buy_2"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeClassBuy3        GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType = "class_buy_3"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeClassSell1       GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType = "class_sell_1"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeClassSell2       GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType = "class_sell_2"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeClassSell3       GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType = "class_sell_3"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeSell1            GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType = "sell_1"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeSell2            GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType = "sell_2"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeSell3            GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType = "sell_3"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeTopDivergence    GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType = "top_divergence"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeBottomDivergence:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeBuy1:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeBuy2:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeBuy3:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeClassBuy1:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeClassBuy2:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeClassBuy3:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeClassSell1:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeClassSell2:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeClassSell3:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeSell1:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeSell2:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeSell3:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalTypeTopDivergence:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsDivergencesStrength.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthLessThannil GetCalculationResults200JSONResponseBodyObjectsDivergencesStrength = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthNormal      GetCalculationResults200JSONResponseBodyObjectsDivergencesStrength = "normal"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthStrongest   GetCalculationResults200JSONResponseBodyObjectsDivergencesStrength = "strongest"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthWeakest     GetCalculationResults200JSONResponseBodyObjectsDivergencesStrength = "weakest"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsDivergencesStrength enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesStrength) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthNormal:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthStrongest:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthWeakest:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuLeaveDirection.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuLeaveDirectionDown        GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuLeaveDirection = "down"
+	GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuLeaveDirectionLessThannil GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuLeaveDirection = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuLeaveDirectionUp          GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuLeaveDirection = "up"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuLeaveDirection enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuLeaveDirection) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuLeaveDirectionDown:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuLeaveDirectionLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuLeaveDirectionUp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatus.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatusConfirmed GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatus = "confirmed"
+	GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatusExtended  GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatus = "extended"
+	GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatusLeft      GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatus = "left"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatus enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatus) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatusConfirmed:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatusExtended:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatusLeft:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKind.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKindConsolidation GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKind = "consolidation"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKindLessThannil   GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKind = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKindTrend         GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKind = "trend"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKind enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKind) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKindConsolidation:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKindLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKindTrend:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalClass.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalClassClassLike   GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalClass = "class_like"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalClassLessThannil GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalClass = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalClassStandard    GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalClass = "standard"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalClass enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalClass) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalClassClassLike:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalClassLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalClassStandard:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalType.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeBottomDivergence GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalType = "bottom_divergence"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeBuy1             GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalType = "buy_1"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeBuy2             GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalType = "buy_2"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeBuy3             GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalType = "buy_3"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeClassBuy1        GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalType = "class_buy_1"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeClassBuy2        GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalType = "class_buy_2"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeClassBuy3        GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalType = "class_buy_3"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeClassSell1       GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalType = "class_sell_1"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeClassSell2       GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalType = "class_sell_2"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeClassSell3       GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalType = "class_sell_3"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeSell1            GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalType = "sell_1"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeSell2            GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalType = "sell_2"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeSell3            GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalType = "sell_3"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeTopDivergence    GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalType = "top_divergence"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalType enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalType) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeBottomDivergence:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeBuy1:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeBuy2:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeBuy3:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeClassBuy1:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeClassBuy2:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeClassBuy3:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeClassSell1:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeClassSell2:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeClassSell3:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeSell1:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeSell2:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeSell3:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalTypeTopDivergence:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsTradePointsStrength.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthLessThannil GetCalculationResults200JSONResponseBodyObjectsTradePointsStrength = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthNormal      GetCalculationResults200JSONResponseBodyObjectsTradePointsStrength = "normal"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthStrongest   GetCalculationResults200JSONResponseBodyObjectsTradePointsStrength = "strongest"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthWeakest     GetCalculationResults200JSONResponseBodyObjectsTradePointsStrength = "weakest"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsTradePointsStrength enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsStrength) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthNormal:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthStrongest:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthWeakest:
 		return true
 	default:
 		return false
@@ -361,6 +1327,23 @@ type CalculationResults struct {
 			StartPriceI64       int         `json:"start_price_i64"`
 			StartTime           int         `json:"start_time"`
 		} `json:"bi"`
+		Divergences []struct {
+			BarIndex            int                                                 `json:"bar_index"`
+			Confirmed           bool                                                `json:"confirmed"`
+			ConfirmedAtBarIndex *int                                                `json:"confirmed_at_bar_index"`
+			DivergenceKind      *CalculationResultsObjectsDivergencesDivergenceKind `json:"divergence_kind"`
+			KnownAtBarIndex     int                                                 `json:"known_at_bar_index"`
+			MacdAreaCurrent     *float32                                            `json:"macd_area_current"`
+			MacdAreaReference   *float32                                            `json:"macd_area_reference"`
+			ObjectId            string                                              `json:"object_id"`
+			ObjectRevision      int                                                 `json:"object_revision"`
+			PriceI64            int                                                 `json:"price_i64"`
+			ReferenceObjectId   *string                                             `json:"reference_object_id"`
+			SignalClass         *CalculationResultsObjectsDivergencesSignalClass    `json:"signal_class"`
+			SignalType          CalculationResultsObjectsDivergencesSignalType      `json:"signal_type"`
+			Strength            *CalculationResultsObjectsDivergencesStrength       `json:"strength"`
+			Time                int                                                 `json:"time"`
+		} `json:"divergences"`
 		Fractals []struct {
 			BarIndex            int         `json:"bar_index"`
 			Confirmed           bool        `json:"confirmed"`
@@ -372,6 +1355,21 @@ type CalculationResults struct {
 			PriceI64            int         `json:"price_i64"`
 			Time                int         `json:"time"`
 		} `json:"fractals"`
+		SegmentZhongshu []struct {
+			Confirmed           bool                                                    `json:"confirmed"`
+			ConfirmedAtBarIndex *int                                                    `json:"confirmed_at_bar_index"`
+			EndBarIndex         int                                                     `json:"end_bar_index"`
+			EndTime             int                                                     `json:"end_time"`
+			KnownAtBarIndex     int                                                     `json:"known_at_bar_index"`
+			LeaveDirection      *CalculationResultsObjectsSegmentZhongshuLeaveDirection `json:"leave_direction"`
+			ObjectId            string                                                  `json:"object_id"`
+			ObjectRevision      int                                                     `json:"object_revision"`
+			StartBarIndex       int                                                     `json:"start_bar_index"`
+			StartTime           int                                                     `json:"start_time"`
+			Status              CalculationResultsObjectsSegmentZhongshuStatus          `json:"status"`
+			ZdI64               int                                                     `json:"zd_i64"`
+			ZgI64               int                                                     `json:"zg_i64"`
+		} `json:"segment_zhongshu"`
 		Segments []struct {
 			Confirmed           bool        `json:"confirmed"`
 			ConfirmedAtBarIndex *int        `json:"confirmed_at_bar_index"`
@@ -386,6 +1384,23 @@ type CalculationResults struct {
 			StartPriceI64       int         `json:"start_price_i64"`
 			StartTime           int         `json:"start_time"`
 		} `json:"segments"`
+		TradePoints []struct {
+			BarIndex            int                                                 `json:"bar_index"`
+			Confirmed           bool                                                `json:"confirmed"`
+			ConfirmedAtBarIndex *int                                                `json:"confirmed_at_bar_index"`
+			DivergenceKind      *CalculationResultsObjectsTradePointsDivergenceKind `json:"divergence_kind"`
+			KnownAtBarIndex     int                                                 `json:"known_at_bar_index"`
+			MacdAreaCurrent     *float32                                            `json:"macd_area_current"`
+			MacdAreaReference   *float32                                            `json:"macd_area_reference"`
+			ObjectId            string                                              `json:"object_id"`
+			ObjectRevision      int                                                 `json:"object_revision"`
+			PriceI64            int                                                 `json:"price_i64"`
+			ReferenceObjectId   *string                                             `json:"reference_object_id"`
+			SignalClass         *CalculationResultsObjectsTradePointsSignalClass    `json:"signal_class"`
+			SignalType          CalculationResultsObjectsTradePointsSignalType      `json:"signal_type"`
+			Strength            *CalculationResultsObjectsTradePointsStrength       `json:"strength"`
+			Time                int                                                 `json:"time"`
+		} `json:"trade_points"`
 		Zhongshu []struct {
 			Confirmed           bool                                             `json:"confirmed"`
 			ConfirmedAtBarIndex *int                                             `json:"confirmed_at_bar_index"`
@@ -406,6 +1421,36 @@ type CalculationResults struct {
 	ResultKind interface{}            `json:"result_kind"`
 	Values     *map[string][]*float32 `json:"values,omitempty"`
 }
+
+// CalculationResultsObjectsDivergencesDivergenceKind defines model for CalculationResults.Objects.Divergences.DivergenceKind.
+type CalculationResultsObjectsDivergencesDivergenceKind string
+
+// CalculationResultsObjectsDivergencesSignalClass defines model for CalculationResults.Objects.Divergences.SignalClass.
+type CalculationResultsObjectsDivergencesSignalClass string
+
+// CalculationResultsObjectsDivergencesSignalType defines model for CalculationResults.Objects.Divergences.SignalType.
+type CalculationResultsObjectsDivergencesSignalType string
+
+// CalculationResultsObjectsDivergencesStrength defines model for CalculationResults.Objects.Divergences.Strength.
+type CalculationResultsObjectsDivergencesStrength string
+
+// CalculationResultsObjectsSegmentZhongshuLeaveDirection defines model for CalculationResults.Objects.SegmentZhongshu.LeaveDirection.
+type CalculationResultsObjectsSegmentZhongshuLeaveDirection string
+
+// CalculationResultsObjectsSegmentZhongshuStatus defines model for CalculationResults.Objects.SegmentZhongshu.Status.
+type CalculationResultsObjectsSegmentZhongshuStatus string
+
+// CalculationResultsObjectsTradePointsDivergenceKind defines model for CalculationResults.Objects.TradePoints.DivergenceKind.
+type CalculationResultsObjectsTradePointsDivergenceKind string
+
+// CalculationResultsObjectsTradePointsSignalClass defines model for CalculationResults.Objects.TradePoints.SignalClass.
+type CalculationResultsObjectsTradePointsSignalClass string
+
+// CalculationResultsObjectsTradePointsSignalType defines model for CalculationResults.Objects.TradePoints.SignalType.
+type CalculationResultsObjectsTradePointsSignalType string
+
+// CalculationResultsObjectsTradePointsStrength defines model for CalculationResults.Objects.TradePoints.Strength.
+type CalculationResultsObjectsTradePointsStrength string
 
 // CalculationResultsObjectsZhongshuLeaveDirection defines model for CalculationResults.Objects.Zhongshu.LeaveDirection.
 type CalculationResultsObjectsZhongshuLeaveDirection string
@@ -469,6 +1514,23 @@ type ChanObjects struct {
 		StartPriceI64       int         `json:"start_price_i64"`
 		StartTime           int         `json:"start_time"`
 	} `json:"bi"`
+	Divergences []struct {
+		BarIndex            int                                   `json:"bar_index"`
+		Confirmed           bool                                  `json:"confirmed"`
+		ConfirmedAtBarIndex *int                                  `json:"confirmed_at_bar_index"`
+		DivergenceKind      *ChanObjectsDivergencesDivergenceKind `json:"divergence_kind"`
+		KnownAtBarIndex     int                                   `json:"known_at_bar_index"`
+		MacdAreaCurrent     *float32                              `json:"macd_area_current"`
+		MacdAreaReference   *float32                              `json:"macd_area_reference"`
+		ObjectId            string                                `json:"object_id"`
+		ObjectRevision      int                                   `json:"object_revision"`
+		PriceI64            int                                   `json:"price_i64"`
+		ReferenceObjectId   *string                               `json:"reference_object_id"`
+		SignalClass         *ChanObjectsDivergencesSignalClass    `json:"signal_class"`
+		SignalType          ChanObjectsDivergencesSignalType      `json:"signal_type"`
+		Strength            *ChanObjectsDivergencesStrength       `json:"strength"`
+		Time                int                                   `json:"time"`
+	} `json:"divergences"`
 	Fractals []struct {
 		BarIndex            int         `json:"bar_index"`
 		Confirmed           bool        `json:"confirmed"`
@@ -480,6 +1542,21 @@ type ChanObjects struct {
 		PriceI64            int         `json:"price_i64"`
 		Time                int         `json:"time"`
 	} `json:"fractals"`
+	SegmentZhongshu []struct {
+		Confirmed           bool                                      `json:"confirmed"`
+		ConfirmedAtBarIndex *int                                      `json:"confirmed_at_bar_index"`
+		EndBarIndex         int                                       `json:"end_bar_index"`
+		EndTime             int                                       `json:"end_time"`
+		KnownAtBarIndex     int                                       `json:"known_at_bar_index"`
+		LeaveDirection      *ChanObjectsSegmentZhongshuLeaveDirection `json:"leave_direction"`
+		ObjectId            string                                    `json:"object_id"`
+		ObjectRevision      int                                       `json:"object_revision"`
+		StartBarIndex       int                                       `json:"start_bar_index"`
+		StartTime           int                                       `json:"start_time"`
+		Status              ChanObjectsSegmentZhongshuStatus          `json:"status"`
+		ZdI64               int                                       `json:"zd_i64"`
+		ZgI64               int                                       `json:"zg_i64"`
+	} `json:"segment_zhongshu"`
 	Segments []struct {
 		Confirmed           bool        `json:"confirmed"`
 		ConfirmedAtBarIndex *int        `json:"confirmed_at_bar_index"`
@@ -494,6 +1571,23 @@ type ChanObjects struct {
 		StartPriceI64       int         `json:"start_price_i64"`
 		StartTime           int         `json:"start_time"`
 	} `json:"segments"`
+	TradePoints []struct {
+		BarIndex            int                                   `json:"bar_index"`
+		Confirmed           bool                                  `json:"confirmed"`
+		ConfirmedAtBarIndex *int                                  `json:"confirmed_at_bar_index"`
+		DivergenceKind      *ChanObjectsTradePointsDivergenceKind `json:"divergence_kind"`
+		KnownAtBarIndex     int                                   `json:"known_at_bar_index"`
+		MacdAreaCurrent     *float32                              `json:"macd_area_current"`
+		MacdAreaReference   *float32                              `json:"macd_area_reference"`
+		ObjectId            string                                `json:"object_id"`
+		ObjectRevision      int                                   `json:"object_revision"`
+		PriceI64            int                                   `json:"price_i64"`
+		ReferenceObjectId   *string                               `json:"reference_object_id"`
+		SignalClass         *ChanObjectsTradePointsSignalClass    `json:"signal_class"`
+		SignalType          ChanObjectsTradePointsSignalType      `json:"signal_type"`
+		Strength            *ChanObjectsTradePointsStrength       `json:"strength"`
+		Time                int                                   `json:"time"`
+	} `json:"trade_points"`
 	Zhongshu []struct {
 		Confirmed           bool                               `json:"confirmed"`
 		ConfirmedAtBarIndex *int                               `json:"confirmed_at_bar_index"`
@@ -511,11 +1605,72 @@ type ChanObjects struct {
 	} `json:"zhongshu"`
 }
 
+// ChanObjectsDivergencesDivergenceKind defines model for ChanObjects.Divergences.DivergenceKind.
+type ChanObjectsDivergencesDivergenceKind string
+
+// ChanObjectsDivergencesSignalClass defines model for ChanObjects.Divergences.SignalClass.
+type ChanObjectsDivergencesSignalClass string
+
+// ChanObjectsDivergencesSignalType defines model for ChanObjects.Divergences.SignalType.
+type ChanObjectsDivergencesSignalType string
+
+// ChanObjectsDivergencesStrength defines model for ChanObjects.Divergences.Strength.
+type ChanObjectsDivergencesStrength string
+
+// ChanObjectsSegmentZhongshuLeaveDirection defines model for ChanObjects.SegmentZhongshu.LeaveDirection.
+type ChanObjectsSegmentZhongshuLeaveDirection string
+
+// ChanObjectsSegmentZhongshuStatus defines model for ChanObjects.SegmentZhongshu.Status.
+type ChanObjectsSegmentZhongshuStatus string
+
+// ChanObjectsTradePointsDivergenceKind defines model for ChanObjects.TradePoints.DivergenceKind.
+type ChanObjectsTradePointsDivergenceKind string
+
+// ChanObjectsTradePointsSignalClass defines model for ChanObjects.TradePoints.SignalClass.
+type ChanObjectsTradePointsSignalClass string
+
+// ChanObjectsTradePointsSignalType defines model for ChanObjects.TradePoints.SignalType.
+type ChanObjectsTradePointsSignalType string
+
+// ChanObjectsTradePointsStrength defines model for ChanObjects.TradePoints.Strength.
+type ChanObjectsTradePointsStrength string
+
 // ChanObjectsZhongshuLeaveDirection defines model for ChanObjects.Zhongshu.LeaveDirection.
 type ChanObjectsZhongshuLeaveDirection string
 
 // ChanObjectsZhongshuStatus defines model for ChanObjects.Zhongshu.Status.
 type ChanObjectsZhongshuStatus string
+
+// ChanSignalPoint defines model for ChanSignalPoint.
+type ChanSignalPoint struct {
+	BarIndex            int                            `json:"bar_index"`
+	Confirmed           bool                           `json:"confirmed"`
+	ConfirmedAtBarIndex *int                           `json:"confirmed_at_bar_index"`
+	DivergenceKind      *ChanSignalPointDivergenceKind `json:"divergence_kind"`
+	KnownAtBarIndex     int                            `json:"known_at_bar_index"`
+	MacdAreaCurrent     *float32                       `json:"macd_area_current"`
+	MacdAreaReference   *float32                       `json:"macd_area_reference"`
+	ObjectId            string                         `json:"object_id"`
+	ObjectRevision      int                            `json:"object_revision"`
+	PriceI64            int                            `json:"price_i64"`
+	ReferenceObjectId   *string                        `json:"reference_object_id"`
+	SignalClass         *ChanSignalPointSignalClass    `json:"signal_class"`
+	SignalType          ChanSignalPointSignalType      `json:"signal_type"`
+	Strength            *ChanSignalPointStrength       `json:"strength"`
+	Time                int                            `json:"time"`
+}
+
+// ChanSignalPointDivergenceKind defines model for ChanSignalPoint.DivergenceKind.
+type ChanSignalPointDivergenceKind string
+
+// ChanSignalPointSignalClass defines model for ChanSignalPoint.SignalClass.
+type ChanSignalPointSignalClass string
+
+// ChanSignalPointSignalType defines model for ChanSignalPoint.SignalType.
+type ChanSignalPointSignalType string
+
+// ChanSignalPointStrength defines model for ChanSignalPoint.Strength.
+type ChanSignalPointStrength string
 
 // ChanZhongshu defines model for ChanZhongshu.
 type ChanZhongshu struct {
@@ -1159,6 +2314,36 @@ type GetCalculationResultsParams struct {
 	ToBarIndex   int `form:"to_bar_index" json:"to_bar_index"`
 }
 
+// GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKind defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKind string
+
+// GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalClass defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalClass string
+
+// GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType string
+
+// GetCalculationResults200JSONResponseBodyObjectsDivergencesStrength defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsDivergencesStrength string
+
+// GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuLeaveDirection defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuLeaveDirection string
+
+// GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatus defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatus string
+
+// GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKind defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKind string
+
+// GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalClass defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalClass string
+
+// GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalType defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalType string
+
+// GetCalculationResults200JSONResponseBodyObjectsTradePointsStrength defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsTradePointsStrength string
+
 // GetCalculationResults200JSONResponseBodyObjectsZhongshuLeaveDirection defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsZhongshuLeaveDirection string
 
@@ -1424,10 +2609,13 @@ type PutLayoutJSONBody struct {
 			SourceHash       string      `json:"source_hash"`
 		} `json:"algorithm"`
 		CategoryVisibility struct {
-			Bi       bool  `json:"bi"`
-			Fractals bool  `json:"fractals"`
-			Segments *bool `json:"segments,omitempty"`
-			Zhongshu bool  `json:"zhongshu"`
+			Bi              bool  `json:"bi"`
+			Divergences     *bool `json:"divergences,omitempty"`
+			Fractals        bool  `json:"fractals"`
+			SegmentZhongshu *bool `json:"segment_zhongshu,omitempty"`
+			Segments        *bool `json:"segments,omitempty"`
+			TradePoints     *bool `json:"trade_points,omitempty"`
+			Zhongshu        bool  `json:"zhongshu"`
 		} `json:"category_visibility"`
 		DataRevision string                 `json:"data_revision"`
 		DatasetId    string                 `json:"dataset_id"`

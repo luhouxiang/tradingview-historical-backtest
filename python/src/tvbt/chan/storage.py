@@ -62,6 +62,25 @@ ZHONGSHU_SCHEMA = pa.schema(
         ("object_revision", pa.int64()),
     ]
 )
+SIGNAL_SCHEMA = pa.schema(
+    [
+        ("object_id", pa.string()),
+        ("bar_index", pa.int64()),
+        ("time", pa.int64()),
+        ("price_i64", pa.int64()),
+        ("signal_type", pa.string()),
+        ("divergence_kind", pa.string()),
+        ("signal_class", pa.string()),
+        ("strength", pa.string()),
+        ("reference_object_id", pa.string()),
+        ("macd_area_reference", pa.float64()),
+        ("macd_area_current", pa.float64()),
+        ("confirmed", pa.bool_()),
+        ("confirmed_at_bar_index", pa.int64()),
+        ("known_at_bar_index", pa.int64()),
+        ("object_revision", pa.int64()),
+    ]
+)
 EVENT_SCHEMA = pa.schema(
     [
         ("event_seq", pa.int64()),
@@ -85,6 +104,9 @@ class ChanResult:
     bi: list[dict[str, Any]] = field(default_factory=list)
     segments: list[dict[str, Any]] = field(default_factory=list)
     zhongshu: list[dict[str, Any]] = field(default_factory=list)
+    segment_zhongshu: list[dict[str, Any]] = field(default_factory=list)
+    divergences: list[dict[str, Any]] = field(default_factory=list)
+    trade_points: list[dict[str, Any]] = field(default_factory=list)
     events: list[dict[str, Any]] = field(default_factory=list)
     checkpoints: dict[int, bytes] = field(default_factory=dict)
 
@@ -113,6 +135,9 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
             "bi": (result.bi, LINE_SCHEMA),
             "segments": (result.segments, LINE_SCHEMA),
             "zhongshu": (result.zhongshu, ZHONGSHU_SCHEMA),
+            "segment_zhongshu": (result.segment_zhongshu, ZHONGSHU_SCHEMA),
+            "divergences": (result.divergences, SIGNAL_SCHEMA),
+            "trade_points": (result.trade_points, SIGNAL_SCHEMA),
             "events": (result.events, EVENT_SCHEMA),
         }
         files: dict[str, dict[str, int | str]] = {}
@@ -146,6 +171,9 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
                 "bi": len(result.bi),
                 "segments": len(result.segments),
                 "zhongshu": len(result.zhongshu),
+                "segment_zhongshu": len(result.segment_zhongshu),
+                "divergences": len(result.divergences),
+                "trade_points": len(result.trade_points),
                 "events": len(result.events),
             },
             "files": files,

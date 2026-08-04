@@ -19,6 +19,9 @@ class BarLike(Protocol):
     @property
     def low_i64(self) -> int: ...
 
+    @property
+    def close_i64(self) -> int: ...
+
 
 class EndpointLike(Protocol):
     @property
@@ -67,6 +70,8 @@ class ReferenceSegment:
 class ReferenceCenter:
     base_index: int
     seed_end_index: int
+    end_index: int
+    exit_index: int | None
     start_bar_index: int
     end_bar_index: int
     start_time: int
@@ -390,6 +395,8 @@ def reference_centers(lines: Sequence[LineLike]) -> list[ReferenceCenter]:
                 ReferenceCenter(
                     base_index=base,
                     seed_end_index=seed_end,
+                    end_index=end_index,
+                    exit_index=cursor if cursor < len(lines) else None,
                     start_bar_index=lines[base].start.bar_index,
                     end_bar_index=lines[end_index].end.bar_index,
                     start_time=lines[base].start.time,

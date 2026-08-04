@@ -59,4 +59,20 @@ describe('ChartSession', () => {
     }))
     await expect(new ChartSession(fetcher).open(meta())).rejects.toThrow('identity')
   })
+
+  it('loads a bounded window around an arbitrary historical bar', async () => {
+    const fetcher = vi.fn(async (_dataset: string, _revision: string, generation: string, options: { tail?: number; beforeBarIndex?: number; limit?: number } = {}) => {
+      if (options.tail) return range(generation, 3000, 3000, true)
+      return range(generation, 880, 241, true)
+    })
+    const session = new ChartSession(fetcher)
+    await session.open(meta())
+    expect(await session.loadAround(1000, 120, true)).toBe(241)
+    expect(fetcher).toHaveBeenLastCalledWith('SHFE.AO2609.5m', revision, session.generation, {
+      beforeBarIndex: 1121, limit: 241,
+    })
+    expect(session.bars.some((bar) => bar.barIndex === 1000)).toBe(true)
+    expect(session.bars).toHaveLength(241)
+    expect(session.bars.some((bar) => bar.barIndex === 3000)).toBe(false)
+  })
 })

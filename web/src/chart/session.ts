@@ -78,6 +78,24 @@ export class ChartSession {
     return this.inflight
   }
 
+  async loadAround(barIndex: number, radius = 120, replace = false): Promise<number> {
+    if (!this.metaValue) return 0
+    const meta = this.metaValue
+    const generation = this.generationValue
+    const first = Math.max(meta.coverage.first_bar_index, barIndex - radius)
+    const last = Math.min(meta.coverage.last_bar_index, barIndex + radius)
+    const beforeBarIndex = last + 1
+    const before = replace ? 0 : this.byIndex.size
+    const response = await this.fetchBars(meta.dataset_id, meta.data_revision, generation, {
+      beforeBarIndex,
+      limit: last - first + 1,
+    })
+    if (generation !== this.generationValue) return 0
+    if (replace) this.byIndex.clear()
+    this.merge(response)
+    return this.byIndex.size - before
+  }
+
   private merge(response: BarRangeResponse): void {
     const meta = this.metaValue
     if (

@@ -152,7 +152,10 @@
               "fractals": {"type": "boolean"},
               "bi": {"type": "boolean"},
               "segments": {"type": "boolean"},
-              "zhongshu": {"type": "boolean"}
+              "zhongshu": {"type": "boolean"},
+              "segment_zhongshu": {"type": "boolean"},
+              "divergences": {"type": "boolean"},
+              "trade_points": {"type": "boolean"}
             }
           }
         }

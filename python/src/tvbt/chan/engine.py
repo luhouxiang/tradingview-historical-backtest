@@ -7,6 +7,7 @@ from typing import Any, Literal
 
 from tvbt.chan.events import EventEmitter
 from tvbt.chan.reference import reference_centers, reference_segments
+from tvbt.chan.signals import ChanSignal, chan_divergences, chan_trade_points
 
 Direction = Literal["up", "down", "unknown"]
 FractalKind = Literal["top", "bottom"]
@@ -98,7 +99,7 @@ class ChanParameters:
 
 
 class ChanEngine:
-    algorithm_version = "3.0.0"
+    algorithm_version = "4.1.0"
 
     def __init__(self, parameters: ChanParameters | None = None) -> None:
         self.parameters = parameters or ChanParameters()
@@ -109,6 +110,10 @@ class ChanEngine:
         self._stroke_start: Fractal | None = None
         self._pending_fractals: list[Fractal] = []
         self._provisional_bi_id: str | None = None
+        self._macd_fast: float | None = None
+        self._macd_slow: float | None = None
+        self._macd_dea: float | None = None
+        self._macd_histogram: dict[int, float] = {}
         self.emitter = EventEmitter()
 
     def update(self, bar: RawBar) -> None:
@@ -119,6 +124,7 @@ class ChanEngine:
         if bar.low_i64 > bar.high_i64:
             raise ValueError("raw bar low exceeds high")
         self.raw_bars.append(bar)
+        self._append_macd(bar)
         appended = self._update_inclusion(bar)
         bi_count = len(self.bi)
         if appended:
@@ -396,6 +402,7 @@ class ChanEngine:
                 )
             )
         segments: list[tuple[str, dict[str, Any], int]] = []
+        segment_lines: list[LineObject] = []
         for segment in reference_segments(self.bi, self.raw_bars):
             object_id = _stable_id(
                 "segment",
@@ -421,8 +428,109 @@ class ChanEngine:
                     segment.known_at_bar_index,
                 )
             )
+            if segment.confirmed:
+                direction: Literal["up", "down"] = "up" if segment.up else "down"
+                start = Fractal(
+                    f"{object_id}-start",
+                    "bottom" if direction == "up" else "top",
+                    segment.start_index,
+                    segment.start_bar_index,
+                    segment.start_time,
+                    segment.start_price_i64,
+                    segment.known_at_bar_index,
+                    segment.known_at_bar_index,
+                )
+                end = Fractal(
+                    f"{object_id}-end",
+                    "top" if direction == "up" else "bottom",
+                    segment.end_index,
+                    segment.end_bar_index,
+                    segment.end_time,
+                    segment.end_price_i64,
+                    segment.known_at_bar_index,
+                    segment.known_at_bar_index,
+                )
+                segment_lines.append(
+                    LineObject(
+                        object_id,
+                        start,
+                        end,
+                        direction,
+                        segment.known_at_bar_index,
+                        segment.known_at_bar_index,
+                    )
+                )
+
+        # Lesson 18 defines the initial center as the open price interval
+        # (max lows, min highs). A point contact has no interval width and is
+        # therefore not a standard segment center, even though the legacy
+        # reference-center scanner preserves that compatibility case for bi.
+        segment_centers = [
+            center for center in reference_centers(segment_lines) if center.zd_i64 < center.zg_i64
+        ]
+        segment_center_ids: list[str] = []
+        segment_center_values: list[tuple[str, dict[str, Any], int]] = []
+        for center in segment_centers:
+            object_id = _stable_id(
+                "segment-zhongshu",
+                segment_lines[center.base_index].object_id,
+                segment_lines[center.seed_end_index].object_id,
+            )
+            segment_center_ids.append(object_id)
+            segment_center_values.append(
+                (
+                    object_id,
+                    {
+                        "start_bar_index": center.start_bar_index,
+                        "start_time": center.start_time,
+                        "end_bar_index": center.end_bar_index,
+                        "end_time": center.end_time,
+                        "zg_i64": center.zg_i64,
+                        "zd_i64": center.zd_i64,
+                        "confirmed": True,
+                        "confirmed_at_bar_index": center.known_at_bar_index,
+                        "status": center.status,
+                        "leave_direction": center.leave_direction,
+                    },
+                    center.known_at_bar_index,
+                )
+            )
+
+        divergence_specs = chan_divergences(
+            segment_lines, segment_centers, segment_center_ids, self._macd_histogram
+        )
+        divergence_values: list[tuple[str, dict[str, Any], int]] = []
+        divergence_objects: list[tuple[str, ChanSignal]] = []
+        for signal in divergence_specs:
+            object_id = _stable_id(
+                "divergence",
+                signal.divergence_kind,
+                segment_lines[signal.segment_index].object_id,
+                signal.reference_object_id,
+            )
+            divergence_objects.append((object_id, signal))
+            divergence_values.append(
+                (object_id, _signal_payload(signal), signal.known_at_bar_index)
+            )
+
+        trade_point_values: list[tuple[str, dict[str, Any], int]] = []
+        for signal in chan_trade_points(
+            segment_lines, segment_centers, segment_center_ids, divergence_objects
+        ):
+            object_id = _stable_id(
+                "trade-point",
+                signal.signal_type,
+                segment_lines[signal.segment_index].object_id,
+                signal.reference_object_id,
+            )
+            trade_point_values.append(
+                (object_id, _signal_payload(signal), signal.known_at_bar_index)
+            )
         self._sync_objects("zhongshu", centers, known_at_bar_index)
         self._sync_objects("segment", segments, known_at_bar_index)
+        self._sync_objects("segment_zhongshu", segment_center_values, known_at_bar_index)
+        self._sync_objects("divergence", divergence_values, known_at_bar_index)
+        self._sync_objects("trade_point", trade_point_values, known_at_bar_index)
 
     def _sync_objects(
         self,
@@ -458,6 +566,16 @@ class ChanEngine:
             "zhongshu": sorted(
                 self.emitter.current("zhongshu"), key=lambda item: item["start_bar_index"]
             ),
+            "segment_zhongshu": sorted(
+                self.emitter.current("segment_zhongshu"),
+                key=lambda item: item["start_bar_index"],
+            ),
+            "divergences": sorted(
+                self.emitter.current("divergence"), key=lambda item: item["bar_index"]
+            ),
+            "trade_points": sorted(
+                self.emitter.current("trade_point"), key=lambda item: item["bar_index"]
+            ),
         }
 
     def export_state(self) -> dict[str, Any]:
@@ -477,6 +595,8 @@ class ChanEngine:
     def from_state(cls, state: dict[str, Any]) -> ChanEngine:
         engine = cls(ChanParameters(**state["parameters"]))
         engine.raw_bars = [RawBar(**item) for item in state["raw_bars"]]
+        for bar in engine.raw_bars:
+            engine._append_macd(bar)
         engine.included = [IncludedBar(**item) for item in state["included"]]
         engine.fractals = [Fractal(**item) for item in state["fractals"]]
         fractals = {item.object_id: item for item in engine.fractals}
@@ -487,6 +607,36 @@ class ChanEngine:
         engine._provisional_bi_id = state["provisional_bi_id"]
         engine.emitter = EventEmitter.from_state(state["emitter"])
         return engine
+
+    def _append_macd(self, bar: RawBar) -> None:
+        close = float(bar.close_i64)
+        if self._macd_fast is None or self._macd_slow is None or self._macd_dea is None:
+            self._macd_fast = self._macd_slow = close
+            self._macd_dea = 0.0
+        else:
+            self._macd_fast = (2.0 / 13.0) * close + (11.0 / 13.0) * self._macd_fast
+            self._macd_slow = (2.0 / 27.0) * close + (25.0 / 27.0) * self._macd_slow
+            diff = self._macd_fast - self._macd_slow
+            self._macd_dea = (2.0 / 10.0) * diff + (8.0 / 10.0) * self._macd_dea
+        diff = self._macd_fast - self._macd_slow
+        self._macd_histogram[bar.bar_index] = 2.0 * (diff - self._macd_dea)
+
+
+def _signal_payload(signal: ChanSignal) -> dict[str, Any]:
+    return {
+        "bar_index": signal.bar_index,
+        "time": signal.time,
+        "price_i64": signal.price_i64,
+        "signal_type": signal.signal_type,
+        "divergence_kind": signal.divergence_kind,
+        "signal_class": signal.signal_class,
+        "strength": signal.strength,
+        "reference_object_id": signal.reference_object_id,
+        "macd_area_reference": signal.macd_area_reference,
+        "macd_area_current": signal.macd_area_current,
+        "confirmed": True,
+        "confirmed_at_bar_index": signal.known_at_bar_index,
+    }
 
 
 def _line_state(line: LineObject) -> dict[str, Any]:

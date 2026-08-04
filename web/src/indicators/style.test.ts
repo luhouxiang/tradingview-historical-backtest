@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { AlgorithmDefinition, SeriesSource, StrategySource } from '../types/api'
-import { canvasDash, colorWithOpacity, completeIndicatorStyle, resolvedOutputStyle, styleableOutputs } from './style'
+import { canvasDash, chanStyleForRendering, colorWithOpacity, completeIndicatorStyle, resolvedOutputStyle, styleableOutputs } from './style'
 
 function definition(kind: 'indicator' | 'chan'): AlgorithmDefinition {
   return {
@@ -18,6 +18,9 @@ function definition(kind: 'indicator' | 'chan'): AlgorithmDefinition {
           { name: 'fractal', display_name: '分型', pane: 'main', series_type: 'semantic_objects', object_type: 'fractal' },
           { name: 'bi', display_name: '笔', pane: 'main', series_type: 'semantic_objects', object_type: 'bi' },
           { name: 'zhongshu', display_name: '中枢', pane: 'main', series_type: 'semantic_objects', object_type: 'zhongshu' },
+          { name: 'segment_zhongshu', display_name: '标准线段中枢', pane: 'main', series_type: 'semantic_objects', object_type: 'segment_zhongshu' },
+          { name: 'divergence', display_name: '背驰', pane: 'main', series_type: 'semantic_objects', object_type: 'divergence' },
+          { name: 'trade_point', display_name: '买卖点', pane: 'main', series_type: 'semantic_objects', object_type: 'trade_point' },
         ]
       : [
           { name: 'ma', display_name: 'MA', pane: 'main', series_type: 'line' },
@@ -43,13 +46,14 @@ describe('indicator styles', () => {
     const source: StrategySource = {
       source_type: 'StrategySource', source_id: 'strategy-1', definition: definition('chan'),
       parameters: {}, job_id: 'job-1', status: 'completed', visible: true,
-      category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true },
+      category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true, segment_zhongshu: true, divergences: true, trade_points: true },
     }
     const style = completeIndicatorStyle(source)
     expect(style.outputs.fractal).toMatchObject({ color: '#f23645', visible: false })
     expect(style.outputs.bi).toMatchObject({ color: '#2962ff', line_width: 2, visible: true })
     expect(style.outputs.segment).toMatchObject({ color: '#f2d600', line_width: 2, visible: true })
-    expect(style.outputs.zhongshu).toMatchObject({ color: '#ab47bc', visible: true })
+    expect(style.outputs.zhongshu).toMatchObject({ color: '#64b5f6', line_style: 'solid', visible: true })
+    expect(style.outputs.segment_zhongshu).toMatchObject({ color: '#fff176', line_style: 'solid', visible: true })
   })
 
   it('resolves saved styles and converts rendering helpers deterministically', () => {
@@ -63,5 +67,19 @@ describe('indicator styles', () => {
     expect(canvasDash('dashed', 2)).toEqual([12, 8])
     expect(canvasDash('dotted', 2)).toEqual([2, 6])
     expect(canvasDash('solid', 2)).toEqual([])
+  })
+
+  it('uses object-tree categories to override stale Chan style visibility', () => {
+    const source: StrategySource = {
+      source_type: 'StrategySource', source_id: 'strategy-1', definition: definition('chan'),
+      parameters: {}, job_id: 'job-1', status: 'completed', visible: true,
+      category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true, segment_zhongshu: true, divergences: true, trade_points: true },
+      style: { outputs: {
+        bi: { color: '#2962ff', line_width: 2, line_style: 'solid', opacity: 1, visible: false },
+        fractal: { color: '#f23645', line_width: 1, line_style: 'solid', opacity: 1, visible: true },
+      } },
+    }
+    expect(chanStyleForRendering(source)?.outputs.bi.visible).toBe(true)
+    expect(chanStyleForRendering(source)?.outputs.fractal.visible).toBe(false)
   })
 })

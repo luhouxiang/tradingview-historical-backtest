@@ -7,7 +7,7 @@ import AppShell from './AppShell.vue'
 
 const api = vi.hoisted(() => ({
   getLayout: vi.fn(), getDrawings: vi.fn(), putLayout: vi.fn(), putDrawings: vi.fn(),
-  listAlgorithms: vi.fn(), createCalculation: vi.fn(), getCalculation: vi.fn(),
+  listAlgorithms: vi.fn(), createCalculation: vi.fn(), getCalculation: vi.fn(), getCalculationResults: vi.fn(),
   createReplay: vi.fn(), getReplay: vi.fn(), getReplayEvents: vi.fn(),
   createBacktest: vi.fn(), getBacktest: vi.fn(), getBacktestSummary: vi.fn(), getBacktestTrades: vi.fn(), getBacktestEquity: vi.fn(),
   createStudy: vi.fn(), getStudy: vi.fn(), getStudyEvaluations: vi.fn(),
@@ -21,16 +21,18 @@ vi.mock('../api/client', () => ({
 
 const dataset = {
   dataset_id: 'SHFE.AO2609.5m', data_revision: `sha256:${'1'.repeat(64)}`,
-  price: { price_scale: 1 },
+  price: { price_scale: 1 }, coverage: { first_bar_index: 0, last_bar_index: 100 },
 } as DatasetMeta
+const focusSignalMock = vi.fn()
 
 const ChartStub = defineComponent({
   name: 'ChartGroup',
-  props: { strategySources: { type: Array, default: () => [] } },
+  props: { dataset: { type: Object, default: null }, strategySources: { type: Array, default: () => [] }, selectedSignal: { type: Object, default: null } },
   setup(_, { expose }) {
     expose({
       snapshotLayout: () => ({ panes: [{ id: 'price', kind: 'price', weight: 6, minHeight: 240, visible: true, collapsed: false, order: 0 }] }),
       restoreLayout: vi.fn(),
+      focusSignal: focusSignalMock,
     })
     return () => h('div', 'chart')
   },
@@ -66,6 +68,10 @@ describe('AppShell', () => {
     vi.clearAllMocks()
     api.getSourceFiles.mockResolvedValue([])
     api.listDatasets.mockResolvedValue({ catalog_revision: 0, datasets: [] })
+    api.getCalculationResults.mockResolvedValue({
+      result_kind: 'chan', objects: { fractals: [], bi: [], segments: [], zhongshu: [], segment_zhongshu: [], divergences: [], trade_points: [] },
+      coverage: { first_bar_index: 0, last_bar_index: 100, returned_count: 101 },
+    })
   })
   it('renders the empty TradingView-style workspace', () => {
     const wrapper = mount(AppShell, {
@@ -136,9 +142,39 @@ describe('AppShell', () => {
     expect(chart.props('strategySources')).toEqual([
       expect.objectContaining({
         source_type: 'StrategySource', visible: true,
-        category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true },
+        category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true, segment_zhongshu: true, divergences: true, trade_points: true },
       }),
     ])
+  })
+
+  it('selects a signal row without moving the chart and locates only from its lock', async () => {
+    api.getLayout.mockRejectedValue(new ApiError('WORKSPACE_NOT_FOUND', 'missing', 'req-layout'))
+    api.getDrawings.mockRejectedValue(new ApiError('DRAWINGS_NOT_FOUND', 'missing', 'req-drawings'))
+    api.listAlgorithms.mockResolvedValue([chanDefinition()])
+    api.createCalculation.mockResolvedValue({ job_id: 'job-chan-signals', status: 'completed' })
+    const signal = {
+      object_id: 'buy-1', bar_index: 80, time: 1_700_000_000_000, price_i64: 2650,
+      signal_type: 'buy_1', divergence_kind: null, signal_class: 'standard', strength: null,
+      reference_object_id: null, macd_area_reference: null, macd_area_current: null,
+      confirmed: true, confirmed_at_bar_index: 81, known_at_bar_index: 81, object_revision: 1,
+    }
+    api.getCalculationResults.mockResolvedValue({
+      result_kind: 'chan', objects: { fractals: [], bi: [], segments: [], zhongshu: [], segment_zhongshu: [], divergences: [], trade_points: [signal] },
+      coverage: { first_bar_index: 0, last_bar_index: 100, returned_count: 1 },
+    })
+    const wrapper = mount(AppShell, {
+      props: { health: 'ok' }, global: { stubs: { ChartGroup: ChartStub, DatasetPanel: true } },
+    })
+    wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset)
+    await flushPromises()
+    await wrapper.findAll('.right-dock nav button')[3]?.trigger('click')
+    const row = wrapper.get('[data-object-type="ChanSignalObject"]')
+    expect(row.text()).toContain('一买')
+    await row.trigger('click')
+    expect(focusSignalMock).not.toHaveBeenCalled()
+    expect(wrapper.findComponent(ChartStub).props('selectedSignal')).toEqual(expect.objectContaining({ object_id: 'buy-1' }))
+    await row.get('.signal-object-lock').trigger('click')
+    expect(focusSignalMock).toHaveBeenCalledWith(expect.objectContaining({ object_id: 'buy-1' }))
   })
 
   it('recreates defaults when a saved indicator algorithm revision is no longer published', async () => {

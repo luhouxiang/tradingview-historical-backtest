@@ -28,7 +28,7 @@ button:disabled { color: #787b86; }
 .empty-chart { position: relative; display: grid; place-content: center; height: 100%; overflow: hidden; border: 1px solid #2a2e39; background-image: linear-gradient(#1c2030 1px, transparent 1px), linear-gradient(90deg, #1c2030 1px, transparent 1px); background-size: 64px 48px; text-align: center; }
 .empty-chart p { margin: 0 0 8px; color: #b2b5be; }.empty-chart small { color: #5d606b; }
 .watermark { position: absolute; inset: 50% auto auto 50%; transform: translate(-50%, -50%); font-size: min(18vw, 180px); font-weight: 900; color: rgb(255 255 255 / 2.5%); }
-.right-dock { min-width: 280px; background: #1e222d; }
+.right-dock { min-width: 280px; min-height: 0; overflow: hidden; background: #1e222d; }
 .right-dock nav { display: flex; height: 40px; border-bottom: 1px solid #2a2e39; }.right-dock .active, .bottom-dock .active { color: #fff; border-bottom: 2px solid #2962ff; border-radius: 0; }
 .right-dock .dock-close { margin-left: auto; color: #787b86; }
 .workspace-splitter { position: relative; z-index: 10; width: 1px; min-width: 1px; padding: 0; cursor: col-resize; background: #f23645; overflow: visible; }
@@ -47,7 +47,11 @@ button:disabled { color: #787b86; }
 .dataset-card .issue { color: #f23645; }
 .dataset-meta { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 6px; margin: 14px 0; font-size: 11px; }
 .dataset-meta dt { color: #787b86; }.dataset-meta dd { margin: 0; overflow-wrap: anywhere; color: #b2b5be; }
-.indicator-panel, .object-tree { height: calc(100% - 40px); overflow: auto; padding: 10px; }
+.indicator-panel, .object-tree { height: calc(100% - 40px); min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 10px; scrollbar-color: #596174 #181c27; scrollbar-width: thin; }
+.object-tree::-webkit-scrollbar { width: 9px; }
+.object-tree::-webkit-scrollbar-track { background: #181c27; }
+.object-tree::-webkit-scrollbar-thumb { border: 2px solid #181c27; border-radius: 5px; background: #596174; }
+.object-tree::-webkit-scrollbar-thumb:hover { background: #787f91; }
 .indicator-manager { display: flex; flex-direction: column; height: calc(100% - 40px); min-height: 0; }
 .indicator-manager-header { display: grid; gap: 10px; padding: 12px 12px 10px; border-bottom: 1px solid #2a2e39; }
 .indicator-manager-header > div { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
@@ -139,6 +143,32 @@ button:disabled { color: #787b86; }
 .indicator-style-dialog > footer .primary { border-color: #2962ff; background: #2962ff; color: #fff; }
 .object-tree h3 { color: #787b86; font-size: 12px; }
 .object-node { margin: 4px 0; padding: 8px; border-left: 2px solid #2962ff; background: #181c27; font-size: 12px; }
+.strategy-node { padding: 0; overflow: hidden; }
+.strategy-header { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto 30px 30px; align-items: center; gap: 3px; min-height: 38px; padding: 4px 5px; }
+.strategy-header button { height: 27px; padding: 0; border-radius: 3px; color: #a2a6b3; }
+.strategy-header button:hover { background: #2a2e39; color: #fff; }
+.strategy-header .tree-toggle { font-size: 13px; }
+.strategy-status { color: #00bfa5; font-size: 10px; }
+.strategy-children { border-top: 1px solid #2a2e39; }
+.strategy-categories { padding: 5px 8px 7px 24px; color: #a2a6b3; }
+.strategy-categories summary { cursor: pointer; font-size: 11px; }
+.strategy-categories label { display: grid; grid-template-columns: 17px 1fr; align-items: center; margin-top: 4px; font-size: 11px; }
+.signal-branch-title { display: flex; justify-content: space-between; padding: 7px 9px 5px 18px; border-top: 1px solid #252936; color: #a2a6b3; font-size: 11px; }
+.signal-branch-title small { color: #787b86; }
+.signal-tree-empty { margin: 0; padding: 8px 10px 10px 32px; color: #787b86; font-size: 11px; }
+.signal-object-node { display: grid; grid-template-columns: 16px minmax(0, 1fr) 29px; align-items: center; gap: 3px; min-height: 45px; padding: 4px 5px 4px 17px; border-top: 1px solid #252936; cursor: pointer; outline: none; }
+.signal-object-node:hover { background: #242936; }
+.signal-object-node.selected { background: #1f4f91; color: #fff; }
+.tree-elbow { align-self: start; padding-top: 3px; color: #596174; }
+.signal-object-content { display: grid; min-width: 0; gap: 3px; }
+.signal-object-content strong { overflow: hidden; color: #d1d4dc; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.signal-object-content strong.buy { color: #00c9b7; }
+.signal-object-content strong.sell { color: #f23645; }
+.signal-object-node.selected .signal-object-content strong { color: #fff; }
+.signal-object-content small { overflow: hidden; color: #9297a6; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.signal-object-node.selected .signal-object-content small { color: #d9e6ff; }
+.signal-object-lock { width: 27px; height: 27px !important; padding: 0 !important; border: 1px solid transparent; background: transparent; cursor: pointer; }
+.signal-object-lock:hover, .signal-object-lock.active { border-color: #6a8edb; background: #243b64; }
 .drawing-node { display: grid; gap: 5px; cursor: pointer; }
 .drawing-node.selected { background: #242b3d; border-left-color: #f7a600; }
 .drawing-node input { min-width: 0; border: 0; background: transparent; color: #d1d4dc; }
@@ -186,6 +216,10 @@ button:disabled { color: #787b86; }
 .drawing-object { pointer-events: visiblePainted; cursor: pointer; }
 .replay-signal { pointer-events: none; fill: #f23645; font-size: 9px; }
 .replay-signal.close_short, .replay-signal.open_long { fill: #089981; }
+.signal-selection { pointer-events: none; fill: #131722; stroke: #fff; stroke-width: 2; }
+.signal-selection line { stroke: #fff; stroke-width: 1; stroke-dasharray: 4 3; }
+.signal-selection.locked { stroke: #2962ff; }
+.signal-selection.locked line { stroke: #2962ff; }
 .drawing-object line { vector-effect: non-scaling-stroke; }
 .drawing-handle { fill: #131722; stroke: #fff; stroke-width: 2; pointer-events: all; cursor: move; }
 .drawing-handle.locked { cursor: not-allowed; }

@@ -719,7 +719,7 @@ export interface components {
                 /** @enum {unknown} */
                 series_type: "line" | "histogram" | "semantic_objects";
                 /** @enum {unknown} */
-                object_type?: "fractal" | "bi" | "segment" | "zhongshu" | "strategy_state" | "stage_signal" | "trade_signal" | "chart_event";
+                object_type?: "fractal" | "bi" | "segment" | "zhongshu" | "segment_zhongshu" | "divergence" | "trade_point" | "strategy_state" | "stage_signal" | "trade_signal" | "chart_event";
             }[];
             warmup: {
                 /** @constant */
@@ -772,6 +772,9 @@ export interface components {
             bi: components["schemas"]["ChanLineObject"][];
             segments: components["schemas"]["ChanLineObject"][];
             zhongshu: components["schemas"]["ChanZhongshu"][];
+            segment_zhongshu: components["schemas"]["ChanZhongshu"][];
+            divergences: components["schemas"]["ChanSignalPoint"][];
+            trade_points: components["schemas"]["ChanSignalPoint"][];
         };
         ChanFractal: {
             object_id: string;
@@ -814,6 +817,27 @@ export interface components {
             status: "confirmed" | "extended" | "left";
             /** @enum {string|null} */
             leave_direction: "up" | "down" | null;
+            known_at_bar_index: number;
+            object_revision: number;
+        };
+        ChanSignalPoint: {
+            object_id: string;
+            bar_index: number;
+            time: number;
+            price_i64: number;
+            /** @enum {string} */
+            signal_type: "bottom_divergence" | "top_divergence" | "buy_1" | "buy_2" | "buy_3" | "sell_1" | "sell_2" | "sell_3" | "class_buy_1" | "class_buy_2" | "class_buy_3" | "class_sell_1" | "class_sell_2" | "class_sell_3";
+            /** @enum {string|null} */
+            divergence_kind: "trend" | "consolidation" | null;
+            /** @enum {string|null} */
+            signal_class: "standard" | "class_like" | null;
+            /** @enum {string|null} */
+            strength: "strongest" | "normal" | "weakest" | null;
+            reference_object_id: string | null;
+            macd_area_reference: number | null;
+            macd_area_current: number | null;
+            confirmed: boolean;
+            confirmed_at_bar_index: number | null;
             known_at_bar_index: number;
             object_revision: number;
         };
@@ -1378,6 +1402,9 @@ export interface components {
                     bi: boolean;
                     segments?: boolean;
                     zhongshu: boolean;
+                    segment_zhongshu?: boolean;
+                    divergences?: boolean;
+                    trade_points?: boolean;
                 };
             }[];
             /** Format: date-time */

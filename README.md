@@ -277,15 +277,16 @@ PUT 必须携带 `If-Match` 当前 revision；首次创建使用 0。Go 在 `dat
 
 ## 13. 里程碑 5：缠论
 
-Python 缠论引擎按 `E:\work\py\algo-ui\common\chanlun\c_bi.py` 的规则实现包含关系、三独立 K 线严格分型、笔、笔中枢和段；笔端点逐项遵循参考算法的独立 K 线计数、同类极值替换及后继分型区间确认，相邻笔首尾相接并严格上下交替。算法细节见 `docs/13-chan-bi-center-segment-algorithm.md`。
+Python 缠论引擎按 `E:\work\py\algo-ui\common\chanlun\c_bi.py` 的规则实现包含关系、三独立 K 线严格分型、笔、笔中枢和段；笔端点逐项遵循参考算法的独立 K 线计数、同类极值替换及后继分型区间确认，相邻笔首尾相接并严格上下交替。算法细节见 `docs/13-chan-bi-center-segment-algorithm.md`。标准线段中枢、趋势/盘整背驰和一二三类买卖点按 108 课定义实现，执行口径见 `docs/14-chan-108-segment-center-divergence-trade-points.md`。
 计算使用 `causal_events` 模式，所有对象携带稳定 ID、修订号、确认位置和
 `known_at_bar_index`。笔中枢按参考实现扫描同奇偶位置的笔并延长固定 ZD/ZG 区间；段按 `_NCHDUAN` 的首段发现、正反向确认和临时段修订规则生成。
 
 结果原子写入 `cache/chan/{cache_key}/`：`fractals.parquet`、`bi.parquet`、
-`segments.parquet`、`zhongshu.parquet`、`events.parquet`、版本化检查点、`manifest.json` 和最后提交的
+`segments.parquet`、`zhongshu.parquet`、`segment_zhongshu.parquet`、`divergences.parquet`、
+`trade_points.parquet`、`events.parquet`、版本化检查点、`manifest.json` 和最后提交的
 `_SUCCESS`。Vue 将每个缠论算法实例作为一个 `StrategySource`，对象树只建立分型、笔、段、
-中枢四个类别节点；图表使用单个批量 `ChanPrimitive`，范围变化只向 Go 查询既有缓存。
-缠论同时出现在“指标”面板中并叠加到 K 线主图；新数据集默认创建一个缠论源，默认画蓝色笔、黄色段和紫色中枢，分型可在对象树中另行开启。
+笔中枢、标准线段中枢、背驰和买卖点类别节点；图表使用单个批量 `ChanPrimitive`，范围变化只向 Go 查询既有缓存。
+缠论同时出现在“指标”面板中并叠加到 K 线主图；新数据集默认创建一个缠论源，默认画蓝色笔、黄色段、带半透明填充与阴影的浅蓝色笔中枢、带半透明填充与阴影的浅黄色标准线段中枢，以及背驰和买卖点标记，分型可在对象树中另行开启。
 指标面板使用统一指标管理器承载大规模算法目录：常用指标支持收藏，全部指标支持分类与模糊搜索，当前使用指标以可展开的紧凑实例卡管理参数、状态和删除操作。
 当前使用卡片的参数输入区为样式入口预留右侧空间；点击 `…` 可按输出线设置颜色、透明度、线宽、实线/虚线/点线及可见性，确认后即时刷新并随工作区保存，且不会触发指标重算。
 
