@@ -64,6 +64,8 @@ def definition() -> dict[str, Any]:
                 ("segment", "段"),
                 ("zhongshu", "笔中枢"),
                 ("segment_zhongshu", "标准线段中枢"),
+                ("movement_state", "走势状态"),
+                ("center_monitor", "Z/Zn 中枢监视"),
                 ("divergence", "背驰"),
                 ("trade_point", "买卖点"),
             )
@@ -86,6 +88,8 @@ def calculate_chan(payload: dict[str, Any], guard: PathGuard, cancelled: threadi
         segments=rows["segments"],
         zhongshu=rows["zhongshu"],
         segment_zhongshu=rows["segment_zhongshu"],
+        movement_states=rows["movement_states"],
+        center_monitors=rows["center_monitors"],
         divergences=rows["divergences"],
         trade_points=rows["trade_points"],
         events=[event.row() for event in runtime.emitter.events],

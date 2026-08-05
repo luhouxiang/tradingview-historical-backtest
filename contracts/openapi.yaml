@@ -1084,7 +1084,7 @@ components:
                   display_name: {type: string, minLength: 1}
                   pane: {enum: [main, indicator]}
                   series_type: {enum: [line, histogram, semantic_objects]}
-                  object_type: {enum: [fractal, bi, segment, zhongshu, segment_zhongshu, divergence, trade_point, strategy_state, stage_signal, trade_signal, chart_event]}
+                  object_type: {enum: [fractal, bi, segment, zhongshu, segment_zhongshu, movement_state, center_monitor, divergence, trade_point, strategy_state, stage_signal, trade_signal, chart_event]}
             warmup:
               type: object
               additionalProperties: false
@@ -1194,7 +1194,7 @@ components:
     ChanObjects:
       type: object
       additionalProperties: false
-      required: [fractals, bi, segments, zhongshu, segment_zhongshu, divergences, trade_points]
+      required: [fractals, bi, segments, zhongshu, segment_zhongshu, movement_states, center_monitors, divergences, trade_points]
       properties:
         fractals:
           type: array
@@ -1211,6 +1211,12 @@ components:
         segment_zhongshu:
           type: array
           items: {$ref: "#/components/schemas/ChanZhongshu"}
+        movement_states:
+          type: array
+          items: {$ref: "#/components/schemas/ChanMovementState"}
+        center_monitors:
+          type: array
+          items: {$ref: "#/components/schemas/ChanCenterMonitor"}
         divergences:
           type: array
           items: {$ref: "#/components/schemas/ChanSignalPoint"}
@@ -1254,7 +1260,7 @@ components:
     ChanZhongshu:
       type: object
       additionalProperties: false
-      required: [object_id, start_bar_index, start_time, end_bar_index, end_time, zg_i64, zd_i64, confirmed, confirmed_at_bar_index, status, leave_direction, known_at_bar_index, object_revision]
+      required: [object_id, start_bar_index, start_time, end_bar_index, end_time, zg_i64, zd_i64, gg_i64, dd_i64, z_i64, analysis_level, component_kind, component_count, confirmed, confirmed_at_bar_index, status, leave_direction, known_at_bar_index, object_revision]
       properties:
         object_id: {type: string, minLength: 1}
         start_bar_index: {type: integer, minimum: 0}
@@ -1263,10 +1269,59 @@ components:
         end_time: {type: integer}
         zg_i64: {type: integer}
         zd_i64: {type: integer}
+        gg_i64: {type: integer}
+        dd_i64: {type: integer}
+        z_i64: {type: integer}
+        analysis_level: {type: string, minLength: 1}
+        component_kind: {type: string, enum: [bi, segment]}
+        component_count: {type: integer, minimum: 3}
         confirmed: {type: boolean}
         confirmed_at_bar_index: {type: [integer, "null"], minimum: 0}
         status: {type: string, enum: [confirmed, extended, left]}
         leave_direction: {type: [string, "null"], enum: [up, down, null]}
+        known_at_bar_index: {type: integer, minimum: 0}
+        object_revision: {type: integer, minimum: 1}
+
+    ChanMovementState:
+      type: object
+      additionalProperties: false
+      required: [object_id, start_bar_index, start_time, end_bar_index, end_time, price_i64, state_type, direction, analysis_level, reference_object_id, confirmed, confirmed_at_bar_index, known_at_bar_index, object_revision]
+      properties:
+        object_id: {type: string, minLength: 1}
+        start_bar_index: {type: integer, minimum: 0}
+        start_time: {type: integer}
+        end_bar_index: {type: integer, minimum: 0}
+        end_time: {type: integer}
+        price_i64: {type: integer}
+        state_type: {type: string, enum: [consolidation, centre_oscillation, centre_migration_up, centre_migration_down]}
+        direction: {type: [string, "null"], enum: [up, down, null]}
+        analysis_level: {type: string, minLength: 1}
+        reference_object_id: {type: string, minLength: 1}
+        confirmed: {type: boolean}
+        confirmed_at_bar_index: {type: [integer, "null"], minimum: 0}
+        known_at_bar_index: {type: integer, minimum: 0}
+        object_revision: {type: integer, minimum: 1}
+
+    ChanCenterMonitor:
+      type: object
+      additionalProperties: false
+      required: [object_id, bar_index, time, z_i64, zn_i64, range_high_i64, range_low_i64, component_direction, relative_position, strength, migration_warning, analysis_level, reference_object_id, confirmed, confirmed_at_bar_index, known_at_bar_index, object_revision]
+      properties:
+        object_id: {type: string, minLength: 1}
+        bar_index: {type: integer, minimum: 0}
+        time: {type: integer}
+        z_i64: {type: integer}
+        zn_i64: {type: integer}
+        range_high_i64: {type: integer}
+        range_low_i64: {type: integer}
+        component_direction: {type: string, enum: [up, down]}
+        relative_position: {type: string, enum: [above, below, equal]}
+        strength: {type: string, enum: [strong, weak, neutral]}
+        migration_warning: {type: [string, "null"], enum: [up, down, null]}
+        analysis_level: {type: string, minLength: 1}
+        reference_object_id: {type: string, minLength: 1}
+        confirmed: {type: boolean}
+        confirmed_at_bar_index: {type: [integer, "null"], minimum: 0}
         known_at_bar_index: {type: integer, minimum: 0}
         object_revision: {type: integer, minimum: 1}
 

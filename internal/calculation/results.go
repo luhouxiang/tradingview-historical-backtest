@@ -175,10 +175,53 @@ type ChanZhongshu struct {
 	EndTime             int64   `json:"end_time" parquet:"end_time"`
 	ZGI64               int64   `json:"zg_i64" parquet:"zg_i64"`
 	ZDI64               int64   `json:"zd_i64" parquet:"zd_i64"`
+	GGI64               int64   `json:"gg_i64" parquet:"gg_i64"`
+	DDI64               int64   `json:"dd_i64" parquet:"dd_i64"`
+	ZI64                int64   `json:"z_i64" parquet:"z_i64"`
+	AnalysisLevel       string  `json:"analysis_level" parquet:"analysis_level"`
+	ComponentKind       string  `json:"component_kind" parquet:"component_kind"`
+	ComponentCount      int64   `json:"component_count" parquet:"component_count"`
 	Confirmed           bool    `json:"confirmed" parquet:"confirmed"`
 	ConfirmedAtBarIndex *int64  `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index,optional"`
 	Status              string  `json:"status" parquet:"status"`
 	LeaveDirection      *string `json:"leave_direction" parquet:"leave_direction,optional"`
+	KnownAtBarIndex     int64   `json:"known_at_bar_index" parquet:"known_at_bar_index"`
+	ObjectRevision      int64   `json:"object_revision" parquet:"object_revision"`
+}
+
+type ChanMovementState struct {
+	ObjectID            string  `json:"object_id" parquet:"object_id"`
+	StartBarIndex       int64   `json:"start_bar_index" parquet:"start_bar_index"`
+	StartTime           int64   `json:"start_time" parquet:"start_time"`
+	EndBarIndex         int64   `json:"end_bar_index" parquet:"end_bar_index"`
+	EndTime             int64   `json:"end_time" parquet:"end_time"`
+	PriceI64            int64   `json:"price_i64" parquet:"price_i64"`
+	StateType           string  `json:"state_type" parquet:"state_type"`
+	Direction           *string `json:"direction" parquet:"direction,optional"`
+	AnalysisLevel       string  `json:"analysis_level" parquet:"analysis_level"`
+	ReferenceObjectID   string  `json:"reference_object_id" parquet:"reference_object_id"`
+	Confirmed           bool    `json:"confirmed" parquet:"confirmed"`
+	ConfirmedAtBarIndex *int64  `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index,optional"`
+	KnownAtBarIndex     int64   `json:"known_at_bar_index" parquet:"known_at_bar_index"`
+	ObjectRevision      int64   `json:"object_revision" parquet:"object_revision"`
+}
+
+type ChanCenterMonitor struct {
+	ObjectID            string  `json:"object_id" parquet:"object_id"`
+	BarIndex            int64   `json:"bar_index" parquet:"bar_index"`
+	Time                int64   `json:"time" parquet:"time"`
+	ZI64                int64   `json:"z_i64" parquet:"z_i64"`
+	ZnI64               int64   `json:"zn_i64" parquet:"zn_i64"`
+	RangeHighI64        int64   `json:"range_high_i64" parquet:"range_high_i64"`
+	RangeLowI64         int64   `json:"range_low_i64" parquet:"range_low_i64"`
+	ComponentDirection  string  `json:"component_direction" parquet:"component_direction"`
+	RelativePosition    string  `json:"relative_position" parquet:"relative_position"`
+	Strength            string  `json:"strength" parquet:"strength"`
+	MigrationWarning    *string `json:"migration_warning" parquet:"migration_warning,optional"`
+	AnalysisLevel       string  `json:"analysis_level" parquet:"analysis_level"`
+	ReferenceObjectID   string  `json:"reference_object_id" parquet:"reference_object_id"`
+	Confirmed           bool    `json:"confirmed" parquet:"confirmed"`
+	ConfirmedAtBarIndex *int64  `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index,optional"`
 	KnownAtBarIndex     int64   `json:"known_at_bar_index" parquet:"known_at_bar_index"`
 	ObjectRevision      int64   `json:"object_revision" parquet:"object_revision"`
 }
@@ -202,13 +245,15 @@ type ChanSignalPoint struct {
 }
 
 type ChanObjects struct {
-	Fractals        []ChanFractal     `json:"fractals"`
-	Bi              []ChanLineObject  `json:"bi"`
-	Segments        []ChanLineObject  `json:"segments"`
-	Zhongshu        []ChanZhongshu    `json:"zhongshu"`
-	SegmentZhongshu []ChanZhongshu    `json:"segment_zhongshu"`
-	Divergences     []ChanSignalPoint `json:"divergences"`
-	TradePoints     []ChanSignalPoint `json:"trade_points"`
+	Fractals        []ChanFractal       `json:"fractals"`
+	Bi              []ChanLineObject    `json:"bi"`
+	Segments        []ChanLineObject    `json:"segments"`
+	Zhongshu        []ChanZhongshu      `json:"zhongshu"`
+	SegmentZhongshu []ChanZhongshu      `json:"segment_zhongshu"`
+	MovementStates  []ChanMovementState `json:"movement_states"`
+	CenterMonitors  []ChanCenterMonitor `json:"center_monitors"`
+	Divergences     []ChanSignalPoint   `json:"divergences"`
+	TradePoints     []ChanSignalPoint   `json:"trade_points"`
 }
 
 func readChanResults(directory, jobID, cacheKey string, meta manifest, from, to int64) (Results, error) {
@@ -232,6 +277,14 @@ func readChanResults(directory, jobID, cacheKey string, meta manifest, from, to 
 	if err != nil {
 		return Results{}, err
 	}
+	movementStates, err := parquet.ReadFile[ChanMovementState](filepath.Join(directory, "movement_states.parquet"))
+	if err != nil {
+		return Results{}, err
+	}
+	centerMonitors, err := parquet.ReadFile[ChanCenterMonitor](filepath.Join(directory, "center_monitors.parquet"))
+	if err != nil {
+		return Results{}, err
+	}
 	divergences, err := parquet.ReadFile[ChanSignalPoint](filepath.Join(directory, "divergences.parquet"))
 	if err != nil {
 		return Results{}, err
@@ -246,10 +299,12 @@ func readChanResults(directory, jobID, cacheKey string, meta manifest, from, to 
 		Segments:        filterLines(segments, from, to),
 		Zhongshu:        filterZhongshu(zhongshu, from, to),
 		SegmentZhongshu: filterZhongshu(segmentZhongshu, from, to),
+		MovementStates:  filterMovementStates(movementStates, from, to),
+		CenterMonitors:  filterCenterMonitors(centerMonitors, from, to),
 		Divergences:     filterSignalPoints(divergences, from, to),
 		TradePoints:     filterSignalPoints(tradePoints, from, to),
 	}
-	returned := len(objects.Fractals) + len(objects.Bi) + len(objects.Segments) + len(objects.Zhongshu) + len(objects.SegmentZhongshu) + len(objects.Divergences) + len(objects.TradePoints)
+	returned := len(objects.Fractals) + len(objects.Bi) + len(objects.Segments) + len(objects.Zhongshu) + len(objects.SegmentZhongshu) + len(objects.MovementStates) + len(objects.CenterMonitors) + len(objects.Divergences) + len(objects.TradePoints)
 	checksumPayload, _ := json.Marshal(objects)
 	digest := sha256.Sum256(checksumPayload)
 	return Results{
@@ -257,6 +312,26 @@ func readChanResults(directory, jobID, cacheKey string, meta manifest, from, to 
 		Algorithm: meta.Algorithm, ResultKind: "chan", Coverage: Coverage{FirstBarIndex: from, LastBarIndex: to, ReturnedCount: returned},
 		Checksum: "sha256:" + hex.EncodeToString(digest[:]), Objects: &objects,
 	}, nil
+}
+
+func filterMovementStates(values []ChanMovementState, from, to int64) []ChanMovementState {
+	result := make([]ChanMovementState, 0)
+	for _, value := range values {
+		if value.EndBarIndex >= from && value.StartBarIndex <= to {
+			result = append(result, value)
+		}
+	}
+	return result
+}
+
+func filterCenterMonitors(values []ChanCenterMonitor, from, to int64) []ChanCenterMonitor {
+	result := make([]ChanCenterMonitor, 0)
+	for _, value := range values {
+		if value.BarIndex >= from && value.BarIndex <= to {
+			result = append(result, value)
+		}
+	}
+	return result
 }
 
 func filterSignalPoints(values []ChanSignalPoint, from, to int64) []ChanSignalPoint {

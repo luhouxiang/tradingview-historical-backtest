@@ -13,13 +13,15 @@
   "calculation_mode": "causal_events",
   "engine_version": "0.1.0",
   "coverage": {"bar_count": 17017, "first_bar_index": 0, "last_bar_index": 17016},
-  "counts": {"merged_bars": 12000, "fractals": 2100, "bi": 540, "segments": 81, "zhongshu": 24, "segment_zhongshu": 8, "divergences": 6, "trade_points": 14, "events": 6500},
+  "counts": {"merged_bars": 12000, "fractals": 2100, "bi": 540, "segments": 81, "zhongshu": 24, "segment_zhongshu": 8, "movement_states": 12, "center_monitors": 48, "divergences": 6, "trade_points": 14, "events": 6500},
   "files": {
     "fractals": {"path": "fractals.parquet", "row_count": 2100, "sha256": "sha256:4444444444444444444444444444444444444444444444444444444444444444"},
     "bi": {"path": "bi.parquet", "row_count": 540, "sha256": "sha256:5555555555555555555555555555555555555555555555555555555555555555"},
     "segments": {"path": "segments.parquet", "row_count": 81, "sha256": "sha256:6666666666666666666666666666666666666666666666666666666666666666"},
     "zhongshu": {"path": "zhongshu.parquet", "row_count": 24, "sha256": "sha256:7777777777777777777777777777777777777777777777777777777777777777"},
     "segment_zhongshu": {"path": "segment_zhongshu.parquet", "row_count": 8, "sha256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+    "movement_states": {"path": "movement_states.parquet", "row_count": 12, "sha256": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"},
+    "center_monitors": {"path": "center_monitors.parquet", "row_count": 48, "sha256": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"},
     "divergences": {"path": "divergences.parquet", "row_count": 6, "sha256": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
     "trade_points": {"path": "trade_points.parquet", "row_count": 14, "sha256": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"},
     "events": {"path": "events.parquet", "row_count": 6500, "sha256": "sha256:8888888888888888888888888888888888888888888888888888888888888888"}

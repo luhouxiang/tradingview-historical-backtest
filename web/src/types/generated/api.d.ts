@@ -719,7 +719,7 @@ export interface components {
                 /** @enum {unknown} */
                 series_type: "line" | "histogram" | "semantic_objects";
                 /** @enum {unknown} */
-                object_type?: "fractal" | "bi" | "segment" | "zhongshu" | "segment_zhongshu" | "divergence" | "trade_point" | "strategy_state" | "stage_signal" | "trade_signal" | "chart_event";
+                object_type?: "fractal" | "bi" | "segment" | "zhongshu" | "segment_zhongshu" | "movement_state" | "center_monitor" | "divergence" | "trade_point" | "strategy_state" | "stage_signal" | "trade_signal" | "chart_event";
             }[];
             warmup: {
                 /** @constant */
@@ -773,6 +773,8 @@ export interface components {
             segments: components["schemas"]["ChanLineObject"][];
             zhongshu: components["schemas"]["ChanZhongshu"][];
             segment_zhongshu: components["schemas"]["ChanZhongshu"][];
+            movement_states: components["schemas"]["ChanMovementState"][];
+            center_monitors: components["schemas"]["ChanCenterMonitor"][];
             divergences: components["schemas"]["ChanSignalPoint"][];
             trade_points: components["schemas"]["ChanSignalPoint"][];
         };
@@ -811,12 +813,60 @@ export interface components {
             end_time: number;
             zg_i64: number;
             zd_i64: number;
+            gg_i64: number;
+            dd_i64: number;
+            z_i64: number;
+            analysis_level: string;
+            /** @enum {string} */
+            component_kind: "bi" | "segment";
+            component_count: number;
             confirmed: boolean;
             confirmed_at_bar_index: number | null;
             /** @enum {string} */
             status: "confirmed" | "extended" | "left";
             /** @enum {string|null} */
             leave_direction: "up" | "down" | null;
+            known_at_bar_index: number;
+            object_revision: number;
+        };
+        ChanMovementState: {
+            object_id: string;
+            start_bar_index: number;
+            start_time: number;
+            end_bar_index: number;
+            end_time: number;
+            price_i64: number;
+            /** @enum {string} */
+            state_type: "consolidation" | "centre_oscillation" | "centre_migration_up" | "centre_migration_down";
+            /** @enum {string|null} */
+            direction: "up" | "down" | null;
+            analysis_level: string;
+            reference_object_id: string;
+            confirmed: boolean;
+            confirmed_at_bar_index: number | null;
+            known_at_bar_index: number;
+            object_revision: number;
+        };
+        ChanCenterMonitor: {
+            object_id: string;
+            bar_index: number;
+            time: number;
+            z_i64: number;
+            zn_i64: number;
+            range_high_i64: number;
+            range_low_i64: number;
+            /** @enum {string} */
+            component_direction: "up" | "down";
+            /** @enum {string} */
+            relative_position: "above" | "below" | "equal";
+            /** @enum {string} */
+            strength: "strong" | "weak" | "neutral";
+            /** @enum {string|null} */
+            migration_warning: "up" | "down" | null;
+            analysis_level: string;
+            reference_object_id: string;
+            confirmed: boolean;
+            confirmed_at_bar_index: number | null;
             known_at_bar_index: number;
             object_revision: number;
         };
@@ -1403,6 +1453,8 @@ export interface components {
                     segments?: boolean;
                     zhongshu: boolean;
                     segment_zhongshu?: boolean;
+                    movement_states?: boolean;
+                    center_monitors?: boolean;
                     divergences?: boolean;
                     trade_points?: boolean;
                 };

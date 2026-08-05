@@ -5,7 +5,7 @@ import BacktestPanel from './BacktestPanel.vue'
 
 const api = vi.hoisted(() => ({
   listAlgorithms: vi.fn(), createBacktest: vi.fn(), getBacktest: vi.fn(),
-  getBacktestSummary: vi.fn(), getBacktestTrades: vi.fn(), getBacktestEquity: vi.fn(),
+  getBacktestSummary: vi.fn(), getBacktestTrades: vi.fn(), getBacktestEquity: vi.fn(), getBacktestChartEvents: vi.fn(),
 }))
 vi.mock('../api/client', () => api)
 
@@ -31,9 +31,15 @@ describe('BacktestPanel', () => {
     api.getBacktestSummary.mockResolvedValue({ total_return: .1, max_drawdown: .02, trade_count: 2, win_rate: .5, sharpe: 1.2, total_commission_i64: 600 })
     api.getBacktestTrades.mockResolvedValue({ rows: [{ trade_id: 'trade-1', side: 'short', entry_bar_index: 10, entry_price_i64: 100, exit_bar_index: 20, exit_price_i64: 90, net_pnl_i64: 10 }], next_cursor: null })
     api.getBacktestEquity.mockResolvedValue([{ bar_index: 0, equity_i64: 100 }, { bar_index: 1, equity_i64: 110 }])
+    api.getBacktestChartEvents.mockResolvedValue([])
   })
 
   it('creates a formal run and renders summary, trades and equity views', async () => {
+    api.getBacktestChartEvents.mockResolvedValue([{
+      event_seq: 1, known_at_bar_index: 80, object_type: 'strategy_state', object_id: 'state-80',
+      operation: 'upsert', object_revision: 1,
+      payload: { state_to: 'above_with_B3', timestamp_utc: 1_700_000_000_000, price_i64: 2650, reason_code: 'CENTRE_STATE_ABOVE_WITH_B3' },
+    }])
     const wrapper = mount(BacktestPanel, { props: { dataset, view: 'backtest' } })
     await flushPromises()
     await wrapper.get('.backtest-controls button').trigger('click')
@@ -42,6 +48,9 @@ describe('BacktestPanel', () => {
       execution: expect.objectContaining({ fill_timing: 'next_bar_open' }),
     }))
     expect(wrapper.get('.summary-grid').text()).toContain('10.00%')
+    expect(wrapper.emitted('completed')?.[0]?.[0]).toMatchObject({
+      run_id: 'run-1', objects: [expect.objectContaining({ object_id: 'state-80', label: '中枢上方·有三买', bar_index: 80 })],
+    })
     await wrapper.setProps({ view: 'trades' })
     expect(wrapper.get('.trade-table').text()).toContain('trade-1')
     await wrapper.setProps({ view: 'equity' })

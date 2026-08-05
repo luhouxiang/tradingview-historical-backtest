@@ -256,7 +256,7 @@ describe('ChartGroup', () => {
         bi: [{ object_id: 'bi-1', start_time: 1_700_000_000_000, start_price_i64: 10, end_time: 1_700_000_300_000, end_price_i64: 12, confirmed: true }],
         segments: [{ object_id: 'segment-1', start_time: 1_700_000_000_000, start_price_i64: 10, end_time: 1_700_000_300_000, end_price_i64: 12, confirmed: true }],
         zhongshu: [{ object_id: 'zs-1', start_time: 1_700_000_000_000, end_time: 1_700_000_300_000, zg_i64: 12, zd_i64: 10, confirmed: true }],
-        segment_zhongshu: [], divergences: [], trade_points: [],
+        segment_zhongshu: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [],
       },
       coverage: { first_bar_index: 0, last_bar_index: 1, returned_count: 2 },
     })
@@ -281,7 +281,7 @@ describe('ChartGroup', () => {
   })
 
   it('hides future bars when replay cursor moves without creating calculations', async () => {
-    const wrapper = mount(ChartGroup, { props: { dataset: dataset(), replayCursor: 0, replayObjects: { fractals: [], bi: [], segments: [], zhongshu: [], segment_zhongshu: [], divergences: [], trade_points: [] } } })
+    const wrapper = mount(ChartGroup, { props: { dataset: dataset(), replayCursor: 0, replayObjects: { fractals: [], bi: [], segments: [], zhongshu: [], segment_zhongshu: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] } } })
     await flushPromises()
     expect(chartMocks.candle.setData).toHaveBeenLastCalledWith([
       expect.objectContaining({ time: 1_700_000_000, open: 10, high: 12, low: 9, close: 11 }),

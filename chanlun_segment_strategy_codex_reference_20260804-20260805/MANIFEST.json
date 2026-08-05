@@ -1,0 +1,38 @@
+{
+  "package_name": "chanlun_segment_strategy_codex_reference_20260804-20260805",
+  "package_version": "1.0.0",
+  "language": "zh-CN",
+  "encoding": "UTF-8",
+  "discussion_window": {
+    "start": "2026-08-04T20:26:00+02:00",
+    "end": "2026-08-05T16:27:00+02:00",
+    "timezone": "Europe/Amsterdam"
+  },
+  "purpose": "Codex reference for segment-based Chan-theory centre and strategy algorithms",
+  "entrypoints": ["AGENTS.md", "README.md"],
+  "contents": {
+    "human_readable_specs": "docs/",
+    "machine_readable_specs": "specs/",
+    "normative_examples": "examples/",
+    "source_index": "refs/chanlun108_sources.md",
+    "recovered_discussion": "source/recovered_discussion.md",
+    "reusable_prompts": "prompts/codex_reference_prompt.md",
+    "chart_assets": "assets/"
+  },
+  "normative_files": [
+    "AGENTS.md",
+    "docs/02_domain_model.md",
+    "docs/03_center_detection.md",
+    "docs/04_signal_rules.md",
+    "docs/07_state_machine_and_backtest.md",
+    "specs/signal_event.schema.json",
+    "specs/invariants.json"
+  ],
+  "known_limitations": [
+    "The recovered discussion is a structured reconstruction, not a byte-for-byte platform export.",
+    "The underlying fractal, stroke, and segment completion algorithm is not fully specified in the recoverable discussion.",
+    "Several implementation choices remain explicit project decisions in docs/08_open_questions.md."
+  ],
+  "risk_notice": "The package describes theory and engineering conventions; it does not guarantee trading profits."
+}
+

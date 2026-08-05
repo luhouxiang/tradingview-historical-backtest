@@ -6,7 +6,7 @@ from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
 from tvbt.chan.events import EventEmitter
-from tvbt.chan.reference import reference_centers, reference_segments
+from tvbt.chan.reference import ReferenceCenter, reference_centers, reference_segments
 from tvbt.chan.signals import ChanSignal, chan_divergences, chan_trade_points
 
 Direction = Literal["up", "down", "unknown"]
@@ -99,7 +99,7 @@ class ChanParameters:
 
 
 class ChanEngine:
-    algorithm_version = "4.1.0"
+    algorithm_version = "5.0.0"
 
     def __init__(self, parameters: ChanParameters | None = None) -> None:
         self.parameters = parameters or ChanParameters()
@@ -383,6 +383,9 @@ class ChanEngine:
                 self.bi[center.base_index].object_id,
                 self.bi[center.seed_end_index].object_id,
             )
+            components = self.bi[center.base_index : center.end_index + 1]
+            dd_i64 = min(min(line.start.price_i64, line.end.price_i64) for line in components)
+            gg_i64 = max(max(line.start.price_i64, line.end.price_i64) for line in components)
             centers.append(
                 (
                     object_id,
@@ -393,6 +396,12 @@ class ChanEngine:
                         "end_time": center.end_time,
                         "zg_i64": center.zg_i64,
                         "zd_i64": center.zd_i64,
+                        "gg_i64": gg_i64,
+                        "dd_i64": dd_i64,
+                        "z_i64": (center.zd_i64 + center.zg_i64) // 2,
+                        "analysis_level": "stroke",
+                        "component_kind": "bi",
+                        "component_count": len(components),
                         "confirmed": True,
                         "confirmed_at_bar_index": center.known_at_bar_index,
                         "status": center.status,
@@ -470,6 +479,9 @@ class ChanEngine:
         ]
         segment_center_ids: list[str] = []
         segment_center_values: list[tuple[str, dict[str, Any], int]] = []
+        movement_state_values: list[tuple[str, dict[str, Any], int]] = []
+        center_monitor_values: list[tuple[str, dict[str, Any], int]] = []
+        previous_center: tuple[ReferenceCenter, str, int, int] | None = None
         for center in segment_centers:
             object_id = _stable_id(
                 "segment-zhongshu",
@@ -477,6 +489,10 @@ class ChanEngine:
                 segment_lines[center.seed_end_index].object_id,
             )
             segment_center_ids.append(object_id)
+            components = segment_lines[center.base_index : center.end_index + 1]
+            dd_i64 = min(min(line.start.price_i64, line.end.price_i64) for line in components)
+            gg_i64 = max(max(line.start.price_i64, line.end.price_i64) for line in components)
+            z_i64 = (center.zd_i64 + center.zg_i64) // 2
             segment_center_values.append(
                 (
                     object_id,
@@ -487,6 +503,12 @@ class ChanEngine:
                         "end_time": center.end_time,
                         "zg_i64": center.zg_i64,
                         "zd_i64": center.zd_i64,
+                        "gg_i64": gg_i64,
+                        "dd_i64": dd_i64,
+                        "z_i64": z_i64,
+                        "analysis_level": "segment",
+                        "component_kind": "segment",
+                        "component_count": len(components),
                         "confirmed": True,
                         "confirmed_at_bar_index": center.known_at_bar_index,
                         "status": center.status,
@@ -495,6 +517,98 @@ class ChanEngine:
                     center.known_at_bar_index,
                 )
             )
+            phase = "centre_oscillation" if len(components) > 3 else "consolidation"
+            movement_state_values.append(
+                (
+                    _stable_id("movement-state", object_id, phase),
+                    {
+                        "start_bar_index": center.start_bar_index,
+                        "start_time": center.start_time,
+                        "end_bar_index": center.end_bar_index,
+                        "end_time": center.end_time,
+                        "price_i64": z_i64,
+                        "state_type": phase,
+                        "direction": None,
+                        "analysis_level": "segment",
+                        "reference_object_id": object_id,
+                        "confirmed": True,
+                        "confirmed_at_bar_index": center.known_at_bar_index,
+                    },
+                    center.known_at_bar_index,
+                )
+            )
+            if previous_center is not None:
+                prior, prior_id, prior_dd, prior_gg = previous_center
+                migration = "up" if dd_i64 > prior_gg else "down" if gg_i64 < prior_dd else None
+                if migration is not None:
+                    movement_state_values.append(
+                        (
+                            _stable_id("movement-state", prior_id, object_id, migration),
+                            {
+                                "start_bar_index": prior.end_bar_index,
+                                "start_time": prior.end_time,
+                                "end_bar_index": center.end_bar_index,
+                                "end_time": center.end_time,
+                                "price_i64": z_i64,
+                                "state_type": f"centre_migration_{migration}",
+                                "direction": migration,
+                                "analysis_level": "segment",
+                                "reference_object_id": object_id,
+                                "confirmed": True,
+                                "confirmed_at_bar_index": center.known_at_bar_index,
+                            },
+                            center.known_at_bar_index,
+                        )
+                    )
+            previous_center = (center, object_id, dd_i64, gg_i64)
+
+            zn_values: list[int] = []
+            for component in components:
+                low = min(component.start.price_i64, component.end.price_i64)
+                high = max(component.start.price_i64, component.end.price_i64)
+                zn_i64 = (low + high) // 2
+                zn_values.append(zn_i64)
+                relative = "above" if zn_i64 > z_i64 else "below" if zn_i64 < z_i64 else "equal"
+                strength = (
+                    "strong"
+                    if (component.direction == "up" and zn_i64 > z_i64)
+                    or (component.direction == "down" and zn_i64 < z_i64)
+                    else "weak"
+                    if zn_i64 != z_i64
+                    else "neutral"
+                )
+                warning = None
+                if len(zn_values) >= 3:
+                    tail = zn_values[-3:]
+                    warning = (
+                        "up"
+                        if tail[0] < tail[1] < tail[2]
+                        else "down"
+                        if tail[0] > tail[1] > tail[2]
+                        else None
+                    )
+                center_monitor_values.append(
+                    (
+                        _stable_id("center-monitor", object_id, component.object_id),
+                        {
+                            "bar_index": component.end.bar_index,
+                            "time": component.end.time,
+                            "z_i64": z_i64,
+                            "zn_i64": zn_i64,
+                            "range_high_i64": high,
+                            "range_low_i64": low,
+                            "component_direction": component.direction,
+                            "relative_position": relative,
+                            "strength": strength,
+                            "migration_warning": warning,
+                            "analysis_level": "segment",
+                            "reference_object_id": object_id,
+                            "confirmed": True,
+                            "confirmed_at_bar_index": component.known_at_bar_index,
+                        },
+                        component.known_at_bar_index,
+                    )
+                )
 
         divergence_specs = chan_divergences(
             segment_lines, segment_centers, segment_center_ids, self._macd_histogram
@@ -529,6 +643,8 @@ class ChanEngine:
         self._sync_objects("zhongshu", centers, known_at_bar_index)
         self._sync_objects("segment", segments, known_at_bar_index)
         self._sync_objects("segment_zhongshu", segment_center_values, known_at_bar_index)
+        self._sync_objects("movement_state", movement_state_values, known_at_bar_index)
+        self._sync_objects("center_monitor", center_monitor_values, known_at_bar_index)
         self._sync_objects("divergence", divergence_values, known_at_bar_index)
         self._sync_objects("trade_point", trade_point_values, known_at_bar_index)
 
@@ -569,6 +685,12 @@ class ChanEngine:
             "segment_zhongshu": sorted(
                 self.emitter.current("segment_zhongshu"),
                 key=lambda item: item["start_bar_index"],
+            ),
+            "movement_states": sorted(
+                self.emitter.current("movement_state"), key=lambda item: item["start_bar_index"]
+            ),
+            "center_monitors": sorted(
+                self.emitter.current("center_monitor"), key=lambda item: item["bar_index"]
             ),
             "divergences": sorted(
                 self.emitter.current("divergence"), key=lambda item: item["bar_index"]

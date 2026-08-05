@@ -1,0 +1,35 @@
+{
+  "decisions": [
+    {
+      "decision_id": "CL-DEC-001",
+      "question": "Which scope defines non-overlap between same-level centres?",
+      "choice": null,
+      "allowed_choices": ["core_only", "oscillation_envelope"],
+      "reason": null,
+      "effective_rule_version": null,
+      "decided_at": null,
+      "decided_by": null
+    },
+    {
+      "decision_id": "CL-DEC-002",
+      "question": "Does the standard centre use raw completed segments or completed lower-level movements treated as segments?",
+      "choice": null,
+      "allowed_choices": ["raw_completed_segments", "completed_lower_level_movements"],
+      "reason": null,
+      "effective_rule_version": null,
+      "decided_at": null,
+      "decided_by": null
+    },
+    {
+      "decision_id": "CL-DEC-003",
+      "question": "What is the primary reproducible structural force metric?",
+      "choice": null,
+      "allowed_choices": ["price_time_slope", "normalised_price_displacement", "ordered_multi_metric"],
+      "reason": null,
+      "effective_rule_version": null,
+      "decided_at": null,
+      "decided_by": null
+    }
+  ]
+}
+

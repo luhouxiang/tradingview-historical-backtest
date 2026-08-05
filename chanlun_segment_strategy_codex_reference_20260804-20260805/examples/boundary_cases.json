@@ -1,0 +1,51 @@
+{
+  "description": "Normative boundary cases for the project strict closed-centre convention.",
+  "cases": [
+    {
+      "id": "B3-ONE-TICK-ABOVE",
+      "centre": {"ZD_ticks": 1000, "ZG_ticks": 1010},
+      "departure": {"direction": "up", "completed": true},
+      "first_retest": {"low_ticks": 1011, "completed": true},
+      "expected": {"signal": "B3", "status": "confirmed"}
+    },
+    {
+      "id": "B3-EQUALS-UPPER-BOUNDARY",
+      "centre": {"ZD_ticks": 1000, "ZG_ticks": 1010},
+      "departure": {"direction": "up", "completed": true},
+      "first_retest": {"low_ticks": 1010, "completed": true},
+      "expected": {"signal": null, "centre_state": "active", "reason": "boundary_contact_is_extension"}
+    },
+    {
+      "id": "B3-REENTERS-CORE",
+      "centre": {"ZD_ticks": 1000, "ZG_ticks": 1010},
+      "departure": {"direction": "up", "completed": true},
+      "first_retest": {"low_ticks": 1005, "completed": true},
+      "expected": {"signal": null, "centre_state": "active", "reason": "first_retest_reentered_core"}
+    },
+    {
+      "id": "S3-ONE-TICK-BELOW",
+      "centre": {"ZD_ticks": 1000, "ZG_ticks": 1010},
+      "departure": {"direction": "down", "completed": true},
+      "first_retest": {"high_ticks": 999, "completed": true},
+      "expected": {"signal": "S3", "status": "confirmed"}
+    },
+    {
+      "id": "S3-EQUALS-LOWER-BOUNDARY",
+      "centre": {"ZD_ticks": 1000, "ZG_ticks": 1010},
+      "departure": {"direction": "down", "completed": true},
+      "first_retest": {"high_ticks": 1000, "completed": true},
+      "expected": {"signal": null, "centre_state": "active", "reason": "boundary_contact_is_extension"}
+    },
+    {
+      "id": "FIRST-RETEST-CANNOT-BE-SKIPPED",
+      "centre": {"ZD_ticks": 1000, "ZG_ticks": 1010},
+      "departure": {"direction": "up", "completed": true},
+      "retests": [
+        {"sequence": 1, "low_ticks": 1008, "completed": true},
+        {"sequence": 2, "low_ticks": 1015, "completed": true}
+      ],
+      "expected": {"signal": null, "centre_state": "active", "reason": "first_retest_already_invalidated_departure"}
+    }
+  ]
+}
+

@@ -53,12 +53,36 @@ describe('ObjectTreePanel', () => {
     expect(signals.map((node) => node.attributes('data-signal-id'))).toEqual(['class-buy-new', 'buy-old'])
     expect(signals[0]?.classes()).toContain('selected')
     expect(signals[0]?.text()).toContain('类一买')
-    expect(wrapper.findAll('.strategy-node label')).toHaveLength(7)
+    expect(wrapper.findAll('.strategy-node label')).toHaveLength(9)
     await wrapper.get('.strategy-node label input').trigger('change')
     expect(wrapper.emitted('patchStrategy')?.at(-1)?.[0]).toBe('chan-1')
     await signals[0]?.trigger('click')
     expect(wrapper.emitted('selectSignal')?.at(-1)).toEqual([newer])
     await signals[0]?.get('.signal-object-lock').trigger('click')
     expect(wrapper.emitted('lockSignal')?.at(-1)).toEqual([newer])
+  })
+
+  it('shows backtest strategy states as selectable and locatable semantic objects', async () => {
+    const item = {
+      object_id: 'state-80', bar_index: 80, time: 1_700_000_000_000, price_i64: 2650,
+      confirmed_at_bar_index: 80, known_at_bar_index: 80, object_revision: 1,
+      label: '中枢上方·有三买', detail: 'CENTRE_STATE_ABOVE_WITH_B3',
+    }
+    const wrapper = mount(ObjectTreePanel, { props: {
+      dataset: { time: { timezone: 'Asia/Shanghai' }, price: { price_scale: 1, price_decimals: 0 } } as never,
+      drawings: [], sources: [], strategySources: [], selectedId: null,
+      strategyRunSources: [{
+        source_type: 'StrategyRunSource', source_id: 'run-source-1', run_id: 'run-1',
+        definition: { name: '固定级别中枢决策树' }, status: 'completed', visible: true,
+        objects: [item], signals: [],
+      }] as never,
+    } })
+    expect(wrapper.get('[data-object-type="StrategyRunSource"]').text()).toContain('固定级别中枢决策树')
+    const node = wrapper.get('[data-object-type="StrategySemanticObject"]')
+    expect(node.text()).toContain('中枢上方·有三买')
+    await node.trigger('click')
+    expect(wrapper.emitted('selectSignal')?.at(-1)).toEqual([item])
+    await node.get('.signal-object-lock').trigger('click')
+    expect(wrapper.emitted('lockSignal')?.at(-1)).toEqual([item])
   })
 })

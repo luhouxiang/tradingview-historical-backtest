@@ -27,7 +27,7 @@ import { histogramColor, indicatorLineColor, MARKET_COLORS } from '../chart/mark
 import { chanStyleForRendering, colorWithOpacity, resolvedOutputStyle } from '../indicators/style'
 import { logger } from '../logging/logger'
 import type { ReplayObjects, ReplaySignal } from '../replay/eventIndex'
-import type { ChanCalculationResults, ChanSignalPoint, DatasetMeta, SeriesSource, StrategySource } from '../types/api'
+import type { ChanCalculationResults, ChanTreeObject, DatasetMeta, SeriesSource, StrategySource } from '../types/api'
 import { cloneDrawings, LayerManager, type DrawingAnchor, type DrawingObject, type DrawingType, type ProjectedDrawing } from '../drawing/model'
 
 const props = withDefaults(defineProps<{
@@ -39,7 +39,7 @@ const props = withDefaults(defineProps<{
   replaySignals?: ReplaySignal[]
   drawings?: DrawingObject[]
   selectedDrawingId?: string | null
-  selectedSignal?: ChanSignalPoint | null
+  selectedSignal?: ChanTreeObject | null
   signalLocked?: boolean
   drawingTool?: DrawingType | 'cursor'
   magnet?: boolean
@@ -105,13 +105,14 @@ const pendingProjected = computed(() => {
   return x === null || y === null ? null : { x, y }
 })
 const projectedReplaySignals = computed(() => props.replaySignals.flatMap((signal) => {
-  if (signal.object_type !== 'chart_event' || !chart || !candles) return []
+  if (!['strategy_state', 'chart_event'].includes(signal.object_type) || !chart || !candles) return []
   const timestamp = Number(signal.timestamp_utc)
   const price = Number(signal.price_i64)
   if (!Number.isFinite(timestamp) || !Number.isFinite(price) || !props.dataset) return []
   const x = chart.timeScale().timeToCoordinate(Math.floor(timestamp / 1000) as UTCTimestamp)
   const y = candles.priceToCoordinate(price / props.dataset.price.price_scale)
-  return x === null || y === null ? [] : [{ x, y, type: String(signal.event_type), id: signal.object_id }]
+  const type = String(signal.event_type ?? signal.action ?? signal.state_to ?? signal.stage ?? signal.object_type)
+  return x === null || y === null ? [] : [{ x, y, type, id: signal.object_id }]
 }))
 const projectedSelectedSignal = computed(() => {
   projectionRevision.value
@@ -451,6 +452,8 @@ async function renderChan(fromBarIndex: number, toBarIndex: number): Promise<voi
       segments: source?.visible && source.category_visibility.segments ? props.replayObjects.segments : [],
       zhongshu: source?.visible && source.category_visibility.zhongshu ? props.replayObjects.zhongshu : [],
       segment_zhongshu: source?.visible && source.category_visibility.segment_zhongshu ? props.replayObjects.segment_zhongshu : [],
+      movement_states: source?.visible && (source.category_visibility.movement_states ?? true) ? props.replayObjects.movement_states : [],
+      center_monitors: source?.visible && (source.category_visibility.center_monitors ?? true) ? props.replayObjects.center_monitors : [],
       divergences: source?.visible && source.category_visibility.divergences ? props.replayObjects.divergences : [],
       trade_points: source?.visible && source.category_visibility.trade_points ? props.replayObjects.trade_points : [],
     }
@@ -460,7 +463,7 @@ async function renderChan(fromBarIndex: number, toBarIndex: number): Promise<voi
   }
   const sources = props.strategySources.filter((source) => source.status === 'completed' && source.visible)
   chanPrimitive.setStyle(chanStyleForRendering(sources[0]))
-  const merged: ChanCalculationResults['objects'] = { fractals: [], bi: [], segments: [], zhongshu: [], segment_zhongshu: [], divergences: [], trade_points: [] }
+  const merged: ChanCalculationResults['objects'] = { fractals: [], bi: [], segments: [], zhongshu: [], segment_zhongshu: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] }
   await Promise.all(sources.map(async (source) => {
     const result = await getCalculationResults(source.job_id, fromBarIndex, toBarIndex)
     if (result.result_kind !== 'chan') return
@@ -469,6 +472,8 @@ async function renderChan(fromBarIndex: number, toBarIndex: number): Promise<voi
     if (source.category_visibility.segments) merged.segments.push(...result.objects.segments)
     if (source.category_visibility.zhongshu) merged.zhongshu.push(...result.objects.zhongshu)
     if (source.category_visibility.segment_zhongshu) merged.segment_zhongshu.push(...result.objects.segment_zhongshu)
+    if (source.category_visibility.movement_states ?? true) merged.movement_states.push(...result.objects.movement_states)
+    if (source.category_visibility.center_monitors ?? true) merged.center_monitors.push(...result.objects.center_monitors)
     if (source.category_visibility.divergences) merged.divergences.push(...result.objects.divergences)
     if (source.category_visibility.trade_points) merged.trade_points.push(...result.objects.trade_points)
   }))
@@ -519,7 +524,7 @@ async function openDataset(meta: DatasetMeta): Promise<void> {
   }
 }
 
-async function focusSignal(signal: ChanSignalPoint): Promise<void> {
+async function focusSignal(signal: ChanTreeObject): Promise<void> {
   if (!props.dataset || session.meta?.dataset_id !== props.dataset.dataset_id) return
   const currentBars = session.bars
   const currentIndex = currentBars.findIndex((bar) => bar.barIndex === signal.bar_index)

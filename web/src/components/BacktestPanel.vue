@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { createBacktest, getBacktest, getBacktestEquity, getBacktestSummary, getBacktestTrades, listAlgorithms } from '../api/client'
-import type { AlgorithmDefinition, BacktestSummary, BacktestTrade, DatasetMeta, EquityRow } from '../types/api'
+import { computed, onMounted, ref, watch } from 'vue'
+import { createBacktest, getBacktest, getBacktestChartEvents, getBacktestEquity, getBacktestSummary, getBacktestTrades, listAlgorithms } from '../api/client'
+import type { AlgorithmDefinition, BacktestSummary, BacktestTrade, ChanTreeObject, DatasetMeta, EquityRow, StrategyRunSource } from '../types/api'
 
 const props = defineProps<{ dataset: DatasetMeta | null; view: 'backtest' | 'trades' | 'equity' }>()
+const emit = defineEmits<{ completed: [source: StrategyRunSource] }>()
+const strategies = ref<AlgorithmDefinition[]>([])
 const strategy = ref<AlgorithmDefinition | null>(null)
+const strategyParameters = ref<Record<string, string | number | boolean>>({})
 const status = ref('idle')
 const error = ref('')
 const runId = ref('')
@@ -34,7 +37,7 @@ async function run(): Promise<void> {
   error.value = ''
   summary.value = null
   try {
-    const parameters = Object.fromEntries(Object.entries(definition.parameter_schema.properties).map(([name, rule]) => [name, rule.default!]))
+    const parameters = { ...strategyParameters.value }
     const accepted = await createBacktest({
       dataset_id: dataset.dataset_id, data_revision: dataset.data_revision,
       strategy: {
@@ -66,12 +69,49 @@ async function run(): Promise<void> {
     }
     if (current.status !== 'completed') throw new Error(current.error?.message ?? `回测${current.status}`)
     status.value = 'completed'
-    const [summaryValue, tradeValue, equityValue] = await Promise.all([
-      getBacktestSummary(runId.value), getBacktestTrades(runId.value), getBacktestEquity(runId.value),
+    const [summaryValue, tradeValue, equityValue, causalEvents] = await Promise.all([
+      getBacktestSummary(runId.value), getBacktestTrades(runId.value), getBacktestEquity(runId.value), getBacktestChartEvents(runId.value),
     ])
     summary.value = summaryValue
     trades.value = tradeValue.rows
     equity.value = equityValue
+    const currentObjects = new Map<string, ChanTreeObject>()
+    for (const event of causalEvents) {
+      const key = `${event.object_type}:${event.object_id}`
+      if (event.operation === 'delete') { currentObjects.delete(key); continue }
+      const payload = event.payload
+      const state = String(payload.state_to ?? payload.stage ?? payload.action ?? payload.event_type ?? event.object_type)
+      const labels: Record<string, string> = {
+        inside: '中枢内', below_without_S3: '中枢下方·无三卖', below_with_S3: '中枢下方·有三卖',
+        above_without_B3: '中枢上方·无三买', above_with_B3: '中枢上方·有三买',
+        waiting_B1: '等待标准一买', waiting_trend_divergence: '等待趋势背驰',
+        long_after_B1: '标准一买后持多', short_after_S1: '标准一卖后持空',
+        reverting_up_to_centre: '盘整底背驰·向上回归中枢',
+        reverting_down_to_centre: '盘整顶背驰·向下回归中枢',
+        returned_to_centre: '已回到中枢', converted_to_B3: '回归失败·转三买',
+        converted_to_S3: '回归失败·转三卖', holding_upward_migration: '三买后上移持有',
+        holding_downward_migration: '三卖后下移持有', migration_hold_exited: '迁移持有退出',
+        later_centre_BUY_3_filtered: '后续中枢三买已过滤',
+        later_centre_SELL_3_filtered: '后续中枢三卖已过滤',
+        open_long: '开多', close_long: '平多', open_short: '开空', close_short: '平空',
+      }
+      currentObjects.set(key, {
+        object_id: event.object_id,
+        bar_index: Number(payload.bar_index ?? event.known_at_bar_index),
+        time: Number(payload.timestamp_utc ?? 0),
+        price_i64: Number(payload.price_i64 ?? 0),
+        confirmed_at_bar_index: event.known_at_bar_index,
+        known_at_bar_index: event.known_at_bar_index,
+        object_revision: event.object_revision,
+        label: labels[state] ?? state,
+        detail: String(payload.reason_code ?? event.object_type),
+      })
+    }
+    emit('completed', {
+      source_type: 'StrategyRunSource', source_id: `run-source-${runId.value}`, run_id: runId.value,
+      definition, status: 'completed', visible: true, objects: [...currentObjects.values()],
+      signals: causalEvents.filter((event) => event.operation === 'upsert').map((event) => ({ ...event.payload, object_type: event.object_type, object_id: event.object_id })),
+    })
   } catch (cause) {
     status.value = 'failed'
     error.value = cause instanceof Error ? cause.message : '回测失败'
@@ -79,14 +119,31 @@ async function run(): Promise<void> {
 }
 
 onMounted(async () => {
-  try { strategy.value = (await listAlgorithms()).find((value) => value.kind === 'strategy') ?? null }
+  try {
+    strategies.value = (await listAlgorithms()).filter((value) => value.kind === 'strategy')
+    strategy.value = strategies.value[0] ?? null
+  }
   catch (cause) { error.value = cause instanceof Error ? cause.message : '策略不可用' }
+})
+
+watch(strategy, (definition) => {
+  strategyParameters.value = definition
+    ? Object.fromEntries(Object.entries(definition.parameter_schema.properties).map(([name, rule]) => [name, rule.default ?? '']))
+    : {}
 })
 </script>
 
 <template>
   <section class="backtest-panel" aria-label="回测结果">
     <div class="backtest-controls">
+      <select v-model="strategy" aria-label="选择回测策略">
+        <option v-for="candidate in strategies" :key="candidate.algorithm_id" :value="candidate">{{ candidate.name }}</option>
+      </select>
+      <label v-for="(rule, name) in strategy?.parameter_schema.properties" :key="name">
+        {{ name }}
+        <input v-if="rule.type === 'boolean'" v-model="strategyParameters[name]" type="checkbox" />
+        <input v-else v-model.number="strategyParameters[name]" type="number" :min="rule.minimum" :max="rule.maximum" />
+      </label>
       <strong>{{ strategy?.name ?? '正在加载策略…' }}</strong>
       <label>初始资金 <input v-model.number="initialCash" type="number" min="0" /></label>
       <label>每手手续费 <input v-model.number="commission" type="number" min="0" /></label>

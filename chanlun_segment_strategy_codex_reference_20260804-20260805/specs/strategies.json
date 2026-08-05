@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0.0",
+  "strategies": [
+    {
+      "id": "downtrend_reversal_only",
+      "class": "structural",
+      "requires": ["downtrend+consolidation+downtrend", "confirmed_B1"],
+      "entry": "at_or_after_B1.confirmed_at",
+      "exit": ["same_level_consolidation_via_lower_level_S1", "same_level_sell_signal"],
+      "forbids": ["class_B1_like_as_standard_B1"]
+    },
+    {
+      "id": "fixed_level_centre_decision_tree",
+      "class": "state_machine",
+      "requires": ["fixed_analysis_level", "nearest_confirmed_same_level_centre"],
+      "states": ["inside", "below_without_S3", "below_with_S3", "above_without_B3", "above_with_B3"],
+      "entry": "state_dependent",
+      "exit": ["state_transition", "same_level_sell_signal"]
+    },
+    {
+      "id": "centre_oscillation_swing",
+      "class": "lower_level_execution",
+      "requires": ["active_centre", "no_confirmed_B3_or_S3", "comparable_same_direction_oscillation_legs"],
+      "entry": "lower_level_B1_after_downward_consolidation_divergence",
+      "exit": "lower_level_S1_after_upward_consolidation_divergence",
+      "stops_on": ["B3", "S3", "centre_promotion"]
+    },
+    {
+      "id": "third_buy_centre_migration_hold",
+      "class": "trend_following",
+      "requires": ["confirmed_B3"],
+      "entry": "at_or_after_B3.confirmed_at",
+      "hold": "until_new_centre_or_same_level_upward_migration_divergence",
+      "exit": "same_level_upward_migration_trend_divergence"
+    },
+    {
+      "id": "first_centre_B3_rotation",
+      "class": "rotation",
+      "requires": ["confirmed_B3", "B3_after_first_uptrend_centre_preferred"],
+      "entry": "at_or_after_B3.confirmed_at",
+      "exit": ["next_lower_level_up_movement_fails_new_high", "consolidation_divergence", "migration_divergence"]
+    },
+    {
+      "id": "multi_timeframe_core_plus_swing",
+      "class": "multi_level_position_management",
+      "requires": ["higher_level_core_direction", "lower_level_B1_S1_events"],
+      "entry": "higher_level_buy_signal",
+      "reduce": "lower_level_S1",
+      "add_back": "lower_level_B1",
+      "exit": "higher_level_sell_signal"
+    },
+    {
+      "id": "trend_divergence_reversal",
+      "class": "structural",
+      "requires": ["two_same_level_non_overlapping_centres", "final_leg_new_extreme", "weaker_force", "lower_level_completion"],
+      "entry": "confirmed_B1",
+      "exit": "confirmed_S1_or_strategy_specific_follow_up",
+      "auxiliary": ["MACD"]
+    },
+    {
+      "id": "consolidation_divergence_centre_reversion",
+      "class": "mean_reversion",
+      "requires": ["one_centre_or_same_centre_oscillation", "weaker_same_direction_leg", "lower_level_completion"],
+      "entry": "lower_level_turn_after_consolidation_divergence",
+      "branch": ["return_to_centre", "convert_to_B3_or_S3"],
+      "forbids": ["labelling_as_standard_trend_B1_S1"]
+    },
+    {
+      "id": "small_to_large_B2",
+      "class": "special_confirmation",
+      "requires": ["lower_level_divergence", "no_target_level_standard_B1", "completed_target_level_first_retest"],
+      "entry": "confirmed_small_to_large_B2",
+      "tag": "small_to_large",
+      "forbids": ["mixing_with_normal_B2_metrics"]
+    },
+    {
+      "id": "accelerated_breakout_lower_level_B3",
+      "class": "aggressive_breakout",
+      "requires": ["confirmed_large_centre", "fast_and_forceful_departure", "volume_confirmation", "confirmed_lower_level_B3"],
+      "entry": "at_or_after_lower_level_B3.confirmed_at",
+      "fallback": "wait_for_large_level_B3",
+      "risk": "higher_false_breakout_risk"
+    }
+  ],
+  "filters_and_auxiliaries": [
+    "macd_zero_axis_risk_filter",
+    "ma_B1_candidate",
+    "ma_B2_candidate",
+    "fractal_ma_centre_confirmation",
+    "boll_phase_auxiliary",
+    "Zn_centre_monitor"
+  ]
+}
+

@@ -2,14 +2,15 @@
 import { ref } from 'vue'
 import { chanSignalLabel } from '../chart/chanPrimitive'
 import type { DrawingObject } from '../drawing/model'
-import type { ChanSignalPoint, DatasetMeta, SeriesSource, StrategySource } from '../types/api'
+import type { ChanSignalPoint, ChanTreeObject, DatasetMeta, SeriesSource, StrategyRunSource, StrategySource } from '../types/api'
 
 const props = defineProps<{
   dataset?: DatasetMeta | null
   drawings: DrawingObject[]
   sources: SeriesSource[]
   strategySources: StrategySource[]
-  signalsBySource?: Record<string, ChanSignalPoint[]>
+  strategyRunSources?: StrategyRunSource[]
+  signalsBySource?: Record<string, ChanTreeObject[]>
   signalsLoading?: boolean
   selectedId: string | null
   selectedSignalId?: string | null
@@ -22,8 +23,8 @@ const emit = defineEmits<{
   selectDrawing: [id: string]
   patchStrategy: [id: string, patch: Partial<StrategySource>]
   removeStrategy: [id: string]
-  selectSignal: [signal: ChanSignalPoint]
-  lockSignal: [signal: ChanSignalPoint]
+  selectSignal: [signal: ChanTreeObject]
+  lockSignal: [signal: ChanTreeObject]
 }>()
 
 const collapsedStrategies = ref(new Set<string>())
@@ -35,7 +36,7 @@ function toggleStrategy(sourceId: string): void {
   collapsedStrategies.value = next
 }
 
-function signalsFor(sourceId: string): ChanSignalPoint[] {
+function signalsFor(sourceId: string): ChanTreeObject[] {
   return [...(props.signalsBySource?.[sourceId] ?? [])].sort((left, right) =>
     right.bar_index - left.bar_index || right.known_at_bar_index - left.known_at_bar_index || right.object_id.localeCompare(left.object_id),
   )
@@ -48,9 +49,21 @@ function formatSignalTime(timestamp: number): string {
   }).format(new Date(timestamp)).replaceAll('/', '-')
 }
 
-function formatSignalPrice(signal: ChanSignalPoint): string {
+function formatSignalPrice(signal: ChanTreeObject): string {
   const scale = props.dataset?.price?.price_scale ?? 1
   return (signal.price_i64 / scale).toFixed(props.dataset?.price?.price_decimals ?? 0)
+}
+
+function objectLabel(value: ChanTreeObject): string {
+  if (value.label) return value.label
+  if ('signal_type' in value) return chanSignalLabel(value as ChanSignalPoint)
+  return value.object_type ?? '缠论对象'
+}
+
+function objectSide(value: ChanTreeObject): 'buy' | 'sell' | 'semantic' {
+  const signal = value.signal ?? ('signal_type' in value ? value as ChanSignalPoint : null)
+  if (!signal) return 'semantic'
+  return signal.signal_type.includes('buy') || signal.signal_type === 'bottom_divergence' ? 'buy' : 'sell'
 }
 </script>
 
@@ -74,7 +87,7 @@ function formatSignalPrice(signal: ChanSignalPoint): string {
       <div v-if="!collapsedStrategies.has(source.source_id)" class="strategy-children">
         <details class="strategy-categories">
           <summary>图层分类</summary>
-          <label v-for="category in (['fractals', 'bi', 'segments', 'zhongshu', 'segment_zhongshu', 'divergences', 'trade_points'] as const)" :key="category">
+          <label v-for="category in (['fractals', 'bi', 'segments', 'zhongshu', 'segment_zhongshu', 'movement_states', 'center_monitors', 'divergences', 'trade_points'] as const)" :key="category">
             <input
               type="checkbox" :checked="source.category_visibility[category]"
               @change="emit('patchStrategy', source.source_id, { category_visibility: { ...source.category_visibility, [category]: !source.category_visibility[category] } })"
@@ -92,7 +105,7 @@ function formatSignalPrice(signal: ChanSignalPoint): string {
         >
           <span class="tree-elbow">└</span>
           <span class="signal-object-content">
-            <strong :class="signal.signal_type.includes('buy') || signal.signal_type === 'bottom_divergence' ? 'buy' : 'sell'">{{ chanSignalLabel(signal) }}</strong>
+            <strong :class="objectSide(signal)">{{ objectLabel(signal) }}</strong>
             <small>{{ formatSignalTime(signal.time) }} · {{ formatSignalPrice(signal) }} · #{{ signal.bar_index }}</small>
           </span>
           <button
@@ -104,6 +117,30 @@ function formatSignalPrice(signal: ChanSignalPoint): string {
       </div>
     </article>
     <h3>用户绘图</h3>
+    <article v-for="source in strategyRunSources" :key="source.source_id" class="object-node strategy-node strategy-run-node" data-object-type="StrategyRunSource">
+      <header class="strategy-header">
+        <strong>{{ source.definition.name }}</strong>
+        <span class="strategy-status">{{ source.run_id }}</span>
+      </header>
+      <div class="strategy-children">
+        <div class="signal-branch-title"><span>策略状态与信号</span><small>{{ source.objects.length }}</small></div>
+        <div
+          v-for="item in [...source.objects].sort((left, right) => right.bar_index - left.bar_index || right.object_revision - left.object_revision)"
+          :key="item.object_id" class="signal-object-node" :class="{ selected: selectedSignalId === item.object_id }"
+          data-object-type="StrategySemanticObject" :data-signal-id="item.object_id"
+          role="button" tabindex="0" @click="emit('selectSignal', item)" @keydown.enter="emit('selectSignal', item)"
+        >
+          <span class="tree-elbow">└</span>
+          <span class="signal-object-content">
+            <strong class="semantic">{{ objectLabel(item) }}</strong>
+            <small>{{ formatSignalTime(item.time) }} · {{ formatSignalPrice(item) }} · #{{ item.bar_index }}</small>
+          </span>
+          <button class="signal-object-lock" :class="{ active: lockedSignalId === item.object_id }" title="锁定并定位" @click.stop="emit('lockSignal', item)">
+            {{ lockedSignalId === item.object_id ? '🔒' : '🔓' }}
+          </button>
+        </div>
+      </div>
+    </article>
     <article
       v-for="(drawing, index) in [...drawings].sort((a, b) => a.order_in_band - b.order_in_band)"
       :key="drawing.id"

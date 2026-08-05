@@ -224,6 +224,22 @@ def test_standard_segment_centers_and_third_points_are_causal_on_aol9() -> None:
     result = runtime.result_rows()
     assert len(result["segment_zhongshu"]) == 4
     assert all(value["zd_i64"] < value["zg_i64"] for value in result["segment_zhongshu"])
+    assert all(
+        value["analysis_level"] == "segment"
+        and value["component_kind"] == "segment"
+        and value["component_count"] >= 3
+        and value["dd_i64"] <= value["zd_i64"] < value["zg_i64"] <= value["gg_i64"]
+        and value["z_i64"] == (value["zd_i64"] + value["zg_i64"]) // 2
+        for value in result["segment_zhongshu"]
+    )
+    assert result["movement_states"]
+    assert result["center_monitors"]
+    assert all(
+        value["known_at_bar_index"] >= value["confirmed_at_bar_index"]
+        and value["relative_position"] in {"above", "below", "equal"}
+        and value["strength"] in {"strong", "weak", "neutral"}
+        for value in result["center_monitors"]
+    )
     assert [(value["signal_type"], value["bar_index"]) for value in result["trade_points"]] == [
         ("buy_3", 4206),
         ("buy_3", 4689),

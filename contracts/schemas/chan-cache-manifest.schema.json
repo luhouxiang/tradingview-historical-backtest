@@ -41,7 +41,7 @@
     "counts": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["merged_bars", "fractals", "bi", "segments", "zhongshu", "segment_zhongshu", "divergences", "trade_points", "events"],
+      "required": ["merged_bars", "fractals", "bi", "segments", "zhongshu", "segment_zhongshu", "movement_states", "center_monitors", "divergences", "trade_points", "events"],
       "properties": {
         "merged_bars": {"type": "integer", "minimum": 0},
         "fractals": {"type": "integer", "minimum": 0},
@@ -49,6 +49,8 @@
         "segments": {"type": "integer", "minimum": 0},
         "zhongshu": {"type": "integer", "minimum": 0},
         "segment_zhongshu": {"type": "integer", "minimum": 0},
+        "movement_states": {"type": "integer", "minimum": 0},
+        "center_monitors": {"type": "integer", "minimum": 0},
         "divergences": {"type": "integer", "minimum": 0},
         "trade_points": {"type": "integer", "minimum": 0},
         "events": {"type": "integer", "minimum": 0}
@@ -57,13 +59,15 @@
     "files": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fractals", "bi", "segments", "zhongshu", "segment_zhongshu", "divergences", "trade_points", "events"],
+      "required": ["fractals", "bi", "segments", "zhongshu", "segment_zhongshu", "movement_states", "center_monitors", "divergences", "trade_points", "events"],
       "properties": {
         "fractals": {"$ref": "#/$defs/file"},
         "bi": {"$ref": "#/$defs/file"},
         "segments": {"$ref": "#/$defs/file"},
         "zhongshu": {"$ref": "#/$defs/file"},
         "segment_zhongshu": {"$ref": "#/$defs/file"},
+        "movement_states": {"$ref": "#/$defs/file"},
+        "center_monitors": {"$ref": "#/$defs/file"},
         "divergences": {"$ref": "#/$defs/file"},
         "trade_points": {"$ref": "#/$defs/file"},
         "events": {"$ref": "#/$defs/file"}

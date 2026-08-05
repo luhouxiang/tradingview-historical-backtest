@@ -14,6 +14,7 @@ import type {
   ReplayRequest,
   ReplayStatus,
   ReplayEventsResponse,
+  CausalEvent,
   BacktestRequest,
   RunAccepted,
   RunStatus,
@@ -176,6 +177,11 @@ export async function getBacktestTrades(runId: string, cursor?: string): Promise
 export async function getBacktestEquity(runId: string): Promise<EquityRow[]> {
   const response = await apiRequest<{ request_id: string; run_id: string; rows: EquityRow[] }>(`/api/v1/backtests/${encodeURIComponent(runId)}/equity`)
   return response.rows
+}
+
+export async function getBacktestChartEvents(runId: string): Promise<CausalEvent[]> {
+  const response = await apiRequest<{ request_id: string; run_id: string; events: CausalEvent[] }>(`/api/v1/backtests/${encodeURIComponent(runId)}/chart-events`)
+  return response.events
 }
 
 export function createStudy(request: StudyRequest): Promise<StudyAccepted> {

@@ -109,7 +109,7 @@ export interface AlgorithmOutput {
   display_name: string
   pane: 'main' | 'indicator'
   series_type: 'line' | 'histogram' | 'semantic_objects'
-  object_type?: 'fractal' | 'bi' | 'segment' | 'zhongshu' | 'segment_zhongshu' | 'divergence' | 'trade_point' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event'
+  object_type?: 'fractal' | 'bi' | 'segment' | 'zhongshu' | 'segment_zhongshu' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event'
 }
 
 export interface AlgorithmDefinition extends AlgorithmRef {
@@ -192,6 +192,12 @@ export interface ChanZhongshu {
   end_time: number
   zg_i64: number
   zd_i64: number
+  gg_i64: number
+  dd_i64: number
+  z_i64: number
+  analysis_level: string
+  component_kind: 'bi' | 'segment'
+  component_count: number
   confirmed: boolean
   confirmed_at_bar_index: number | null
   status: 'confirmed' | 'extended' | 'left'
@@ -218,6 +224,68 @@ export interface ChanSignalPoint {
   object_revision: number
 }
 
+export interface ChanTreeObject {
+  object_id: string
+  object_type?: 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point'
+  bar_index: number
+  time: number
+  price_i64: number
+  confirmed_at_bar_index: number | null
+  known_at_bar_index: number
+  object_revision: number
+  label?: string
+  detail?: string
+  signal?: ChanSignalPoint
+}
+
+export interface StrategyRunSource {
+  source_type: 'StrategyRunSource'
+  source_id: string
+  run_id: string
+  definition: AlgorithmDefinition
+  status: 'completed'
+  visible: boolean
+  objects: ChanTreeObject[]
+  signals: Array<Record<string, unknown> & { object_type: string; object_id: string }>
+}
+
+export interface ChanMovementState {
+  object_id: string
+  start_bar_index: number
+  start_time: number
+  end_bar_index: number
+  end_time: number
+  price_i64: number
+  state_type: 'consolidation' | 'centre_oscillation' | 'centre_migration_up' | 'centre_migration_down'
+  direction: 'up' | 'down' | null
+  analysis_level: string
+  reference_object_id: string
+  confirmed: boolean
+  confirmed_at_bar_index: number | null
+  known_at_bar_index: number
+  object_revision: number
+}
+
+export interface ChanCenterMonitor {
+  object_id: string
+  bar_index: number
+  time: number
+  z_i64: number
+  zn_i64: number
+  range_high_i64: number
+  range_low_i64: number
+  component_direction: 'up' | 'down'
+  relative_position: 'above' | 'below' | 'equal'
+  strength: 'strong' | 'weak' | 'neutral'
+  migration_warning: 'up' | 'down' | null
+  analysis_level: string
+  reference_object_id: string
+  confirmed: boolean
+  confirmed_at_bar_index: number | null
+  known_at_bar_index: number
+  object_revision: number
+}
+
 export interface ChanCalculationResults extends CalculationResultBase {
   result_kind: 'chan'
   objects: {
@@ -226,6 +294,8 @@ export interface ChanCalculationResults extends CalculationResultBase {
     segments: ChanLineObject[]
     zhongshu: ChanZhongshu[]
     segment_zhongshu: ChanZhongshu[]
+    movement_states: ChanMovementState[]
+    center_monitors: ChanCenterMonitor[]
     divergences: ChanSignalPoint[]
     trade_points: ChanSignalPoint[]
   }
@@ -256,7 +326,7 @@ export interface ReplayStatus {
 export interface CausalEvent {
   event_seq: number
   known_at_bar_index: number
-  object_type: 'fractal' | 'bi' | 'segment' | 'zhongshu' | 'segment_zhongshu' | 'divergence' | 'trade_point' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event'
+  object_type: 'fractal' | 'bi' | 'segment' | 'zhongshu' | 'segment_zhongshu' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event'
   object_id: string
   operation: 'upsert' | 'delete'
   object_revision: number
@@ -451,7 +521,7 @@ export interface StrategySource {
   job_id: string
   status: JobStatus['status']
   visible: boolean
-  category_visibility: { fractals: boolean; bi: boolean; segments: boolean; zhongshu: boolean; segment_zhongshu: boolean; divergences: boolean; trade_points: boolean }
+  category_visibility: { fractals: boolean; bi: boolean; segments: boolean; zhongshu: boolean; segment_zhongshu: boolean; movement_states?: boolean; center_monitors?: boolean; divergences: boolean; trade_points: boolean }
   style?: IndicatorStyle
   error?: string
 }
@@ -508,7 +578,7 @@ export interface PersistedStrategySource {
   data_revision: string
   algorithm: AlgorithmRef & { kind: 'chan' }
   parameters: Record<string, string | number | boolean>
-  category_visibility: { fractals: boolean; bi: boolean; segments?: boolean; zhongshu: boolean; segment_zhongshu?: boolean; divergences?: boolean; trade_points?: boolean }
+  category_visibility: { fractals: boolean; bi: boolean; segments?: boolean; zhongshu: boolean; segment_zhongshu?: boolean; movement_states?: boolean; center_monitors?: boolean; divergences?: boolean; trade_points?: boolean }
   style?: IndicatorStyle
 }
 

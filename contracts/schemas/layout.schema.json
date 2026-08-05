@@ -154,6 +154,8 @@
               "segments": {"type": "boolean"},
               "zhongshu": {"type": "boolean"},
               "segment_zhongshu": {"type": "boolean"},
+              "movement_states": {"type": "boolean"},
+              "center_monitors": {"type": "boolean"},
               "divergences": {"type": "boolean"},
               "trade_points": {"type": "boolean"}
             }

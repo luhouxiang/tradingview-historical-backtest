@@ -32,6 +32,12 @@
 | C-027 | 标准线段中枢、背驰和一二三类买卖点按缠论 108 课固化为 Python 因果语义对象。标准线段中枢使用已确认段，且按第 18 课只接受 `ZD < ZG` 的正宽重叠；三类点的回抽段严格为离开段的下一段。缓存包含 `segment_zhongshu/divergences/trade_points` 三类 Parquet。笔中枢默认浅蓝色实线框、半透明填充和柔和阴影；标准线段中枢默认浅黄色实线框、半透明填充和柔和阴影。详细口径见 `docs/14-chan-108-segment-center-divergence-trade-points.md`。 |
 | C-028 | 趋势背驰严格采用 `a+Z1+b+Z2+c`：两中枢完整外围范围必须不重叠，力度比较 `b=Z1.exit_index` 与 `c=Z2.exit_index`，不再比较进入首中枢前的 a 与 c；c 后首个已完成反向段确认端点。单中枢 `a+Z+c` 为盘整背驰并生成类一，类一后按相同次序生成类二；严格三类点若最近同向起点为类一则附加类三生命周期标记。标准和类二买卖点均分为最强（与三类点同点）、一般（不突破一类点）、最弱（突破但回试自身有盘整背驰确认）。契约新增 `signal_class`、`strength` 及六种类买卖点，算法版本升为 4.1.0，禁止复用 4.0.x 缓存。 |
 | C-029 | 右侧“对象树”在每个缠论 `StrategySource` 父节点下逐项显示 Python 生成的背驰、标准/类买卖点对象，并按 `bar_index` 最近优先排列。点击具体信号只改变选中状态，不移动当前 K 线；若信号锚点已在屏幕内则以发生点与因果确认点两个圆形端点高亮。点击小锁才执行定位：对象不在当前缓存/视口时按其 K 线锚点加载有限连续历史窗口并移入屏幕。每个信号是策略父节点下的只读语义对象，不持久化为普通 `DrawingObject`。对象树拥有独立纵向滚动区域。 |
+| C-030 | 参考 `chanlun_segment_strategy_codex_reference_20260804-20260805` 扩展缠论时按独立里程碑逐套落地单级别策略。排除需要跨周期或上下级别联动的 `multi_timeframe_core_plus_swing`、`centre_oscillation_swing`、`small_to_large_B2`、`accelerated_breakout_lower_level_B3`。单级别语义对象统一使用 `analysis_level=segment`、`component_kind=segment`；标准中枢继续采用 C-027 的正宽核心、完整振荡包络分离和 MACD 面积力度口径。新增走势状态与 `Z/Zn` 监视对象，均进入因果事件、对象树、图表图层和锁定定位流程。 |
+| C-031 | `fixed_level_centre_decision_tree` 使用最近已确认线段中枢和收盘价划分 `inside / below_without_S3 / below_with_S3 / above_without_B3 / above_with_B3`。边界接触属于中枢内；只在关联当前中枢的严格 B3/S3 已确认后开多/开空，回到中枢或越过另一侧时平仓。状态、阶段、交易和图表事件共用逐 K 线事件入口；正式回测完成后作为 `StrategyRunSource` 进入对象树，点击只选中、小锁定位，主图只绘制状态与最终图表事件以避免阶段/交易事件重影。 |
+| C-032 | `downtrend_reversal_only` 只接受 `signal_class=standard` 的已确认一买开多，并以标准一卖平多，不反手做空；`trend_divergence_reversal` 接受标准一买/一卖并在相反信号确认时平仓、反向开仓。两者都拒绝盘整背驰生成的 `class_buy_1/class_sell_1`。信号发生点保留在缠论对象中，策略对象统一锚定其 `known_at_bar_index` 对应 K 线的时间和收盘价，确保图表展示、对象树定位与实际可用信息时刻一致。 |
+| C-033 | `consolidation_divergence_centre_reversion` 仅消费可追溯到 `divergence_kind=consolidation` 及其关联标准线段中枢的类一买/类一卖。入场后的首要目标是价格回到冻结核心 `[ZD,ZG]`；确认进入核心即结束回归仓。若关联中枢先确认严格 S3（底背驰多仓）或 B3（顶背驰空仓），则记录回归失败，平仓并切换到严格三类点方向。新仓确认 K 线当根不执行回归止盈，防止同一已知时刻产生无意义的开平重影。 |
+| C-034 | `third_buy_centre_migration_hold` 仅由 `signal_class=standard` 的严格 B3/S3 触发，B3 开多、S3 开空。持仓期间不因类一买卖或价格触边做同级短差；任一不同于入场来源中枢的新标准线段中枢确认时退出，或在多仓标准 S1、空仓标准 B1 确认时按同级趋势背驰退出。类三标记不代替严格三类点，确保迁移持有的起点和终点均为已完成结构。 |
+| C-035 | `first_centre_B3_rotation` 的单级别实现把“首中枢三类点”固化为：同一方向周期只执行首个 `signal_class=standard` 的 B3/S3；后续同向严格三类点发布 `LATER_CENTRE_THIRD_POINT_FILTERED` 状态但不下单；相反严格三类点出现后重置前一方向周期。持仓在新同级中枢、相反标准一类点或相反类一（盘整背驰）确认时退出。参考方案中“下一次级别走势不能创新高”等低级别失败规则不在本里程碑实现，也不以当前级别局部 K 线替代。 |
 
 ## B. 本规范为首版选定的实现方式
 

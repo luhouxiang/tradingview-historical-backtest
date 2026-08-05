@@ -82,6 +82,8 @@ type CategoryVisibility struct {
 	Segments        *bool `json:"segments,omitempty"`
 	Zhongshu        bool  `json:"zhongshu"`
 	SegmentZhongshu *bool `json:"segment_zhongshu,omitempty"`
+	MovementStates  *bool `json:"movement_states,omitempty"`
+	CenterMonitors  *bool `json:"center_monitors,omitempty"`
 	Divergences     *bool `json:"divergences,omitempty"`
 	TradePoints     *bool `json:"trade_points,omitempty"`
 }

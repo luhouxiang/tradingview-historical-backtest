@@ -9,7 +9,7 @@ const api = vi.hoisted(() => ({
   getLayout: vi.fn(), getDrawings: vi.fn(), putLayout: vi.fn(), putDrawings: vi.fn(),
   listAlgorithms: vi.fn(), createCalculation: vi.fn(), getCalculation: vi.fn(), getCalculationResults: vi.fn(),
   createReplay: vi.fn(), getReplay: vi.fn(), getReplayEvents: vi.fn(),
-  createBacktest: vi.fn(), getBacktest: vi.fn(), getBacktestSummary: vi.fn(), getBacktestTrades: vi.fn(), getBacktestEquity: vi.fn(),
+  createBacktest: vi.fn(), getBacktest: vi.fn(), getBacktestSummary: vi.fn(), getBacktestTrades: vi.fn(), getBacktestEquity: vi.fn(), getBacktestChartEvents: vi.fn(),
   createStudy: vi.fn(), getStudy: vi.fn(), getStudyEvaluations: vi.fn(),
   getDataset: vi.fn(), getJob: vi.fn(), getSourceFiles: vi.fn(), importSource: vi.fn(),
   listDatasets: vi.fn(), startDatasetScan: vi.fn(),
@@ -69,7 +69,7 @@ describe('AppShell', () => {
     api.getSourceFiles.mockResolvedValue([])
     api.listDatasets.mockResolvedValue({ catalog_revision: 0, datasets: [] })
     api.getCalculationResults.mockResolvedValue({
-      result_kind: 'chan', objects: { fractals: [], bi: [], segments: [], zhongshu: [], segment_zhongshu: [], divergences: [], trade_points: [] },
+      result_kind: 'chan', objects: { fractals: [], bi: [], segments: [], zhongshu: [], segment_zhongshu: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] },
       coverage: { first_bar_index: 0, last_bar_index: 100, returned_count: 101 },
     })
   })
@@ -142,7 +142,7 @@ describe('AppShell', () => {
     expect(chart.props('strategySources')).toEqual([
       expect.objectContaining({
         source_type: 'StrategySource', visible: true,
-        category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true, segment_zhongshu: true, divergences: true, trade_points: true },
+        category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true, segment_zhongshu: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
       }),
     ])
   })
@@ -159,7 +159,7 @@ describe('AppShell', () => {
       confirmed: true, confirmed_at_bar_index: 81, known_at_bar_index: 81, object_revision: 1,
     }
     api.getCalculationResults.mockResolvedValue({
-      result_kind: 'chan', objects: { fractals: [], bi: [], segments: [], zhongshu: [], segment_zhongshu: [], divergences: [], trade_points: [signal] },
+      result_kind: 'chan', objects: { fractals: [], bi: [], segments: [], zhongshu: [], segment_zhongshu: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [signal] },
       coverage: { first_bar_index: 0, last_bar_index: 100, returned_count: 1 },
     })
     const wrapper = mount(AppShell, {

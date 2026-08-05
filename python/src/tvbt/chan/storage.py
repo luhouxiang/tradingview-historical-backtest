@@ -54,10 +54,55 @@ ZHONGSHU_SCHEMA = pa.schema(
         ("end_time", pa.int64()),
         ("zg_i64", pa.int64()),
         ("zd_i64", pa.int64()),
+        ("gg_i64", pa.int64()),
+        ("dd_i64", pa.int64()),
+        ("z_i64", pa.int64()),
+        ("analysis_level", pa.string()),
+        ("component_kind", pa.string()),
+        ("component_count", pa.int64()),
         ("confirmed", pa.bool_()),
         ("confirmed_at_bar_index", pa.int64()),
         ("status", pa.string()),
         ("leave_direction", pa.string()),
+        ("known_at_bar_index", pa.int64()),
+        ("object_revision", pa.int64()),
+    ]
+)
+MOVEMENT_STATE_SCHEMA = pa.schema(
+    [
+        ("object_id", pa.string()),
+        ("start_bar_index", pa.int64()),
+        ("start_time", pa.int64()),
+        ("end_bar_index", pa.int64()),
+        ("end_time", pa.int64()),
+        ("price_i64", pa.int64()),
+        ("state_type", pa.string()),
+        ("direction", pa.string()),
+        ("analysis_level", pa.string()),
+        ("reference_object_id", pa.string()),
+        ("confirmed", pa.bool_()),
+        ("confirmed_at_bar_index", pa.int64()),
+        ("known_at_bar_index", pa.int64()),
+        ("object_revision", pa.int64()),
+    ]
+)
+CENTER_MONITOR_SCHEMA = pa.schema(
+    [
+        ("object_id", pa.string()),
+        ("bar_index", pa.int64()),
+        ("time", pa.int64()),
+        ("z_i64", pa.int64()),
+        ("zn_i64", pa.int64()),
+        ("range_high_i64", pa.int64()),
+        ("range_low_i64", pa.int64()),
+        ("component_direction", pa.string()),
+        ("relative_position", pa.string()),
+        ("strength", pa.string()),
+        ("migration_warning", pa.string()),
+        ("analysis_level", pa.string()),
+        ("reference_object_id", pa.string()),
+        ("confirmed", pa.bool_()),
+        ("confirmed_at_bar_index", pa.int64()),
         ("known_at_bar_index", pa.int64()),
         ("object_revision", pa.int64()),
     ]
@@ -105,6 +150,8 @@ class ChanResult:
     segments: list[dict[str, Any]] = field(default_factory=list)
     zhongshu: list[dict[str, Any]] = field(default_factory=list)
     segment_zhongshu: list[dict[str, Any]] = field(default_factory=list)
+    movement_states: list[dict[str, Any]] = field(default_factory=list)
+    center_monitors: list[dict[str, Any]] = field(default_factory=list)
     divergences: list[dict[str, Any]] = field(default_factory=list)
     trade_points: list[dict[str, Any]] = field(default_factory=list)
     events: list[dict[str, Any]] = field(default_factory=list)
@@ -136,6 +183,8 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
             "segments": (result.segments, LINE_SCHEMA),
             "zhongshu": (result.zhongshu, ZHONGSHU_SCHEMA),
             "segment_zhongshu": (result.segment_zhongshu, ZHONGSHU_SCHEMA),
+            "movement_states": (result.movement_states, MOVEMENT_STATE_SCHEMA),
+            "center_monitors": (result.center_monitors, CENTER_MONITOR_SCHEMA),
             "divergences": (result.divergences, SIGNAL_SCHEMA),
             "trade_points": (result.trade_points, SIGNAL_SCHEMA),
             "events": (result.events, EVENT_SCHEMA),
@@ -172,6 +221,8 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
                 "segments": len(result.segments),
                 "zhongshu": len(result.zhongshu),
                 "segment_zhongshu": len(result.segment_zhongshu),
+                "movement_states": len(result.movement_states),
+                "center_monitors": len(result.center_monitors),
                 "divergences": len(result.divergences),
                 "trade_points": len(result.trade_points),
                 "events": len(result.events),

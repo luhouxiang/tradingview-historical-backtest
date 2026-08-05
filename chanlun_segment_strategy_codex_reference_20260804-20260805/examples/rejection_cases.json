@@ -1,0 +1,36 @@
+{
+  "description": "Signals that must be rejected under the project hard rules.",
+  "cases": [
+    {
+      "id": "TREND-DIV-ONE-CENTRE",
+      "input": {"same_level_centre_count": 1, "macd_weaker": true},
+      "expected": {"trend_divergence": false, "possible": "consolidation_divergence"}
+    },
+    {
+      "id": "TREND-DIV-NO-NEW-LOW",
+      "input": {"same_level_centre_count": 2, "final_leg_new_low": false, "macd_weaker": true},
+      "expected": {"trend_divergence": false}
+    },
+    {
+      "id": "MACD-ONLY",
+      "input": {"structure_valid": false, "macd_price_divergence": true},
+      "expected": {"structural_signal": null}
+    },
+    {
+      "id": "WEAK-B2-NO-CONSOLIDATION-DIVERGENCE",
+      "input": {"B2_price_ticks": 990, "B1_price_ticks": 1000, "consolidation_divergence": false},
+      "expected": {"B2_confirmed": false}
+    },
+    {
+      "id": "UNFINISHED-FINAL-LEG",
+      "input": {"trend_structure_valid": true, "final_leg_completed": false, "provisional_macd_area_weaker": true},
+      "expected": {"allowed_status": "candidate", "confirmed": false}
+    },
+    {
+      "id": "MIXED-COMPONENT-KINDS",
+      "input": {"components": ["segment", "segment", "stroke_experimental"]},
+      "expected": {"centre_confirmed": false}
+    }
+  ]
+}
+

@@ -11,6 +11,8 @@ OBJECT_TYPES = frozenset(
         "segment",
         "zhongshu",
         "segment_zhongshu",
+        "movement_state",
+        "center_monitor",
         "divergence",
         "trade_point",
     }

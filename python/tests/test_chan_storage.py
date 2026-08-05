@@ -89,6 +89,8 @@ def test_chan_cache_writes_typed_tables_checkpoints_and_success_last(tmp_path: P
     assert manifest["counts"]["segments"] == 0
     assert manifest["files"]["segments"]["path"] == "segments.parquet"
     assert manifest["counts"]["segment_zhongshu"] == 0
+    assert manifest["files"]["movement_states"]["path"] == "movement_states.parquet"
+    assert manifest["files"]["center_monitors"]["path"] == "center_monitors.parquet"
     assert manifest["files"]["divergences"]["path"] == "divergences.parquet"
     assert manifest["files"]["trade_points"]["path"] == "trade_points.parquet"
     assert manifest["checkpoint"]["last_bar_index"] == 4

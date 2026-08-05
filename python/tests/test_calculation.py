@@ -114,6 +114,8 @@ def test_chan_calculation_writes_causal_structure_cache(tmp_path: Path) -> None:
     assert pq.read_table(output / "bi.parquet").num_rows > 0
     assert (output / "segments.parquet").is_file()
     assert (output / "segment_zhongshu.parquet").is_file()
+    assert (output / "movement_states.parquet").is_file()
+    assert (output / "center_monitors.parquet").is_file()
     assert (output / "divergences.parquet").is_file()
     assert (output / "trade_points.parquet").is_file()
     assert (

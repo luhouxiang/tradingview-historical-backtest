@@ -1,0 +1,62 @@
+{
+  "rule_version": "1.0.0-reference",
+  "level_model": {
+    "mode": "fixed_timeframe_proxy",
+    "analysis_level": "30m",
+    "component_level": "5m",
+    "component_kind": "segment",
+    "require_completed_components": true
+  },
+  "price_model": {
+    "representation": "integer_ticks",
+    "min_tick": "0.01",
+    "allow_float_epsilon": false
+  },
+  "centre": {
+    "core_interval": "closed",
+    "allow_degenerate_point_centre": true,
+    "freeze_core_after_first_three": true,
+    "promotion_component_count": 9,
+    "trend_non_overlap_scope": "REQUIRES_PROJECT_DECISION",
+    "trend_non_overlap_options": ["core_only", "oscillation_envelope"]
+  },
+  "third_point": {
+    "require_completed_departure": true,
+    "require_first_completed_retest": true,
+    "B3_retest_rule": "retest_low_ticks > ZG_ticks",
+    "S3_retest_rule": "retest_high_ticks < ZD_ticks",
+    "equality_means": "centre_extension"
+  },
+  "trend_divergence": {
+    "minimum_same_level_centres": 2,
+    "require_same_direction": true,
+    "require_non_overlap": true,
+    "require_final_leg_new_extreme": true,
+    "require_lower_level_completion": true,
+    "force_metric": "REQUIRES_PROJECT_DECISION",
+    "macd_role": "auxiliary_only"
+  },
+  "second_point": {
+    "require_B1_or_small_to_large_tag": true,
+    "require_first_countertrend_movement_completed": true,
+    "allow_B2_below_B1": true,
+    "weak_B2_requires_consolidation_divergence": true,
+    "allow_B2_B3_overlap": true
+  },
+  "backtest": {
+    "trade_before_confirmed_at": false,
+    "candidate_is_tradable": false,
+    "confirmation_bar_fill_policy": "next_tradable_event",
+    "preserve_invalidated_candidates": true
+  },
+  "indicators": {
+    "may_create_structural_signal": false,
+    "MACD": {"role": ["force_comparison", "risk_filter"]},
+    "volume": {"role": ["force_comparison", "breakout_filter"]},
+    "BOLL": {"role": ["phase_auxiliary", "warning"]},
+    "moving_average": {"role": ["phase_auxiliary", "candidate_only"]},
+    "fractal": {"role": ["phase_auxiliary"]},
+    "Zn": {"role": ["centre_strength_monitor", "warning"]}
+  }
+}
+

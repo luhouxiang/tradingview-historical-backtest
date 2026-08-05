@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "invariants": [
+    {"id": "INV-CENTRE-001", "rule": "A confirmed centre uses at least three consecutive completed components."},
+    {"id": "INV-CENTRE-002", "rule": "ZD_ticks <= ZG_ticks."},
+    {"id": "INV-CENTRE-003", "rule": "After confirmation, ZD_ticks and ZG_ticks are immutable for that centre_id."},
+    {"id": "INV-CENTRE-004", "rule": "DD_ticks <= ZD_ticks <= ZG_ticks <= GG_ticks."},
+    {"id": "INV-CENTRE-005", "rule": "Components from different analysis_level or component_kind values cannot form one centre."},
+    {"id": "INV-CENTRE-006", "rule": "Nine or more extension components trigger centre promotion recognition."},
+    {"id": "INV-B3-001", "rule": "B3 requires a completed departure and the first completed retest."},
+    {"id": "INV-B3-002", "rule": "B3 requires retest_low_ticks > ZG_ticks; equality means extension."},
+    {"id": "INV-S3-001", "rule": "S3 requires retest_high_ticks < ZD_ticks; equality means extension."},
+    {"id": "INV-DIV-001", "rule": "Standard trend divergence requires at least two same-level non-overlapping centres."},
+    {"id": "INV-DIV-002", "rule": "Standard trend divergence requires a new directional extreme in the final leg."},
+    {"id": "INV-DIV-003", "rule": "Indicators cannot create a structural signal without structural prerequisites."},
+    {"id": "INV-B2-001", "rule": "A B2 below B1 is weak and requires consolidation divergence plus lower-level completion."},
+    {"id": "INV-TIME-001", "rule": "confirmed_at is not earlier than endpoint_time."},
+    {"id": "INV-TIME-002", "rule": "Backtest execution is not earlier than confirmed_at."},
+    {"id": "INV-TIME-003", "rule": "An unfinished final leg can emit only a candidate signal."},
+    {"id": "INV-PRICE-001", "rule": "Boundary comparisons use integer minimum-tick units, not floating epsilon."},
+    {"id": "INV-MIX-001", "rule": "Stroke-centre experimental signals are never mixed with standard segment-centre signals."},
+    {"id": "INV-AUDIT-001", "rule": "Invalidated candidates remain auditable and are not silently deleted."}
+  ]
+}
+

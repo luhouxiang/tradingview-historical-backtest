@@ -1,0 +1,45 @@
+{
+  "description": "Theoretical endpoint versus observable confirmation and executable time.",
+  "events": [
+    {
+      "event_id": "seg-final-candidate-v1",
+      "symbol": "EXAMPLE",
+      "type": "segment_candidate",
+      "endpoint_time": "2026-08-05T10:00:00+02:00",
+      "observed_at": "2026-08-05T10:00:00+02:00",
+      "completed": false
+    },
+    {
+      "event_id": "div-candidate-v1",
+      "symbol": "EXAMPLE",
+      "type": "trend_divergence_candidate",
+      "endpoint_time": "2026-08-05T10:00:00+02:00",
+      "observed_at": "2026-08-05T10:05:00+02:00",
+      "tradable": false
+    },
+    {
+      "event_id": "b1-confirmed-v1",
+      "symbol": "EXAMPLE",
+      "type": "B1",
+      "status": "confirmed",
+      "endpoint_time": "2026-08-05T10:00:00+02:00",
+      "confirmed_at": "2026-08-05T10:15:00+02:00",
+      "signal_price_ticks": 1000,
+      "tradable_from": "2026-08-05T10:15:00+02:00"
+    },
+    {
+      "event_id": "fill-v1",
+      "symbol": "EXAMPLE",
+      "type": "execution_fill",
+      "submitted_at": "2026-08-05T10:15:00+02:00",
+      "filled_at": "2026-08-05T10:16:00+02:00",
+      "executable_price_ticks": 1007
+    }
+  ],
+  "assertions": [
+    "No execution occurs at endpoint_time merely because it is back-labelled later.",
+    "The executable price is stored separately from the theoretical signal price.",
+    "The candidate remains in the audit trail."
+  ]
+}
+

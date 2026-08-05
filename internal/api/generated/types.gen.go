@@ -9,6 +9,87 @@ import (
 	"time"
 )
 
+// Defines values for CalculationResultsObjectsCenterMonitorsComponentDirection.
+const (
+	CalculationResultsObjectsCenterMonitorsComponentDirectionDown CalculationResultsObjectsCenterMonitorsComponentDirection = "down"
+	CalculationResultsObjectsCenterMonitorsComponentDirectionUp   CalculationResultsObjectsCenterMonitorsComponentDirection = "up"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsCenterMonitorsComponentDirection enum.
+func (e CalculationResultsObjectsCenterMonitorsComponentDirection) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsCenterMonitorsComponentDirectionDown:
+		return true
+	case CalculationResultsObjectsCenterMonitorsComponentDirectionUp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsCenterMonitorsMigrationWarning.
+const (
+	CalculationResultsObjectsCenterMonitorsMigrationWarningDown        CalculationResultsObjectsCenterMonitorsMigrationWarning = "down"
+	CalculationResultsObjectsCenterMonitorsMigrationWarningLessThannil CalculationResultsObjectsCenterMonitorsMigrationWarning = "<nil>"
+	CalculationResultsObjectsCenterMonitorsMigrationWarningUp          CalculationResultsObjectsCenterMonitorsMigrationWarning = "up"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsCenterMonitorsMigrationWarning enum.
+func (e CalculationResultsObjectsCenterMonitorsMigrationWarning) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsCenterMonitorsMigrationWarningDown:
+		return true
+	case CalculationResultsObjectsCenterMonitorsMigrationWarningLessThannil:
+		return true
+	case CalculationResultsObjectsCenterMonitorsMigrationWarningUp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsCenterMonitorsRelativePosition.
+const (
+	CalculationResultsObjectsCenterMonitorsRelativePositionAbove CalculationResultsObjectsCenterMonitorsRelativePosition = "above"
+	CalculationResultsObjectsCenterMonitorsRelativePositionBelow CalculationResultsObjectsCenterMonitorsRelativePosition = "below"
+	CalculationResultsObjectsCenterMonitorsRelativePositionEqual CalculationResultsObjectsCenterMonitorsRelativePosition = "equal"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsCenterMonitorsRelativePosition enum.
+func (e CalculationResultsObjectsCenterMonitorsRelativePosition) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsCenterMonitorsRelativePositionAbove:
+		return true
+	case CalculationResultsObjectsCenterMonitorsRelativePositionBelow:
+		return true
+	case CalculationResultsObjectsCenterMonitorsRelativePositionEqual:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsCenterMonitorsStrength.
+const (
+	CalculationResultsObjectsCenterMonitorsStrengthNeutral CalculationResultsObjectsCenterMonitorsStrength = "neutral"
+	CalculationResultsObjectsCenterMonitorsStrengthStrong  CalculationResultsObjectsCenterMonitorsStrength = "strong"
+	CalculationResultsObjectsCenterMonitorsStrengthWeak    CalculationResultsObjectsCenterMonitorsStrength = "weak"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsCenterMonitorsStrength enum.
+func (e CalculationResultsObjectsCenterMonitorsStrength) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsCenterMonitorsStrengthNeutral:
+		return true
+	case CalculationResultsObjectsCenterMonitorsStrengthStrong:
+		return true
+	case CalculationResultsObjectsCenterMonitorsStrengthWeak:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CalculationResultsObjectsDivergencesDivergenceKind.
 const (
 	CalculationResultsObjectsDivergencesDivergenceKindConsolidation CalculationResultsObjectsDivergencesDivergenceKind = "consolidation"
@@ -123,6 +204,69 @@ func (e CalculationResultsObjectsDivergencesStrength) Valid() bool {
 	case CalculationResultsObjectsDivergencesStrengthStrongest:
 		return true
 	case CalculationResultsObjectsDivergencesStrengthWeakest:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsMovementStatesDirection.
+const (
+	CalculationResultsObjectsMovementStatesDirectionDown        CalculationResultsObjectsMovementStatesDirection = "down"
+	CalculationResultsObjectsMovementStatesDirectionLessThannil CalculationResultsObjectsMovementStatesDirection = "<nil>"
+	CalculationResultsObjectsMovementStatesDirectionUp          CalculationResultsObjectsMovementStatesDirection = "up"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsMovementStatesDirection enum.
+func (e CalculationResultsObjectsMovementStatesDirection) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsMovementStatesDirectionDown:
+		return true
+	case CalculationResultsObjectsMovementStatesDirectionLessThannil:
+		return true
+	case CalculationResultsObjectsMovementStatesDirectionUp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsMovementStatesStateType.
+const (
+	CalculationResultsObjectsMovementStatesStateTypeCentreMigrationDown CalculationResultsObjectsMovementStatesStateType = "centre_migration_down"
+	CalculationResultsObjectsMovementStatesStateTypeCentreMigrationUp   CalculationResultsObjectsMovementStatesStateType = "centre_migration_up"
+	CalculationResultsObjectsMovementStatesStateTypeCentreOscillation   CalculationResultsObjectsMovementStatesStateType = "centre_oscillation"
+	CalculationResultsObjectsMovementStatesStateTypeConsolidation       CalculationResultsObjectsMovementStatesStateType = "consolidation"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsMovementStatesStateType enum.
+func (e CalculationResultsObjectsMovementStatesStateType) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsMovementStatesStateTypeCentreMigrationDown:
+		return true
+	case CalculationResultsObjectsMovementStatesStateTypeCentreMigrationUp:
+		return true
+	case CalculationResultsObjectsMovementStatesStateTypeCentreOscillation:
+		return true
+	case CalculationResultsObjectsMovementStatesStateTypeConsolidation:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsSegmentZhongshuComponentKind.
+const (
+	CalculationResultsObjectsSegmentZhongshuComponentKindBi      CalculationResultsObjectsSegmentZhongshuComponentKind = "bi"
+	CalculationResultsObjectsSegmentZhongshuComponentKindSegment CalculationResultsObjectsSegmentZhongshuComponentKind = "segment"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsSegmentZhongshuComponentKind enum.
+func (e CalculationResultsObjectsSegmentZhongshuComponentKind) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsSegmentZhongshuComponentKindBi:
+		return true
+	case CalculationResultsObjectsSegmentZhongshuComponentKindSegment:
 		return true
 	default:
 		return false
@@ -291,6 +435,24 @@ func (e CalculationResultsObjectsTradePointsStrength) Valid() bool {
 	}
 }
 
+// Defines values for CalculationResultsObjectsZhongshuComponentKind.
+const (
+	CalculationResultsObjectsZhongshuComponentKindBi      CalculationResultsObjectsZhongshuComponentKind = "bi"
+	CalculationResultsObjectsZhongshuComponentKindSegment CalculationResultsObjectsZhongshuComponentKind = "segment"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsZhongshuComponentKind enum.
+func (e CalculationResultsObjectsZhongshuComponentKind) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsZhongshuComponentKindBi:
+		return true
+	case CalculationResultsObjectsZhongshuComponentKindSegment:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CalculationResultsObjectsZhongshuLeaveDirection.
 const (
 	CalculationResultsObjectsZhongshuLeaveDirectionDown        CalculationResultsObjectsZhongshuLeaveDirection = "down"
@@ -327,6 +489,213 @@ func (e CalculationResultsObjectsZhongshuStatus) Valid() bool {
 	case CalculationResultsObjectsZhongshuStatusExtended:
 		return true
 	case CalculationResultsObjectsZhongshuStatusLeft:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanCenterMonitorComponentDirection.
+const (
+	ChanCenterMonitorComponentDirectionDown ChanCenterMonitorComponentDirection = "down"
+	ChanCenterMonitorComponentDirectionUp   ChanCenterMonitorComponentDirection = "up"
+)
+
+// Valid indicates whether the value is a known member of the ChanCenterMonitorComponentDirection enum.
+func (e ChanCenterMonitorComponentDirection) Valid() bool {
+	switch e {
+	case ChanCenterMonitorComponentDirectionDown:
+		return true
+	case ChanCenterMonitorComponentDirectionUp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanCenterMonitorMigrationWarning.
+const (
+	ChanCenterMonitorMigrationWarningDown        ChanCenterMonitorMigrationWarning = "down"
+	ChanCenterMonitorMigrationWarningLessThannil ChanCenterMonitorMigrationWarning = "<nil>"
+	ChanCenterMonitorMigrationWarningUp          ChanCenterMonitorMigrationWarning = "up"
+)
+
+// Valid indicates whether the value is a known member of the ChanCenterMonitorMigrationWarning enum.
+func (e ChanCenterMonitorMigrationWarning) Valid() bool {
+	switch e {
+	case ChanCenterMonitorMigrationWarningDown:
+		return true
+	case ChanCenterMonitorMigrationWarningLessThannil:
+		return true
+	case ChanCenterMonitorMigrationWarningUp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanCenterMonitorRelativePosition.
+const (
+	ChanCenterMonitorRelativePositionAbove ChanCenterMonitorRelativePosition = "above"
+	ChanCenterMonitorRelativePositionBelow ChanCenterMonitorRelativePosition = "below"
+	ChanCenterMonitorRelativePositionEqual ChanCenterMonitorRelativePosition = "equal"
+)
+
+// Valid indicates whether the value is a known member of the ChanCenterMonitorRelativePosition enum.
+func (e ChanCenterMonitorRelativePosition) Valid() bool {
+	switch e {
+	case ChanCenterMonitorRelativePositionAbove:
+		return true
+	case ChanCenterMonitorRelativePositionBelow:
+		return true
+	case ChanCenterMonitorRelativePositionEqual:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanCenterMonitorStrength.
+const (
+	ChanCenterMonitorStrengthNeutral ChanCenterMonitorStrength = "neutral"
+	ChanCenterMonitorStrengthStrong  ChanCenterMonitorStrength = "strong"
+	ChanCenterMonitorStrengthWeak    ChanCenterMonitorStrength = "weak"
+)
+
+// Valid indicates whether the value is a known member of the ChanCenterMonitorStrength enum.
+func (e ChanCenterMonitorStrength) Valid() bool {
+	switch e {
+	case ChanCenterMonitorStrengthNeutral:
+		return true
+	case ChanCenterMonitorStrengthStrong:
+		return true
+	case ChanCenterMonitorStrengthWeak:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanMovementStateDirection.
+const (
+	ChanMovementStateDirectionDown        ChanMovementStateDirection = "down"
+	ChanMovementStateDirectionLessThannil ChanMovementStateDirection = "<nil>"
+	ChanMovementStateDirectionUp          ChanMovementStateDirection = "up"
+)
+
+// Valid indicates whether the value is a known member of the ChanMovementStateDirection enum.
+func (e ChanMovementStateDirection) Valid() bool {
+	switch e {
+	case ChanMovementStateDirectionDown:
+		return true
+	case ChanMovementStateDirectionLessThannil:
+		return true
+	case ChanMovementStateDirectionUp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanMovementStateStateType.
+const (
+	ChanMovementStateStateTypeCentreMigrationDown ChanMovementStateStateType = "centre_migration_down"
+	ChanMovementStateStateTypeCentreMigrationUp   ChanMovementStateStateType = "centre_migration_up"
+	ChanMovementStateStateTypeCentreOscillation   ChanMovementStateStateType = "centre_oscillation"
+	ChanMovementStateStateTypeConsolidation       ChanMovementStateStateType = "consolidation"
+)
+
+// Valid indicates whether the value is a known member of the ChanMovementStateStateType enum.
+func (e ChanMovementStateStateType) Valid() bool {
+	switch e {
+	case ChanMovementStateStateTypeCentreMigrationDown:
+		return true
+	case ChanMovementStateStateTypeCentreMigrationUp:
+		return true
+	case ChanMovementStateStateTypeCentreOscillation:
+		return true
+	case ChanMovementStateStateTypeConsolidation:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsCenterMonitorsComponentDirection.
+const (
+	ChanObjectsCenterMonitorsComponentDirectionDown ChanObjectsCenterMonitorsComponentDirection = "down"
+	ChanObjectsCenterMonitorsComponentDirectionUp   ChanObjectsCenterMonitorsComponentDirection = "up"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsCenterMonitorsComponentDirection enum.
+func (e ChanObjectsCenterMonitorsComponentDirection) Valid() bool {
+	switch e {
+	case ChanObjectsCenterMonitorsComponentDirectionDown:
+		return true
+	case ChanObjectsCenterMonitorsComponentDirectionUp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsCenterMonitorsMigrationWarning.
+const (
+	ChanObjectsCenterMonitorsMigrationWarningDown        ChanObjectsCenterMonitorsMigrationWarning = "down"
+	ChanObjectsCenterMonitorsMigrationWarningLessThannil ChanObjectsCenterMonitorsMigrationWarning = "<nil>"
+	ChanObjectsCenterMonitorsMigrationWarningUp          ChanObjectsCenterMonitorsMigrationWarning = "up"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsCenterMonitorsMigrationWarning enum.
+func (e ChanObjectsCenterMonitorsMigrationWarning) Valid() bool {
+	switch e {
+	case ChanObjectsCenterMonitorsMigrationWarningDown:
+		return true
+	case ChanObjectsCenterMonitorsMigrationWarningLessThannil:
+		return true
+	case ChanObjectsCenterMonitorsMigrationWarningUp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsCenterMonitorsRelativePosition.
+const (
+	ChanObjectsCenterMonitorsRelativePositionAbove ChanObjectsCenterMonitorsRelativePosition = "above"
+	ChanObjectsCenterMonitorsRelativePositionBelow ChanObjectsCenterMonitorsRelativePosition = "below"
+	ChanObjectsCenterMonitorsRelativePositionEqual ChanObjectsCenterMonitorsRelativePosition = "equal"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsCenterMonitorsRelativePosition enum.
+func (e ChanObjectsCenterMonitorsRelativePosition) Valid() bool {
+	switch e {
+	case ChanObjectsCenterMonitorsRelativePositionAbove:
+		return true
+	case ChanObjectsCenterMonitorsRelativePositionBelow:
+		return true
+	case ChanObjectsCenterMonitorsRelativePositionEqual:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsCenterMonitorsStrength.
+const (
+	ChanObjectsCenterMonitorsStrengthNeutral ChanObjectsCenterMonitorsStrength = "neutral"
+	ChanObjectsCenterMonitorsStrengthStrong  ChanObjectsCenterMonitorsStrength = "strong"
+	ChanObjectsCenterMonitorsStrengthWeak    ChanObjectsCenterMonitorsStrength = "weak"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsCenterMonitorsStrength enum.
+func (e ChanObjectsCenterMonitorsStrength) Valid() bool {
+	switch e {
+	case ChanObjectsCenterMonitorsStrengthNeutral:
+		return true
+	case ChanObjectsCenterMonitorsStrengthStrong:
+		return true
+	case ChanObjectsCenterMonitorsStrengthWeak:
 		return true
 	default:
 		return false
@@ -447,6 +816,69 @@ func (e ChanObjectsDivergencesStrength) Valid() bool {
 	case ChanObjectsDivergencesStrengthStrongest:
 		return true
 	case ChanObjectsDivergencesStrengthWeakest:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsMovementStatesDirection.
+const (
+	ChanObjectsMovementStatesDirectionDown        ChanObjectsMovementStatesDirection = "down"
+	ChanObjectsMovementStatesDirectionLessThannil ChanObjectsMovementStatesDirection = "<nil>"
+	ChanObjectsMovementStatesDirectionUp          ChanObjectsMovementStatesDirection = "up"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsMovementStatesDirection enum.
+func (e ChanObjectsMovementStatesDirection) Valid() bool {
+	switch e {
+	case ChanObjectsMovementStatesDirectionDown:
+		return true
+	case ChanObjectsMovementStatesDirectionLessThannil:
+		return true
+	case ChanObjectsMovementStatesDirectionUp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsMovementStatesStateType.
+const (
+	ChanObjectsMovementStatesStateTypeCentreMigrationDown ChanObjectsMovementStatesStateType = "centre_migration_down"
+	ChanObjectsMovementStatesStateTypeCentreMigrationUp   ChanObjectsMovementStatesStateType = "centre_migration_up"
+	ChanObjectsMovementStatesStateTypeCentreOscillation   ChanObjectsMovementStatesStateType = "centre_oscillation"
+	ChanObjectsMovementStatesStateTypeConsolidation       ChanObjectsMovementStatesStateType = "consolidation"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsMovementStatesStateType enum.
+func (e ChanObjectsMovementStatesStateType) Valid() bool {
+	switch e {
+	case ChanObjectsMovementStatesStateTypeCentreMigrationDown:
+		return true
+	case ChanObjectsMovementStatesStateTypeCentreMigrationUp:
+		return true
+	case ChanObjectsMovementStatesStateTypeCentreOscillation:
+		return true
+	case ChanObjectsMovementStatesStateTypeConsolidation:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsSegmentZhongshuComponentKind.
+const (
+	ChanObjectsSegmentZhongshuComponentKindBi      ChanObjectsSegmentZhongshuComponentKind = "bi"
+	ChanObjectsSegmentZhongshuComponentKindSegment ChanObjectsSegmentZhongshuComponentKind = "segment"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsSegmentZhongshuComponentKind enum.
+func (e ChanObjectsSegmentZhongshuComponentKind) Valid() bool {
+	switch e {
+	case ChanObjectsSegmentZhongshuComponentKindBi:
+		return true
+	case ChanObjectsSegmentZhongshuComponentKindSegment:
 		return true
 	default:
 		return false
@@ -615,6 +1047,24 @@ func (e ChanObjectsTradePointsStrength) Valid() bool {
 	}
 }
 
+// Defines values for ChanObjectsZhongshuComponentKind.
+const (
+	ChanObjectsZhongshuComponentKindBi      ChanObjectsZhongshuComponentKind = "bi"
+	ChanObjectsZhongshuComponentKindSegment ChanObjectsZhongshuComponentKind = "segment"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsZhongshuComponentKind enum.
+func (e ChanObjectsZhongshuComponentKind) Valid() bool {
+	switch e {
+	case ChanObjectsZhongshuComponentKindBi:
+		return true
+	case ChanObjectsZhongshuComponentKindSegment:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ChanObjectsZhongshuLeaveDirection.
 const (
 	ChanObjectsZhongshuLeaveDirectionDown        ChanObjectsZhongshuLeaveDirection = "down"
@@ -777,6 +1227,24 @@ func (e ChanSignalPointStrength) Valid() bool {
 	}
 }
 
+// Defines values for ChanZhongshuComponentKind.
+const (
+	ChanZhongshuComponentKindBi      ChanZhongshuComponentKind = "bi"
+	ChanZhongshuComponentKindSegment ChanZhongshuComponentKind = "segment"
+)
+
+// Valid indicates whether the value is a known member of the ChanZhongshuComponentKind enum.
+func (e ChanZhongshuComponentKind) Valid() bool {
+	switch e {
+	case ChanZhongshuComponentKindBi:
+		return true
+	case ChanZhongshuComponentKindSegment:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ChanZhongshuLeaveDirection.
 const (
 	ChanZhongshuLeaveDirectionDown        ChanZhongshuLeaveDirection = "down"
@@ -813,6 +1281,87 @@ func (e ChanZhongshuStatus) Valid() bool {
 	case ChanZhongshuStatusExtended:
 		return true
 	case ChanZhongshuStatusLeft:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsComponentDirection.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsComponentDirectionDown GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsComponentDirection = "down"
+	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsComponentDirectionUp   GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsComponentDirection = "up"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsComponentDirection enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsComponentDirection) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsComponentDirectionDown:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsComponentDirectionUp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarning.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarningDown        GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarning = "down"
+	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarningLessThannil GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarning = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarningUp          GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarning = "up"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarning enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarning) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarningDown:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarningLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarningUp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePosition.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePositionAbove GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePosition = "above"
+	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePositionBelow GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePosition = "below"
+	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePositionEqual GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePosition = "equal"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePosition enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePosition) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePositionAbove:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePositionBelow:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePositionEqual:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrength.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrengthNeutral GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrength = "neutral"
+	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrengthStrong  GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrength = "strong"
+	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrengthWeak    GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrength = "weak"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrength enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrength) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrengthNeutral:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrengthStrong:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrengthWeak:
 		return true
 	default:
 		return false
@@ -933,6 +1482,69 @@ func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesStrength) Vali
 	case GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthStrongest:
 		return true
 	case GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthWeakest:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsMovementStatesDirection.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsMovementStatesDirectionDown        GetCalculationResults200JSONResponseBodyObjectsMovementStatesDirection = "down"
+	GetCalculationResults200JSONResponseBodyObjectsMovementStatesDirectionLessThannil GetCalculationResults200JSONResponseBodyObjectsMovementStatesDirection = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsMovementStatesDirectionUp          GetCalculationResults200JSONResponseBodyObjectsMovementStatesDirection = "up"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsMovementStatesDirection enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsMovementStatesDirection) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsMovementStatesDirectionDown:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsMovementStatesDirectionLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsMovementStatesDirectionUp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsMovementStatesStateType.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsMovementStatesStateTypeCentreMigrationDown GetCalculationResults200JSONResponseBodyObjectsMovementStatesStateType = "centre_migration_down"
+	GetCalculationResults200JSONResponseBodyObjectsMovementStatesStateTypeCentreMigrationUp   GetCalculationResults200JSONResponseBodyObjectsMovementStatesStateType = "centre_migration_up"
+	GetCalculationResults200JSONResponseBodyObjectsMovementStatesStateTypeCentreOscillation   GetCalculationResults200JSONResponseBodyObjectsMovementStatesStateType = "centre_oscillation"
+	GetCalculationResults200JSONResponseBodyObjectsMovementStatesStateTypeConsolidation       GetCalculationResults200JSONResponseBodyObjectsMovementStatesStateType = "consolidation"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsMovementStatesStateType enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsMovementStatesStateType) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsMovementStatesStateTypeCentreMigrationDown:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsMovementStatesStateTypeCentreMigrationUp:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsMovementStatesStateTypeCentreOscillation:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsMovementStatesStateTypeConsolidation:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuComponentKind.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuComponentKindBi      GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuComponentKind = "bi"
+	GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuComponentKindSegment GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuComponentKind = "segment"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuComponentKind enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuComponentKind) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuComponentKindBi:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuComponentKindSegment:
 		return true
 	default:
 		return false
@@ -1095,6 +1707,24 @@ func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsStrength) Vali
 	case GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthStrongest:
 		return true
 	case GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthWeakest:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsZhongshuComponentKind.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsZhongshuComponentKindBi      GetCalculationResults200JSONResponseBodyObjectsZhongshuComponentKind = "bi"
+	GetCalculationResults200JSONResponseBodyObjectsZhongshuComponentKindSegment GetCalculationResults200JSONResponseBodyObjectsZhongshuComponentKind = "segment"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsZhongshuComponentKind enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsZhongshuComponentKind) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsZhongshuComponentKindBi:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsZhongshuComponentKindSegment:
 		return true
 	default:
 		return false
@@ -1327,6 +1957,25 @@ type CalculationResults struct {
 			StartPriceI64       int         `json:"start_price_i64"`
 			StartTime           int         `json:"start_time"`
 		} `json:"bi"`
+		CenterMonitors []struct {
+			AnalysisLevel       string                                                    `json:"analysis_level"`
+			BarIndex            int                                                       `json:"bar_index"`
+			ComponentDirection  CalculationResultsObjectsCenterMonitorsComponentDirection `json:"component_direction"`
+			Confirmed           bool                                                      `json:"confirmed"`
+			ConfirmedAtBarIndex *int                                                      `json:"confirmed_at_bar_index"`
+			KnownAtBarIndex     int                                                       `json:"known_at_bar_index"`
+			MigrationWarning    *CalculationResultsObjectsCenterMonitorsMigrationWarning  `json:"migration_warning"`
+			ObjectId            string                                                    `json:"object_id"`
+			ObjectRevision      int                                                       `json:"object_revision"`
+			RangeHighI64        int                                                       `json:"range_high_i64"`
+			RangeLowI64         int                                                       `json:"range_low_i64"`
+			ReferenceObjectId   string                                                    `json:"reference_object_id"`
+			RelativePosition    CalculationResultsObjectsCenterMonitorsRelativePosition   `json:"relative_position"`
+			Strength            CalculationResultsObjectsCenterMonitorsStrength           `json:"strength"`
+			Time                int                                                       `json:"time"`
+			ZI64                int                                                       `json:"z_i64"`
+			ZnI64               int                                                       `json:"zn_i64"`
+		} `json:"center_monitors"`
 		Divergences []struct {
 			BarIndex            int                                                 `json:"bar_index"`
 			Confirmed           bool                                                `json:"confirmed"`
@@ -1355,11 +2004,32 @@ type CalculationResults struct {
 			PriceI64            int         `json:"price_i64"`
 			Time                int         `json:"time"`
 		} `json:"fractals"`
+		MovementStates []struct {
+			AnalysisLevel       string                                            `json:"analysis_level"`
+			Confirmed           bool                                              `json:"confirmed"`
+			ConfirmedAtBarIndex *int                                              `json:"confirmed_at_bar_index"`
+			Direction           *CalculationResultsObjectsMovementStatesDirection `json:"direction"`
+			EndBarIndex         int                                               `json:"end_bar_index"`
+			EndTime             int                                               `json:"end_time"`
+			KnownAtBarIndex     int                                               `json:"known_at_bar_index"`
+			ObjectId            string                                            `json:"object_id"`
+			ObjectRevision      int                                               `json:"object_revision"`
+			PriceI64            int                                               `json:"price_i64"`
+			ReferenceObjectId   string                                            `json:"reference_object_id"`
+			StartBarIndex       int                                               `json:"start_bar_index"`
+			StartTime           int                                               `json:"start_time"`
+			StateType           CalculationResultsObjectsMovementStatesStateType  `json:"state_type"`
+		} `json:"movement_states"`
 		SegmentZhongshu []struct {
+			AnalysisLevel       string                                                  `json:"analysis_level"`
+			ComponentCount      int                                                     `json:"component_count"`
+			ComponentKind       CalculationResultsObjectsSegmentZhongshuComponentKind   `json:"component_kind"`
 			Confirmed           bool                                                    `json:"confirmed"`
 			ConfirmedAtBarIndex *int                                                    `json:"confirmed_at_bar_index"`
+			DdI64               int                                                     `json:"dd_i64"`
 			EndBarIndex         int                                                     `json:"end_bar_index"`
 			EndTime             int                                                     `json:"end_time"`
+			GgI64               int                                                     `json:"gg_i64"`
 			KnownAtBarIndex     int                                                     `json:"known_at_bar_index"`
 			LeaveDirection      *CalculationResultsObjectsSegmentZhongshuLeaveDirection `json:"leave_direction"`
 			ObjectId            string                                                  `json:"object_id"`
@@ -1367,6 +2037,7 @@ type CalculationResults struct {
 			StartBarIndex       int                                                     `json:"start_bar_index"`
 			StartTime           int                                                     `json:"start_time"`
 			Status              CalculationResultsObjectsSegmentZhongshuStatus          `json:"status"`
+			ZI64                int                                                     `json:"z_i64"`
 			ZdI64               int                                                     `json:"zd_i64"`
 			ZgI64               int                                                     `json:"zg_i64"`
 		} `json:"segment_zhongshu"`
@@ -1402,10 +2073,15 @@ type CalculationResults struct {
 			Time                int                                                 `json:"time"`
 		} `json:"trade_points"`
 		Zhongshu []struct {
+			AnalysisLevel       string                                           `json:"analysis_level"`
+			ComponentCount      int                                              `json:"component_count"`
+			ComponentKind       CalculationResultsObjectsZhongshuComponentKind   `json:"component_kind"`
 			Confirmed           bool                                             `json:"confirmed"`
 			ConfirmedAtBarIndex *int                                             `json:"confirmed_at_bar_index"`
+			DdI64               int                                              `json:"dd_i64"`
 			EndBarIndex         int                                              `json:"end_bar_index"`
 			EndTime             int                                              `json:"end_time"`
+			GgI64               int                                              `json:"gg_i64"`
 			KnownAtBarIndex     int                                              `json:"known_at_bar_index"`
 			LeaveDirection      *CalculationResultsObjectsZhongshuLeaveDirection `json:"leave_direction"`
 			ObjectId            string                                           `json:"object_id"`
@@ -1413,6 +2089,7 @@ type CalculationResults struct {
 			StartBarIndex       int                                              `json:"start_bar_index"`
 			StartTime           int                                              `json:"start_time"`
 			Status              CalculationResultsObjectsZhongshuStatus          `json:"status"`
+			ZI64                int                                              `json:"z_i64"`
 			ZdI64               int                                              `json:"zd_i64"`
 			ZgI64               int                                              `json:"zg_i64"`
 		} `json:"zhongshu"`
@@ -1421,6 +2098,18 @@ type CalculationResults struct {
 	ResultKind interface{}            `json:"result_kind"`
 	Values     *map[string][]*float32 `json:"values,omitempty"`
 }
+
+// CalculationResultsObjectsCenterMonitorsComponentDirection defines model for CalculationResults.Objects.CenterMonitors.ComponentDirection.
+type CalculationResultsObjectsCenterMonitorsComponentDirection string
+
+// CalculationResultsObjectsCenterMonitorsMigrationWarning defines model for CalculationResults.Objects.CenterMonitors.MigrationWarning.
+type CalculationResultsObjectsCenterMonitorsMigrationWarning string
+
+// CalculationResultsObjectsCenterMonitorsRelativePosition defines model for CalculationResults.Objects.CenterMonitors.RelativePosition.
+type CalculationResultsObjectsCenterMonitorsRelativePosition string
+
+// CalculationResultsObjectsCenterMonitorsStrength defines model for CalculationResults.Objects.CenterMonitors.Strength.
+type CalculationResultsObjectsCenterMonitorsStrength string
 
 // CalculationResultsObjectsDivergencesDivergenceKind defines model for CalculationResults.Objects.Divergences.DivergenceKind.
 type CalculationResultsObjectsDivergencesDivergenceKind string
@@ -1433,6 +2122,15 @@ type CalculationResultsObjectsDivergencesSignalType string
 
 // CalculationResultsObjectsDivergencesStrength defines model for CalculationResults.Objects.Divergences.Strength.
 type CalculationResultsObjectsDivergencesStrength string
+
+// CalculationResultsObjectsMovementStatesDirection defines model for CalculationResults.Objects.MovementStates.Direction.
+type CalculationResultsObjectsMovementStatesDirection string
+
+// CalculationResultsObjectsMovementStatesStateType defines model for CalculationResults.Objects.MovementStates.StateType.
+type CalculationResultsObjectsMovementStatesStateType string
+
+// CalculationResultsObjectsSegmentZhongshuComponentKind defines model for CalculationResults.Objects.SegmentZhongshu.ComponentKind.
+type CalculationResultsObjectsSegmentZhongshuComponentKind string
 
 // CalculationResultsObjectsSegmentZhongshuLeaveDirection defines model for CalculationResults.Objects.SegmentZhongshu.LeaveDirection.
 type CalculationResultsObjectsSegmentZhongshuLeaveDirection string
@@ -1452,6 +2150,9 @@ type CalculationResultsObjectsTradePointsSignalType string
 // CalculationResultsObjectsTradePointsStrength defines model for CalculationResults.Objects.TradePoints.Strength.
 type CalculationResultsObjectsTradePointsStrength string
 
+// CalculationResultsObjectsZhongshuComponentKind defines model for CalculationResults.Objects.Zhongshu.ComponentKind.
+type CalculationResultsObjectsZhongshuComponentKind string
+
 // CalculationResultsObjectsZhongshuLeaveDirection defines model for CalculationResults.Objects.Zhongshu.LeaveDirection.
 type CalculationResultsObjectsZhongshuLeaveDirection string
 
@@ -1468,6 +2169,39 @@ type CausalEvent struct {
 	Operation       interface{}            `json:"operation"`
 	Payload         map[string]interface{} `json:"payload"`
 }
+
+// ChanCenterMonitor defines model for ChanCenterMonitor.
+type ChanCenterMonitor struct {
+	AnalysisLevel       string                              `json:"analysis_level"`
+	BarIndex            int                                 `json:"bar_index"`
+	ComponentDirection  ChanCenterMonitorComponentDirection `json:"component_direction"`
+	Confirmed           bool                                `json:"confirmed"`
+	ConfirmedAtBarIndex *int                                `json:"confirmed_at_bar_index"`
+	KnownAtBarIndex     int                                 `json:"known_at_bar_index"`
+	MigrationWarning    *ChanCenterMonitorMigrationWarning  `json:"migration_warning"`
+	ObjectId            string                              `json:"object_id"`
+	ObjectRevision      int                                 `json:"object_revision"`
+	RangeHighI64        int                                 `json:"range_high_i64"`
+	RangeLowI64         int                                 `json:"range_low_i64"`
+	ReferenceObjectId   string                              `json:"reference_object_id"`
+	RelativePosition    ChanCenterMonitorRelativePosition   `json:"relative_position"`
+	Strength            ChanCenterMonitorStrength           `json:"strength"`
+	Time                int                                 `json:"time"`
+	ZI64                int                                 `json:"z_i64"`
+	ZnI64               int                                 `json:"zn_i64"`
+}
+
+// ChanCenterMonitorComponentDirection defines model for ChanCenterMonitor.ComponentDirection.
+type ChanCenterMonitorComponentDirection string
+
+// ChanCenterMonitorMigrationWarning defines model for ChanCenterMonitor.MigrationWarning.
+type ChanCenterMonitorMigrationWarning string
+
+// ChanCenterMonitorRelativePosition defines model for ChanCenterMonitor.RelativePosition.
+type ChanCenterMonitorRelativePosition string
+
+// ChanCenterMonitorStrength defines model for ChanCenterMonitor.Strength.
+type ChanCenterMonitorStrength string
 
 // ChanFractal defines model for ChanFractal.
 type ChanFractal struct {
@@ -1498,6 +2232,30 @@ type ChanLineObject struct {
 	StartTime           int         `json:"start_time"`
 }
 
+// ChanMovementState defines model for ChanMovementState.
+type ChanMovementState struct {
+	AnalysisLevel       string                      `json:"analysis_level"`
+	Confirmed           bool                        `json:"confirmed"`
+	ConfirmedAtBarIndex *int                        `json:"confirmed_at_bar_index"`
+	Direction           *ChanMovementStateDirection `json:"direction"`
+	EndBarIndex         int                         `json:"end_bar_index"`
+	EndTime             int                         `json:"end_time"`
+	KnownAtBarIndex     int                         `json:"known_at_bar_index"`
+	ObjectId            string                      `json:"object_id"`
+	ObjectRevision      int                         `json:"object_revision"`
+	PriceI64            int                         `json:"price_i64"`
+	ReferenceObjectId   string                      `json:"reference_object_id"`
+	StartBarIndex       int                         `json:"start_bar_index"`
+	StartTime           int                         `json:"start_time"`
+	StateType           ChanMovementStateStateType  `json:"state_type"`
+}
+
+// ChanMovementStateDirection defines model for ChanMovementState.Direction.
+type ChanMovementStateDirection string
+
+// ChanMovementStateStateType defines model for ChanMovementState.StateType.
+type ChanMovementStateStateType string
+
 // ChanObjects defines model for ChanObjects.
 type ChanObjects struct {
 	Bi []struct {
@@ -1514,6 +2272,25 @@ type ChanObjects struct {
 		StartPriceI64       int         `json:"start_price_i64"`
 		StartTime           int         `json:"start_time"`
 	} `json:"bi"`
+	CenterMonitors []struct {
+		AnalysisLevel       string                                      `json:"analysis_level"`
+		BarIndex            int                                         `json:"bar_index"`
+		ComponentDirection  ChanObjectsCenterMonitorsComponentDirection `json:"component_direction"`
+		Confirmed           bool                                        `json:"confirmed"`
+		ConfirmedAtBarIndex *int                                        `json:"confirmed_at_bar_index"`
+		KnownAtBarIndex     int                                         `json:"known_at_bar_index"`
+		MigrationWarning    *ChanObjectsCenterMonitorsMigrationWarning  `json:"migration_warning"`
+		ObjectId            string                                      `json:"object_id"`
+		ObjectRevision      int                                         `json:"object_revision"`
+		RangeHighI64        int                                         `json:"range_high_i64"`
+		RangeLowI64         int                                         `json:"range_low_i64"`
+		ReferenceObjectId   string                                      `json:"reference_object_id"`
+		RelativePosition    ChanObjectsCenterMonitorsRelativePosition   `json:"relative_position"`
+		Strength            ChanObjectsCenterMonitorsStrength           `json:"strength"`
+		Time                int                                         `json:"time"`
+		ZI64                int                                         `json:"z_i64"`
+		ZnI64               int                                         `json:"zn_i64"`
+	} `json:"center_monitors"`
 	Divergences []struct {
 		BarIndex            int                                   `json:"bar_index"`
 		Confirmed           bool                                  `json:"confirmed"`
@@ -1542,11 +2319,32 @@ type ChanObjects struct {
 		PriceI64            int         `json:"price_i64"`
 		Time                int         `json:"time"`
 	} `json:"fractals"`
+	MovementStates []struct {
+		AnalysisLevel       string                              `json:"analysis_level"`
+		Confirmed           bool                                `json:"confirmed"`
+		ConfirmedAtBarIndex *int                                `json:"confirmed_at_bar_index"`
+		Direction           *ChanObjectsMovementStatesDirection `json:"direction"`
+		EndBarIndex         int                                 `json:"end_bar_index"`
+		EndTime             int                                 `json:"end_time"`
+		KnownAtBarIndex     int                                 `json:"known_at_bar_index"`
+		ObjectId            string                              `json:"object_id"`
+		ObjectRevision      int                                 `json:"object_revision"`
+		PriceI64            int                                 `json:"price_i64"`
+		ReferenceObjectId   string                              `json:"reference_object_id"`
+		StartBarIndex       int                                 `json:"start_bar_index"`
+		StartTime           int                                 `json:"start_time"`
+		StateType           ChanObjectsMovementStatesStateType  `json:"state_type"`
+	} `json:"movement_states"`
 	SegmentZhongshu []struct {
+		AnalysisLevel       string                                    `json:"analysis_level"`
+		ComponentCount      int                                       `json:"component_count"`
+		ComponentKind       ChanObjectsSegmentZhongshuComponentKind   `json:"component_kind"`
 		Confirmed           bool                                      `json:"confirmed"`
 		ConfirmedAtBarIndex *int                                      `json:"confirmed_at_bar_index"`
+		DdI64               int                                       `json:"dd_i64"`
 		EndBarIndex         int                                       `json:"end_bar_index"`
 		EndTime             int                                       `json:"end_time"`
+		GgI64               int                                       `json:"gg_i64"`
 		KnownAtBarIndex     int                                       `json:"known_at_bar_index"`
 		LeaveDirection      *ChanObjectsSegmentZhongshuLeaveDirection `json:"leave_direction"`
 		ObjectId            string                                    `json:"object_id"`
@@ -1554,6 +2352,7 @@ type ChanObjects struct {
 		StartBarIndex       int                                       `json:"start_bar_index"`
 		StartTime           int                                       `json:"start_time"`
 		Status              ChanObjectsSegmentZhongshuStatus          `json:"status"`
+		ZI64                int                                       `json:"z_i64"`
 		ZdI64               int                                       `json:"zd_i64"`
 		ZgI64               int                                       `json:"zg_i64"`
 	} `json:"segment_zhongshu"`
@@ -1589,10 +2388,15 @@ type ChanObjects struct {
 		Time                int                                   `json:"time"`
 	} `json:"trade_points"`
 	Zhongshu []struct {
+		AnalysisLevel       string                             `json:"analysis_level"`
+		ComponentCount      int                                `json:"component_count"`
+		ComponentKind       ChanObjectsZhongshuComponentKind   `json:"component_kind"`
 		Confirmed           bool                               `json:"confirmed"`
 		ConfirmedAtBarIndex *int                               `json:"confirmed_at_bar_index"`
+		DdI64               int                                `json:"dd_i64"`
 		EndBarIndex         int                                `json:"end_bar_index"`
 		EndTime             int                                `json:"end_time"`
+		GgI64               int                                `json:"gg_i64"`
 		KnownAtBarIndex     int                                `json:"known_at_bar_index"`
 		LeaveDirection      *ChanObjectsZhongshuLeaveDirection `json:"leave_direction"`
 		ObjectId            string                             `json:"object_id"`
@@ -1600,10 +2404,23 @@ type ChanObjects struct {
 		StartBarIndex       int                                `json:"start_bar_index"`
 		StartTime           int                                `json:"start_time"`
 		Status              ChanObjectsZhongshuStatus          `json:"status"`
+		ZI64                int                                `json:"z_i64"`
 		ZdI64               int                                `json:"zd_i64"`
 		ZgI64               int                                `json:"zg_i64"`
 	} `json:"zhongshu"`
 }
+
+// ChanObjectsCenterMonitorsComponentDirection defines model for ChanObjects.CenterMonitors.ComponentDirection.
+type ChanObjectsCenterMonitorsComponentDirection string
+
+// ChanObjectsCenterMonitorsMigrationWarning defines model for ChanObjects.CenterMonitors.MigrationWarning.
+type ChanObjectsCenterMonitorsMigrationWarning string
+
+// ChanObjectsCenterMonitorsRelativePosition defines model for ChanObjects.CenterMonitors.RelativePosition.
+type ChanObjectsCenterMonitorsRelativePosition string
+
+// ChanObjectsCenterMonitorsStrength defines model for ChanObjects.CenterMonitors.Strength.
+type ChanObjectsCenterMonitorsStrength string
 
 // ChanObjectsDivergencesDivergenceKind defines model for ChanObjects.Divergences.DivergenceKind.
 type ChanObjectsDivergencesDivergenceKind string
@@ -1616,6 +2433,15 @@ type ChanObjectsDivergencesSignalType string
 
 // ChanObjectsDivergencesStrength defines model for ChanObjects.Divergences.Strength.
 type ChanObjectsDivergencesStrength string
+
+// ChanObjectsMovementStatesDirection defines model for ChanObjects.MovementStates.Direction.
+type ChanObjectsMovementStatesDirection string
+
+// ChanObjectsMovementStatesStateType defines model for ChanObjects.MovementStates.StateType.
+type ChanObjectsMovementStatesStateType string
+
+// ChanObjectsSegmentZhongshuComponentKind defines model for ChanObjects.SegmentZhongshu.ComponentKind.
+type ChanObjectsSegmentZhongshuComponentKind string
 
 // ChanObjectsSegmentZhongshuLeaveDirection defines model for ChanObjects.SegmentZhongshu.LeaveDirection.
 type ChanObjectsSegmentZhongshuLeaveDirection string
@@ -1634,6 +2460,9 @@ type ChanObjectsTradePointsSignalType string
 
 // ChanObjectsTradePointsStrength defines model for ChanObjects.TradePoints.Strength.
 type ChanObjectsTradePointsStrength string
+
+// ChanObjectsZhongshuComponentKind defines model for ChanObjects.Zhongshu.ComponentKind.
+type ChanObjectsZhongshuComponentKind string
 
 // ChanObjectsZhongshuLeaveDirection defines model for ChanObjects.Zhongshu.LeaveDirection.
 type ChanObjectsZhongshuLeaveDirection string
@@ -1674,10 +2503,15 @@ type ChanSignalPointStrength string
 
 // ChanZhongshu defines model for ChanZhongshu.
 type ChanZhongshu struct {
+	AnalysisLevel       string                      `json:"analysis_level"`
+	ComponentCount      int                         `json:"component_count"`
+	ComponentKind       ChanZhongshuComponentKind   `json:"component_kind"`
 	Confirmed           bool                        `json:"confirmed"`
 	ConfirmedAtBarIndex *int                        `json:"confirmed_at_bar_index"`
+	DdI64               int                         `json:"dd_i64"`
 	EndBarIndex         int                         `json:"end_bar_index"`
 	EndTime             int                         `json:"end_time"`
+	GgI64               int                         `json:"gg_i64"`
 	KnownAtBarIndex     int                         `json:"known_at_bar_index"`
 	LeaveDirection      *ChanZhongshuLeaveDirection `json:"leave_direction"`
 	ObjectId            string                      `json:"object_id"`
@@ -1685,9 +2519,13 @@ type ChanZhongshu struct {
 	StartBarIndex       int                         `json:"start_bar_index"`
 	StartTime           int                         `json:"start_time"`
 	Status              ChanZhongshuStatus          `json:"status"`
+	ZI64                int                         `json:"z_i64"`
 	ZdI64               int                         `json:"zd_i64"`
 	ZgI64               int                         `json:"zg_i64"`
 }
+
+// ChanZhongshuComponentKind defines model for ChanZhongshu.ComponentKind.
+type ChanZhongshuComponentKind string
 
 // ChanZhongshuLeaveDirection defines model for ChanZhongshu.LeaveDirection.
 type ChanZhongshuLeaveDirection string
@@ -2314,6 +3152,18 @@ type GetCalculationResultsParams struct {
 	ToBarIndex   int `form:"to_bar_index" json:"to_bar_index"`
 }
 
+// GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsComponentDirection defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsComponentDirection string
+
+// GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarning defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarning string
+
+// GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePosition defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePosition string
+
+// GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrength defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrength string
+
 // GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKind defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKind string
 
@@ -2325,6 +3175,15 @@ type GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType string
 
 // GetCalculationResults200JSONResponseBodyObjectsDivergencesStrength defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsDivergencesStrength string
+
+// GetCalculationResults200JSONResponseBodyObjectsMovementStatesDirection defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsMovementStatesDirection string
+
+// GetCalculationResults200JSONResponseBodyObjectsMovementStatesStateType defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsMovementStatesStateType string
+
+// GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuComponentKind defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuComponentKind string
 
 // GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuLeaveDirection defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuLeaveDirection string
@@ -2343,6 +3202,9 @@ type GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalType string
 
 // GetCalculationResults200JSONResponseBodyObjectsTradePointsStrength defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsTradePointsStrength string
+
+// GetCalculationResults200JSONResponseBodyObjectsZhongshuComponentKind defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsZhongshuComponentKind string
 
 // GetCalculationResults200JSONResponseBodyObjectsZhongshuLeaveDirection defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsZhongshuLeaveDirection string
@@ -2610,8 +3472,10 @@ type PutLayoutJSONBody struct {
 		} `json:"algorithm"`
 		CategoryVisibility struct {
 			Bi              bool  `json:"bi"`
+			CenterMonitors  *bool `json:"center_monitors,omitempty"`
 			Divergences     *bool `json:"divergences,omitempty"`
 			Fractals        bool  `json:"fractals"`
+			MovementStates  *bool `json:"movement_states,omitempty"`
 			SegmentZhongshu *bool `json:"segment_zhongshu,omitempty"`
 			Segments        *bool `json:"segments,omitempty"`
 			TradePoints     *bool `json:"trade_points,omitempty"`

@@ -16,6 +16,8 @@ const chanDefaults: Record<string, Pick<IndicatorOutputStyle, 'color' | 'line_wi
   segment: { color: '#f2d600', line_width: 2, line_style: 'solid' },
   zhongshu: { color: '#64b5f6', line_width: 1, line_style: 'solid' },
   segment_zhongshu: { color: '#fff176', line_width: 2, line_style: 'solid' },
+  movement_state: { color: '#ab47bc', line_width: 1, line_style: 'dashed' },
+  center_monitor: { color: '#26c6da', line_width: 1, line_style: 'dotted' },
   divergence: { color: '#ff9800', line_width: 1, line_style: 'solid' },
   trade_point: { color: '#ffffff', line_width: 1, line_style: 'solid' },
 }
@@ -36,7 +38,7 @@ export function styleableOutputs(source: StyleSource): AlgorithmOutput[] {
     return source.definition.outputs.filter((output) => output.series_type === 'line')
   }
   return source.definition.outputs.filter((output) =>
-    output.object_type === 'fractal' || output.object_type === 'bi' || output.object_type === 'segment' || output.object_type === 'zhongshu' || output.object_type === 'segment_zhongshu' || output.object_type === 'divergence' || output.object_type === 'trade_point')
+    output.object_type === 'fractal' || output.object_type === 'bi' || output.object_type === 'segment' || output.object_type === 'zhongshu' || output.object_type === 'segment_zhongshu' || output.object_type === 'movement_state' || output.object_type === 'center_monitor' || output.object_type === 'divergence' || output.object_type === 'trade_point')
 }
 
 function chanVisibility(source: StrategySource, output: AlgorithmOutput): boolean {
@@ -45,6 +47,8 @@ function chanVisibility(source: StrategySource, output: AlgorithmOutput): boolea
   if (output.object_type === 'segment') return source.category_visibility.segments
   if (output.object_type === 'zhongshu') return source.category_visibility.zhongshu
   if (output.object_type === 'segment_zhongshu') return source.category_visibility.segment_zhongshu
+  if (output.object_type === 'movement_state') return source.category_visibility.movement_states ?? true
+  if (output.object_type === 'center_monitor') return source.category_visibility.center_monitors ?? true
   if (output.object_type === 'divergence') return source.category_visibility.divergences
   if (output.object_type === 'trade_point') return source.category_visibility.trade_points
   return true
