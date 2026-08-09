@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -44,6 +45,9 @@ type Config struct {
 		FillMissingBars          bool   `yaml:"fill_missing_bars"`
 	} `yaml:"import"`
 	Chart struct {
+		InitialInstrument         string  `yaml:"initial_instrument"`
+		BeginDT                   string  `yaml:"begin_dt"`
+		EndDT                     string  `yaml:"end_dt"`
 		InitialBars               int     `yaml:"initial_bars"`
 		PrefetchBars              int     `yaml:"prefetch_bars"`
 		MaxBarsPerRequest         int     `yaml:"max_bars_per_request"`
@@ -79,6 +83,12 @@ func Load(path string) (Config, error) {
 	if err := decoder.Decode(&cfg); err != nil {
 		return cfg, fmt.Errorf("decode config: %w", err)
 	}
+	cfg.Chart.InitialInstrument = strings.ToUpper(strings.TrimSpace(cfg.Chart.InitialInstrument))
+	if cfg.Chart.InitialInstrument == "" {
+		cfg.Chart.InitialInstrument = "AOL9"
+	}
+	cfg.Chart.BeginDT = strings.TrimSpace(cfg.Chart.BeginDT)
+	cfg.Chart.EndDT = strings.TrimSpace(cfg.Chart.EndDT)
 	if err := cfg.Validate(); err != nil {
 		return cfg, err
 	}
@@ -135,6 +145,33 @@ func (c Config) Validate() error {
 		return errors.New("chart prefetch threshold must be positive and zoom debounce must be non-negative")
 	}
 	return nil
+}
+
+func (c Config) InitialInstrument() string {
+	if c.Chart.InitialInstrument == "" {
+		return "AOL9"
+	}
+	return c.Chart.InitialInstrument
+}
+
+func (c Config) ChartTimeBoundsUTC() (*int64, *int64) {
+	return c.chartTimeBoundUTC(c.Chart.BeginDT), c.chartTimeBoundUTC(c.Chart.EndDT)
+}
+
+func (c Config) chartTimeBoundUTC(value string) *int64 {
+	if strings.TrimSpace(value) == "" {
+		return nil
+	}
+	location, err := time.LoadLocation(c.App.Timezone)
+	if err != nil {
+		return nil
+	}
+	parsed, err := time.ParseInLocation("2006-01-02 15:04:05", strings.TrimSpace(value), location)
+	if err != nil {
+		return nil
+	}
+	milliseconds := parsed.UTC().UnixMilli()
+	return &milliseconds
 }
 
 func (c Config) ReadTimeout() time.Duration {

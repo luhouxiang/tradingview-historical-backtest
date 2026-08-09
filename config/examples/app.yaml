@@ -29,6 +29,9 @@ import:
   fill_missing_bars: false
 
 chart:
+  initial_instrument: AOL9
+  begin_dt: ""
+  end_dt: ""
   initial_bars: 3000
   prefetch_bars: 1500
   max_bars_per_request: 5000

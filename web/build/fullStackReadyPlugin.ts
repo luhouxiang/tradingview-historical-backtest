@@ -10,6 +10,7 @@ export interface FullStackReadyPluginOptions {
 
 export interface DemoDatasetReadyOptions {
   apiBaseUrl: string
+  preferredSymbol?: string
   fetchImpl?: typeof fetch
   jobPollIntervalMs?: number
   jobTimeoutMs?: number
@@ -35,8 +36,14 @@ interface SourceFile {
   }
 }
 
-const preferredDemoDatasetId = 'SHFE.AOL9.5m'
-const preferredDemoSymbol = 'AOL9'
+function normalizeSymbol(value: string | undefined): string {
+  const symbol = value?.trim().toUpperCase()
+  return symbol || 'AOL9'
+}
+
+function preferredDatasetId(symbol: string): string {
+  return `SHFE.${symbol}.5m`
+}
 
 async function jsonRequest<T>(
   fetchImpl: typeof fetch,
@@ -87,6 +94,8 @@ async function waitForJob(
 export function createDemoDatasetReadyCheck(options: DemoDatasetReadyOptions): () => Promise<boolean> {
   const fetchImpl = options.fetchImpl ?? fetch
   const apiBaseUrl = options.apiBaseUrl.replace(/\/$/, '')
+  const preferredSymbol = normalizeSymbol(options.preferredSymbol)
+  const preferredId = preferredDatasetId(preferredSymbol)
   const pollIntervalMs = options.jobPollIntervalMs ?? 250
   const timeoutMs = options.jobTimeoutMs ?? 120000
   const requestTimeoutMs = options.requestTimeoutMs ?? 2000
@@ -110,7 +119,7 @@ export function createDemoDatasetReadyCheck(options: DemoDatasetReadyOptions): (
       )
       if (catalog.datasets?.some((dataset) => (
         typeof dataset === 'object' && dataset !== null
-        && 'dataset_id' in dataset && dataset.dataset_id === preferredDemoDatasetId
+        && 'dataset_id' in dataset && dataset.dataset_id === preferredId
       ))) return true
       if (bootstrapAttempted) return false
 
@@ -128,7 +137,7 @@ export function createDemoDatasetReadyCheck(options: DemoDatasetReadyOptions): (
       )
       if (catalog.datasets?.some((dataset) => (
         typeof dataset === 'object' && dataset !== null
-        && 'dataset_id' in dataset && dataset.dataset_id === preferredDemoDatasetId
+        && 'dataset_id' in dataset && dataset.dataset_id === preferredId
       ))) return true
 
       const sourceResponse = await jsonRequest<{ items?: SourceFile[] }>(
@@ -138,7 +147,7 @@ export function createDemoDatasetReadyCheck(options: DemoDatasetReadyOptions): (
         requestTimeoutMs,
       )
       const source = sourceResponse.items?.find((item) => (
-        item.status === 'importable' && item.detected?.symbol === preferredDemoSymbol
+        item.status === 'importable' && item.detected?.symbol?.toUpperCase() === preferredSymbol
       ))
       if (!source?.detected) return false
 
@@ -166,7 +175,7 @@ export function createDemoDatasetReadyCheck(options: DemoDatasetReadyOptions): (
       )
       return catalog.datasets?.some((dataset) => (
         typeof dataset === 'object' && dataset !== null
-        && 'dataset_id' in dataset && dataset.dataset_id === preferredDemoDatasetId
+        && 'dataset_id' in dataset && dataset.dataset_id === preferredId
       )) ?? false
     } catch {
       return false

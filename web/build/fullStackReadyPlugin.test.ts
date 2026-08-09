@@ -131,6 +131,39 @@ describe('createDemoDatasetReadyCheck', () => {
     })
   })
 
+  it('uses the configured preferred symbol when bootstrapping the dataset', async () => {
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce(response({ status: 'ok' }))
+      .mockResolvedValueOnce(response({ datasets: [] }))
+      .mockResolvedValueOnce(response({ job_id: 'scan-1' }))
+      .mockResolvedValueOnce(response({ job_id: 'scan-1', status: 'completed' }))
+      .mockResolvedValueOnce(response({ datasets: [] }))
+      .mockResolvedValueOnce(response({
+        items: [{
+          source_file_id: 'source-ao2609',
+          status: 'importable',
+          detected: {
+            exchange: 'SHFE',
+            symbol: 'AO2609',
+            timeframe: '5m',
+          },
+        }],
+      }))
+      .mockResolvedValueOnce(response({ job_id: 'import-1' }))
+      .mockResolvedValueOnce(response({ job_id: 'import-1', status: 'completed' }))
+      .mockResolvedValueOnce(response({ datasets: [{ dataset_id: 'SHFE.AO2609.5m' }] }))
+    const checkReady = createDemoDatasetReadyCheck({
+      apiBaseUrl: 'http://127.0.0.1:8080',
+      preferredSymbol: 'AO2609',
+      fetchImpl,
+      jobPollIntervalMs: 1,
+    })
+
+    await expect(checkReady()).resolves.toBe(true)
+    const importCall = fetchImpl.mock.calls.find(([url]) => String(url).endsWith('/api/v1/datasets/import'))
+    expect(JSON.parse(String(importCall?.[1]?.body))).toMatchObject({ instrument: 'AO2609' })
+  })
+
   it('does not submit repeated scan jobs after a terminal bootstrap failure', async () => {
     const fetchImpl = vi.fn()
       .mockResolvedValueOnce(response({ status: 'ok' }))

@@ -73,6 +73,42 @@ func TestReaderRejectsRevisionAndInvalidRanges(t *testing.T) {
 	}
 }
 
+func TestReaderAppliesConfiguredTimestampBounds(t *testing.T) {
+	begin := int64(1_700_000_000_000 + 3*300_000)
+	end := int64(1_700_000_000_000 + 6*300_000)
+	reader, revision := testReaderWithConfig(t, 10, Config{
+		InitialBars: 3000, PrefetchBars: 1500, MaxBarsPerRequest: 5000,
+		BeginTimestampUTC: &begin, EndTimestampUTC: &end,
+	})
+	tail, err := reader.Read(context.Background(), Query{DatasetID: "SHFE.AO2609.5m", DataRevision: revision, GenerationID: "gen-1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := tail.Bars.BarIndex; len(got) != 4 || got[0] != 3 || got[3] != 6 || tail.HasMoreBefore {
+		t.Fatalf("bounded tail: indexes=%v has_more_before=%v", got, tail.HasMoreBefore)
+	}
+	before := int64(5)
+	prefetch, err := reader.Read(context.Background(), Query{
+		DatasetID: "SHFE.AO2609.5m", DataRevision: revision, GenerationID: "gen-1", BeforeBarIndex: &before, Limit: 10,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := prefetch.Bars.BarIndex; len(got) != 2 || got[0] != 3 || got[1] != 4 || prefetch.HasMoreBefore {
+		t.Fatalf("bounded prefetch: indexes=%v has_more_before=%v", got, prefetch.HasMoreBefore)
+	}
+	before = 3
+	empty, err := reader.Read(context.Background(), Query{
+		DatasetID: "SHFE.AO2609.5m", DataRevision: revision, GenerationID: "gen-1", BeforeBarIndex: &before, Limit: 10,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(empty.Bars.BarIndex) != 0 || empty.HasMoreBefore {
+		t.Fatalf("expected empty range at lower bound, got %#v", empty)
+	}
+}
+
 func BenchmarkReaderHotTail3000(b *testing.B) {
 	reader, revision := testReader(b, 17_017)
 	query := Query{DatasetID: "SHFE.AO2609.5m", DataRevision: revision, GenerationID: "benchmark"}
@@ -90,6 +126,10 @@ func BenchmarkReaderHotTail3000(b *testing.B) {
 }
 
 func testReader(t testing.TB, count int) (*Reader, string) {
+	return testReaderWithConfig(t, count, Config{InitialBars: 3000, PrefetchBars: 1500, MaxBarsPerRequest: 5000})
+}
+
+func testReaderWithConfig(t testing.TB, count int, config Config) (*Reader, string) {
 	t.Helper()
 	root := t.TempDir()
 	guard, err := storage.NewPathGuard(root)
@@ -142,5 +182,5 @@ func testReader(t testing.TB, count int) (*Reader, string) {
 	if err := store.Upsert(meta, metaPath); err != nil {
 		t.Fatal(err)
 	}
-	return NewReader(guard, store, Config{InitialBars: 3000, PrefetchBars: 1500, MaxBarsPerRequest: 5000}), revision
+	return NewReader(guard, store, config), revision
 }

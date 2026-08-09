@@ -64,7 +64,9 @@ if (-not (Test-Path -LiteralPath "$projectRoot/web/node_modules")) {
     } finally { Pop-Location }
 }
 
-& "$PSScriptRoot/prepare-demo-data.ps1" | Out-Null
+$demoData = & "$PSScriptRoot/prepare-demo-data.ps1" | ConvertFrom-Json
+$initialInstrument = [string]$demoData.initial_instrument
+$preferredDatasetId = [string]$demoData.dataset_id
 New-Item -ItemType Directory -Force "$projectRoot/bin/runtime" | Out-Null
 go build -o "$projectRoot/bin/chartd.exe" ./cmd/chartd
 if ($LASTEXITCODE -ne 0) { throw "chartd build failed with exit code $LASTEXITCODE." }
@@ -99,34 +101,35 @@ try {
     $scan = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/v1/datasets/scan' -Method Post
     Wait-Job -JobId $scan.job_id -Deadline ((Get-Date).AddSeconds(60))
     $catalog = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/v1/datasets'
-    $preferredDataset = @($catalog.datasets | Where-Object { $_.dataset_id -eq 'SHFE.AOL9.5m' })[0]
+    $preferredDataset = @($catalog.datasets | Where-Object { $_.dataset_id -eq $preferredDatasetId })[0]
     if (-not $preferredDataset) {
         $sources = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/v1/source-files'
-        $source = @($sources.items | Where-Object { $_.status -eq 'importable' -and $_.detected.symbol -eq 'AOL9' })[0]
-        if (-not $source) { throw 'Prepared AOL9 sample was not detected as importable.' }
+        $source = @($sources.items | Where-Object { $_.status -eq 'importable' -and $_.detected.symbol -eq $initialInstrument })[0]
+        if (-not $source) { throw "Prepared $initialInstrument sample was not detected as importable." }
+        $detected = $source.detected
         $body = @{
             source_file_id = $source.source_file_id
             importer_id = 'tdx_txt_v1'
-            exchange = 'SHFE'
-            instrument = 'AOL9'
-            timeframe = '5m'
-            date_semantics = 'trading_day'
-            timezone = 'Asia/Shanghai'
-            timestamp_semantics = 'bar_end'
+            exchange = $detected.exchange
+            instrument = $detected.symbol
+            timeframe = $detected.timeframe
+            date_semantics = if ($detected.date_semantics) { $detected.date_semantics } else { 'trading_day' }
+            timezone = if ($detected.timezone) { $detected.timezone } else { 'Asia/Shanghai' }
+            timestamp_semantics = if ($detected.timestamp_semantics) { $detected.timestamp_semantics } else { 'bar_end' }
         } | ConvertTo-Json
         $import = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/v1/datasets/import' `
             -Method Post -ContentType 'application/json' -Body $body
         Wait-Job -JobId $import.job_id -Deadline ((Get-Date).AddSeconds(120))
         $catalog = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/v1/datasets'
-        $preferredDataset = @($catalog.datasets | Where-Object { $_.dataset_id -eq 'SHFE.AOL9.5m' })[0]
+        $preferredDataset = @($catalog.datasets | Where-Object { $_.dataset_id -eq $preferredDatasetId })[0]
     }
-    if (-not $preferredDataset) { throw 'The AOL9 demo dataset is not available after import.' }
+    if (-not $preferredDataset) { throw "The $initialInstrument demo dataset is not available after import." }
 
     Write-Host ''
     Write-Host 'TVBT is ready: http://127.0.0.1:5173/' -ForegroundColor Green
     Write-Host "Python: $PythonExecutable"
     Write-Host "Dataset: $($preferredDataset.dataset_id), $($preferredDataset.bar_count) bars"
-    Write-Host 'The AOL9 dataset is selected automatically. Open the bottom Backtest tab and click Start formal backtest.'
+    Write-Host "The $initialInstrument dataset is selected automatically. Open the bottom Backtest tab and click Start formal backtest."
     Write-Host 'Press Ctrl+C in this window to stop the exact service process trees.'
     if (-not $NoBrowser) { Start-Process 'http://127.0.0.1:5173/' }
 

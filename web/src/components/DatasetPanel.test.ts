@@ -46,14 +46,14 @@ describe('DatasetPanel', () => {
     expect(wrapper.text()).toContain('5m')
   })
 
-  it('selects the AOL9 dataset automatically even when another dataset is listed first', async () => {
+  it('selects the configured initial dataset automatically even when another dataset is listed first', async () => {
     const oldSummary = {
-      dataset_id: 'SHFE.AO2609.5m', active_revision: `sha256:${'1'.repeat(64)}`,
-      instrument: 'AO2609', timeframe: '5m', bar_count: 17017, status: 'ready',
-    }
-    const summary = {
       dataset_id: 'SHFE.AOL9.5m', active_revision: `sha256:${'2'.repeat(64)}`,
       instrument: 'AOL9', timeframe: '5m', bar_count: 69289, status: 'ready',
+    }
+    const summary = {
+      dataset_id: 'SHFE.AO2609.5m', active_revision: `sha256:${'1'.repeat(64)}`,
+      instrument: 'AO2609', timeframe: '5m', bar_count: 17017, status: 'ready',
     }
     const metadata = {
       ...summary, data_revision: summary.active_revision,

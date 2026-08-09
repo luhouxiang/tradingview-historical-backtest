@@ -189,6 +189,10 @@ function legendBar(): CachedBar | null {
   return crosshairActive.value ? hoveredBar.value : latestBar.value
 }
 
+function formatKLineIndex(bar: CachedBar | null): string {
+  return bar ? String(bar.barIndex + 1).padStart(5, '0') : '--'
+}
+
 function formatPrice(value: number | undefined): string {
   if (value === undefined || !props.dataset) return '--'
   return (value / props.dataset.price.price_scale).toFixed(props.dataset.price.price_decimals)
@@ -860,6 +864,7 @@ onBeforeUnmount(() => {
             开 {{ formatPrice(legendBar()?.openI64) }} 高 {{ formatPrice(legendBar()?.highI64) }}
             低 {{ formatPrice(legendBar()?.lowI64) }} 收 {{ formatPrice(legendBar()?.closeI64) }}
           </span>
+          <span class="legend-value legend-bar-index">K线 {{ formatKLineIndex(legendBar()) }}</span>
           <span v-for="item in maLegendItems" :key="item.key" class="legend-value" :style="{ color: item.color }">
             MA{{ item.period }} {{ formatLegendValue(legendValue(item.key)) }}
           </span>

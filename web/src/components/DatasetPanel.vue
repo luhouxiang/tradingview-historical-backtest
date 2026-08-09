@@ -19,6 +19,8 @@ const datasets = ref<DatasetSummary[]>([])
 const selected = ref<DatasetMeta | null>(props.selectedDataset ?? null)
 const busy = ref(false)
 const status = ref('')
+const initialInstrument = (__TVBT_INITIAL_INSTRUMENT__ || 'AOL9').trim().toUpperCase()
+const initialDatasetId = `SHFE.${initialInstrument}.5m`
 
 watch(() => props.selectedDataset, (dataset) => {
   if (dataset) selected.value = dataset
@@ -81,7 +83,7 @@ async function selectDataset(item: DatasetSummary): Promise<void> {
 onMounted(async () => {
   try {
     await refresh()
-    const preferred = datasets.value.find((dataset) => dataset.dataset_id === 'SHFE.AOL9.5m') ?? datasets.value[0]
+    const preferred = datasets.value.find((dataset) => dataset.dataset_id === initialDatasetId) ?? datasets.value[0]
     if (preferred) await selectDataset(preferred)
   } catch {
     // An empty catalog before the Go service starts is a recoverable shell state.
