@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
-	"sort"
 	"sync"
 
 	"github.com/parquet-go/parquet-go"
@@ -27,8 +26,6 @@ type Config struct {
 	PrefetchBars      int
 	MaxBarsPerRequest int
 	MaxCachedDatasets int
-	BeginTimestampUTC *int64
-	EndTimestampUTC   *int64
 }
 
 type Query struct {
@@ -105,8 +102,7 @@ func (r *Reader) Read(ctx context.Context, query Query) (Response, error) {
 	if err != nil {
 		return Response{}, err
 	}
-	bars = filterByTimestamp(bars, r.config.BeginTimestampUTC, r.config.EndTimestampUTC)
-	start, end := rangeBounds(bars, query.BeforeBarIndex, count)
+	start, end := rangeBounds(len(bars), query.BeforeBarIndex, count)
 	selected := bars[start:end]
 	columns := columns(selected)
 	checksum, err := checksum(columns)
@@ -148,12 +144,10 @@ func (r *Reader) requestCount(query Query) (int, error) {
 	return count, nil
 }
 
-func rangeBounds(bars []importer.Bar, before *int64, count int) (int, int) {
-	end := len(bars)
-	if before != nil {
-		end = sort.Search(len(bars), func(index int) bool {
-			return bars[index].BarIndex >= *before
-		})
+func rangeBounds(length int, before *int64, count int) (int, int) {
+	end := length
+	if before != nil && *before < int64(end) {
+		end = int(*before)
 	}
 	if end < 0 {
 		end = 0
@@ -163,25 +157,6 @@ func rangeBounds(bars []importer.Bar, before *int64, count int) (int, int) {
 		start = 0
 	}
 	return start, end
-}
-
-func filterByTimestamp(bars []importer.Bar, begin, end *int64) []importer.Bar {
-	start := 0
-	if begin != nil {
-		start = sort.Search(len(bars), func(index int) bool {
-			return bars[index].TimestampUTC >= *begin
-		})
-	}
-	stop := len(bars)
-	if end != nil {
-		stop = sort.Search(len(bars), func(index int) bool {
-			return bars[index].TimestampUTC > *end
-		})
-	}
-	if start > stop {
-		return nil
-	}
-	return bars[start:stop]
 }
 
 func (r *Reader) load(meta catalog.DatasetMeta) ([]importer.Bar, error) {

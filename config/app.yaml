@@ -30,8 +30,8 @@ import:
 
 chart:
   initial_instrument: AO2609
-  begin_dt: ""
-  end_dt: ""
+  begin_dt: "2026-04-27 11:30:00"
+  end_dt: "2026-07-24 21:50:00"
   initial_bars: 3000
   prefetch_bars: 1500
   max_bars_per_request: 5000

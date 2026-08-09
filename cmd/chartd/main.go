@@ -78,11 +78,9 @@ func main() {
 		os.Exit(1)
 	}
 	datasetService := importer.NewService(guard, catalogStore, cfg, logger)
-	beginTimestampUTC, endTimestampUTC := cfg.ChartTimeBoundsUTC()
 	barReader := marketdata.NewReader(guard, catalogStore, marketdata.Config{
 		InitialBars: cfg.Chart.InitialBars, PrefetchBars: cfg.Chart.PrefetchBars,
 		MaxBarsPerRequest: cfg.Chart.MaxBarsPerRequest, MaxCachedDatasets: 8,
-		BeginTimestampUTC: beginTimestampUTC, EndTimestampUTC: endTimestampUTC,
 	})
 	jobManager, err := jobs.NewPersistentManager(guard)
 	if err != nil {

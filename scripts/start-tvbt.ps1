@@ -102,10 +102,9 @@ try {
     Wait-Job -JobId $scan.job_id -Deadline ((Get-Date).AddSeconds(60))
     $catalog = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/v1/datasets'
     $preferredDataset = @($catalog.datasets | Where-Object { $_.dataset_id -eq $preferredDatasetId })[0]
-    if (-not $preferredDataset) {
-        $sources = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/v1/source-files'
-        $source = @($sources.items | Where-Object { $_.status -eq 'importable' -and $_.detected.symbol -eq $initialInstrument })[0]
-        if (-not $source) { throw "Prepared $initialInstrument sample was not detected as importable." }
+    $sources = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/v1/source-files'
+    $source = @($sources.items | Where-Object { $_.status -eq 'importable' -and $_.detected.symbol -eq $initialInstrument })[0]
+    if ($source) {
         $detected = $source.detected
         $body = @{
             source_file_id = $source.source_file_id
@@ -122,6 +121,8 @@ try {
         Wait-Job -JobId $import.job_id -Deadline ((Get-Date).AddSeconds(120))
         $catalog = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/v1/datasets'
         $preferredDataset = @($catalog.datasets | Where-Object { $_.dataset_id -eq $preferredDatasetId })[0]
+    } elseif (-not $preferredDataset) {
+        throw "Prepared $initialInstrument sample was not detected as importable."
     }
     if (-not $preferredDataset) { throw "The $initialInstrument demo dataset is not available after import." }
 

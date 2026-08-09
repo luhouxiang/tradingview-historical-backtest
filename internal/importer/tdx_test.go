@@ -280,6 +280,49 @@ func TestImportIsImmutableAndRevisionAware(t *testing.T) {
 	}
 }
 
+func TestImportAppliesConfiguredTimeWindowBeforeWritingDataset(t *testing.T) {
+	service, guard, _, _ := newTestService(t)
+	items, err := service.Scan(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := ImportRequest{
+		SourceFileID: items[0].SourceFileID, ImporterID: AdapterID, Exchange: "SHFE", Instrument: "AO2609", Timeframe: "5m",
+		DateSemantics: "trading_day", Timezone: "Asia/Shanghai", TimestampSemantics: "bar_end",
+	}
+	full, _, err := service.Import(context.Background(), request, func(float64) {})
+	if err != nil {
+		t.Fatal(err)
+	}
+	service.config.App.Timezone = "Asia/Shanghai"
+	service.config.Chart.BeginDT = "2025-09-22 01:00:00"
+	service.config.Chart.EndDT = "2025-09-22 09:05:00"
+	bounded, reused, err := service.Import(context.Background(), request, func(float64) {})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if reused || bounded.DataRevision == full.DataRevision {
+		t.Fatalf("bounded import should create a distinct revision: reused=%v full=%s bounded=%s", reused, full.DataRevision, bounded.DataRevision)
+	}
+	if bounded.Coverage.BarCount != 2 || bounded.Coverage.FirstBarIndex != 0 || bounded.Coverage.LastBarIndex != 1 || bounded.Quality.ZeroVolumeCount != 1 {
+		t.Fatalf("unexpected bounded metadata: %#v", bounded)
+	}
+	barsPath, err := guard.Resolve(bounded.Files[0].Path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err := parquet.ReadFile[Bar](barsPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	location, _ := time.LoadLocation("Asia/Shanghai")
+	wantFirst := time.Date(2025, 9, 22, 1, 0, 0, 0, location).UTC().UnixMilli()
+	wantLast := time.Date(2025, 9, 22, 9, 5, 0, 0, location).UTC().UnixMilli()
+	if len(rows) != 2 || rows[0].BarIndex != 0 || rows[1].BarIndex != 1 || rows[0].TimestampUTC != wantFirst || rows[1].TimestampUTC != wantLast {
+		t.Fatalf("unexpected bounded rows: %#v", rows)
+	}
+}
+
 func newTestService(t *testing.T) (*Service, *storage.PathGuard, *catalog.Store, string) {
 	t.Helper()
 	root := t.TempDir()
@@ -383,6 +426,7 @@ func TestDataRevisionChangesForEverySemanticInput(t *testing.T) {
 	}{
 		{"source", []byte("sourcf"), []byte(`{"mode":"strict"}`), baseConfig, AdapterVersion},
 		{"options", []byte("source"), []byte(`{"mode":"lenient"}`), baseConfig, AdapterVersion},
+		{"time_window", []byte("source"), []byte(`{"begin_timestamp_utc":1700000000000,"mode":"strict"}`), baseConfig, AdapterVersion},
 		{"instrument", []byte("source"), []byte(`{"mode":"strict"}`), runtimeConfig{instrumentHash: "changed", sessionHash: baseConfig.sessionHash, calendarHash: baseConfig.calendarHash}, AdapterVersion},
 		{"session", []byte("source"), []byte(`{"mode":"strict"}`), runtimeConfig{instrumentHash: baseConfig.instrumentHash, sessionHash: "changed", calendarHash: baseConfig.calendarHash}, AdapterVersion},
 		{"calendar", []byte("source"), []byte(`{"mode":"strict"}`), runtimeConfig{instrumentHash: baseConfig.instrumentHash, sessionHash: baseConfig.sessionHash, calendarHash: "changed"}, AdapterVersion},

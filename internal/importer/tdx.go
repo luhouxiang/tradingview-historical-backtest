@@ -44,6 +44,8 @@ type ImportOptions struct {
 	FailOnDuplicate    bool   `json:"fail_on_duplicate_timestamp"`
 	KeepZeroVolumeBars bool   `json:"keep_zero_volume_bars"`
 	FillMissingBars    bool   `json:"fill_missing_bars"`
+	BeginTimestampUTC  *int64 `json:"begin_timestamp_utc,omitempty"`
+	EndTimestampUTC    *int64 `json:"end_timestamp_utc,omitempty"`
 }
 
 type Bar struct {
@@ -168,6 +170,9 @@ func ParseTdx(data []byte, sourcePath, sourceHash string, instrument InstrumentC
 			addIssue(&report, "ERROR", "TRADING_CALENDAR_MAPPING_MISSING", err.Error(), sourceLine)
 			continue
 		}
+		if !withinImportWindow(timestamp, options.BeginTimestampUTC, options.EndTimestampUTC) {
+			continue
+		}
 		prices := make([]int64, 4)
 		priceOK := true
 		for index := range prices {
@@ -267,6 +272,10 @@ func ParseTdx(data []byte, sourcePath, sourceHash string, instrument InstrumentC
 		return ParseResult{Detection: detection, Bars: bars, Quality: report}, &QualityError{Report: report}
 	}
 	return ParseResult{Detection: detection, Bars: bars, Quality: report}, nil
+}
+
+func withinImportWindow(timestamp int64, begin, end *int64) bool {
+	return (begin == nil || timestamp >= *begin) && (end == nil || timestamp <= *end)
 }
 
 func addIssue(report *QualityReport, level, code, message string, line int64) {

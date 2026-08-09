@@ -117,11 +117,11 @@ export function createDemoDatasetReadyCheck(options: DemoDatasetReadyOptions): (
         undefined,
         requestTimeoutMs,
       )
-      if (catalog.datasets?.some((dataset) => (
+      const hasPreferredDataset = catalog.datasets?.some((dataset) => (
         typeof dataset === 'object' && dataset !== null
         && 'dataset_id' in dataset && dataset.dataset_id === preferredId
-      ))) return true
-      if (bootstrapAttempted) return false
+      )) ?? false
+      if (bootstrapAttempted) return hasPreferredDataset
 
       const scan = await jsonRequest<{ job_id: string }>(fetchImpl, `${apiBaseUrl}/api/v1/datasets/scan`, {
         method: 'POST',
@@ -135,11 +135,6 @@ export function createDemoDatasetReadyCheck(options: DemoDatasetReadyOptions): (
         undefined,
         requestTimeoutMs,
       )
-      if (catalog.datasets?.some((dataset) => (
-        typeof dataset === 'object' && dataset !== null
-        && 'dataset_id' in dataset && dataset.dataset_id === preferredId
-      ))) return true
-
       const sourceResponse = await jsonRequest<{ items?: SourceFile[] }>(
         fetchImpl,
         `${apiBaseUrl}/api/v1/source-files`,
@@ -149,7 +144,12 @@ export function createDemoDatasetReadyCheck(options: DemoDatasetReadyOptions): (
       const source = sourceResponse.items?.find((item) => (
         item.status === 'importable' && item.detected?.symbol?.toUpperCase() === preferredSymbol
       ))
-      if (!source?.detected) return false
+      if (!source?.detected) {
+        return catalog.datasets?.some((dataset) => (
+          typeof dataset === 'object' && dataset !== null
+          && 'dataset_id' in dataset && dataset.dataset_id === preferredId
+        )) ?? false
+      }
 
       const detected = source.detected
       const imported = await jsonRequest<{ job_id: string }>(fetchImpl, `${apiBaseUrl}/api/v1/datasets/import`, {

@@ -77,18 +77,32 @@ describe('fullStackReadyPlugin', () => {
 })
 
 describe('createDemoDatasetReadyCheck', () => {
-  it('leaves an existing preferred demo dataset unchanged', async () => {
+  it('refreshes an existing preferred demo dataset when its source is available', async () => {
     const fetchImpl = vi.fn()
       .mockResolvedValueOnce(response({ status: 'ok' }))
+      .mockResolvedValueOnce(response({ datasets: [{ dataset_id: 'SHFE.AOL9.5m' }] }))
+      .mockResolvedValueOnce(response({ job_id: 'scan-1' }))
+      .mockResolvedValueOnce(response({ job_id: 'scan-1', status: 'completed' }))
+      .mockResolvedValueOnce(response({ datasets: [{ dataset_id: 'SHFE.AOL9.5m' }] }))
+      .mockResolvedValueOnce(response({
+        items: [{
+          source_file_id: 'source-1',
+          status: 'importable',
+          detected: { exchange: 'SHFE', symbol: 'AOL9', timeframe: '5m' },
+        }],
+      }))
+      .mockResolvedValueOnce(response({ job_id: 'import-1' }))
+      .mockResolvedValueOnce(response({ job_id: 'import-1', status: 'completed' }))
       .mockResolvedValueOnce(response({ datasets: [{ dataset_id: 'SHFE.AOL9.5m' }] }))
     const checkReady = createDemoDatasetReadyCheck({
       apiBaseUrl: 'http://127.0.0.1:8080',
       fetchImpl,
+      jobPollIntervalMs: 1,
     })
 
     await expect(checkReady()).resolves.toBe(true)
-    expect(fetchImpl).toHaveBeenCalledTimes(2)
-    expect(fetchImpl).not.toHaveBeenCalledWith(expect.stringContaining('/datasets/scan'), expect.anything())
+    expect(fetchImpl).toHaveBeenCalledWith(expect.stringContaining('/datasets/scan'), expect.anything())
+    expect(fetchImpl).toHaveBeenCalledWith(expect.stringContaining('/datasets/import'), expect.anything())
   })
 
   it('scans and imports only the prepared AOL9 sample when the preferred dataset is absent', async () => {

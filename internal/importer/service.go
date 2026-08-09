@@ -29,6 +29,7 @@ import (
 var (
 	ErrSourceNotFound = errors.New("source file not found")
 	ErrSourceChanged  = errors.New("source file changed after scan")
+	ErrNoBarsInRange  = errors.New("no bars within configured chart time range")
 )
 
 type SourceFile struct {
@@ -192,6 +193,7 @@ func (s *Service) Import(ctx context.Context, request ImportRequest, progress fu
 		FailOnDuplicate: s.config.Import.FailOnDuplicateTimestamp, KeepZeroVolumeBars: s.config.Import.KeepZeroVolumeBars,
 		FillMissingBars: s.config.Import.FillMissingBars,
 	}
+	options.BeginTimestampUTC, options.EndTimestampUTC = s.config.ChartTimeBoundsUTC()
 	if options.TimestampSemantics == "" {
 		options.TimestampSemantics = "bar_end"
 	}
@@ -209,6 +211,9 @@ func (s *Service) Import(ctx context.Context, request ImportRequest, progress fu
 	}
 	if result.Detection.Symbol != request.Instrument || result.Detection.Timeframe != request.Timeframe {
 		return catalog.DatasetMeta{}, false, fmt.Errorf("requested mapping does not match detected title")
+	}
+	if len(result.Bars) == 0 {
+		return catalog.DatasetMeta{}, false, ErrNoBarsInRange
 	}
 	after, err := os.ReadFile(path)
 	if err != nil || hashBytes(after) != source.SHA256 {

@@ -19,7 +19,7 @@ func TestLoadExample(t *testing.T) {
 	if cfg.InitialInstrument() != "AO2609" {
 		t.Fatalf("unexpected initial instrument %q", cfg.InitialInstrument())
 	}
-	if cfg.Chart.BeginDT != "" || cfg.Chart.EndDT != "" {
+	if cfg.Chart.BeginDT != "2026-04-27 11:30:00" || cfg.Chart.EndDT != "2026-07-24 21:50:00" {
 		t.Fatalf("unexpected chart time bounds %q/%q", cfg.Chart.BeginDT, cfg.Chart.EndDT)
 	}
 }
@@ -66,8 +66,8 @@ func TestChartTimeBoundsUTCParsesValidBoundsAndIgnoresInvalidValues(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	text := strings.Replace(string(data), `begin_dt: ""`, `begin_dt: "2026-08-10 14:10:00"`, 1)
-	text = strings.Replace(text, `end_dt: ""`, `end_dt: "bad-time"`, 1)
+	text := strings.Replace(string(data), `begin_dt: "2026-04-27 11:30:00"`, `begin_dt: "2026-08-10 14:10:00"`, 1)
+	text = strings.Replace(text, `end_dt: "2026-07-24 21:50:00"`, `end_dt: "bad-time"`, 1)
 	if err := os.WriteFile(path, []byte(text), 0o600); err != nil {
 		t.Fatal(err)
 	}
