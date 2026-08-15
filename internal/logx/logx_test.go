@@ -80,6 +80,30 @@ func TestFieldsAreAppendedToTextMessage(t *testing.T) {
 	}
 }
 
+func TestConsoleWriterReceivesSameFixedTextOutput(t *testing.T) {
+	var fileOutput bytes.Buffer
+	var consoleOutput bytes.Buffer
+	logger, err := logx.New(logx.Options{
+		Service:       "test",
+		Writer:        &fileOutput,
+		ConsoleWriter: &consoleOutput,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	logger.Info("test.console", "visible on screen", map[string]any{"case": "debug"})
+
+	fileLine := strings.TrimSpace(fileOutput.String())
+	consoleLine := strings.TrimSpace(consoleOutput.String())
+	if fileLine == "" || fileLine != consoleLine {
+		t.Fatalf("file line = %q, console line = %q", fileLine, consoleLine)
+	}
+	if !strings.Contains(consoleLine, `test.console visible on screen`) ||
+		!strings.Contains(consoleLine, `"case":"debug"`) {
+		t.Fatalf("console line = %q", consoleLine)
+	}
+}
+
 func TestExternalClientLogUsesClientSource(t *testing.T) {
 	var output bytes.Buffer
 	logger, err := logx.New(logx.Options{Service: "vue-client", Writer: &output})

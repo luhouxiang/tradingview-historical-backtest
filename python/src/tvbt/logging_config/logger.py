@@ -7,6 +7,7 @@ import logging.handlers
 import os
 import queue
 import shutil
+import sys
 import time
 from dataclasses import dataclass
 from datetime import datetime
@@ -76,6 +77,22 @@ class FixedTextFormatter(logging.Formatter):
         )
 
 
+class CurrentStdoutHandler(logging.StreamHandler):
+    def __init__(self) -> None:
+        super().__init__(sys.stdout)
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.stream = sys.stdout
+        super().emit(record)
+
+    def flush(self) -> None:
+        try:
+            self.stream = sys.stdout
+            super().flush()
+        except ValueError:
+            return
+
+
 def _gzip_rotator(source: str, destination: str) -> None:
     with open(source, "rb") as input_file, gzip.open(destination, "wb") as output_file:
         shutil.copyfileobj(input_file, output_file)
@@ -85,9 +102,17 @@ def _gzip_rotator(source: str, destination: str) -> None:
 @dataclass
 class LoggingRuntime:
     listener: logging.handlers.QueueListener
+    records: queue.Queue[logging.LogRecord]
+    handlers: list[logging.Handler]
     degraded: bool
 
+    def flush(self) -> None:
+        self.records.join()
+        for handler in self.handlers:
+            handler.flush()
+
     def close(self) -> None:
+        self.flush()
         self.listener.stop()
 
 
@@ -95,17 +120,69 @@ class StructuredLogger:
     def __init__(self, logger: logging.Logger) -> None:
         self._logger = logger
 
-    def debug(self, event: str, message: str, fields: dict[str, Any] | None = None) -> None:
-        self._logger.debug(message, extra={"event": event, "fields": fields or {}}, stacklevel=2)
+    def debug(
+        self,
+        event_or_message: str,
+        message: str | dict[str, Any] | None = None,
+        fields: dict[str, Any] | None = None,
+        _stacklevel: int = 3,
+    ) -> None:
+        self._log(logging.DEBUG, event_or_message, message, fields, _stacklevel)
 
-    def info(self, event: str, message: str, fields: dict[str, Any] | None = None) -> None:
-        self._logger.info(message, extra={"event": event, "fields": fields or {}}, stacklevel=2)
+    def info(
+        self,
+        event_or_message: str,
+        message: str | dict[str, Any] | None = None,
+        fields: dict[str, Any] | None = None,
+        _stacklevel: int = 3,
+    ) -> None:
+        self._log(logging.INFO, event_or_message, message, fields, _stacklevel)
 
-    def warning(self, event: str, message: str, fields: dict[str, Any] | None = None) -> None:
-        self._logger.warning(message, extra={"event": event, "fields": fields or {}}, stacklevel=2)
+    def warning(
+        self,
+        event_or_message: str,
+        message: str | dict[str, Any] | None = None,
+        fields: dict[str, Any] | None = None,
+        _stacklevel: int = 3,
+    ) -> None:
+        self._log(logging.WARNING, event_or_message, message, fields, _stacklevel)
 
-    def error(self, event: str, message: str, fields: dict[str, Any] | None = None) -> None:
-        self._logger.error(message, extra={"event": event, "fields": fields or {}}, stacklevel=2)
+    def error(
+        self,
+        event_or_message: str,
+        message: str | dict[str, Any] | None = None,
+        fields: dict[str, Any] | None = None,
+        _stacklevel: int = 3,
+    ) -> None:
+        self._log(logging.ERROR, event_or_message, message, fields, _stacklevel)
+
+    def _log(
+        self,
+        level: int,
+        event_or_message: str,
+        message: str | dict[str, Any] | None,
+        fields: dict[str, Any] | None,
+        stacklevel: int,
+    ) -> None:
+        event, text, resolved_fields = _resolve_log_arguments(event_or_message, message, fields)
+        self._logger.log(
+            level,
+            text,
+            extra={"event": event, "fields": resolved_fields},
+            stacklevel=stacklevel,
+        )
+
+
+def _resolve_log_arguments(
+    event_or_message: str,
+    message: str | dict[str, Any] | None,
+    fields: dict[str, Any] | None,
+) -> tuple[str, str, dict[str, Any]]:
+    if isinstance(message, dict) and fields is None:
+        return "", event_or_message, message
+    if message is None:
+        return "", event_or_message, fields or {}
+    return event_or_message, message, fields or {}
 
 
 def configure_logging(
@@ -115,9 +192,11 @@ def configure_logging(
     max_bytes: int,
     backup_count: int,
     project_root: Path,
+    console: bool = True,
+    logger_name: str = "tvbt",
 ) -> tuple[StructuredLogger, LoggingRuntime]:
-    records: queue.SimpleQueue[logging.LogRecord] = queue.SimpleQueue()
-    logger = logging.getLogger("tvbt")
+    records: queue.Queue[logging.LogRecord] = queue.Queue()
+    logger = logging.getLogger(logger_name)
     logger.handlers.clear()
     logger.setLevel(level)
     logger.propagate = False
@@ -136,6 +215,11 @@ def configure_logging(
         handler = logging.NullHandler()
         degraded = True
     handler.setFormatter(FixedTextFormatter(project_root))
-    listener = logging.handlers.QueueListener(records, handler, respect_handler_level=True)
+    handlers: list[logging.Handler] = [handler]
+    if console:
+        console_handler = CurrentStdoutHandler()
+        console_handler.setFormatter(FixedTextFormatter(project_root))
+        handlers.append(console_handler)
+    listener = logging.handlers.QueueListener(records, *handlers, respect_handler_level=True)
     listener.start()
-    return StructuredLogger(logger), LoggingRuntime(listener, degraded)
+    return StructuredLogger(logger), LoggingRuntime(listener, records, handlers, degraded)

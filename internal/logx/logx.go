@@ -16,13 +16,14 @@ import (
 )
 
 type Options struct {
-	Service     string
-	Path        string
-	MaxSizeMB   int
-	MaxBackups  int
-	Compress    bool
-	Writer      io.Writer
-	ProjectRoot string
+	Service       string
+	Path          string
+	MaxSizeMB     int
+	MaxBackups    int
+	Compress      bool
+	Writer        io.Writer
+	ConsoleWriter io.Writer
+	ProjectRoot   string
 }
 
 type Logger struct {
@@ -49,6 +50,9 @@ func New(options Options) (*Logger, error) {
 		}
 		writer = rotator
 		closer = rotator
+	}
+	if options.ConsoleWriter != nil {
+		writer = io.MultiWriter(writer, options.ConsoleWriter)
 	}
 	root, _ := filepath.Abs(options.ProjectRoot)
 	return &Logger{service: options.Service, writer: writer, closer: closer, projectRoot: root}, nil

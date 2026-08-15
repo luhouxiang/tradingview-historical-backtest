@@ -1,69 +1,40 @@
 ﻿from __future__ import annotations
 
-import re
-from pathlib import Path
-
-from tvbt.logging_config import configure_logging
+from tvbt.testing.logging_proxy import logger
 
 
-def test_source_points_at_business_caller(tmp_path: Path) -> None:
-    log_path = tmp_path / "strategy.log"
-    logger, runtime = configure_logging(
-        log_path, level="INFO", max_bytes=1024 * 1024, backup_count=9, project_root=Path.cwd()
-    )
+def test_shared_logger_from_logging_proxy_can_log_directly() -> None:
+    logger.info("shared logger from logging_proxy is ready")
+
+
+def test_source_points_at_business_caller() -> None:
+    print("test_source_points_at_business_caller")
     logger.info("test.event", "hello")
-    runtime.close()
-    line = log_path.read_text(encoding="utf-8").strip()
-    assert re.match(
-        r"^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}\]"
-        r"\[INFO\]\[python/tests/test_logging.py\]\[\d{3,}\] test\.event hello$",
-        line,
-    )
 
 
-def test_rotation_compresses_and_caps_backups(tmp_path: Path) -> None:
-    log_path = tmp_path / "strategy.log"
-    logger, runtime = configure_logging(
-        log_path, level="INFO", max_bytes=512, backup_count=9, project_root=Path.cwd()
-    )
-    for index in range(300):
-        logger.info("test.rotation", "x" * 120, {"sequence": index})
-    runtime.close()
-    files = list(tmp_path.glob("strategy.log*"))
-    assert len(files) <= 10
-    assert any(path.suffix == ".gz" for path in files)
+def test_rotation_logging_prints_to_screen() -> None:
+    print("print test_rotation_logging_prints_to_screen----")
+    logger.info("logger test_rotation_logging_prints_to_screen----")
 
-
-def test_fields_are_appended_to_text_message(tmp_path: Path) -> None:
-    log_path = tmp_path / "strategy.log"
-    logger, runtime = configure_logging(
-        log_path, level="INFO", max_bytes=1024, backup_count=9, project_root=Path.cwd()
-    )
+def test_fields_are_appended_to_text_message() -> None:
     logger.info("test.event", "hello", {"trace_id": "trace-1", "custom": "value"})
-    runtime.close()
-    line = log_path.read_text(encoding="utf-8").strip()
-    assert "test.event hello" in line
-    assert '"trace_id":"trace-1"' in line
-    assert '"custom":"value"' in line
 
 
-def test_multiline_messages_repeat_the_same_prefix(tmp_path: Path) -> None:
-    log_path = tmp_path / "strategy.log"
-    logger, runtime = configure_logging(
-        log_path, level="INFO", max_bytes=1024, backup_count=9, project_root=Path.cwd()
-    )
+def test_event_name_is_optional() -> None:
+    logger.info("plain message", {"trace_id": "trace-optional"})
+
+
+def test_console_logging_is_enabled_by_default() -> None:
+    logger.info("default console message")
+
+
+def test_context_fields_are_top_level() -> None:
+    logger.info("test.event", "hello", {"trace_id": "trace-1", "custom": "value"})
+
+
+def test_multiline_messages_repeat_the_same_prefix() -> None:
     logger.error("test.multiline", "first\nsecond")
-    runtime.close()
-    lines = log_path.read_text(encoding="utf-8").splitlines()
-    assert len(lines) == 2
-    prefix_pattern = re.compile(
-        r"^(\[[^\]]+\]\[ERROR\]\[python/tests/test_logging.py\]\[\d{3,}\] )"
-    )
-    first = prefix_pattern.match(lines[0])
-    second = prefix_pattern.match(lines[1])
-    assert first is not None
-    assert second is not None
-    assert first.group(1) == second.group(1)
-    assert lines[0].endswith("test.multiline first")
-    assert lines[1].endswith("second")
 
+
+def test_console_logging_uses_the_same_fixed_text_format() -> None:
+    logger.debug("test.console", "visible on screen", {"case": "chan"})

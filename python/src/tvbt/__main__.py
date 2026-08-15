@@ -30,6 +30,7 @@ def main() -> None:
         max_bytes=cfg.logging.max_file_bytes,
         backup_count=cfg.logging.backup_count,
         project_root=Path.cwd(),
+        console=True,
     )
     set_runtime_logger(logger)
     server = InternalServer((cfg.host, cfg.port), logger, guard)

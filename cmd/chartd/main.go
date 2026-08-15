@@ -50,16 +50,16 @@ func main() {
 	vueLogPath, _ := guard.Resolve("logs/vue/client.log")
 	projectRoot, _ := filepath.Abs(".")
 	maxSizeMB := int(cfg.Logging.MaxFileBytes / (1024 * 1024))
-	logger, err := logx.New(logx.Options{Service: "go-api", Path: goLogPath, MaxSizeMB: maxSizeMB, MaxBackups: cfg.Logging.BackupCount, Compress: cfg.Logging.CompressBackups, ProjectRoot: projectRoot})
+	logger, err := logx.New(logx.Options{Service: "go-api", Path: goLogPath, MaxSizeMB: maxSizeMB, MaxBackups: cfg.Logging.BackupCount, Compress: cfg.Logging.CompressBackups, ConsoleWriter: os.Stdout, ProjectRoot: projectRoot})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "log setup degraded: %v\n", err)
-		logger, _ = logx.New(logx.Options{Service: "go-api", Writer: ioDiscard{}})
+		logger, _ = logx.New(logx.Options{Service: "go-api", Writer: ioDiscard{}, ConsoleWriter: os.Stdout})
 	}
 	defer logger.Close()
-	vueLogger, err := logx.New(logx.Options{Service: "vue-client", Path: vueLogPath, MaxSizeMB: maxSizeMB, MaxBackups: cfg.Logging.BackupCount, Compress: cfg.Logging.CompressBackups, ProjectRoot: projectRoot})
+	vueLogger, err := logx.New(logx.Options{Service: "vue-client", Path: vueLogPath, MaxSizeMB: maxSizeMB, MaxBackups: cfg.Logging.BackupCount, Compress: cfg.Logging.CompressBackups, ConsoleWriter: os.Stdout, ProjectRoot: projectRoot})
 	if err != nil {
 		logger.Warn("logging.degraded", "Vue log file is unavailable", map[string]any{"reason": err.Error()})
-		vueLogger, _ = logx.New(logx.Options{Service: "vue-client", Writer: ioDiscard{}})
+		vueLogger, _ = logx.New(logx.Options{Service: "vue-client", Writer: ioDiscard{}, ConsoleWriter: os.Stdout})
 	}
 	defer vueLogger.Close()
 	recovered, err := maintenance.RecoverStaleTemps(guard, time.Duration(cfg.Storage.TmpRetentionHours)*time.Hour, time.Now().UTC())

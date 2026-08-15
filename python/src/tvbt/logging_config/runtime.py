@@ -8,16 +8,36 @@ from tvbt.logging_config.logger import StructuredLogger
 class NullStructuredLogger:
     """No-op logger used when code is called outside the Python service process."""
 
-    def debug(self, event: str, message: str, fields: dict[str, Any] | None = None) -> None:
+    def debug(
+        self,
+        event_or_message: str,
+        message: str | dict[str, Any] | None = None,
+        fields: dict[str, Any] | None = None,
+    ) -> None:
         return
 
-    def info(self, event: str, message: str, fields: dict[str, Any] | None = None) -> None:
+    def info(
+        self,
+        event_or_message: str,
+        message: str | dict[str, Any] | None = None,
+        fields: dict[str, Any] | None = None,
+    ) -> None:
         return
 
-    def warning(self, event: str, message: str, fields: dict[str, Any] | None = None) -> None:
+    def warning(
+        self,
+        event_or_message: str,
+        message: str | dict[str, Any] | None = None,
+        fields: dict[str, Any] | None = None,
+    ) -> None:
         return
 
-    def error(self, event: str, message: str, fields: dict[str, Any] | None = None) -> None:
+    def error(
+        self,
+        event_or_message: str,
+        message: str | dict[str, Any] | None = None,
+        fields: dict[str, Any] | None = None,
+    ) -> None:
         return
 
 
@@ -45,6 +65,7 @@ def get_runtime_logger() -> StructuredLogger | NullStructuredLogger:
     from tvbt.logging_config import get_runtime_logger
 
     get_runtime_logger().info("event.name", "human readable message", {"job_id": job_id})
+    get_runtime_logger().info("plain message without an event name")
     ```
 
     Tests and one-off scripts that do not configure logging receive a no-op logger.

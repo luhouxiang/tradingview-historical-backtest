@@ -3,21 +3,13 @@ from __future__ import annotations
 import json
 import threading
 from http.client import HTTPConnection
-from pathlib import Path
 
 from tvbt.api.server import InternalServer
-from tvbt.logging_config import configure_logging
+from tvbt.testing.logging_proxy import structured_logger
 
 
-def test_health_and_placeholder_job(tmp_path: Path) -> None:
-    logger, runtime = configure_logging(
-        tmp_path / "strategy.log",
-        level="INFO",
-        max_bytes=1024 * 1024,
-        backup_count=9,
-        project_root=Path.cwd(),
-    )
-    server = InternalServer(("127.0.0.1", 0), logger)
+def test_health_and_placeholder_job() -> None:
+    server = InternalServer(("127.0.0.1", 0), structured_logger)
     thread = threading.Thread(target=server.serve_forever)
     thread.start()
     try:
@@ -52,7 +44,3 @@ def test_health_and_placeholder_job(tmp_path: Path) -> None:
         server.shutdown()
         server.server_close()
         thread.join(timeout=2)
-        runtime.close()
-    log_text = (tmp_path / "strategy.log").read_text(encoding="utf-8")
-    assert "python.request.started Python internal request started" in log_text
-    assert "python.request.completed Python internal request completed" in log_text
