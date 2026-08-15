@@ -77,7 +77,7 @@ class FixedTextFormatter(logging.Formatter):
         )
 
 
-class CurrentStdoutHandler(logging.StreamHandler):
+class CurrentStdoutHandler(logging.StreamHandler[Any]):
     def __init__(self) -> None:
         super().__init__(sys.stdout)
 
@@ -182,6 +182,8 @@ def _resolve_log_arguments(
         return "", event_or_message, message
     if message is None:
         return "", event_or_message, fields or {}
+    if not isinstance(message, str):
+        return event_or_message, str(message), fields or {}
     return event_or_message, message, fields or {}
 
 

@@ -10,6 +10,7 @@ from tvbt import CONTRACT_VERSION
 from tvbt.api.server import InternalServer
 from tvbt.config import load
 from tvbt.logging_config import configure_logging, set_runtime_logger
+from tvbt.logging_proxy import logger
 from tvbt.storage.path_guard import PathGuard
 
 
@@ -24,7 +25,7 @@ def main() -> None:
     cfg = load(args.config)
     guard = PathGuard(cfg.data_root)
     log_path = guard.resolve("logs/python/strategy.log")
-    logger, logging_runtime = configure_logging(
+    structured_logger, logging_runtime = configure_logging(
         log_path,
         level=cfg.logging.level,
         max_bytes=cfg.logging.max_file_bytes,
@@ -32,8 +33,8 @@ def main() -> None:
         project_root=Path.cwd(),
         console=True,
     )
-    set_runtime_logger(logger)
-    server = InternalServer((cfg.host, cfg.port), logger, guard)
+    set_runtime_logger(structured_logger)
+    server = InternalServer((cfg.host, cfg.port), structured_logger, guard)
 
     def stop(_signum: int, _frame: object) -> None:
         logger.info("engine.stopped", "Python engine stopping")

@@ -12,7 +12,7 @@ import pyarrow.parquet as pq
 from tvbt.chan.checkpoint import dump_checkpoint
 from tvbt.chan.engine import ChanEngine, ChanParameters, RawBar
 from tvbt.chan.storage import ChanResult, write_chan_cache
-from tvbt.logging_config import get_runtime_logger
+from tvbt.logging_proxy import logger
 from tvbt.storage.path_guard import PathGuard
 
 """缠论计算入口。
@@ -113,7 +113,7 @@ def calculate_chan(payload: dict[str, Any], guard: PathGuard, cancelled: threadi
     """
     started = time.perf_counter()
     context = _log_context(payload)
-    get_runtime_logger().info(
+    logger.info(
         "calculation.started",
         "Chan calculation started",
         {**context, "calculation_mode": payload.get("calculation_mode")},
@@ -139,7 +139,7 @@ def calculate_chan(payload: dict[str, Any], guard: PathGuard, cancelled: threadi
             checkpoints=checkpoints,
         )
         result_ref = write_chan_cache(payload, guard, result)
-        get_runtime_logger().info(
+        logger.info(
             "calculation.completed",
             "Chan calculation completed",
             {
@@ -161,7 +161,7 @@ def calculate_chan(payload: dict[str, Any], guard: PathGuard, cancelled: threadi
         )
         return result_ref
     except InterruptedError:
-        get_runtime_logger().warning(
+        logger.warning(
             "calculation.cancelled",
             "Chan calculation cancelled",
             {
@@ -171,7 +171,7 @@ def calculate_chan(payload: dict[str, Any], guard: PathGuard, cancelled: threadi
         )
         raise
     except Exception as exc:
-        get_runtime_logger().error(
+        logger.error(
             "calculation.failed",
             "Chan calculation failed",
             {
@@ -209,7 +209,7 @@ def run_chan(
     expected = definition()
     for key in ("kind", "algorithm_id", "algorithm_version", "source_hash"):
         if algorithm.get(key) != expected[key]:
-            get_runtime_logger().warning(
+            logger.warning(
                 "algorithm.rejected",
                 "Chan algorithm identity rejected",
                 {**_log_context(payload), "mismatch_field": key},
@@ -218,7 +218,7 @@ def run_chan(
     bars_path = guard.resolve(str(dataset.get("bars_path", "")))
     meta_path = guard.resolve(str(dataset.get("meta_path", "")))
     json.loads(meta_path.read_text(encoding="utf-8"))
-    get_runtime_logger().debug(
+    logger.debug(
         "algorithm.loaded",
         "Chan algorithm payload accepted",
         {
@@ -231,7 +231,7 @@ def run_chan(
         bars_path,
         columns=["bar_index", "timestamp_utc", "high_i64", "low_i64", "close_i64"],
     ).to_pydict()
-    get_runtime_logger().debug(
+    logger.debug(
         "data.batch.transferred",
         "Chan input Parquet loaded",
         {
@@ -268,14 +268,14 @@ def run_chan(
             checkpoints[raw_index] = dump_checkpoint(
                 runtime.algorithm_version, raw_index, runtime.export_state()
             )
-            get_runtime_logger().debug(
+            logger.debug(
                 "checkpoint.saved",
                 "Chan checkpoint saved in memory",
                 {**_log_context(payload), "bar_index": raw_index, "sequence": len(checkpoints)},
             )
     if cancelled.is_set():
         raise InterruptedError("calculation cancelled")
-    get_runtime_logger().debug(
+    logger.debug(
         "algorithm.completed",
         "Chan engine run completed",
         {

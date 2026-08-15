@@ -8,7 +8,7 @@ from typing import Any, Literal
 from tvbt.chan.events import EventEmitter
 from tvbt.chan.reference import ReferenceCenter, reference_centers, reference_segments
 from tvbt.chan.signals import ChanSignal, chan_divergences, chan_trade_points
-from tvbt.logging_config import get_runtime_logger
+from tvbt.logging_proxy import logger
 
 """逐 K 线因果缠论引擎。
 
@@ -738,7 +738,7 @@ class ChanEngine:
         self._sync_objects("center_monitor", center_monitor_values, known_at_bar_index)
         self._sync_objects("divergence", divergence_values, known_at_bar_index)
         self._sync_objects("trade_point", trade_point_values, known_at_bar_index)
-        get_runtime_logger().debug(
+        logger.debug(
             "chan.structures.updated",
             "Chan structures updated after confirmed bi change",
             {

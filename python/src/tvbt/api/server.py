@@ -17,6 +17,7 @@ from tvbt.api.jobs import Job, JobStore
 from tvbt.backtest import run_backtest
 from tvbt.calculation import calculate
 from tvbt.logging_config import StructuredLogger, set_runtime_logger
+from tvbt.logging_proxy import logger
 from tvbt.optimization import run_study
 from tvbt.replay import generate_replay
 from tvbt.storage.path_guard import PathGuard
@@ -41,7 +42,7 @@ class InternalServer(ThreadingHTTPServer):
         self.jobs.run(job_id, lambda value, event: calculate(value, self.guard, event))
         job = self.jobs.get(job_id)
         if job is not None:
-            self.structured_logger.info(
+            logger.info(
                 "calculation.finished",
                 "indicator calculation finished",
                 {"job_id": job_id, "status": job.status, "progress": job.progress},
@@ -51,7 +52,7 @@ class InternalServer(ThreadingHTTPServer):
         self.jobs.run(job_id, lambda value, event: generate_replay(value, self.guard, event))
         job = self.jobs.get(job_id)
         if job is not None:
-            self.structured_logger.info(
+            logger.info(
                 "replay.generation.finished",
                 "causal replay generation finished",
                 {"job_id": job_id, "status": job.status, "progress": job.progress},
@@ -61,7 +62,7 @@ class InternalServer(ThreadingHTTPServer):
         self.jobs.run(job_id, lambda value, event: run_backtest(value, self.guard, event))
         job = self.jobs.get(job_id)
         if job is not None:
-            self.structured_logger.info(
+            logger.info(
                 "backtest.finished",
                 "formal backtest finished",
                 {"job_id": job_id, "status": job.status, "progress": job.progress},
@@ -76,7 +77,7 @@ class InternalServer(ThreadingHTTPServer):
         )
         job = self.jobs.get(job_id)
         if job is not None:
-            self.structured_logger.info(
+            logger.info(
                 "optimization.finished",
                 "parameter optimization study finished",
                 {"job_id": job_id, "status": job.status, "progress": job.progress},
@@ -186,7 +187,7 @@ class InternalHandler(BaseHTTPRequestHandler):
                     args=(job_id,),
                     daemon=True,
                 ).start()
-            self.server.structured_logger.info(
+            logger.info(
                 "python.job.submitted",
                 "job accepted",
                 {"job_id": job_id, "kind": kind, "trace_id": trace_id},
@@ -236,7 +237,7 @@ class InternalHandler(BaseHTTPRequestHandler):
             return None
 
     def _error(self, status: HTTPStatus, code: str, message: str, request_id: str) -> None:
-        self.server.structured_logger.warning(
+        logger.warning(
             "python.request.failed",
             "Python internal request failed",
             {
@@ -254,7 +255,7 @@ class InternalHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
-        self.server.structured_logger.info(
+        logger.info(
             "python.request.completed",
             "Python internal request completed",
             {
@@ -267,7 +268,7 @@ class InternalHandler(BaseHTTPRequestHandler):
     def _log_request_started(
         self, method: str, path: str, request_id: str, trace_id: str
     ) -> None:
-        self.server.structured_logger.info(
+        logger.info(
             "python.request.started",
             "Python internal request started",
             {

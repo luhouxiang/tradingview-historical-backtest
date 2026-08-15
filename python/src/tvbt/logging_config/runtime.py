@@ -13,6 +13,7 @@ class NullStructuredLogger:
         event_or_message: str,
         message: str | dict[str, Any] | None = None,
         fields: dict[str, Any] | None = None,
+        _stacklevel: int = 3,
     ) -> None:
         return
 
@@ -21,6 +22,7 @@ class NullStructuredLogger:
         event_or_message: str,
         message: str | dict[str, Any] | None = None,
         fields: dict[str, Any] | None = None,
+        _stacklevel: int = 3,
     ) -> None:
         return
 
@@ -29,6 +31,7 @@ class NullStructuredLogger:
         event_or_message: str,
         message: str | dict[str, Any] | None = None,
         fields: dict[str, Any] | None = None,
+        _stacklevel: int = 3,
     ) -> None:
         return
 
@@ -37,6 +40,7 @@ class NullStructuredLogger:
         event_or_message: str,
         message: str | dict[str, Any] | None = None,
         fields: dict[str, Any] | None = None,
+        _stacklevel: int = 3,
     ) -> None:
         return
 
@@ -62,10 +66,10 @@ def get_runtime_logger() -> StructuredLogger | NullStructuredLogger:
     Usage from any Python business module:
 
     ```python
-    from tvbt.logging_config import get_runtime_logger
+    from tvbt.logging_proxy import logger
 
-    get_runtime_logger().info("event.name", "human readable message", {"job_id": job_id})
-    get_runtime_logger().info("plain message without an event name")
+    logger.info("event.name", "human readable message", {"job_id": job_id})
+    logger.info("plain message without an event name")
     ```
 
     Tests and one-off scripts that do not configure logging receive a no-op logger.

@@ -73,10 +73,10 @@ def test_source_hash_is_stable_sha256_and_is_published_by_definition() -> None:
     Expected: it is deterministic in one process, has the public `sha256:`
     format, and `definition()` publishes exactly the same value for Go callers.
     """
-    logger.info("checking Chan source hash stability")
     first = _source_hash()
     second = _source_hash()
-
+    logger.info(first)
+    logger.info(second)
     assert first == second
     assert first.startswith("sha256:")
     assert len(first) == len("sha256:") + 64
@@ -108,6 +108,7 @@ def test_definition_documents_how_go_and_vue_should_call_chan() -> None:
         "divergence",
         "trade_point",
     }
+    logger.info(spec["outputs"])
 
 
 def test_run_chan_reads_declared_parquet_and_can_stop_at_a_prefix(tmp_path: Path) -> None:
