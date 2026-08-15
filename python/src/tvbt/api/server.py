@@ -4,6 +4,7 @@ import json
 import re
 import secrets
 import threading
+import time
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -15,7 +16,7 @@ from tvbt.algorithms import definitions
 from tvbt.api.jobs import Job, JobStore
 from tvbt.backtest import run_backtest
 from tvbt.calculation import calculate
-from tvbt.logging_config import StructuredLogger
+from tvbt.logging_config import StructuredLogger, set_runtime_logger
 from tvbt.optimization import run_study
 from tvbt.replay import generate_replay
 from tvbt.storage.path_guard import PathGuard
@@ -33,6 +34,7 @@ class InternalServer(ThreadingHTTPServer):
         super().__init__(address, InternalHandler)
         self.jobs = JobStore()
         self.structured_logger = logger
+        set_runtime_logger(logger)
         self.guard = guard or PathGuard(Path.cwd() / ".tvbt-test-data")
 
     def run_calculation(self, job_id: str) -> None:
@@ -88,6 +90,7 @@ class InternalHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         request_id, trace_id = self._ids()
         path = urlparse(self.path).path
+        self._log_request_started("GET", path, request_id, trace_id)
         if path == "/internal/v1/health":
             self._json(
                 HTTPStatus.OK,
@@ -118,6 +121,7 @@ class InternalHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         request_id, trace_id = self._ids()
         path = urlparse(self.path).path
+        self._log_request_started("POST", path, request_id, trace_id)
         submit = re.fullmatch(r"/internal/v1/job-submissions/([^/]+)", path)
         if submit:
             kind = submit.group(1)
@@ -149,6 +153,9 @@ class InternalHandler(BaseHTTPRequestHandler):
                     request_id,
                 )
                 return
+            payload["request_id"] = request_id
+            payload["trace_id"] = trace_id
+            payload["job_id"] = job_id
             job = Job(job_id, kind, request_id, trace_id, payload=payload)
             if not self.server.jobs.submit(job):
                 self._error(
@@ -229,6 +236,15 @@ class InternalHandler(BaseHTTPRequestHandler):
             return None
 
     def _error(self, status: HTTPStatus, code: str, message: str, request_id: str) -> None:
+        self.server.structured_logger.warning(
+            "python.request.failed",
+            "Python internal request failed",
+            {
+                "request_id": request_id,
+                "status": int(status),
+                "error_code": code,
+            },
+        )
         self._json(status, {"error": {"code": code, "message": message, "request_id": request_id}})
 
     def _json(self, status: HTTPStatus, payload: dict[str, Any]) -> None:
@@ -238,6 +254,30 @@ class InternalHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+        self.server.structured_logger.info(
+            "python.request.completed",
+            "Python internal request completed",
+            {
+                "request_id": payload.get("request_id", "unknown"),
+                "status": int(status),
+                "response_bytes": len(body),
+            },
+        )
+
+    def _log_request_started(
+        self, method: str, path: str, request_id: str, trace_id: str
+    ) -> None:
+        self.server.structured_logger.info(
+            "python.request.started",
+            "Python internal request started",
+            {
+                "request_id": request_id,
+                "trace_id": trace_id,
+                "method": method,
+                "path": path,
+                "started_ms": int(time.time() * 1000),
+            },
+        )
 
     def log_message(self, format: str, *args: object) -> None:
         return

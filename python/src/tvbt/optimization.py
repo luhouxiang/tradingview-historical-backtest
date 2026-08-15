@@ -15,6 +15,7 @@ from typing import Any
 
 from tvbt import CONTRACT_VERSION, ENGINE_VERSION
 from tvbt.backtest import run_backtest
+from tvbt.logging_config.logger import LOG_METADATA_FIELDS, format_fixed_text_entry
 from tvbt.storage.path_guard import PathGuard
 
 SUPPORTED_METRICS = {
@@ -377,7 +378,7 @@ def run_study(
             json.dumps(stability, separators=(",", ":")), encoding="utf-8"
         )
         log_event = {
-            "timestamp": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+            "timestamp": datetime.now().astimezone(),
             "level": "INFO",
             "event": "optimization.study.completed",
             "message": "optimization study completed",
@@ -390,7 +391,7 @@ def run_study(
             "selected_evaluation_index": selected["evaluation_index"],
         }
         (temporary / "log.ndjson").write_text(
-            json.dumps(log_event, separators=(",", ":")) + "\n", encoding="utf-8"
+            _format_study_log_event(log_event) + "\n", encoding="utf-8"
         )
         (temporary / "_SUCCESS").write_bytes(b"")
         os.replace(temporary, output)
@@ -398,6 +399,21 @@ def run_study(
         if temporary.exists():
             shutil.rmtree(temporary)
     return guard.relative(output)
+
+
+def _format_study_log_event(event: dict[str, Any]) -> str:
+    fields = {key: value for key, value in event.items() if key not in LOG_METADATA_FIELDS}
+    timestamp = event["timestamp"]
+    assert isinstance(timestamp, datetime)
+    return format_fixed_text_entry(
+        timestamp=timestamp,
+        level=str(event["level"]),
+        source_file=str(event["source_file"]),
+        source_line=int(event["source_line"]),
+        event=str(event["event"]),
+        message=str(event["message"]),
+        fields=fields,
+    )
 
 
 def _rank_correlation(evaluations: list[dict[str, Any]]) -> float | None:

@@ -6,9 +6,24 @@ from typing import Literal
 
 from tvbt.chan.reference import LineLike, ReferenceCenter
 
+"""线段级缠论信号生成。
+
+本文件消费 `engine.py` 生成的已确认线段和 `reference.py` 生成的标准线段
+中枢，只负责语义信号，不负责订单、成交或收益计算。
+
+信号分两层：
+
+- 背驰：趋势背驰和盘整背驰，使用结构关系加 MACD 同方向柱面积比较。
+- 买卖点：标准一二三类点，以及项目显式定义的“类一/类二/类三”生命周期点。
+"""
+
+# 背驰类别。trend 对应 a+Z1+b+Z2+c，consolidation 对应 a+Z+c。
 DivergenceKind = Literal["trend", "consolidation"]
+# 二类点强弱：三类点同点、未突破一类点、突破但自身盘整背驰确认。
 SignalStrength = Literal["strongest", "normal", "weakest"]
+# standard 是 108 课标准点；class_like 是项目定义的盘整背驰派生点。
 SignalClass = Literal["standard", "class_like"]
+# 图表和对象树可见的信号全集。
 SignalType = Literal[
     "bottom_divergence",
     "top_divergence",
@@ -29,6 +44,20 @@ SignalType = Literal[
 
 @dataclass(frozen=True)
 class ChanSignal:
+    """缠论背驰或买卖点。
+
+    字段说明：
+
+    - `signal_type`：最终展示和策略消费的信号类型。
+    - `divergence_kind`：仅背驰对象有值；买卖点为 None。
+    - `signal_class/strength`：买卖点分层；背驰本身不填。
+    - `segment_index`：信号理论端点所在的线段序号。
+    - `bar_index/time/price_i64`：理论端点锚点，不是确认 K 线。
+    - `reference_object_id`：关联中枢或背驰对象 ID。
+    - `macd_area_reference/current`：背驰力度比较面积，买卖点为 None。
+    - `known_at_bar_index`：信号最早可见位置，通常是后续反向段确认时刻。
+    """
+
     signal_type: SignalType
     divergence_kind: DivergenceKind | None
     signal_class: SignalClass | None
@@ -52,6 +81,7 @@ def _high(line: LineLike) -> int:
 
 
 def _outer_range(center: ReferenceCenter, segments: Sequence[LineLike]) -> tuple[int, int]:
+    """返回中枢参与组件完整外包络 `[DD, GG]`。"""
     components = segments[center.base_index : center.end_index + 1]
     return min(_low(line) for line in components), max(_high(line) for line in components)
 
@@ -59,6 +89,7 @@ def _outer_range(center: ReferenceCenter, segments: Sequence[LineLike]) -> tuple
 def _previous_same_direction(
     segments: Sequence[LineLike], before_index: int, direction: str
 ) -> int | None:
+    """从 `before_index` 前向左找最近同向线段，作为盘整背驰的 a 段。"""
     return next(
         (
             index
@@ -70,6 +101,11 @@ def _previous_same_direction(
 
 
 def _macd_area(line: LineLike, histogram: Mapping[int, float]) -> float:
+    """计算线段同方向 MACD 柱面积。
+
+    向上线段只累计正柱；向下线段只累计负柱绝对值。MACD 只用于结构成立后的
+    力度比较，不能单独生成缠论信号。
+    """
     values = (
         histogram.get(index, 0.0) for index in range(line.start.bar_index, line.end.bar_index + 1)
     )
@@ -89,6 +125,7 @@ def _divergence(
     *,
     require_new_extreme: bool = True,
 ) -> ChanSignal | None:
+    """比较参考段和当前段，若当前段力度收缩则生成背驰。"""
     if reference.direction != current.direction:
         return None
     reference_area = _macd_area(reference, histogram)
@@ -127,11 +164,10 @@ def chan_divergences(
     center_ids: list[str],
     histogram: Mapping[int, float],
 ) -> list[ChanSignal]:
-    """Identify confirmed segment-level trend and consolidation divergence.
+    """识别已确认的线段级趋势背驰和盘整背驰。
 
-    A center's leaving leg is ``exit_index``.  The interleaved leg at
-    ``end_index + 1`` is not the leaving trend leg and must never be used for
-    MACD strength comparison.
+    中枢真正的离开段是 `exit_index`。`end_index + 1` 只是奇偶交错序列中的
+    相邻段，不能拿来做 MACD 力度比较。
     """
     result: list[ChanSignal] = []
     seen: set[tuple[DivergenceKind, int]] = set()
@@ -211,6 +247,7 @@ def chan_divergences(
 def _point_from_divergence(
     divergence_id: str, divergence: ChanSignal, signal_type: SignalType, signal_class: SignalClass
 ) -> ChanSignal:
+    """把背驰端点转换成一类买卖点端点。"""
     return ChanSignal(
         signal_type=signal_type,
         divergence_kind=None,
@@ -230,6 +267,11 @@ def _point_from_divergence(
 def _third_points(
     segments: Sequence[LineLike], centers: list[ReferenceCenter], center_ids: list[str]
 ) -> list[ChanSignal]:
+    """扫描严格三买/三卖。
+
+    三买要求向上离开中枢后的第一次已完成向下回试，其低点严格大于 `ZG`；
+    三卖是镜像规则，回试高点严格小于 `ZD`。触边不算三类点。
+    """
     result: list[ChanSignal] = []
     for center, center_id in zip(centers, center_ids, strict=True):
         if center.status != "left" or center.exit_index is None:
@@ -283,11 +325,10 @@ def chan_trade_points(
     center_ids: list[str],
     divergences: list[tuple[str, ChanSignal]],
 ) -> list[ChanSignal]:
-    """Create standard and project-defined class-like 1/2/3 points.
+    """生成标准和项目定义的类一/二/三买卖点。
 
-    Class-like chains use a consolidation divergence as their origin.  A class
-    third point is the first strict third point after that origin when no later
-    standard first point of the same side supersedes it.
+    类信号链以盘整背驰为起点；若后续严格三类点之前没有同向标准一类点取代
+    这个起点，则额外暴露类三生命周期标记。
     """
     result: list[ChanSignal] = []
     thirds = _third_points(segments, centers, center_ids)

@@ -176,11 +176,11 @@ func TestClientLogsOverrideService(t *testing.T) {
 	if recorder.Code != http.StatusAccepted {
 		t.Fatalf("status = %d, body=%s", recorder.Code, recorder.Body.String())
 	}
-	var event map[string]any
-	if err := json.Unmarshal(output.Bytes(), &event); err != nil {
-		t.Fatal(err)
+	line := strings.TrimSpace(output.String())
+	if !strings.Contains(line, "[INFO][src/main.ts][010] app.started started") {
+		t.Fatalf("vue log line = %q", line)
 	}
-	if event["service"] != "vue-client" {
-		t.Fatalf("service = %v", event["service"])
+	if strings.Contains(line, "spoofed") {
+		t.Fatalf("vue log line leaked client service field: %q", line)
 	}
 }

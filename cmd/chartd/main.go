@@ -46,8 +46,8 @@ func main() {
 		fmt.Fprintf(os.Stderr, "data_root error: %v\n", err)
 		os.Exit(2)
 	}
-	goLogPath, _ := guard.Resolve("logs/go/app.ndjson")
-	vueLogPath, _ := guard.Resolve("logs/vue/client.ndjson")
+	goLogPath, _ := guard.Resolve("logs/go/app.log")
+	vueLogPath, _ := guard.Resolve("logs/vue/client.log")
 	projectRoot, _ := filepath.Abs(".")
 	maxSizeMB := int(cfg.Logging.MaxFileBytes / (1024 * 1024))
 	logger, err := logx.New(logx.Options{Service: "go-api", Path: goLogPath, MaxSizeMB: maxSizeMB, MaxBackups: cfg.Logging.BackupCount, Compress: cfg.Logging.CompressBackups, ProjectRoot: projectRoot})

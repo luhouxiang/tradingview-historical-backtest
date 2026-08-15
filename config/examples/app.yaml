@@ -45,7 +45,7 @@ workspace:
 
 logging:
   level: INFO
-  format: ndjson
+  format: text
   max_file_bytes: 52428800
   backup_count: 9
   compress_backups: true

@@ -105,8 +105,11 @@
 
 ## 7. 日志
 
-- 三端使用结构化 NDJSON。
-- 每条日志必须有 source_file、source_line、source_function。
+- 三端日志统一使用固定文本格式：
+  `[yyyy-MM-dd HH:mm:ss.SSS][LEVEL][filename][line] message`，
+  例如 `[2026-06-02 18:13:29.470][ERROR][src/tvbt/__main__.py][018] abcd`。
+- 若日志内容包含多行，每一行都必须分别输出完整前缀，且同一条日志拆出的多行前缀必须一致。
+- `filename` 记录项目内源码相对路径，例如 `src/tvbt/__main__.py`，不记录绝对路径；`line` 使用三位数字，不足三位左侧补 0，超过三位按实际行号输出。
 - 每个活动日志文件最多 50 MiB，当前文件加备份最多 10 个，即 backup_count 为 9。
 - 日志失败不得中断导入、图表、指标或回测。
 - INFO 不得逐根打印完整 K 线；批量流转只记录范围、数量、校验和和耗时。

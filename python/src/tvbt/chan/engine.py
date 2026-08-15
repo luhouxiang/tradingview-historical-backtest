@@ -8,6 +8,22 @@ from typing import Any, Literal
 from tvbt.chan.events import EventEmitter
 from tvbt.chan.reference import ReferenceCenter, reference_centers, reference_segments
 from tvbt.chan.signals import ChanSignal, chan_divergences, chan_trade_points
+from tvbt.logging_config import get_runtime_logger
+
+"""逐 K 线因果缠论引擎。
+
+算法分层：
+
+1. `RawBar` 保存 Go 指定的标准化 K 线字段。
+2. `_update_inclusion` 处理包含关系，生成独立 K 线 `IncludedBar`。
+3. `_seal_fractal` 在第三根独立 K 线出现后确认中间 K 线的严格分型。
+4. `_consume_fractal` 按参考实现的端点选择规则释放已确认笔。
+5. `_update_structures` 在笔变化时重扫笔中枢、线段、标准线段中枢、背驰和买卖点。
+6. `EventEmitter` 统一把结构变化转换为 `known_at_bar_index` 约束的因果事件。
+
+本文件不读取磁盘、不写缓存、不处理订单成交；这些职责分别在 `algorithm.py`、
+`storage.py` 和策略/回测模块中完成。
+"""
 
 Direction = Literal["up", "down", "unknown"]
 FractalKind = Literal["top", "bottom"]
@@ -722,6 +738,24 @@ class ChanEngine:
         self._sync_objects("center_monitor", center_monitor_values, known_at_bar_index)
         self._sync_objects("divergence", divergence_values, known_at_bar_index)
         self._sync_objects("trade_point", trade_point_values, known_at_bar_index)
+        get_runtime_logger().debug(
+            "chan.structures.updated",
+            "Chan structures updated after confirmed bi change",
+            {
+                "bar_index": known_at_bar_index,
+                "merged_bar_count": len(self.included),
+                "fractal_count": len(self.fractals),
+                "bi_count": len(self.bi),
+                "zhongshu_count": len(centers),
+                "segment_count": len(segments),
+                "segment_zhongshu_count": len(segment_center_values),
+                "movement_state_count": len(movement_state_values),
+                "center_monitor_count": len(center_monitor_values),
+                "divergence_count": len(divergence_values),
+                "trade_point_count": len(trade_point_values),
+                "event_count": len(self.emitter.events),
+            },
+        )
 
     def _sync_objects(
         self,

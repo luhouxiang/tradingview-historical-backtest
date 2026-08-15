@@ -132,8 +132,8 @@ func (c Config) Validate() error {
 			return fmt.Errorf("invalid %s: %w", name, err)
 		}
 	}
-	if c.Logging.Format != "ndjson" || c.Logging.MaxFileBytes <= 0 || c.Logging.BackupCount != 9 {
-		return errors.New("logging must use ndjson, a positive max_file_bytes, and backup_count 9")
+	if c.Logging.Format != "text" || c.Logging.MaxFileBytes <= 0 || c.Logging.BackupCount != 9 {
+		return errors.New("logging must use text, a positive max_file_bytes, and backup_count 9")
 	}
 	if c.Logging.VueBatchMaxEvents < 1 || c.Logging.VueBatchMaxEvents > 100 {
 		return errors.New("logging.vue_batch_max_events must be between 1 and 100")

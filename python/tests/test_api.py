@@ -11,9 +11,9 @@ from tvbt.logging_config import configure_logging
 
 def test_health_and_placeholder_job(tmp_path: Path) -> None:
     logger, runtime = configure_logging(
-        tmp_path / "test.ndjson",
+        tmp_path / "strategy.log",
         level="INFO",
-        max_bytes=1024,
+        max_bytes=1024 * 1024,
         backup_count=9,
         project_root=Path.cwd(),
     )
@@ -53,3 +53,6 @@ def test_health_and_placeholder_job(tmp_path: Path) -> None:
         server.server_close()
         thread.join(timeout=2)
         runtime.close()
+    log_text = (tmp_path / "strategy.log").read_text(encoding="utf-8")
+    assert "python.request.started Python internal request started" in log_text
+    assert "python.request.completed Python internal request completed" in log_text

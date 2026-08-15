@@ -9,41 +9,52 @@ import queue
 import shutil
 import time
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from time import struct_time
 from typing import Any
 
-CONTEXT_FIELDS = {
-    "request_id",
-    "trace_id",
-    "job_id",
-    "run_id",
-    "replay_id",
-    "dataset_id",
-    "data_revision",
-    "algorithm_id",
-    "algorithm_version",
-    "strategy_id",
-    "strategy_version",
-    "cache_key",
-    "bar_index",
-    "bar_time",
-    "sequence",
-    "stage_signal_id",
-    "signal_id",
-    "parent_signal_id",
-    "duration_ms",
+LOG_METADATA_FIELDS = {
+    "timestamp",
+    "level",
+    "event",
+    "message",
+    "source_file",
+    "source_line",
+    "source_function",
 }
 
 
-class NDJSONFormatter(logging.Formatter):
+def format_fixed_text_entry(
+    *,
+    timestamp: datetime,
+    level: str,
+    source_file: str,
+    source_line: int,
+    event: str,
+    message: str,
+    fields: dict[str, Any] | None = None,
+) -> str:
+    timestamp_text = (
+        timestamp.astimezone().strftime("%Y-%m-%d %H:%M:%S")
+        + f".{timestamp.microsecond // 1000:03d}"
+    )
+    prefix = f"[{timestamp_text}][{level}][{source_file}][{source_line:03d}] "
+    parts = [value for value in (event, message) if value]
+    if fields:
+        parts.append(json.dumps(fields, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+    content = " ".join(parts)
+    normalized = content.replace("\r\n", "\n").replace("\r", "\n")
+    return "\n".join(prefix + line for line in normalized.split("\n"))
+
+
+class FixedTextFormatter(logging.Formatter):
     @staticmethod
     def converter(timestamp: float | None) -> struct_time:
-        return time.gmtime() if timestamp is None else time.gmtime(timestamp)
+        return time.localtime() if timestamp is None else time.localtime(timestamp)
 
-    def __init__(self, service: str, project_root: Path) -> None:
+    def __init__(self, project_root: Path) -> None:
         super().__init__()
-        self.service = service
         self.project_root = project_root.resolve()
 
     def format(self, record: logging.LogRecord) -> str:
@@ -52,28 +63,17 @@ class NDJSONFormatter(logging.Formatter):
             source_file = path.relative_to(self.project_root).as_posix()
         except ValueError:
             source_file = path.name
-        payload: dict[str, Any] = {
-            "timestamp": self.formatTime(record, "%Y-%m-%dT%H:%M:%S")
-            + f".{int(record.msecs):03d}Z",
-            "level": record.levelname,
-            "service": self.service,
-            "event": getattr(record, "event", "logging.message"),
-            "message": record.getMessage(),
-            "source_file": source_file,
-            "source_line": record.lineno,
-            "source_function": record.funcName,
-        }
+        event = getattr(record, "event", "logging.message")
         fields = getattr(record, "fields", None)
-        if isinstance(fields, dict) and fields:
-            remaining = {}
-            for key, value in fields.items():
-                if key in CONTEXT_FIELDS:
-                    payload[key] = value
-                else:
-                    remaining[key] = value
-            if remaining:
-                payload["fields"] = remaining
-        return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+        return format_fixed_text_entry(
+            timestamp=datetime.fromtimestamp(record.created).astimezone(),
+            level=record.levelname,
+            source_file=source_file,
+            source_line=record.lineno,
+            event=event if isinstance(event, str) else "logging.message",
+            message=record.getMessage(),
+            fields=fields if isinstance(fields, dict) else None,
+        )
 
 
 def _gzip_rotator(source: str, destination: str) -> None:
@@ -135,7 +135,7 @@ def configure_logging(
     except OSError:
         handler = logging.NullHandler()
         degraded = True
-    handler.setFormatter(NDJSONFormatter("python-engine", project_root))
+    handler.setFormatter(FixedTextFormatter(project_root))
     listener = logging.handlers.QueueListener(records, handler, respect_handler_level=True)
     listener.start()
     return StructuredLogger(logger), LoggingRuntime(listener, degraded)

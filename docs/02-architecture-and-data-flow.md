@@ -181,7 +181,7 @@ Vue logger
   -> 每 1 秒或累计 100 条
   -> POST /api/v1/client-logs
   -> Go 校验和补充 received_at
-  -> logs/vue/client.ndjson
+  -> logs/vue/client.log
 ~~~
 
 页面关闭时使用 sendBeacon 尝试发送剩余日志。失败不得阻塞页面卸载或图表交互。

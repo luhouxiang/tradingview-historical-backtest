@@ -1,6 +1,10 @@
 {
   "python.defaultInterpreterPath": "D:\\ProgramData\\anaconda3\\envs\\pydev3.14\\python.exe",
   "python.analysis.extraPaths": ["${workspaceFolder}/python/src"],
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.cwd": "${workspaceFolder}/python",
+  "python.testing.pytestArgs": ["tests"],
   "go.toolsEnvVars": {
     "GOTOOLCHAIN": "go1.25.7"
   },

@@ -707,10 +707,10 @@ try {
 } catch {
     $stderr = if (Test-Path -LiteralPath $chartdStderr) { Get-Content -Raw $chartdStderr } else { '' }
     $stdout = if (Test-Path -LiteralPath $chartdStdout) { Get-Content -Raw $chartdStdout } else { '' }
-    $appLog = Join-Path $dataRoot 'logs/go/app.ndjson'
+    $appLog = Join-Path $dataRoot 'logs/go/app.log'
     $runtimeLog = if (Test-Path -LiteralPath $appLog) { Get-Content -Raw $appLog } else { '' }
     $pythonError = if ($needsPython -and (Test-Path -LiteralPath $pythonStderr)) { Get-Content -Raw $pythonStderr } else { '' }
-    $pythonLogPath = Join-Path $dataRoot 'logs/python/strategy.ndjson'
+    $pythonLogPath = Join-Path $dataRoot 'logs/python/strategy.log'
     $pythonRuntimeLog = if ($needsPython -and (Test-Path -LiteralPath $pythonLogPath)) { Get-Content -Raw $pythonLogPath } else { '' }
     Write-Host "chartd stdout: $stdout"
     Write-Host "chartd stderr: $stderr"

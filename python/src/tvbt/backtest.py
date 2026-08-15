@@ -18,6 +18,7 @@ import pyarrow.parquet as pq
 from tvbt import CONTRACT_VERSION, ENGINE_VERSION
 from tvbt.chan.storage import EVENT_SCHEMA
 from tvbt.indicators import resolve
+from tvbt.logging_config.logger import LOG_METADATA_FIELDS, format_fixed_text_entry
 from tvbt.storage.path_guard import PathGuard
 from tvbt.strategy import run_strategy
 
@@ -452,7 +453,7 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
         )
         log_events = _formal_log_events(payload, strategy, orders, fills, fact_hashes)
         (temporary / "log.ndjson").write_text(
-            "".join(json.dumps(event, separators=(",", ":")) + "\n" for event in log_events),
+            "".join(_format_formal_log_event(event) + "\n" for event in log_events),
             encoding="utf-8",
         )
         (temporary / "_SUCCESS").write_bytes(b"")
@@ -470,7 +471,7 @@ def _formal_log_events(
     fills: list[dict[str, Any]],
     fact_hashes: dict[str, str],
 ) -> list[dict[str, Any]]:
-    timestamp = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+    timestamp = datetime.now().astimezone()
     common = {
         "timestamp": timestamp,
         "level": "INFO",
@@ -554,6 +555,21 @@ def _formal_log_events(
         }
     )
     return result
+
+
+def _format_formal_log_event(event: dict[str, Any]) -> str:
+    fields = {key: value for key, value in event.items() if key not in LOG_METADATA_FIELDS}
+    timestamp = event["timestamp"]
+    assert isinstance(timestamp, datetime)
+    return format_fixed_text_entry(
+        timestamp=timestamp,
+        level=str(event["level"]),
+        source_file=str(event["source_file"]),
+        source_line=int(event["source_line"]),
+        event=str(event["event"]),
+        message=str(event["message"]),
+        fields=fields,
+    )
 
 
 def _summary(

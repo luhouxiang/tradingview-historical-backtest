@@ -109,7 +109,7 @@ history、workspaces 或未知名称，也不跟随符号链接。移动结果�
 
 ## 7. 日志与诊断
 
-三端 NDJSON 位于 `data_root/logs`，活动文件最大 50 MiB，最多 9 个压缩备份。正式回测的
+三端固定文本日志位于 `data_root/logs`，活动文件最大 50 MiB，最多 9 个压缩备份。正式回测的
 `runs/{run_id}/log.ndjson` 另行保留状态变化、阶段信号、交易信号、订单、成交及其关联 ID，
 不受滚动日志替代。
 

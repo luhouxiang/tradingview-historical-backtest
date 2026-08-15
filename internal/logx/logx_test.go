@@ -2,9 +2,9 @@ package logx_test
 
 import (
 	"bytes"
-	"encoding/json"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -30,46 +30,80 @@ func BenchmarkStructuredLogDiscard(b *testing.B) {
 
 func TestSourcePointsAtBusinessCaller(t *testing.T) {
 	var output bytes.Buffer
-	logger, err := logx.New(logx.Options{Service: "test", Writer: &output})
+	root, _ := filepath.Abs("../..")
+	logger, err := logx.New(logx.Options{Service: "test", Writer: &output, ProjectRoot: root})
 	if err != nil {
 		t.Fatal(err)
 	}
 	logger.Info("test.event", "hello", nil)
-	var event map[string]any
-	if err := json.Unmarshal(output.Bytes(), &event); err != nil {
-		t.Fatal(err)
-	}
-	file, _ := event["source_file"].(string)
-	if !strings.HasSuffix(file, "logx_test.go") {
-		t.Fatalf("source_file = %q, want business test file", file)
-	}
-	if event["source_line"].(float64) <= 0 {
-		t.Fatal("source_line must be positive")
+	line := strings.TrimSpace(output.String())
+	pattern := regexp.MustCompile(`^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}\]\[INFO\]\[internal/logx/logx_test.go\]\[\d{3,}\] test\.event hello$`)
+	if !pattern.MatchString(line) {
+		t.Fatalf("log line = %q", line)
 	}
 }
 
-func TestContextFieldsAreTopLevel(t *testing.T) {
+func TestMultilineMessagesRepeatTheSamePrefix(t *testing.T) {
+	var output bytes.Buffer
+	logger, err := logx.New(logx.Options{Service: "test", Writer: &output})
+	if err != nil {
+		t.Fatal(err)
+	}
+	logger.Error("test.multiline", "first\nsecond", nil)
+	lines := strings.Split(strings.TrimSpace(output.String()), "\n")
+	if len(lines) != 2 {
+		t.Fatalf("line count = %d", len(lines))
+	}
+	prefix := regexp.MustCompile(`^(\[[^\]]+\]\[ERROR\]\[logx_test.go\]\[\d{3,}\] )`)
+	first := prefix.FindString(lines[0])
+	second := prefix.FindString(lines[1])
+	if first == "" || first != second {
+		t.Fatalf("prefixes differ: %q %q", lines[0], lines[1])
+	}
+	if !strings.HasSuffix(lines[0], "test.multiline first") || !strings.HasSuffix(lines[1], "second") {
+		t.Fatalf("unexpected multiline output: %q", lines)
+	}
+}
+
+func TestFieldsAreAppendedToTextMessage(t *testing.T) {
 	var output bytes.Buffer
 	logger, err := logx.New(logx.Options{Service: "test", Writer: &output})
 	if err != nil {
 		t.Fatal(err)
 	}
 	logger.Info("test.event", "hello", map[string]any{"trace_id": "trace-1", "custom": "value"})
-	var event map[string]any
-	if err := json.Unmarshal(output.Bytes(), &event); err != nil {
+	line := strings.TrimSpace(output.String())
+	if !strings.Contains(line, `test.event hello`) ||
+		!strings.Contains(line, `"trace_id":"trace-1"`) ||
+		!strings.Contains(line, `"custom":"value"`) {
+		t.Fatalf("log line = %q", line)
+	}
+}
+
+func TestExternalClientLogUsesClientSource(t *testing.T) {
+	var output bytes.Buffer
+	logger, err := logx.New(logx.Options{Service: "vue-client", Writer: &output})
+	if err != nil {
 		t.Fatal(err)
 	}
-	if event["trace_id"] != "trace-1" {
-		t.Fatalf("trace_id = %v", event["trace_id"])
-	}
-	if event["fields"].(map[string]any)["custom"] != "value" {
-		t.Fatalf("fields = %v", event["fields"])
+	logger.External(map[string]any{
+		"level":           "INFO",
+		"event":           "app.started",
+		"message":         "ready",
+		"source_file":     "src/main.ts",
+		"source_line":     float64(18),
+		"source_function": "bootstrap",
+		"service":         "spoofed",
+	})
+	line := strings.TrimSpace(output.String())
+	if !strings.Contains(line, "[INFO][src/main.ts][018] app.started ready") {
+		t.Fatalf("log line = %q", line)
 	}
 }
 
 func TestRotationCompressesAndCapsBackups(t *testing.T) {
 	dir := t.TempDir()
-	path := filepath.Join(dir, "app.ndjson")
+	path := filepath.Join(dir, "app.log")
 	logger, err := logx.New(logx.Options{Service: "test", Path: path, MaxSizeMB: 1, MaxBackups: 9, Compress: true})
 	if err != nil {
 		t.Fatal(err)

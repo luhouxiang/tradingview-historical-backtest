@@ -299,9 +299,9 @@ workspaces/default/
 ## 11. 日志文件
 
 ~~~text
-logs/go/app.ndjson
-logs/python/strategy.ndjson
-logs/vue/client.ndjson
+logs/go/app.log
+logs/python/strategy.log
+logs/vue/client.log
 ~~~
 
 活动文件达到 50 MiB 后滚动；保留 9 个备份，总数不超过 10。旧文件压缩为 gzip。每个进程只滚动自己的文件，Vue 文件由 Go 统一写。

@@ -650,11 +650,9 @@ def test_replay_and_backtest_share_signals_and_next_open_fills(tmp_path: Path) -
     fills = pq.read_table(tmp_path / run_ref / "fills.parquet").to_pylist()
     assert [value["bar_index"] for value in fills] == [6, 8]
     assert pq.read_table(tmp_path / run_ref / "trades.parquet").num_rows == 1
-    log_events = [
-        json.loads(line)
-        for line in (tmp_path / run_ref / "log.ndjson").read_text(encoding="utf-8").splitlines()
-    ]
-    event_names = {event["event"] for event in log_events}
+    log_lines = (tmp_path / run_ref / "log.ndjson").read_text(encoding="utf-8").splitlines()
+    assert all(line.startswith("[") and "][INFO][tvbt/backtest.py][" in line for line in log_lines)
+    event_names = {line.split("] ", 1)[1].split(" ", 1)[0] for line in log_lines}
     assert {
         "strategy.state.changed",
         "strategy.stage.signal",
@@ -663,15 +661,10 @@ def test_replay_and_backtest_share_signals_and_next_open_fills(tmp_path: Path) -
         "backtest.fill.recorded",
         "backtest.completed",
     } <= event_names
-    signal_ids = {event["signal_id"] for event in log_events if "signal_id" in event}
-    assert {fill["order_id"] for fill in fills} <= {
-        event["order_id"] for event in log_events if event["event"] == "backtest.order.recorded"
-    }
-    assert {value["signal_id"] for value in run_signals} <= signal_ids
-    assert all(
-        {"source_file", "source_line", "source_function", "trace_id"} <= event.keys()
-        for event in log_events
-    )
+    log_text = "\n".join(log_lines)
+    assert all(f'"order_id":"{fill["order_id"]}"' in log_text for fill in fills)
+    assert all(f'"signal_id":"{value["signal_id"]}"' in log_text for value in run_signals)
+    assert '"trace_id":"trace-1"' in log_text
     assert (tmp_path / run_ref / "_SUCCESS").is_file()
 
 

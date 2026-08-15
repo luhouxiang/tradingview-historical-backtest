@@ -10,22 +10,22 @@
 
 ~~~text
 logs/
-├── go/app.ndjson
-├── python/strategy.ndjson
-└── vue/client.ndjson
+├── go/app.log
+├── python/strategy.log
+└── vue/client.log
 ~~~
 
 每个日志流：
 
-- UTF-8 NDJSON，一行一个完整 JSON 对象。
+- UTF-8 固定文本格式：`[yyyy-MM-dd HH:mm:ss.SSS][LEVEL][filename][line] message`。
 - 活动文件最大 50 MiB，即 50 × 1024 × 1024 字节。
 - backup_count = 9，活动文件加备份总数最多 10。
 - 旧备份 gzip 压缩。
 - 一个文件只允许一个进程负责轮转。
-- 追加写；单条日志不得跨行。
+- 追加写；若日志内容包含多行，每一行都必须重复完整前缀。
 - 文件写失败不得让主业务失败。
 
-Go 写 go/app.ndjson；Python 写 python/strategy.ndjson；Vue 将日志上传给 Go，由 Go 写 vue/client.ndjson。
+Go 写 go/app.log；Python 写 python/strategy.log；Vue 将日志上传给 Go，由 Go 写 vue/client.log。
 
 ## 3. 统一字段
 

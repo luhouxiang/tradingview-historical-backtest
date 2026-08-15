@@ -2,10 +2,12 @@ package logx
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -66,37 +68,13 @@ func (l *Logger) Error(event, message string, fields map[string]any) {
 }
 
 func (l *Logger) log(level, event, message string, fields map[string]any, skip int) {
-	pc, file, line, ok := runtime.Caller(skip)
-	function := "unknown"
+	_, file, line, ok := runtime.Caller(skip)
 	if ok {
-		if fn := runtime.FuncForPC(pc); fn != nil {
-			function = fn.Name()
-		}
+		file = l.trimPath(file)
 	} else {
 		file, line = "unknown", 1
 	}
-	record := map[string]any{
-		"timestamp":       time.Now().Format(time.RFC3339Nano),
-		"level":           level,
-		"service":         l.service,
-		"event":           event,
-		"message":         message,
-		"source_file":     l.trimPath(file),
-		"source_line":     line,
-		"source_function": function,
-	}
-	extra := make(map[string]any)
-	for key, value := range fields {
-		if isContextField(key) {
-			record[key] = value
-		} else {
-			extra[key] = value
-		}
-	}
-	if len(extra) > 0 {
-		record["fields"] = extra
-	}
-	l.write(record)
+	l.writeText(time.Now(), level, file, line, logMessage(event, message, fields))
 }
 
 func isContextField(key string) bool {
@@ -111,24 +89,33 @@ func isContextField(key string) bool {
 }
 
 func (l *Logger) External(record map[string]any) {
-	clone := make(map[string]any, len(record)+2)
-	for key, value := range record {
-		clone[key] = value
+	level, _ := record["level"].(string)
+	if level == "" {
+		level = "INFO"
 	}
-	clone["service"] = l.service
-	clone["received_at"] = time.Now().Format(time.RFC3339Nano)
-	l.write(clone)
+	file, _ := record["source_file"].(string)
+	if file == "" {
+		file = "unknown"
+	}
+	line := numberField(record["source_line"], 1)
+	event, _ := record["event"].(string)
+	message, _ := record["message"].(string)
+	fields := externalFields(record)
+	l.writeText(time.Now(), level, file, line, logMessage(event, message, fields))
 }
 
-func (l *Logger) write(record map[string]any) {
-	data, err := json.Marshal(record)
-	if err != nil {
-		return
+func (l *Logger) writeText(timestamp time.Time, level, file string, line int, message string) {
+	prefix := fmt.Sprintf("[%s][%s][%s][%03d] ", timestamp.Format("2006-01-02 15:04:05.000"), level, file, line)
+	lines := strings.Split(strings.ReplaceAll(message, "\r\n", "\n"), "\n")
+	var builder strings.Builder
+	for _, value := range lines {
+		builder.WriteString(prefix)
+		builder.WriteString(value)
+		builder.WriteByte('\n')
 	}
-	data = append(data, '\n')
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	_, _ = l.writer.Write(data)
+	_, _ = l.writer.Write([]byte(builder.String()))
 }
 
 func (l *Logger) trimPath(path string) string {
@@ -146,4 +133,59 @@ func (l *Logger) Close() error {
 		return l.closer.Close()
 	}
 	return nil
+}
+
+func logMessage(event, message string, fields map[string]any) string {
+	parts := make([]string, 0, 3)
+	if event != "" {
+		parts = append(parts, event)
+	}
+	if message != "" {
+		parts = append(parts, message)
+	}
+	if len(fields) > 0 {
+		if data, err := json.Marshal(orderedMap(fields)); err == nil {
+			parts = append(parts, string(data))
+		}
+	}
+	return strings.Join(parts, " ")
+}
+
+func orderedMap(fields map[string]any) map[string]any {
+	ordered := make(map[string]any, len(fields))
+	keys := make([]string, 0, len(fields))
+	for key := range fields {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		ordered[key] = fields[key]
+	}
+	return ordered
+}
+
+func numberField(value any, fallback int) int {
+	switch typed := value.(type) {
+	case int:
+		return typed
+	case int64:
+		return int(typed)
+	case float64:
+		return int(typed)
+	default:
+		return fallback
+	}
+}
+
+func externalFields(record map[string]any) map[string]any {
+	fields := make(map[string]any)
+	for key, value := range record {
+		switch key {
+		case "timestamp", "level", "service", "event", "message", "source_file", "source_line", "source_function":
+			continue
+		default:
+			fields[key] = value
+		}
+	}
+	return fields
 }
