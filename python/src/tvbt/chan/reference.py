@@ -300,7 +300,24 @@ def _append_segment(
     """复制线段到结果集，并记录本次释放的可知时刻。"""
     value = copy.deepcopy(segment)
     value.known_at_bar_index = known_at
+    _anchor_segment(value, lines)
     target.append(value)
+
+
+def _anchor_segment(value: ReferenceSegment, lines: Sequence[LineLike]) -> None:
+    """根据组成笔补齐线段端点，已确认段只需执行一次。"""
+    start_line = lines[value.start_index]
+    end_line = lines[value.end_index]
+    value.start_bar_index = start_line.start.bar_index
+    value.end_bar_index = end_line.start.bar_index
+    value.start_time = start_line.start.time
+    value.end_time = end_line.start.time
+    if value.up:
+        value.start_price_i64 = _low(start_line)
+        value.end_price_i64 = _high(end_line)
+    else:
+        value.start_price_i64 = _high(start_line)
+        value.end_price_i64 = _low(end_line)
 
 
 def _update_segment(
@@ -367,6 +384,128 @@ def _update_segment(
         temporary.up = not segment.up
 
 
+@dataclass
+class _SegmentScanState:
+    """保存处理完某个笔前缀后的线段扫描状态，供尾部修订时回滚。"""
+
+    minimum: int
+    maximum: int
+    status: int
+    segment: ReferenceSegment
+    temporary: ReferenceSegment
+    result_count: int
+
+
+class ReferenceSegmentAccumulator:
+    """增量执行线段扫描，并按未变化笔前缀恢复已确定状态。"""
+
+    def __init__(self) -> None:
+        self._minimum = -1
+        self._maximum = -1
+        self._segment = ReferenceSegment()
+        self._temporary = ReferenceSegment()
+        self._status = 0
+        self._result: list[ReferenceSegment] = []
+        self._processed_count = 0
+        self._raw_bar_count = 0
+        self._bars: dict[int, BarLike] = {}
+        self._states = [self._state()]
+
+    def _state(self) -> _SegmentScanState:
+        """复制当前小状态，不复制已经确认且不可变的线段结果前缀。"""
+        return _SegmentScanState(
+            minimum=self._minimum,
+            maximum=self._maximum,
+            status=self._status,
+            segment=copy.deepcopy(self._segment),
+            temporary=copy.deepcopy(self._temporary),
+            result_count=len(self._result),
+        )
+
+    def _restore(self, preserved_line_count: int) -> None:
+        """恢复共同笔前缀结束处的状态，并丢弃其后的候选线段。"""
+        if not 0 <= preserved_line_count <= self._processed_count:
+            raise ValueError("preserved line count is outside processed segment state")
+        state = self._states[preserved_line_count]
+        self._minimum = state.minimum
+        self._maximum = state.maximum
+        self._status = state.status
+        self._segment = copy.deepcopy(state.segment)
+        self._temporary = copy.deepcopy(state.temporary)
+        del self._result[state.result_count :]
+        del self._states[preserved_line_count + 1 :]
+        self._processed_count = preserved_line_count
+
+    def update(
+        self,
+        lines: Sequence[LineLike],
+        raw_bars: Sequence[BarLike],
+        preserved_line_count: int,
+    ) -> list[ReferenceSegment]:
+        """只重放共同前缀后的笔，并返回与全量扫描完全相同的线段快照。"""
+        for bar in raw_bars[self._raw_bar_count :]:
+            self._bars[bar.bar_index] = bar
+        self._raw_bar_count = len(raw_bars)
+        self._restore(min(preserved_line_count, len(lines)))
+        for current in range(self._processed_count, len(lines)):
+            if current >= 3:
+                self._consume(current, lines)
+            self._processed_count += 1
+            self._states.append(self._state())
+        return self._materialize(lines)
+
+    def _consume(self, current: int, lines: Sequence[LineLike]) -> None:
+        """使用一条新增笔推进参考线段状态机。"""
+        if self._status == 0:
+            if not _is_overlap(current, lines, self._bars):
+                self._minimum = self._maximum = -1
+                return
+            if self._minimum == -1:
+                self._minimum = self._maximum = current - 3
+                for cursor in range(current - 2, current):
+                    candidate = self._bars[lines[cursor].start.bar_index]
+                    maximum = self._bars[lines[self._maximum].start.bar_index]
+                    minimum = self._bars[lines[self._minimum].start.bar_index]
+                    if candidate.high_i64 > maximum.high_i64:
+                        self._maximum = cursor
+                    if candidate.low_i64 < minimum.low_i64:
+                        self._minimum = cursor
+            if not _find_first_segment(
+                current,
+                lines,
+                self._bars,
+                self._maximum,
+                self._minimum,
+                self._segment,
+            ):
+                return
+            self._status = 1
+            self._minimum = self._maximum = 1
+            return
+        _update_segment(
+            current,
+            self._segment,
+            self._temporary,
+            lines,
+            self._result,
+            self._bars,
+        )
+
+    def _materialize(self, lines: Sequence[LineLike]) -> list[ReferenceSegment]:
+        """复制确认前缀和当前候选段，补齐端点锚点后生成只读快照。"""
+        if len(lines) < 4:
+            return []
+        result = list(self._result)
+        final_known_at = lines[-1].known_at_bar_index
+        if self._segment.start_index != self._segment.end_index:
+            _append_segment(result, self._segment, lines, final_known_at)
+        if self._temporary.start_index != self._temporary.end_index:
+            _append_segment(result, self._temporary, lines, final_known_at)
+        if result:
+            result.pop(0)
+        return result
+
+
 def reference_segments(
     lines: Sequence[LineLike], raw_bars: Sequence[BarLike]
 ) -> list[ReferenceSegment]:
@@ -375,60 +514,14 @@ def reference_segments(
     输入必须是方向严格交替、首尾相接的笔序列。返回结果包含已确认段和末尾
     当前段/临时段；调用方再决定哪些段可参与标准线段中枢。
     """
-    if len(lines) < 4:
-        return []
-    bars = {bar.bar_index: bar for bar in raw_bars}
-    result: list[ReferenceSegment] = []
-    minimum = -1
-    maximum = -1
-    segment = ReferenceSegment()
-    temporary = ReferenceSegment()
-    status = 0
-    for current in range(3, len(lines)):
-        if status == 0:
-            if not _is_overlap(current, lines, bars):
-                minimum = maximum = -1
-                continue
-            if minimum == -1:
-                minimum = maximum = current - 3
-                for cursor in range(current - 2, current):
-                    candidate = bars[lines[cursor].start.bar_index]
-                    if candidate.high_i64 > bars[lines[maximum].start.bar_index].high_i64:
-                        maximum = cursor
-                    if candidate.low_i64 < bars[lines[minimum].start.bar_index].low_i64:
-                        minimum = cursor
-            if not _find_first_segment(current, lines, bars, maximum, minimum, segment):
-                continue
-            status = 1
-            minimum = maximum = 1
-            continue
-        _update_segment(current, segment, temporary, lines, result, bars)
-
-    final_known_at = lines[-1].known_at_bar_index
-    if segment.start_index != segment.end_index:
-        _append_segment(result, segment, lines, final_known_at)
-    if temporary.start_index != temporary.end_index:
-        _append_segment(result, temporary, lines, final_known_at)
-
-    for value in result:
-        start_line = lines[value.start_index]
-        end_line = lines[value.end_index]
-        value.start_bar_index = start_line.start.bar_index
-        value.end_bar_index = end_line.start.bar_index
-        value.start_time = start_line.start.time
-        value.end_time = end_line.start.time
-        if value.up:
-            value.start_price_i64 = _low(start_line)
-            value.end_price_i64 = _high(end_line)
-        else:
-            value.start_price_i64 = _high(start_line)
-            value.end_price_i64 = _low(end_line)
-    if result:
-        result.pop(0)
-    return result
+    return ReferenceSegmentAccumulator().update(lines, raw_bars, 0)
 
 
-def reference_centers(lines: Sequence[LineLike]) -> list[ReferenceCenter]:
+def reference_centers(
+    lines: Sequence[LineLike],
+    *,
+    start_base: int = 1,
+) -> list[ReferenceCenter]:
     """按参考 `compute_bi_pivots/process_down_up` 扫描同奇偶组件中枢。
 
     从 `base=1` 开始，使用 `base` 与 `base+2` 的价格交集冻结 `ZD/ZG`，
@@ -438,7 +531,7 @@ def reference_centers(lines: Sequence[LineLike]) -> list[ReferenceCenter]:
     result: list[ReferenceCenter] = []
     if len(lines) < 5:
         return result
-    base = 1
+    base = start_base
     while base < len(lines) - 2:
         seed_end = base + 2
         if max(_low(lines[base]), _low(lines[seed_end])) > min(
@@ -483,3 +576,20 @@ def reference_centers(lines: Sequence[LineLike]) -> list[ReferenceCenter]:
             new_base = cursor
         base = new_base - 1 if base == new_base - 2 else new_base - 2
     return result
+
+
+def update_reference_centers(
+    lines: Sequence[LineLike],
+    previous: list[ReferenceCenter],
+    changed_component_index: int,
+) -> list[ReferenceCenter]:
+    """保留离开位置早于变化点的中枢，只从首个不确定中枢基点继续扫描。"""
+    stable: list[ReferenceCenter] = []
+    restart_base = 1
+    for center in previous:
+        if center.exit_index is None or center.exit_index >= changed_component_index:
+            break
+        stable.append(center)
+        new_base = center.exit_index
+        restart_base = new_base - 1 if center.base_index == new_base - 2 else new_base - 2
+    return [*stable, *reference_centers(lines, start_base=max(restart_base, 1))]

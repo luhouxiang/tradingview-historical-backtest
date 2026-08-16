@@ -53,6 +53,8 @@ Vue 只投影和绘制 Python 输出的时间、价格锚点，Go 只读取、�
 
 - 结构只在当前输入前缀已知时发布，不把全历史终态倒灌到早期回放游标。
 - 新发现对象的 `known_at_bar_index` 不早于发现它的当前笔；修改和删除以递增对象修订事件表达。
+- 上层结构按首次变化笔位置更新。已确认段和已离开中枢属于稳定前缀；当前段变化只更新段本身，只有已确认段变化才重算段中枢、走势状态、背驰和买卖点。
+- 增量实现必须与每次从第 0 笔强制全量重扫产生完全相同的事件顺序、对象修订号、可知时间和终态对象。
 - 缓存分别写入 `fractals.parquet`、`bi.parquet`、`segments.parquet`、`zhongshu.parquet`、`segment_zhongshu.parquet`、`divergences.parquet`、`trade_points.parquet` 和 `events.parquet`。
 - 主图默认显示蓝色笔、黄色段，以及带半透明填充与阴影的浅蓝色笔中枢；分型默认关闭。标准线段中枢、背驰和买卖点见 `docs/14-chan-108-segment-center-divergence-trade-points.md`。
 

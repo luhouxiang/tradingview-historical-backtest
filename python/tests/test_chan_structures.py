@@ -1,12 +1,17 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from itertools import pairwise
 
 import pytest
 
 from tvbt.chan.engine import ChanEngine, RawBar
-from tvbt.chan.reference import reference_centers, reference_segments
+from tvbt.chan.reference import (
+    ReferenceSegmentAccumulator,
+    reference_centers,
+    reference_segments,
+    update_reference_centers,
+)
 
 
 @dataclass(frozen=True)
@@ -151,6 +156,76 @@ def test_bi_minimum_independent_bar_rule_blocks_too_short_confirmations() -> Non
     assert rows[0]["end_bar_index"] == 7
     assert rows[0]["start_price_i64"] == min(item.low_i64 for item in runtime.included[2:8])
     assert rows[0]["end_price_i64"] == max(item.high_i64 for item in runtime.included[2:8])
+
+
+def test_incremental_segment_scan_matches_full_scan_after_append_and_rollback() -> None:
+    """测试线段增量扫描在追加笔和修订笔尾后是否等价于全量扫描。
+
+    预期:逐步追加时只处理新增笔；从共同前缀回滚并替换方向尾部后，增量输出
+    的每个段字段仍与从第 0 笔重新扫描的结果完全一致。
+    """
+    lines, bars = swing_components([21, 10, 15, 2, 44, 37, 46, 11, 18, 9, 26, 20, 30, 3, 25, 7])
+    accumulator = ReferenceSegmentAccumulator()
+    preserved = 0
+    for cutoff in (4, 7, 10, len(lines)):
+        incremental = accumulator.update(lines[:cutoff], bars, preserved)
+        assert incremental == reference_segments(lines[:cutoff], bars)
+        preserved = cutoff
+
+    rollback_at = 8
+    revised = [
+        *lines[:rollback_at],
+        *[
+            replace(value, direction="down" if value.direction == "up" else "up")
+            for value in lines[rollback_at:]
+        ],
+    ]
+    assert accumulator.update(revised, bars, rollback_at) == reference_segments(revised, bars)
+
+
+def test_incremental_center_scan_preserves_left_centers_and_rebuilds_tail() -> None:
+    """测试中枢增量扫描是否冻结已离开中枢并只重算不确定尾部。
+
+    预期:组件追加或尾部修订时，离开位置早于变化点的中枢保持原对象语义；
+    增量合并后的完整中枢序列与全量扫描完全相同。
+    """
+    lines = [
+        component_line(index, start, end)
+        for index, (start, end) in enumerate(
+            [
+                (15, 20),
+                (20, 0),
+                (0, 10),
+                (10, 2),
+                (2, 8),
+                (8, 4),
+                (4, 12),
+                (12, 9),
+                (9, 20),
+                (20, 12),
+                (12, 18),
+                (18, 14),
+                (14, 25),
+                (25, 16),
+            ]
+        )
+    ]
+    current = reference_centers(lines[:7])
+    for cutoff in (9, 11, len(lines)):
+        current = update_reference_centers(lines[:cutoff], current, cutoff - 2)
+        assert current == reference_centers(lines[:cutoff])
+
+    rollback_at = 9
+    revised = [
+        *lines[:rollback_at],
+        replace(
+            lines[9],
+            start=Endpoint(9, 540_000, 20),
+            end=Endpoint(10, 600_000, 6),
+        ),
+        *lines[10:],
+    ]
+    assert update_reference_centers(revised, current, rollback_at) == reference_centers(revised)
 
 
 @pytest.mark.parametrize(

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, replace
 from typing import Literal
 
@@ -40,6 +40,7 @@ SignalType = Literal[
     "class_sell_2",
     "class_sell_3",
 ]
+MacdAreaKey = tuple[str, int, int, str]
 
 
 @dataclass(frozen=True)
@@ -100,18 +101,29 @@ def _previous_same_direction(
     )
 
 
-def _macd_area(line: LineLike, histogram: Mapping[int, float]) -> float:
+def _macd_area(
+    line: LineLike,
+    histogram: Mapping[int, float],
+    cache: MutableMapping[MacdAreaKey, float] | None = None,
+) -> float:
     """计算线段同方向 MACD 柱面积。
 
     向上线段只累计正柱；向下线段只累计负柱绝对值。MACD 只用于结构成立后的
     力度比较，不能单独生成缠论信号。
     """
+    key = (line.object_id, line.start.bar_index, line.end.bar_index, line.direction)
+    if cache is not None and key in cache:
+        return cache[key]
     values = (
         histogram.get(index, 0.0) for index in range(line.start.bar_index, line.end.bar_index + 1)
     )
     if line.direction == "up":
-        return sum(max(value, 0.0) for value in values)
-    return sum(abs(min(value, 0.0)) for value in values)
+        result = sum(max(value, 0.0) for value in values)
+    else:
+        result = sum(abs(min(value, 0.0)) for value in values)
+    if cache is not None:
+        cache[key] = result
+    return result
 
 
 def _divergence(
@@ -122,14 +134,15 @@ def _divergence(
     reference_object_id: str,
     known_at_bar_index: int,
     histogram: Mapping[int, float],
+    area_cache: MutableMapping[MacdAreaKey, float] | None = None,
     *,
     require_new_extreme: bool = True,
 ) -> ChanSignal | None:
     """比较参考段和当前段，若当前段力度收缩则生成背驰。"""
     if reference.direction != current.direction:
         return None
-    reference_area = _macd_area(reference, histogram)
-    current_area = _macd_area(current, histogram)
+    reference_area = _macd_area(reference, histogram, area_cache)
+    current_area = _macd_area(current, histogram, area_cache)
     if reference_area <= 0.0 or current_area >= reference_area:
         return None
     if current.direction == "up":
@@ -163,6 +176,7 @@ def chan_divergences(
     centers: list[ReferenceCenter],
     center_ids: list[str],
     histogram: Mapping[int, float],
+    area_cache: MutableMapping[MacdAreaKey, float] | None = None,
 ) -> list[ChanSignal]:
     """识别已确认的线段级趋势背驰和盘整背驰。
 
@@ -193,6 +207,7 @@ def chan_divergences(
             center_id,
             segments[confirmation_index].known_at_bar_index,
             histogram,
+            area_cache,
             require_new_extreme=False,
         )
         if value is not None:
@@ -232,6 +247,7 @@ def chan_divergences(
             center_ids[index],
             segments[current_index + 1].known_at_bar_index,
             histogram,
+            area_cache,
         )
         if value is not None and ("trend", current_index) not in seen:
             result.append(value)

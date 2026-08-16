@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from tvbt.chan.engine import ChanEngine, ChanParameters, Fractal, LineObject, RawBar
-from tvbt.chan.reference import reference_centers
+from tvbt.chan.reference import ReferenceSegmentAccumulator, reference_centers
 
 
 def bar(index: int, high: int, low: int) -> RawBar:
@@ -49,6 +49,21 @@ def wave_bars(count: int = 25) -> list[RawBar]:
 def engine() -> ChanEngine:
     """创建检查点间隔较小的缠论引擎,方便测试检查点和事件。"""
     return ChanEngine(ChanParameters(checkpoint_interval=4))
+
+
+class FullStructureRescanEngine(ChanEngine):
+    """测试专用全量基线，每次笔变化都丢弃全部上层增量状态。"""
+
+    def _update_structures(self, known_at_bar_index: int, changed_bi_index: int) -> None:
+        """从第 0 笔重建全部结构，用于验证增量优化没有改变任何事件。"""
+        self._segment_accumulator = ReferenceSegmentAccumulator()
+        self._bi_centers = []
+        self._center_values = []
+        self._segment_specs = []
+        self._segment_records = []
+        self._segment_lines = []
+        self._all_segment_centers = []
+        super()._update_structures(known_at_bar_index, 0)
 
 
 def assert_bi_use_processed_extremes(runtime: ChanEngine) -> None:
@@ -524,3 +539,34 @@ def test_engine_state_restore_matches_uninterrupted_events_and_objects() -> None
     combined = [*prefix_events, *(event.row() for event in restored.emitter.events)]
     assert combined == [event.row() for event in full.emitter.events]
     assert restored.result_rows() == full.result_rows()
+
+
+def test_incremental_upper_structures_match_forced_full_rescan_events() -> None:
+    """测试上层结构增量更新是否与每次强制全量重扫完全等价。
+
+    预期:AOL9 前缀上，增量引擎和全量基线产生完全相同的事件顺序、修订号、
+    可知时间及最终对象，证明稳定前缀复用只优化计算量而不改变缠论事实。
+    """
+    sample = Path(__file__).parents[2] / "trading-data" / "history" / "30#AOL9.txt"
+    if not sample.is_file():
+        pytest.skip(f"唯一历史数据源中不存在完整测试文件：{sample}")
+    rows = sample.read_text(encoding="gb18030").splitlines()[2:5002]
+    incremental = engine()
+    full_rescan = FullStructureRescanEngine(ChanParameters(checkpoint_interval=4))
+    for index, raw in enumerate(rows):
+        fields = [value.strip() for value in raw.split(",")]
+        value = RawBar(
+            index,
+            1_700_000_000_000 + index * 300_000,
+            int(fields[2]),
+            int(fields[3]),
+            int(fields[4]),
+            int(fields[5]),
+        )
+        incremental.update(value)
+        full_rescan.update(value)
+
+    assert [event.row() for event in incremental.emitter.events] == [
+        event.row() for event in full_rescan.emitter.events
+    ]
+    assert incremental.result_rows() == full_rescan.result_rows()

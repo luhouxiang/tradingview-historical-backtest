@@ -71,6 +71,14 @@ class EventEmitter:
         self._next_event_seq = next_event_seq
         self._objects = dict(objects or {})
         self._revisions = dict(revisions or {})
+        # 按对象类型建立直接索引，避免同步某一类对象时扫描全部历史快照键。
+        self._objects_by_type: dict[str, dict[str, dict[str, Any]]] = {
+            object_type: {} for object_type in OBJECT_TYPES
+        }
+        for key, value in self._objects.items():
+            object_type, separator, object_id = key.partition(":")
+            if separator and object_type in OBJECT_TYPES:
+                self._objects_by_type[object_type][object_id] = value
         self.events: list[ChanEvent] = []
 
     @staticmethod
@@ -117,6 +125,7 @@ class EventEmitter:
         revision = self._revisions.get(key, 0) + 1
         semantic["object_revision"] = revision
         self._objects[key] = semantic
+        self._objects_by_type[object_type][object_id] = semantic
         self._revisions[key] = revision
         return self._append(
             known_at_bar_index,
@@ -133,6 +142,7 @@ class EventEmitter:
         if key not in self._objects:
             return None
         del self._objects[key]
+        self._objects_by_type[object_type].pop(object_id, None)
         revision = self._revisions.get(key, 0) + 1
         self._revisions[key] = revision
         return self._append(known_at_bar_index, object_type, object_id, "delete", revision, "{}")
@@ -171,8 +181,7 @@ class EventEmitter:
         """返回某类对象的当前快照副本，调用方可以安全排序和序列化。"""
         if object_type not in OBJECT_TYPES:
             raise ValueError(f"unsupported Chan object type: {object_type}")
-        prefix = f"{object_type}:"
-        return [dict(value) for key, value in self._objects.items() if key.startswith(prefix)]
+        return [dict(value) for value in self._objects_by_type[object_type].values()]
 
     @classmethod
     def from_state(cls, state: dict[str, Any]) -> EventEmitter:

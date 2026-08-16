@@ -6,7 +6,12 @@ from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
 from tvbt.chan.events import EventEmitter
-from tvbt.chan.reference import ReferenceCenter, reference_centers, reference_segments
+from tvbt.chan.reference import (
+    ReferenceCenter,
+    ReferenceSegment,
+    ReferenceSegmentAccumulator,
+    update_reference_centers,
+)
 from tvbt.chan.signals import ChanSignal, chan_divergences, chan_trade_points
 from tvbt.logging_proxy import logger
 
@@ -18,7 +23,7 @@ from tvbt.logging_proxy import logger
 2. `_update_inclusion` 处理包含关系，生成独立 K 线 `IncludedBar`。
 3. `_seal_fractal` 在第三根独立 K 线出现后确认中间 K 线的严格分型。
 4. `_consume_fractal` 按独立 K 线闭区间极值规则维护最长合法笔链。
-5. `_update_structures` 在笔变化时重扫笔中枢、线段、标准线段中枢、背驰和买卖点。
+5. `_update_structures` 在笔变化时只重算各级尚未确定的结构尾部。
 6. `EventEmitter` 统一把结构变化转换为 `known_at_bar_index` 约束的因果事件。
 
 本文件不读取磁盘、不写缓存、不处理订单成交；这些职责分别在 `algorithm.py`、
@@ -184,6 +189,15 @@ class ChanEngine:
         self._best_bi_endpoint: int | None = None
         # 当前已发布笔链对应的分型位置，用于只修订发生变化的尾部。
         self._bi_path_positions: list[int] = []
+        # 线段扫描器保存每个笔前缀的小状态，笔尾修订时只回滚并重放变化部分。
+        self._segment_accumulator = ReferenceSegmentAccumulator()
+        # 已离开的中枢和已确认线段构成稳定前缀，后续只替换各级未确定尾部。
+        self._bi_centers: list[ReferenceCenter] = []
+        self._center_values: list[tuple[str, dict[str, Any], int]] = []
+        self._segment_specs: list[ReferenceSegment] = []
+        self._segment_records: list[tuple[tuple[str, dict[str, Any], int], LineObject | None]] = []
+        self._segment_lines: list[LineObject] = []
+        self._all_segment_centers: list[ReferenceCenter] = []
         # 独立 K 线位置到分型列表位置的索引，供区间极值扫描快速定位候选端点。
         self._fractal_by_normalized_index: dict[int, int] = {}
         # MACD EMA 状态，用于后续线段背驰面积计算。
@@ -192,6 +206,8 @@ class ChanEngine:
         self._macd_dea: float | None = None
         # 每根原始 K 线的 MACD 柱值，按国内常用 2 * (DIFF - DEA) 语义保存。
         self._macd_histogram: dict[int, float] = {}
+        # 已确认线段的 MACD 面积缓存，键包含实际端点，端点修订时不会误复用。
+        self._macd_area_cache: dict[tuple[str, int, int, str], float] = {}
         # 因果事件收集器，统一管理 upsert/delete 和当前对象快照。
         self.emitter = EventEmitter()
 
@@ -211,7 +227,7 @@ class ChanEngine:
         self._append_macd(bar)
         # 包含关系只有在追加出新的独立 K 线时，才可能封存上一根独立 K 线的分型。
         appended = self._update_inclusion(bar)
-        bi_changed = False
+        changed_bi_index: int | None = None
         if appended:
             fractal = self._seal_fractal()
             if fractal is not None:
@@ -222,10 +238,10 @@ class ChanEngine:
                     fractal.object_id,
                     fractal.payload(),
                 )
-                bi_changed = self._consume_fractal(fractal)
-        if bi_changed:
-            # 只有确认笔发生变化时，才重新扫描中枢、线段、背驰和买卖点。
-            self._update_structures(bar.bar_index)
+                changed_bi_index = self._consume_fractal(fractal)
+        if changed_bi_index is not None:
+            # 只从首次变化的笔位置更新中枢、线段、背驰和买卖点尾部。
+            self._update_structures(bar.bar_index, changed_bi_index)
 
     def _update_inclusion(self, bar: RawBar) -> bool:
         """按前一根独立 K 线方向处理包含关系，返回是否产生新独立 K 线。"""
@@ -335,7 +351,7 @@ class ChanEngine:
             extreme_source_bar_index=pivot_index,
         )
 
-    def _consume_fractal(self, endpoint: Fractal) -> bool:
+    def _consume_fractal(self, endpoint: Fractal) -> int | None:
         """把新分型加入 processed_k 区间极值笔链，并同步必要的因果修订。"""
         endpoint_position = len(self.fractals) - 1
         if self.fractals[endpoint_position] is not endpoint:
@@ -375,7 +391,7 @@ class ChanEngine:
             ):
                 self._best_bi_endpoint = endpoint_position
         if self._best_bi_endpoint == previous_best:
-            return False
+            return None
         return self._sync_bi_path(endpoint.known_at_bar_index)
 
     def _incoming_bi_candidates(self, endpoint: Fractal) -> list[int]:
@@ -420,7 +436,7 @@ class ChanEngine:
             return candidate.price_i64 > current.price_i64
         return candidate.price_i64 < current.price_i64
 
-    def _sync_bi_path(self, known_at_bar_index: int) -> bool:
+    def _sync_bi_path(self, known_at_bar_index: int) -> int | None:
         """把最长合法端点链转换为笔，并用 delete/upsert 发布因果修订。"""
         endpoint_positions: list[int] = []
         position = self._best_bi_endpoint
@@ -460,7 +476,7 @@ class ChanEngine:
         changed = bool(removed) or len(desired) != len(self.bi)
         self._bi_path_positions = endpoint_positions
         if not changed:
-            return False
+            return None
         for line in sorted(removed, key=lambda value: value.object_id):
             self.emitter.delete(known_at_bar_index, "bi", line.object_id)
         for line in desired[preserved_line_count:]:
@@ -471,7 +487,7 @@ class ChanEngine:
                 line.payload(),
             )
         self.bi = desired
-        return True
+        return preserved_line_count
 
     def _assert_bi_extremes(self, line: LineObject) -> None:
         """断言笔端点是 processed_k 闭区间的方向极值，而不是原始 K 线局部点。"""
@@ -491,11 +507,21 @@ class ChanEngine:
                 f"range=[{range_low},{range_high}]"
             )
 
-    def _update_structures(self, known_at_bar_index: int) -> None:
-        """基于已确认笔重建并同步中枢、线段、线段中枢、背驰和买卖点。"""
+    def _update_structures(self, known_at_bar_index: int, changed_bi_index: int) -> None:
+        """从首次变化笔位置更新中枢、线段、线段中枢、背驰和买卖点。"""
         # 笔中枢：使用参考扫描器从已确认笔序列中提取。
-        centers: list[tuple[str, dict[str, Any], int]] = []
-        for center in reference_centers(self.bi):
+        updated_bi_centers = update_reference_centers(
+            self.bi,
+            self._bi_centers,
+            changed_bi_index,
+        )
+        changed_center_index = self._common_prefix_length(
+            self._bi_centers,
+            updated_bi_centers,
+        )
+        centers = self._center_values[:changed_center_index]
+        self._bi_centers = updated_bi_centers
+        for center in self._bi_centers[changed_center_index:]:
             object_id = _stable_id(
                 "zhongshu",
                 self.bi[center.base_index].object_id,
@@ -528,36 +554,45 @@ class ChanEngine:
                     center.known_at_bar_index,
                 )
             )
-        segments: list[tuple[str, dict[str, Any], int]] = []
-        segment_lines: list[LineObject] = []
+        self._center_values = centers
+        segment_specs = self._segment_accumulator.update(
+            self.bi,
+            self.raw_bars,
+            changed_bi_index,
+        )
+        changed_segment_spec_index = self._common_prefix_length(
+            self._segment_specs,
+            segment_specs,
+        )
+        segment_records = self._segment_records[:changed_segment_spec_index]
+        self._segment_specs = segment_specs
         # 线段：参考算法返回线段语义对象；确认线段额外转成 LineObject 供线段中枢复用。
-        for segment in reference_segments(self.bi, self.raw_bars):
+        for segment in segment_specs[changed_segment_spec_index:]:
             object_id = _stable_id(
                 "segment",
                 self.bi[segment.start_index].object_id,
                 "up" if segment.up else "down",
             )
-            segments.append(
-                (
-                    object_id,
-                    {
-                        "start_bar_index": segment.start_bar_index,
-                        "start_time": segment.start_time,
-                        "start_price_i64": segment.start_price_i64,
-                        "start_extreme_source_bar_index": segment.start_bar_index,
-                        "end_bar_index": segment.end_bar_index,
-                        "end_time": segment.end_time,
-                        "end_price_i64": segment.end_price_i64,
-                        "end_extreme_source_bar_index": segment.end_bar_index,
-                        "direction": "up" if segment.up else "down",
-                        "confirmed": segment.confirmed,
-                        "confirmed_at_bar_index": (
-                            segment.known_at_bar_index if segment.confirmed else None
-                        ),
-                    },
-                    segment.known_at_bar_index,
-                )
+            value = (
+                object_id,
+                {
+                    "start_bar_index": segment.start_bar_index,
+                    "start_time": segment.start_time,
+                    "start_price_i64": segment.start_price_i64,
+                    "start_extreme_source_bar_index": segment.start_bar_index,
+                    "end_bar_index": segment.end_bar_index,
+                    "end_time": segment.end_time,
+                    "end_price_i64": segment.end_price_i64,
+                    "end_extreme_source_bar_index": segment.end_bar_index,
+                    "direction": "up" if segment.up else "down",
+                    "confirmed": segment.confirmed,
+                    "confirmed_at_bar_index": (
+                        segment.known_at_bar_index if segment.confirmed else None
+                    ),
+                },
+                segment.known_at_bar_index,
             )
+            segment_line: LineObject | None = None
             if segment.confirmed:
                 direction: Literal["up", "down"] = "up" if segment.up else "down"
                 start = Fractal(
@@ -580,21 +615,51 @@ class ChanEngine:
                     segment.known_at_bar_index,
                     segment.known_at_bar_index,
                 )
-                segment_lines.append(
-                    LineObject(
-                        object_id,
-                        start,
-                        end,
-                        direction,
-                        segment.known_at_bar_index,
-                        segment.known_at_bar_index,
-                    )
+                segment_line = LineObject(
+                    object_id,
+                    start,
+                    end,
+                    direction,
+                    segment.known_at_bar_index,
+                    segment.known_at_bar_index,
                 )
+            segment_records.append((value, segment_line))
+        self._segment_records = segment_records
+        segments = [value for value, _ in segment_records]
+        segment_lines = [line for _, line in segment_records if line is not None]
 
         # 第 18 课定义的初始中枢是开放价格区间（低点最大值、高点最小值）。
         # 仅点接触没有区间宽度，所以不能作为标准线段中枢；笔中枢扫描器保留该兼容情形。
+        changed_confirmed_segment_index = self._common_prefix_length(
+            self._segment_lines,
+            segment_lines,
+        )
+        confirmed_segments_changed = changed_confirmed_segment_index < len(
+            self._segment_lines
+        ) or changed_confirmed_segment_index < len(segment_lines)
+        self._segment_lines = segment_lines
+        self._sync_objects("zhongshu", centers, known_at_bar_index)
+        self._sync_objects("segment", segments, known_at_bar_index)
+        if not confirmed_segments_changed:
+            logger.debug(
+                "chan.structures.tail_reused",
+                "Confirmed segment prefix unchanged; upper Chan structures reused",
+                {
+                    "bar_index": known_at_bar_index,
+                    "changed_bi_index": changed_bi_index,
+                    "bi_count": len(self.bi),
+                    "segment_count": len(segments),
+                },
+            )
+            return
+
+        self._all_segment_centers = update_reference_centers(
+            segment_lines,
+            self._all_segment_centers,
+            changed_confirmed_segment_index,
+        )
         segment_centers = [
-            center for center in reference_centers(segment_lines) if center.zd_i64 < center.zg_i64
+            center for center in self._all_segment_centers if center.zd_i64 < center.zg_i64
         ]
         segment_center_ids: list[str] = []
         segment_center_values: list[tuple[str, dict[str, Any], int]] = []
@@ -735,7 +800,11 @@ class ChanEngine:
                 )
 
         divergence_specs = chan_divergences(
-            segment_lines, segment_centers, segment_center_ids, self._macd_histogram
+            segment_lines,
+            segment_centers,
+            segment_center_ids,
+            self._macd_histogram,
+            self._macd_area_cache,
         )
         divergence_values: list[tuple[str, dict[str, Any], int]] = []
         divergence_objects: list[tuple[str, ChanSignal]] = []
@@ -766,8 +835,6 @@ class ChanEngine:
             trade_point_values.append(
                 (object_id, _signal_payload(signal), signal.known_at_bar_index)
             )
-        self._sync_objects("zhongshu", centers, known_at_bar_index)
-        self._sync_objects("segment", segments, known_at_bar_index)
         self._sync_objects("segment_zhongshu", segment_center_values, known_at_bar_index)
         self._sync_objects("movement_state", movement_state_values, known_at_bar_index)
         self._sync_objects("center_monitor", center_monitor_values, known_at_bar_index)
@@ -791,6 +858,16 @@ class ChanEngine:
                 "event_count": len(self.emitter.events),
             },
         )
+
+    @staticmethod
+    def _common_prefix_length(left: list[Any], right: list[Any]) -> int:
+        """返回两个结构序列完全相同的前缀长度。"""
+        count = 0
+        for old, new in zip(left, right, strict=False):
+            if old != new:
+                break
+            count += 1
+        return count
 
     def _sync_objects(
         self,
@@ -881,6 +958,7 @@ class ChanEngine:
         engine._fractal_by_normalized_index = {
             fractal.normalized_index: position for position, fractal in enumerate(engine.fractals)
         }
+        engine._segment_accumulator.update(engine.bi, engine.raw_bars, 0)
         engine.emitter = EventEmitter.from_state(state["emitter"])
         return engine
 
