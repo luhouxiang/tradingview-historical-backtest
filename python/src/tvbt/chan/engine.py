@@ -17,7 +17,7 @@ from tvbt.logging_proxy import logger
 1. `RawBar` 保存 Go 指定的标准化 K 线字段。
 2. `_update_inclusion` 处理包含关系，生成独立 K 线 `IncludedBar`。
 3. `_seal_fractal` 在第三根独立 K 线出现后确认中间 K 线的严格分型。
-4. `_consume_fractal` 按参考实现的端点选择规则释放已确认笔。
+4. `_consume_fractal` 按独立 K 线闭区间极值规则维护最长合法笔链。
 5. `_update_structures` 在笔变化时重扫笔中枢、线段、标准线段中枢、背驰和买卖点。
 6. `EventEmitter` 统一把结构变化转换为 `known_at_bar_index` 约束的因果事件。
 
@@ -27,7 +27,7 @@ from tvbt.logging_proxy import logger
 
 Direction = Literal["up", "down", "unknown"]
 FractalKind = Literal["top", "bottom"]
-# 参考算法要求一笔至少跨越 5 根独立 K 线。
+# 一笔至少跨越 5 根包含处理后的独立 K 线。
 REFERENCE_MIN_INDEPENDENT_BARS = 5
 
 
@@ -46,7 +46,7 @@ class RawBar:
     # K 线时间戳，沿用上游传入的 UTC 毫秒语义。
     time: int
     # 开盘价、最高价、最低价、收盘价均使用定点整数，避免检查点出现浮点误差。
-    # 当前含义是：原始价格 * price_scale 后取整数，用定点数避免浮点误差。也就是说如果某个数据集的 price_scale = 1000，那就是放大 1000 倍；如果是 10000，就是放大 10000 倍
+    # 当前含义是原始价格乘以数据集 price_scale 后取整数；具体倍数由数据集元数据决定。
     open_i64: int
     high_i64: int
     low_i64: int
@@ -96,6 +96,12 @@ class Fractal:
     # 分型被确认的原始 K 线位置；known_at 与其一致，禁止提前显示。
     confirmed_at_bar_index: int
     known_at_bar_index: int
+    # 分型极值实际来源的原始 K 线位置；当前与 bar_index 相同，单独保存以防字段误读。
+    extreme_source_bar_index: int = -1
+
+    def __post_init__(self) -> None:
+        if self.extreme_source_bar_index < 0:
+            object.__setattr__(self, "extreme_source_bar_index", self.bar_index)
 
     def payload(self) -> dict[str, Any]:
         """转换为因果事件流载荷，字段名保持跨进程 snake_case 契约。"""
@@ -103,6 +109,7 @@ class Fractal:
             "bar_index": self.bar_index,
             "time": self.time,
             "price_i64": self.price_i64,
+            "extreme_source_bar_index": self.extreme_source_bar_index,
             "fractal_type": self.fractal_type,
             "confirmed": True,
             "confirmed_at_bar_index": self.confirmed_at_bar_index,
@@ -130,9 +137,11 @@ class LineObject:
             "start_bar_index": self.start.bar_index,
             "start_time": self.start.time,
             "start_price_i64": self.start.price_i64,
+            "start_extreme_source_bar_index": self.start.extreme_source_bar_index,
             "end_bar_index": self.end.bar_index,
             "end_time": self.end.time,
             "end_price_i64": self.end.price_i64,
+            "end_extreme_source_bar_index": self.end.extreme_source_bar_index,
             "direction": self.direction,
             "confirmed": confirmed,
             "confirmed_at_bar_index": self.confirmed_at_bar_index if confirmed else None,
@@ -155,7 +164,7 @@ class ChanEngine:
     """逐 K 线因果缠论引擎，负责分型、笔、线段、中枢和信号事件生成。"""
 
     # 算法版本参与缓存键；任何语义变化都必须升级版本，禁止复用旧缓存。
-    algorithm_version = "5.0.1"
+    algorithm_version = "6.0.0"
 
     def __init__(self, parameters: ChanParameters | None = None) -> None:
         # 运行参数。
@@ -168,12 +177,15 @@ class ChanEngine:
         self.fractals: list[Fractal] = []
         # 已确认的笔序列，方向必须严格交替。
         self.bi: list[LineObject] = []
-        # 当前待成笔起点，保留用于状态导出和检查点恢复。
-        self._stroke_start: Fractal | None = None
-        # 尚未释放为确认笔的分型队列。
-        self._pending_fractals: list[Fractal] = []
-        # 当前未确认临时笔 ID；确认笔出现或条件失效时删除。
-        self._provisional_bi_id: str | None = None
+        # 每个分型作为笔终点时可形成的最长笔链长度及其前驱分型位置。
+        self._bi_scores: list[int] = []
+        self._bi_predecessors: list[int | None] = []
+        # 当前最长合法笔链的末端分型位置。
+        self._best_bi_endpoint: int | None = None
+        # 当前已发布笔链对应的分型位置，用于只修订发生变化的尾部。
+        self._bi_path_positions: list[int] = []
+        # 独立 K 线位置到分型列表位置的索引，供区间极值扫描快速定位候选端点。
+        self._fractal_by_normalized_index: dict[int, int] = {}
         # MACD EMA 状态，用于后续线段背驰面积计算。
         self._macd_fast: float | None = None
         self._macd_slow: float | None = None
@@ -199,7 +211,7 @@ class ChanEngine:
         self._append_macd(bar)
         # 包含关系只有在追加出新的独立 K 线时，才可能封存上一根独立 K 线的分型。
         appended = self._update_inclusion(bar)
-        bi_count = len(self.bi)
+        bi_changed = False
         if appended:
             fractal = self._seal_fractal()
             if fractal is not None:
@@ -210,10 +222,8 @@ class ChanEngine:
                     fractal.object_id,
                     fractal.payload(),
                 )
-                self._consume_fractal(fractal)
-        # 即使没有确认笔，也要维护前端可见的未确认临时笔。
-        self._update_provisional_bi(bar.bar_index)
-        if len(self.bi) != bi_count:
+                bi_changed = self._consume_fractal(fractal)
+        if bi_changed:
             # 只有确认笔发生变化时，才重新扫描中枢、线段、背驰和买卖点。
             self._update_structures(bar.bar_index)
 
@@ -322,147 +332,164 @@ class ChanEngine:
             price_i64=price,
             confirmed_at_bar_index=confirmed_at,
             known_at_bar_index=confirmed_at,
+            extreme_source_bar_index=pivot_index,
         )
 
-    def _consume_fractal(self, endpoint: Fractal) -> None:
-        """把新确认分型送入参考成笔规则，必要时一次释放多笔。"""
-        self._pending_fractals.append(endpoint)
-        if self._stroke_start is None:
-            self._stroke_start = endpoint
-        while len(self._pending_fractals) >= 3:
-            # 参考算法会从 pending 队列头部选择可成笔端点。
-            selection = self._reference_selection()
-            if selection is None:
-                return
-            endpoint_position, known_at = selection
-            if known_at is None:
-                return
-            # 一个新封存的分型可能释放多笔；这些笔在本批释放分型前不可知，
-            # 批内 known_at 也不能比上一笔倒退。
-            known_at = max(
-                known_at,
-                endpoint.known_at_bar_index,
-                self.bi[-1].known_at_bar_index if self.bi else 0,
-            )
-            start = self._pending_fractals[0]
-            selected = self._pending_fractals[endpoint_position]
-            direction: Literal["up", "down"] = "up" if start.fractal_type == "bottom" else "down"
-            if self.bi and self.bi[-1].direction == direction:
-                raise AssertionError("reference bi directions must alternate")
-            line = LineObject(
-                object_id=_stable_id("bi", start.object_id, selected.object_id),
-                start=start,
-                end=selected,
-                direction=direction,
-                confirmed_at_bar_index=known_at,
-                known_at_bar_index=known_at,
-            )
-            if self._provisional_bi_id is not None:
-                # 确认笔出现后删除同一起点的临时笔，避免前端同时显示确认和未确认版本。
-                self.emitter.delete(known_at, "bi", self._provisional_bi_id)
-                self._provisional_bi_id = None
-            self.bi.append(line)
-            self.emitter.upsert(known_at, "bi", line.object_id, line.payload())
-            self._pending_fractals = self._pending_fractals[endpoint_position:]
-            self._stroke_start = selected
-
-    def _reference_selection(self) -> tuple[int, int | None] | None:
-        """移植 kline-chart c_bi.get_node/satisfy_the_number 的单基点选端逻辑。"""
-        values = self._pending_fractals
-        if len(values) < 2:
-            return None
-        base = values[0]
-        next_position = next(
-            (
-                position
-                for position in range(1, len(values))
-                if values[position].fractal_type != base.fractal_type
-            ),
-            -1,
-        )
-        while next_position >= 0:
-            # 端点与基点之间必须至少包含 5 根独立 K 线。
-            independent_count = values[next_position].normalized_index - base.normalized_index + 1
-            if independent_count < REFERENCE_MIN_INDEPENDENT_BARS:
-                next_position += 1
-                while (
-                    next_position < len(values)
-                    and values[next_position].fractal_type == base.fractal_type
-                ):
-                    next_position += 1
-                if next_position >= len(values):
-                    return None
-                continue
-            return self._reference_satisfy(next_position)
-        return None
-
-    def _reference_satisfy(self, endpoint_position: int) -> tuple[int, int | None]:
-        """检查候选端点是否满足后续分型区间确认规则。"""
-        values = self._pending_fractals
-        base_is_top = values[0].fractal_type == "top"
-        # baseline_position 用于计算后续反向候选与当前端点之间的独立 K 线数量。
-        baseline_position = endpoint_position
-        cursor = endpoint_position + 1
-        while cursor < len(values):
-            candidate = values[cursor]
-            endpoint = values[endpoint_position]
-            if candidate.fractal_type == endpoint.fractal_type:
-                candidate_bar = self.included[candidate.normalized_index]
-                endpoint_bar = self.included[endpoint.normalized_index]
-                more_extreme = (base_is_top and candidate_bar.low_i64 < endpoint_bar.low_i64) or (
-                    not base_is_top and candidate_bar.high_i64 > endpoint_bar.high_i64
+    def _consume_fractal(self, endpoint: Fractal) -> bool:
+        """把新分型加入 processed_k 区间极值笔链，并同步必要的因果修订。"""
+        endpoint_position = len(self.fractals) - 1
+        if self.fractals[endpoint_position] is not endpoint:
+            raise AssertionError("new fractal must be appended before bi selection")
+        self._fractal_by_normalized_index[endpoint.normalized_index] = endpoint_position
+        candidates = self._incoming_bi_candidates(endpoint)
+        score = 0
+        predecessor: int | None = None
+        if candidates:
+            score = max(self._bi_scores[position] + 1 for position in candidates)
+            eligible = [
+                position for position in candidates if self._bi_scores[position] + 1 == score
+            ]
+            # 优先延长当前终态笔链；同类更极端端点修订时则优先保留原前驱，
+            # 避免同分路径无业务原因地整体跳换。
+            if self._best_bi_endpoint in eligible:
+                predecessor = self._best_bi_endpoint
+            elif self._best_bi_endpoint is not None:
+                current_predecessor = self._bi_predecessors[self._best_bi_endpoint]
+                if current_predecessor in eligible:
+                    predecessor = current_predecessor
+            if predecessor is None:
+                predecessor = max(
+                    eligible,
+                    key=lambda position: self.fractals[position].normalized_index,
                 )
-                if more_extreme:
-                    # 同类端点出现更极端价格时，按参考算法替换端点。
-                    endpoint_position = cursor
-                    baseline_position = cursor
-                cursor += 1
-                continue
-            independent_count = (
-                candidate.normalized_index - values[baseline_position].normalized_index + 1
-            )
-            if independent_count < REFERENCE_MIN_INDEPENDENT_BARS:
-                cursor += 1
-                continue
-            candidate_bar = self.included[candidate.normalized_index]
-            endpoint_bar = self.included[values[endpoint_position].normalized_index]
-            separated = (
-                candidate_bar.low_i64 > endpoint_bar.high_i64
-                if base_is_top
-                else candidate_bar.high_i64 < endpoint_bar.low_i64
-            )
-            if separated:
-                # 后续反向分型与端点价格区间严格分离，候选笔才在该分型处被确认。
-                return endpoint_position, candidate.known_at_bar_index
-            cursor += 1
-        # 参考批量渲染会保留这个尚未由后续分型验证的端点，前端以临时笔展示。
-        return endpoint_position, None
+        self._bi_scores.append(score)
+        self._bi_predecessors.append(predecessor)
 
-    def _update_provisional_bi(self, known_at_bar_index: int) -> None:
-        """同步当前未确认临时笔，使前端能显示参考算法的最后候选端点。"""
-        selection = self._reference_selection()
-        if selection is None or selection[1] is not None:
-            if self._provisional_bi_id is not None:
-                self.emitter.delete(known_at_bar_index, "bi", self._provisional_bi_id)
-                self._provisional_bi_id = None
-            return
-        endpoint_position, _ = selection
-        start = self._pending_fractals[0]
-        endpoint = self._pending_fractals[endpoint_position]
-        # 临时笔 ID 只绑定起点，端点移动时使用同一个对象 upsert，减少前端闪烁。
-        provisional_id = _stable_id("bi-provisional", start.object_id)
-        if self._provisional_bi_id is not None and self._provisional_bi_id != provisional_id:
-            self.emitter.delete(known_at_bar_index, "bi", self._provisional_bi_id)
-        self._provisional_bi_id = provisional_id
-        line = LineObject(
-            provisional_id,
-            start,
-            endpoint,
-            "up" if start.fractal_type == "bottom" else "down",
-            known_at_bar_index,
-            known_at_bar_index,
-        )
-        self.emitter.upsert(known_at_bar_index, "bi", provisional_id, line.payload(confirmed=False))
+        previous_best = self._best_bi_endpoint
+        if previous_best is None or score > self._bi_scores[previous_best]:
+            self._best_bi_endpoint = endpoint_position
+        elif score == self._bi_scores[previous_best]:
+            previous = self.fractals[previous_best]
+            if endpoint.fractal_type == previous.fractal_type and self._is_more_extreme(
+                endpoint, previous
+            ):
+                self._best_bi_endpoint = endpoint_position
+        if self._best_bi_endpoint == previous_best:
+            return False
+        return self._sync_bi_path(endpoint.known_at_bar_index)
+
+    def _incoming_bi_candidates(self, endpoint: Fractal) -> list[int]:
+        """寻找所有能与终点构成 processed_k 全区间极值笔的前驱分型。"""
+        range_low = endpoint.price_i64
+        range_high = endpoint.price_i64
+        candidates: list[int] = []
+        for normalized_index in range(endpoint.normalized_index, -1, -1):
+            included = self.included[normalized_index]
+            range_low = min(range_low, included.low_i64)
+            range_high = max(range_high, included.high_i64)
+            # 一旦终点不再是相应区间极值，更早的任何分型都不可能与其成笔。
+            if endpoint.fractal_type == "top" and range_high > endpoint.price_i64:
+                break
+            if endpoint.fractal_type == "bottom" and range_low < endpoint.price_i64:
+                break
+            start_position = self._fractal_by_normalized_index.get(normalized_index)
+            if start_position is None:
+                continue
+            start = self.fractals[start_position]
+            independent_count = endpoint.normalized_index - start.normalized_index + 1
+            if independent_count < REFERENCE_MIN_INDEPENDENT_BARS:
+                continue
+            if (
+                endpoint.fractal_type == "top"
+                and start.fractal_type == "bottom"
+                and start.price_i64 == range_low
+            ) or (
+                endpoint.fractal_type == "bottom"
+                and start.fractal_type == "top"
+                and start.price_i64 == range_high
+            ):
+                candidates.append(start_position)
+        return candidates
+
+    @staticmethod
+    def _is_more_extreme(candidate: Fractal, current: Fractal) -> bool:
+        """判断同类分型是否满足后顶更高或后底更低的替换条件。"""
+        if candidate.fractal_type != current.fractal_type:
+            return False
+        if candidate.fractal_type == "top":
+            return candidate.price_i64 > current.price_i64
+        return candidate.price_i64 < current.price_i64
+
+    def _sync_bi_path(self, known_at_bar_index: int) -> bool:
+        """把最长合法端点链转换为笔，并用 delete/upsert 发布因果修订。"""
+        endpoint_positions: list[int] = []
+        position = self._best_bi_endpoint
+        while position is not None:
+            endpoint_positions.append(position)
+            position = self._bi_predecessors[position]
+        endpoint_positions.reverse()
+        common_endpoint_count = 0
+        for old_position, new_position in zip(
+            self._bi_path_positions,
+            endpoint_positions,
+            strict=False,
+        ):
+            if old_position != new_position:
+                break
+            common_endpoint_count += 1
+        preserved_line_count = max(common_endpoint_count - 1, 0)
+        removed = self.bi[preserved_line_count:]
+        desired = self.bi[:preserved_line_count]
+        for edge_index in range(preserved_line_count, len(endpoint_positions) - 1):
+            start_position = endpoint_positions[edge_index]
+            end_position = endpoint_positions[edge_index + 1]
+            start = self.fractals[start_position]
+            end = self.fractals[end_position]
+            object_id = _stable_id("bi", start.object_id, end.object_id)
+            direction: Literal["up", "down"] = "up" if start.fractal_type == "bottom" else "down"
+            line = LineObject(
+                object_id=object_id,
+                start=start,
+                end=end,
+                direction=direction,
+                confirmed_at_bar_index=known_at_bar_index,
+                known_at_bar_index=known_at_bar_index,
+            )
+            self._assert_bi_extremes(line)
+            desired.append(line)
+        changed = bool(removed) or len(desired) != len(self.bi)
+        self._bi_path_positions = endpoint_positions
+        if not changed:
+            return False
+        for line in sorted(removed, key=lambda value: value.object_id):
+            self.emitter.delete(known_at_bar_index, "bi", line.object_id)
+        for line in desired[preserved_line_count:]:
+            self.emitter.upsert(
+                known_at_bar_index,
+                "bi",
+                line.object_id,
+                line.payload(),
+            )
+        self.bi = desired
+        return True
+
+    def _assert_bi_extremes(self, line: LineObject) -> None:
+        """断言笔端点是 processed_k 闭区间的方向极值，而不是原始 K 线局部点。"""
+        bars = self.included[line.start.normalized_index : line.end.normalized_index + 1]
+        if len(bars) < REFERENCE_MIN_INDEPENDENT_BARS:
+            raise AssertionError("bi must span at least five processed bars")
+        range_low = min(item.low_i64 for item in bars)
+        range_high = max(item.high_i64 for item in bars)
+        if line.direction == "up":
+            valid = line.start.price_i64 == range_low and line.end.price_i64 == range_high
+        else:
+            valid = line.start.price_i64 == range_high and line.end.price_i64 == range_low
+        if not valid:
+            raise AssertionError(
+                "bi endpoints must equal processed_k interval extremes: "
+                f"{line.object_id} {line.start.price_i64}->{line.end.price_i64} "
+                f"range=[{range_low},{range_high}]"
+            )
 
     def _update_structures(self, known_at_bar_index: int) -> None:
         """基于已确认笔重建并同步中枢、线段、线段中枢、背驰和买卖点。"""
@@ -517,9 +544,11 @@ class ChanEngine:
                         "start_bar_index": segment.start_bar_index,
                         "start_time": segment.start_time,
                         "start_price_i64": segment.start_price_i64,
+                        "start_extreme_source_bar_index": segment.start_bar_index,
                         "end_bar_index": segment.end_bar_index,
                         "end_time": segment.end_time,
                         "end_price_i64": segment.end_price_i64,
+                        "end_extreme_source_bar_index": segment.end_bar_index,
                         "direction": "up" if segment.up else "down",
                         "confirmed": segment.confirmed,
                         "confirmed_at_bar_index": (
@@ -824,9 +853,10 @@ class ChanEngine:
             "included": [asdict(item) for item in self.included],
             "fractals": [asdict(item) for item in self.fractals],
             "bi": [_line_state(item) for item in self.bi],
-            "stroke_start_id": self._stroke_start.object_id if self._stroke_start else None,
-            "pending_fractal_ids": [item.object_id for item in self._pending_fractals],
-            "provisional_bi_id": self._provisional_bi_id,
+            "bi_scores": self._bi_scores,
+            "bi_predecessors": self._bi_predecessors,
+            "best_bi_endpoint": self._best_bi_endpoint,
+            "bi_path_positions": self._bi_path_positions,
             "emitter": self.emitter.state(),
         }
 
@@ -841,10 +871,16 @@ class ChanEngine:
         engine.fractals = [Fractal(**item) for item in state["fractals"]]
         fractals = {item.object_id: item for item in engine.fractals}
         engine.bi = [_line_from_state(item, fractals) for item in state["bi"]]
-        start_id = state["stroke_start_id"]
-        engine._stroke_start = fractals.get(start_id)
-        engine._pending_fractals = [fractals[value] for value in state["pending_fractal_ids"]]
-        engine._provisional_bi_id = state["provisional_bi_id"]
+        engine._bi_scores = [int(value) for value in state["bi_scores"]]
+        engine._bi_predecessors = [
+            None if value is None else int(value) for value in state["bi_predecessors"]
+        ]
+        best_endpoint = state["best_bi_endpoint"]
+        engine._best_bi_endpoint = None if best_endpoint is None else int(best_endpoint)
+        engine._bi_path_positions = [int(value) for value in state["bi_path_positions"]]
+        engine._fractal_by_normalized_index = {
+            fractal.normalized_index: position for position, fractal in enumerate(engine.fractals)
+        }
         engine.emitter = EventEmitter.from_state(state["emitter"])
         return engine
 

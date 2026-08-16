@@ -783,6 +783,7 @@ export interface components {
             bar_index: number;
             time: number;
             price_i64: number;
+            extreme_source_bar_index: number;
             /** @enum {unknown} */
             fractal_type: "top" | "bottom";
             confirmed: boolean;
@@ -795,9 +796,11 @@ export interface components {
             start_bar_index: number;
             start_time: number;
             start_price_i64: number;
+            start_extreme_source_bar_index: number;
             end_bar_index: number;
             end_time: number;
             end_price_i64: number;
+            end_extreme_source_bar_index: number;
             /** @enum {unknown} */
             direction: "up" | "down";
             confirmed: boolean;

@@ -51,6 +51,40 @@ def engine() -> ChanEngine:
     return ChanEngine(ChanParameters(checkpoint_interval=4))
 
 
+def assert_bi_use_processed_extremes(runtime: ChanEngine) -> None:
+    """断言每一笔都以包含处理后的 K 线闭区间方向极值作为端点。"""
+    for value in runtime.bi:
+        processed = runtime.included[value.start.normalized_index : value.end.normalized_index + 1]
+        range_high = max(item.high_i64 for item in processed)
+        range_low = min(item.low_i64 for item in processed)
+        if value.direction == "up":
+            assert (value.start.price_i64, value.end.price_i64) == (
+                range_low,
+                range_high,
+            )
+            assert (
+                value.start.extreme_source_bar_index
+                == runtime.included[value.start.normalized_index].low_raw_index
+            )
+            assert (
+                value.end.extreme_source_bar_index
+                == runtime.included[value.end.normalized_index].high_raw_index
+            )
+        else:
+            assert (value.start.price_i64, value.end.price_i64) == (
+                range_high,
+                range_low,
+            )
+            assert (
+                value.start.extreme_source_bar_index
+                == runtime.included[value.start.normalized_index].high_raw_index
+            )
+            assert (
+                value.end.extreme_source_bar_index
+                == runtime.included[value.end.normalized_index].low_raw_index
+            )
+
+
 def line(index: int, start_price: int, end_price: int) -> LineObject:
     """构造一条首尾相接的笔对象,供中枢扫描器测试使用。"""
     direction = "up" if end_price > start_price else "down"
@@ -112,6 +146,7 @@ def test_reference_fractal_is_sealed_by_the_right_independent_bar() -> None:
     fractal = runtime.fractals[0]
     assert fractal.fractal_type == "top"
     assert fractal.bar_index == 4
+    assert fractal.extreme_source_bar_index == 4
     assert fractal.confirmed_at_bar_index == 5
 
 
@@ -128,7 +163,10 @@ def test_reference_extremes_build_alternating_bi_and_confirmed_center() -> None:
     confirmed_bi = [item for item in rows["bi"] if item["confirmed"]]
     assert len(confirmed_bi) >= 3
     assert [item["direction"] for item in confirmed_bi[:3]] == ["down", "up", "down"]
-    assert all(item["end_bar_index"] - item["start_bar_index"] + 1 >= 5 for item in confirmed_bi)
+    assert all(
+        value.end.normalized_index - value.start.normalized_index + 1 >= 5 for value in runtime.bi
+    )
+    assert_bi_use_processed_extremes(runtime)
     assert rows["zhongshu"]
     center = rows["zhongshu"][0]
     assert center["zd_i64"] < center["zg_i64"]
@@ -137,13 +175,13 @@ def test_reference_extremes_build_alternating_bi_and_confirmed_center() -> None:
     assert center["known_at_bar_index"] >= center["confirmed_at_bar_index"]
 
 
-def test_kline_chart_reference_complex_endpoint_sequence_is_exact() -> None:
-    """测试 AOL9 前 60 根复杂近距离与包含关系的成笔金样本。
+def test_later_more_extreme_fractal_revises_existing_bi() -> None:
+    """测试同类后顶更高时是否淘汰旧顶并修订已经发布的笔。
 
-    预期:输出笔端点、方向和确认状态与跨仓库参考实现 `kline-chart/c_bi.py`
-    的金样本一致,并保持相邻笔首尾相接、方向严格交替。
+    预期:原先的 2714 顶和中间 2709 底不能保留为两条笔；后续 2730 有效顶
+    出现后，上涨笔直接延伸到该更高顶，并满足 processed_k 全区间极值规则。
     """
-    # AOL9 前 60 根包含近距离波动和包含关系,用于和参考实现进行金样本对齐。
+    # AOL9 前 60 根包含近距离波动和包含关系，可复现旧算法不修订已确认笔的问题。
     high_low = [
         (2716, 2702),
         (2715, 2711),
@@ -213,13 +251,53 @@ def test_kline_chart_reference_complex_endpoint_sequence_is_exact() -> None:
     assert [
         (item["start_bar_index"], item["end_bar_index"], item["direction"], item["confirmed"])
         for item in rows
-    ] == [
-        (3, 10, "up", True),
-        (10, 23, "down", True),
-        (23, 55, "up", False),
-    ]
+    ] == [(3, 55, "up", True)]
+    assert_bi_use_processed_extremes(runtime)
     assert all(left["end_bar_index"] == right["start_bar_index"] for left, right in pairwise(rows))
     assert all(left["direction"] != right["direction"] for left, right in pairwise(rows))
+
+
+def test_yl9_higher_top_replaces_screenshot_lower_top() -> None:
+    """测试 YL9 截图区间中 8578 后顶是否替换 8575 旧顶。
+
+    预期:包含处理后保留的 8578 顶成为上涨笔终点和下一下降笔起点；下降笔
+    到 8527 底结束，不能从 8575 旧顶出发并穿过更高的有效顶。
+    """
+    sample = Path(__file__).parents[2] / "trading-data" / "history" / "29#YL9.txt"
+    if not sample.is_file():
+        pytest.skip(f"唯一历史数据源中不存在完整测试文件：{sample}")
+    source_rows = sample.read_text(encoding="gb18030").splitlines()[2:]
+    runtime = engine()
+    for index in range(57_300, 57_530):
+        fields = [value.strip() for value in source_rows[index].split(",")]
+        runtime.update(
+            RawBar(
+                index,
+                1_700_000_000_000 + index * 300_000,
+                int(fields[2]),
+                int(fields[3]),
+                int(fields[4]),
+                int(fields[5]),
+            )
+        )
+
+    endpoints = [
+        (
+            value.start.bar_index,
+            value.start.price_i64,
+            value.end.bar_index,
+            value.end.price_i64,
+            value.direction,
+        )
+        for value in runtime.bi
+    ]
+    assert (57_453, 8552, 57_477, 8578, "up") in endpoints
+    assert (57_477, 8578, 57_515, 8527, "down") in endpoints
+    assert not any(
+        start_index == 57_469 and start_price == 8575 and direction == "down"
+        for start_index, start_price, _, _, direction in endpoints
+    )
+    assert_bi_use_processed_extremes(runtime)
 
 
 def test_algo_ui_segment_golden_for_aol9_prefix_is_exact() -> None:
@@ -283,7 +361,7 @@ def test_standard_segment_centers_and_third_points_are_causal_on_aol9() -> None:
             )
         )
     result = runtime.result_rows()
-    assert len(result["segment_zhongshu"]) == 4
+    assert len(result["segment_zhongshu"]) == 3
     assert all(value["zd_i64"] < value["zg_i64"] for value in result["segment_zhongshu"])
     assert all(
         value["analysis_level"] == "segment"
@@ -302,7 +380,6 @@ def test_standard_segment_centers_and_third_points_are_causal_on_aol9() -> None:
         for value in result["center_monitors"]
     )
     assert [(value["signal_type"], value["bar_index"]) for value in result["trade_points"]] == [
-        ("buy_3", 4206),
         ("buy_3", 4689),
     ]
     assert all(

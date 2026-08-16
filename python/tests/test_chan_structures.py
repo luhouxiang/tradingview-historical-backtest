@@ -114,11 +114,11 @@ def assert_connected_and_alternating(rows: list[dict[str, object]]) -> None:
     assert all(left["direction"] != right["direction"] for left, right in pairwise(rows))
 
 
-def test_bi_cases_cover_confirmed_up_down_and_current_unconfirmed_bi() -> None:
-    """测试笔的已确认状态和当前未确认状态。
+def test_bi_cases_cover_confirmed_up_and_down_directions() -> None:
+    """测试已完成笔是否覆盖上涨和下降两种方向。
 
-    预期:已完成笔同时包含 `up` 和 `down`,相邻笔只共享一个端点且方向交替;
-    等待后续分型时,只有最后一笔保持未确认。
+    预期:输出笔同时包含 `up` 和 `down`,每条笔均由已确认分型构成；相邻笔
+    只共享一个端点且方向严格交替，不把尚未形成分型的行情预览冒充为笔。
     """
     runtime = run_levels(([0, 1, 2, 3, 4, 3, 2, 1] * 4) + [0])
     rows = runtime.result_rows()["bi"]
@@ -130,25 +130,27 @@ def test_bi_cases_cover_confirmed_up_down_and_current_unconfirmed_bi() -> None:
         ("up", True),
         ("down", True),
     ]
-    assert rows[-1]["confirmed"] is False
-    assert rows[-1]["confirmed_at_bar_index"] is None
-    assert {row["direction"] for row in rows if row["confirmed"]} == {"up", "down"}
+    assert all(row["confirmed"] is True for row in rows)
+    assert all(row["confirmed_at_bar_index"] is not None for row in rows)
+    assert {row["direction"] for row in rows} == {"up", "down"}
     assert_connected_and_alternating(rows)
 
 
 def test_bi_minimum_independent_bar_rule_blocks_too_short_confirmations() -> None:
     """测试五根独立 K 线成笔门槛和同类分型替换。
 
-    预期:快速交替分型不会生成确认笔;引擎仅保留一条向下临时笔,并在满足
-    可观察距离后使用更极端的底分型候选作为端点。
+    预期:不足五根独立 K 线的快速交替分型不会各自成笔；最终只保留一条
+    从区间最低底到最高顶、跨度满足门槛的已确认上涨笔。
     """
     runtime = run_levels([0, 3, 1, 4, 2, 5, 1, 6, 0, 7, 1, 8, 0])
     rows = runtime.result_rows()["bi"]
 
-    assert [row["confirmed"] for row in rows] == [False]
-    assert rows[0]["direction"] == "down"
-    assert rows[0]["start_bar_index"] == 1
-    assert rows[0]["end_bar_index"] == 8
+    assert [row["confirmed"] for row in rows] == [True]
+    assert rows[0]["direction"] == "up"
+    assert rows[0]["start_bar_index"] == 2
+    assert rows[0]["end_bar_index"] == 7
+    assert rows[0]["start_price_i64"] == min(item.low_i64 for item in runtime.included[2:8])
+    assert rows[0]["end_price_i64"] == max(item.high_i64 for item in runtime.included[2:8])
 
 
 @pytest.mark.parametrize(
@@ -284,8 +286,7 @@ def test_segment_zhongshu_cases_use_positive_width_segment_core() -> None:
     centers = [center for center in reference_centers(lines) if center.zd_i64 < center.zg_i64]
 
     assert [
-        (center.status, center.leave_direction, center.zd_i64, center.zg_i64)
-        for center in centers
+        (center.status, center.leave_direction, center.zd_i64, center.zg_i64) for center in centers
     ] == [("left", "up", 2, 10)]
     components = lines[centers[0].base_index : centers[0].end_index + 1]
     dd_i64 = min(min(line.start.price_i64, line.end.price_i64) for line in components)

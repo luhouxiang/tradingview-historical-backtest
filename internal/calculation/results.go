@@ -141,30 +141,33 @@ func readResults(guard *storage.PathGuard, jobID, cacheKey, resultRef string, fr
 }
 
 type ChanFractal struct {
-	ObjectID            string `json:"object_id" parquet:"object_id"`
-	BarIndex            int64  `json:"bar_index" parquet:"bar_index"`
-	Time                int64  `json:"time" parquet:"time"`
-	PriceI64            int64  `json:"price_i64" parquet:"price_i64"`
-	FractalType         string `json:"fractal_type" parquet:"fractal_type"`
-	Confirmed           bool   `json:"confirmed" parquet:"confirmed"`
-	ConfirmedAtBarIndex *int64 `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index,optional"`
-	KnownAtBarIndex     int64  `json:"known_at_bar_index" parquet:"known_at_bar_index"`
-	ObjectRevision      int64  `json:"object_revision" parquet:"object_revision"`
+	ObjectID              string `json:"object_id" parquet:"object_id"`
+	BarIndex              int64  `json:"bar_index" parquet:"bar_index"`
+	Time                  int64  `json:"time" parquet:"time"`
+	PriceI64              int64  `json:"price_i64" parquet:"price_i64"`
+	ExtremeSourceBarIndex int64  `json:"extreme_source_bar_index" parquet:"extreme_source_bar_index"`
+	FractalType           string `json:"fractal_type" parquet:"fractal_type"`
+	Confirmed             bool   `json:"confirmed" parquet:"confirmed"`
+	ConfirmedAtBarIndex   *int64 `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index,optional"`
+	KnownAtBarIndex       int64  `json:"known_at_bar_index" parquet:"known_at_bar_index"`
+	ObjectRevision        int64  `json:"object_revision" parquet:"object_revision"`
 }
 
 type ChanLineObject struct {
-	ObjectID            string `json:"object_id" parquet:"object_id"`
-	StartBarIndex       int64  `json:"start_bar_index" parquet:"start_bar_index"`
-	StartTime           int64  `json:"start_time" parquet:"start_time"`
-	StartPriceI64       int64  `json:"start_price_i64" parquet:"start_price_i64"`
-	EndBarIndex         int64  `json:"end_bar_index" parquet:"end_bar_index"`
-	EndTime             int64  `json:"end_time" parquet:"end_time"`
-	EndPriceI64         int64  `json:"end_price_i64" parquet:"end_price_i64"`
-	Direction           string `json:"direction" parquet:"direction"`
-	Confirmed           bool   `json:"confirmed" parquet:"confirmed"`
-	ConfirmedAtBarIndex *int64 `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index,optional"`
-	KnownAtBarIndex     int64  `json:"known_at_bar_index" parquet:"known_at_bar_index"`
-	ObjectRevision      int64  `json:"object_revision" parquet:"object_revision"`
+	ObjectID                   string `json:"object_id" parquet:"object_id"`
+	StartBarIndex              int64  `json:"start_bar_index" parquet:"start_bar_index"`
+	StartTime                  int64  `json:"start_time" parquet:"start_time"`
+	StartPriceI64              int64  `json:"start_price_i64" parquet:"start_price_i64"`
+	StartExtremeSourceBarIndex int64  `json:"start_extreme_source_bar_index" parquet:"start_extreme_source_bar_index"`
+	EndBarIndex                int64  `json:"end_bar_index" parquet:"end_bar_index"`
+	EndTime                    int64  `json:"end_time" parquet:"end_time"`
+	EndPriceI64                int64  `json:"end_price_i64" parquet:"end_price_i64"`
+	EndExtremeSourceBarIndex   int64  `json:"end_extreme_source_bar_index" parquet:"end_extreme_source_bar_index"`
+	Direction                  string `json:"direction" parquet:"direction"`
+	Confirmed                  bool   `json:"confirmed" parquet:"confirmed"`
+	ConfirmedAtBarIndex        *int64 `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index,optional"`
+	KnownAtBarIndex            int64  `json:"known_at_bar_index" parquet:"known_at_bar_index"`
+	ObjectRevision             int64  `json:"object_revision" parquet:"object_revision"`
 }
 
 type ChanZhongshu struct {

@@ -6,6 +6,7 @@ function objects(count: number): ChanCalculationResults['objects'] {
   return {
     fractals: Array.from({ length: count }, (_, index) => ({
       object_id: `fractal-${index}`, bar_index: index, time: index * 60_000, price_i64: 1000 + index,
+      extreme_source_bar_index: index,
       fractal_type: index % 2 ? 'top' as const : 'bottom' as const, confirmed: index % 3 !== 0,
       confirmed_at_bar_index: index + 2, known_at_bar_index: index + 2, object_revision: 1,
     })),

@@ -1,8 +1,10 @@
-# 缠论从独立K线到笔的详细算法说明文档
+# 缠论从独立K线到笔的详细算法说明文档（5.0.0 历史归档）
+
+> 本文记录算法 5.0.0，不能作为当前实现依据。算法 6.0.0 已删除本文第 4 章描述的待处理分型队列、后续价格分离确认和临时笔；当前笔必须满足包含处理后 K 线闭区间方向极值规则。请以 `DECISIONS.md` 的 C-040 和 `docs/13-chan-bi-center-segment-algorithm.md` 为准。
 
 更新日期：2026-08-10
 
-适用实现：`python/src/tvbt/chan/engine.py` 中 `ChanEngine.algorithm_version = "5.0.0"`。
+历史适用实现：`ChanEngine.algorithm_version = "5.0.0"`，不适用于当前 6.0.0。
 
 本文只说明从原始 K 线到独立 K 线、包含关系、分型、笔、笔中枢的程序算法和工程表达。段、段中枢、背驰、买卖点只在必要处作为边界提及，详细规则见 `docs/13-chan-bi-center-segment-algorithm.md` 和 `docs/14-chan-108-segment-center-divergence-trade-points.md`。
 

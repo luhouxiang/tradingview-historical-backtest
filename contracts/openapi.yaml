@@ -1227,12 +1227,23 @@ components:
     ChanFractal:
       type: object
       additionalProperties: false
-      required: [object_id, bar_index, time, price_i64, fractal_type, confirmed, confirmed_at_bar_index, known_at_bar_index, object_revision]
+      required:
+        - object_id
+        - bar_index
+        - time
+        - price_i64
+        - extreme_source_bar_index
+        - fractal_type
+        - confirmed
+        - confirmed_at_bar_index
+        - known_at_bar_index
+        - object_revision
       properties:
         object_id: {type: string, minLength: 1}
         bar_index: {type: integer, minimum: 0}
         time: {type: integer}
         price_i64: {type: integer}
+        extreme_source_bar_index: {type: integer, minimum: 0}
         fractal_type: {enum: [top, bottom]}
         confirmed: {type: boolean}
         confirmed_at_bar_index: {type: [integer, "null"], minimum: 0}
@@ -1242,15 +1253,31 @@ components:
     ChanLineObject:
       type: object
       additionalProperties: false
-      required: [object_id, start_bar_index, start_time, start_price_i64, end_bar_index, end_time, end_price_i64, direction, confirmed, confirmed_at_bar_index, known_at_bar_index, object_revision]
+      required:
+        - object_id
+        - start_bar_index
+        - start_time
+        - start_price_i64
+        - start_extreme_source_bar_index
+        - end_bar_index
+        - end_time
+        - end_price_i64
+        - end_extreme_source_bar_index
+        - direction
+        - confirmed
+        - confirmed_at_bar_index
+        - known_at_bar_index
+        - object_revision
       properties:
         object_id: {type: string, minLength: 1}
         start_bar_index: {type: integer, minimum: 0}
         start_time: {type: integer}
         start_price_i64: {type: integer}
+        start_extreme_source_bar_index: {type: integer, minimum: 0}
         end_bar_index: {type: integer, minimum: 0}
         end_time: {type: integer}
         end_price_i64: {type: integer}
+        end_extreme_source_bar_index: {type: integer, minimum: 0}
         direction: {enum: [up, down]}
         confirmed: {type: boolean}
         confirmed_at_bar_index: {type: [integer, "null"], minimum: 0}

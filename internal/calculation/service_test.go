@@ -239,8 +239,8 @@ func TestChanCacheHitAndSemanticRangeRead(t *testing.T) {
 		t.Fatal(err)
 	}
 	confirmedAt := int64(14)
-	fractals := []ChanFractal{{ObjectID: "fractal-1", BarIndex: 10, Time: 1000, PriceI64: 110, FractalType: "top", Confirmed: true, ConfirmedAtBarIndex: &confirmedAt, KnownAtBarIndex: 12, ObjectRevision: 1}}
-	lines := []ChanLineObject{{ObjectID: "bi-1", StartBarIndex: 10, StartTime: 1000, StartPriceI64: 110, EndBarIndex: 20, EndTime: 2000, EndPriceI64: 90, Direction: "down", Confirmed: true, ConfirmedAtBarIndex: &confirmedAt, KnownAtBarIndex: 14, ObjectRevision: 2}}
+	fractals := []ChanFractal{{ObjectID: "fractal-1", BarIndex: 10, Time: 1000, PriceI64: 110, ExtremeSourceBarIndex: 10, FractalType: "top", Confirmed: true, ConfirmedAtBarIndex: &confirmedAt, KnownAtBarIndex: 12, ObjectRevision: 1}}
+	lines := []ChanLineObject{{ObjectID: "bi-1", StartBarIndex: 10, StartTime: 1000, StartPriceI64: 110, StartExtremeSourceBarIndex: 10, EndBarIndex: 20, EndTime: 2000, EndPriceI64: 90, EndExtremeSourceBarIndex: 20, Direction: "down", Confirmed: true, ConfirmedAtBarIndex: &confirmedAt, KnownAtBarIndex: 14, ObjectRevision: 2}}
 	centres := []ChanZhongshu{{ObjectID: "zhongshu-1", StartBarIndex: 18, StartTime: 1800, EndBarIndex: 30, EndTime: 3000, ZGI64: 105, ZDI64: 95, Confirmed: false, KnownAtBarIndex: 30, ObjectRevision: 1}}
 	signals := []ChanSignalPoint{{ObjectID: "signal-1", BarIndex: 20, Time: 2000, PriceI64: 90, SignalType: "buy_1", Confirmed: true, ConfirmedAtBarIndex: &confirmedAt, KnownAtBarIndex: 20, ObjectRevision: 1}}
 	for name, value := range map[string]any{"fractals.parquet": fractals, "bi.parquet": lines, "segments.parquet": lines, "zhongshu.parquet": centres, "segment_zhongshu.parquet": centres, "movement_states.parquet": []ChanMovementState{}, "center_monitors.parquet": []ChanCenterMonitor{}, "divergences.parquet": signals, "trade_points.parquet": signals, "events.parquet": []chanEventTestRow{}} {
@@ -279,6 +279,9 @@ func TestChanCacheHitAndSemanticRangeRead(t *testing.T) {
 	}
 	if result.ResultKind != "chan" || result.Objects == nil || len(result.Objects.Fractals) != 0 || len(result.Objects.Bi) != 1 || len(result.Objects.Segments) != 1 || len(result.Objects.Zhongshu) != 1 || len(result.Objects.SegmentZhongshu) != 1 || len(result.Objects.Divergences) != 1 || len(result.Objects.TradePoints) != 1 || result.Coverage.ReturnedCount != 6 {
 		t.Fatalf("unexpected Chan range result: %#v", result)
+	}
+	if result.Objects.Bi[0].StartExtremeSourceBarIndex != 10 || result.Objects.Bi[0].EndExtremeSourceBarIndex != 20 {
+		t.Fatalf("unexpected Chan extreme source indexes: %#v", result.Objects.Bi[0])
 	}
 }
 

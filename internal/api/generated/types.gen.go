@@ -1944,18 +1944,20 @@ type CalculationResults struct {
 	JobId        string `json:"job_id"`
 	Objects      *struct {
 		Bi []struct {
-			Confirmed           bool        `json:"confirmed"`
-			ConfirmedAtBarIndex *int        `json:"confirmed_at_bar_index"`
-			Direction           interface{} `json:"direction"`
-			EndBarIndex         int         `json:"end_bar_index"`
-			EndPriceI64         int         `json:"end_price_i64"`
-			EndTime             int         `json:"end_time"`
-			KnownAtBarIndex     int         `json:"known_at_bar_index"`
-			ObjectId            string      `json:"object_id"`
-			ObjectRevision      int         `json:"object_revision"`
-			StartBarIndex       int         `json:"start_bar_index"`
-			StartPriceI64       int         `json:"start_price_i64"`
-			StartTime           int         `json:"start_time"`
+			Confirmed                  bool        `json:"confirmed"`
+			ConfirmedAtBarIndex        *int        `json:"confirmed_at_bar_index"`
+			Direction                  interface{} `json:"direction"`
+			EndBarIndex                int         `json:"end_bar_index"`
+			EndExtremeSourceBarIndex   int         `json:"end_extreme_source_bar_index"`
+			EndPriceI64                int         `json:"end_price_i64"`
+			EndTime                    int         `json:"end_time"`
+			KnownAtBarIndex            int         `json:"known_at_bar_index"`
+			ObjectId                   string      `json:"object_id"`
+			ObjectRevision             int         `json:"object_revision"`
+			StartBarIndex              int         `json:"start_bar_index"`
+			StartExtremeSourceBarIndex int         `json:"start_extreme_source_bar_index"`
+			StartPriceI64              int         `json:"start_price_i64"`
+			StartTime                  int         `json:"start_time"`
 		} `json:"bi"`
 		CenterMonitors []struct {
 			AnalysisLevel       string                                                    `json:"analysis_level"`
@@ -1994,15 +1996,16 @@ type CalculationResults struct {
 			Time                int                                                 `json:"time"`
 		} `json:"divergences"`
 		Fractals []struct {
-			BarIndex            int         `json:"bar_index"`
-			Confirmed           bool        `json:"confirmed"`
-			ConfirmedAtBarIndex *int        `json:"confirmed_at_bar_index"`
-			FractalType         interface{} `json:"fractal_type"`
-			KnownAtBarIndex     int         `json:"known_at_bar_index"`
-			ObjectId            string      `json:"object_id"`
-			ObjectRevision      int         `json:"object_revision"`
-			PriceI64            int         `json:"price_i64"`
-			Time                int         `json:"time"`
+			BarIndex              int         `json:"bar_index"`
+			Confirmed             bool        `json:"confirmed"`
+			ConfirmedAtBarIndex   *int        `json:"confirmed_at_bar_index"`
+			ExtremeSourceBarIndex int         `json:"extreme_source_bar_index"`
+			FractalType           interface{} `json:"fractal_type"`
+			KnownAtBarIndex       int         `json:"known_at_bar_index"`
+			ObjectId              string      `json:"object_id"`
+			ObjectRevision        int         `json:"object_revision"`
+			PriceI64              int         `json:"price_i64"`
+			Time                  int         `json:"time"`
 		} `json:"fractals"`
 		MovementStates []struct {
 			AnalysisLevel       string                                            `json:"analysis_level"`
@@ -2042,18 +2045,20 @@ type CalculationResults struct {
 			ZgI64               int                                                     `json:"zg_i64"`
 		} `json:"segment_zhongshu"`
 		Segments []struct {
-			Confirmed           bool        `json:"confirmed"`
-			ConfirmedAtBarIndex *int        `json:"confirmed_at_bar_index"`
-			Direction           interface{} `json:"direction"`
-			EndBarIndex         int         `json:"end_bar_index"`
-			EndPriceI64         int         `json:"end_price_i64"`
-			EndTime             int         `json:"end_time"`
-			KnownAtBarIndex     int         `json:"known_at_bar_index"`
-			ObjectId            string      `json:"object_id"`
-			ObjectRevision      int         `json:"object_revision"`
-			StartBarIndex       int         `json:"start_bar_index"`
-			StartPriceI64       int         `json:"start_price_i64"`
-			StartTime           int         `json:"start_time"`
+			Confirmed                  bool        `json:"confirmed"`
+			ConfirmedAtBarIndex        *int        `json:"confirmed_at_bar_index"`
+			Direction                  interface{} `json:"direction"`
+			EndBarIndex                int         `json:"end_bar_index"`
+			EndExtremeSourceBarIndex   int         `json:"end_extreme_source_bar_index"`
+			EndPriceI64                int         `json:"end_price_i64"`
+			EndTime                    int         `json:"end_time"`
+			KnownAtBarIndex            int         `json:"known_at_bar_index"`
+			ObjectId                   string      `json:"object_id"`
+			ObjectRevision             int         `json:"object_revision"`
+			StartBarIndex              int         `json:"start_bar_index"`
+			StartExtremeSourceBarIndex int         `json:"start_extreme_source_bar_index"`
+			StartPriceI64              int         `json:"start_price_i64"`
+			StartTime                  int         `json:"start_time"`
 		} `json:"segments"`
 		TradePoints []struct {
 			BarIndex            int                                                 `json:"bar_index"`
@@ -2205,31 +2210,34 @@ type ChanCenterMonitorStrength string
 
 // ChanFractal defines model for ChanFractal.
 type ChanFractal struct {
-	BarIndex            int         `json:"bar_index"`
-	Confirmed           bool        `json:"confirmed"`
-	ConfirmedAtBarIndex *int        `json:"confirmed_at_bar_index"`
-	FractalType         interface{} `json:"fractal_type"`
-	KnownAtBarIndex     int         `json:"known_at_bar_index"`
-	ObjectId            string      `json:"object_id"`
-	ObjectRevision      int         `json:"object_revision"`
-	PriceI64            int         `json:"price_i64"`
-	Time                int         `json:"time"`
+	BarIndex              int         `json:"bar_index"`
+	Confirmed             bool        `json:"confirmed"`
+	ConfirmedAtBarIndex   *int        `json:"confirmed_at_bar_index"`
+	ExtremeSourceBarIndex int         `json:"extreme_source_bar_index"`
+	FractalType           interface{} `json:"fractal_type"`
+	KnownAtBarIndex       int         `json:"known_at_bar_index"`
+	ObjectId              string      `json:"object_id"`
+	ObjectRevision        int         `json:"object_revision"`
+	PriceI64              int         `json:"price_i64"`
+	Time                  int         `json:"time"`
 }
 
 // ChanLineObject defines model for ChanLineObject.
 type ChanLineObject struct {
-	Confirmed           bool        `json:"confirmed"`
-	ConfirmedAtBarIndex *int        `json:"confirmed_at_bar_index"`
-	Direction           interface{} `json:"direction"`
-	EndBarIndex         int         `json:"end_bar_index"`
-	EndPriceI64         int         `json:"end_price_i64"`
-	EndTime             int         `json:"end_time"`
-	KnownAtBarIndex     int         `json:"known_at_bar_index"`
-	ObjectId            string      `json:"object_id"`
-	ObjectRevision      int         `json:"object_revision"`
-	StartBarIndex       int         `json:"start_bar_index"`
-	StartPriceI64       int         `json:"start_price_i64"`
-	StartTime           int         `json:"start_time"`
+	Confirmed                  bool        `json:"confirmed"`
+	ConfirmedAtBarIndex        *int        `json:"confirmed_at_bar_index"`
+	Direction                  interface{} `json:"direction"`
+	EndBarIndex                int         `json:"end_bar_index"`
+	EndExtremeSourceBarIndex   int         `json:"end_extreme_source_bar_index"`
+	EndPriceI64                int         `json:"end_price_i64"`
+	EndTime                    int         `json:"end_time"`
+	KnownAtBarIndex            int         `json:"known_at_bar_index"`
+	ObjectId                   string      `json:"object_id"`
+	ObjectRevision             int         `json:"object_revision"`
+	StartBarIndex              int         `json:"start_bar_index"`
+	StartExtremeSourceBarIndex int         `json:"start_extreme_source_bar_index"`
+	StartPriceI64              int         `json:"start_price_i64"`
+	StartTime                  int         `json:"start_time"`
 }
 
 // ChanMovementState defines model for ChanMovementState.
@@ -2259,18 +2267,20 @@ type ChanMovementStateStateType string
 // ChanObjects defines model for ChanObjects.
 type ChanObjects struct {
 	Bi []struct {
-		Confirmed           bool        `json:"confirmed"`
-		ConfirmedAtBarIndex *int        `json:"confirmed_at_bar_index"`
-		Direction           interface{} `json:"direction"`
-		EndBarIndex         int         `json:"end_bar_index"`
-		EndPriceI64         int         `json:"end_price_i64"`
-		EndTime             int         `json:"end_time"`
-		KnownAtBarIndex     int         `json:"known_at_bar_index"`
-		ObjectId            string      `json:"object_id"`
-		ObjectRevision      int         `json:"object_revision"`
-		StartBarIndex       int         `json:"start_bar_index"`
-		StartPriceI64       int         `json:"start_price_i64"`
-		StartTime           int         `json:"start_time"`
+		Confirmed                  bool        `json:"confirmed"`
+		ConfirmedAtBarIndex        *int        `json:"confirmed_at_bar_index"`
+		Direction                  interface{} `json:"direction"`
+		EndBarIndex                int         `json:"end_bar_index"`
+		EndExtremeSourceBarIndex   int         `json:"end_extreme_source_bar_index"`
+		EndPriceI64                int         `json:"end_price_i64"`
+		EndTime                    int         `json:"end_time"`
+		KnownAtBarIndex            int         `json:"known_at_bar_index"`
+		ObjectId                   string      `json:"object_id"`
+		ObjectRevision             int         `json:"object_revision"`
+		StartBarIndex              int         `json:"start_bar_index"`
+		StartExtremeSourceBarIndex int         `json:"start_extreme_source_bar_index"`
+		StartPriceI64              int         `json:"start_price_i64"`
+		StartTime                  int         `json:"start_time"`
 	} `json:"bi"`
 	CenterMonitors []struct {
 		AnalysisLevel       string                                      `json:"analysis_level"`
@@ -2309,15 +2319,16 @@ type ChanObjects struct {
 		Time                int                                   `json:"time"`
 	} `json:"divergences"`
 	Fractals []struct {
-		BarIndex            int         `json:"bar_index"`
-		Confirmed           bool        `json:"confirmed"`
-		ConfirmedAtBarIndex *int        `json:"confirmed_at_bar_index"`
-		FractalType         interface{} `json:"fractal_type"`
-		KnownAtBarIndex     int         `json:"known_at_bar_index"`
-		ObjectId            string      `json:"object_id"`
-		ObjectRevision      int         `json:"object_revision"`
-		PriceI64            int         `json:"price_i64"`
-		Time                int         `json:"time"`
+		BarIndex              int         `json:"bar_index"`
+		Confirmed             bool        `json:"confirmed"`
+		ConfirmedAtBarIndex   *int        `json:"confirmed_at_bar_index"`
+		ExtremeSourceBarIndex int         `json:"extreme_source_bar_index"`
+		FractalType           interface{} `json:"fractal_type"`
+		KnownAtBarIndex       int         `json:"known_at_bar_index"`
+		ObjectId              string      `json:"object_id"`
+		ObjectRevision        int         `json:"object_revision"`
+		PriceI64              int         `json:"price_i64"`
+		Time                  int         `json:"time"`
 	} `json:"fractals"`
 	MovementStates []struct {
 		AnalysisLevel       string                              `json:"analysis_level"`
@@ -2357,18 +2368,20 @@ type ChanObjects struct {
 		ZgI64               int                                       `json:"zg_i64"`
 	} `json:"segment_zhongshu"`
 	Segments []struct {
-		Confirmed           bool        `json:"confirmed"`
-		ConfirmedAtBarIndex *int        `json:"confirmed_at_bar_index"`
-		Direction           interface{} `json:"direction"`
-		EndBarIndex         int         `json:"end_bar_index"`
-		EndPriceI64         int         `json:"end_price_i64"`
-		EndTime             int         `json:"end_time"`
-		KnownAtBarIndex     int         `json:"known_at_bar_index"`
-		ObjectId            string      `json:"object_id"`
-		ObjectRevision      int         `json:"object_revision"`
-		StartBarIndex       int         `json:"start_bar_index"`
-		StartPriceI64       int         `json:"start_price_i64"`
-		StartTime           int         `json:"start_time"`
+		Confirmed                  bool        `json:"confirmed"`
+		ConfirmedAtBarIndex        *int        `json:"confirmed_at_bar_index"`
+		Direction                  interface{} `json:"direction"`
+		EndBarIndex                int         `json:"end_bar_index"`
+		EndExtremeSourceBarIndex   int         `json:"end_extreme_source_bar_index"`
+		EndPriceI64                int         `json:"end_price_i64"`
+		EndTime                    int         `json:"end_time"`
+		KnownAtBarIndex            int         `json:"known_at_bar_index"`
+		ObjectId                   string      `json:"object_id"`
+		ObjectRevision             int         `json:"object_revision"`
+		StartBarIndex              int         `json:"start_bar_index"`
+		StartExtremeSourceBarIndex int         `json:"start_extreme_source_bar_index"`
+		StartPriceI64              int         `json:"start_price_i64"`
+		StartTime                  int         `json:"start_time"`
 	} `json:"segments"`
 	TradePoints []struct {
 		BarIndex            int                                   `json:"bar_index"`
