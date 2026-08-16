@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import threading
@@ -14,11 +14,10 @@ from tvbt.testing.logging_proxy import logger
 
 
 def _write_chan_dataset(root: Path, *, count: int = 25) -> dict[str, str]:
-    """Create the minimum normalized dataset that algorithm.py expects.
+    """创建 `algorithm.py` 所需的最小标准化数据集。
 
-    algorithm.py does not scan history files.  Callers must pass explicit
-    data_root-relative `bars_path` and `meta_path` fields, so the test builds
-    those files exactly as Go would.
+    缠论算法入口不会自行扫描历史目录,调用方必须显式传入相对 data_root
+    的 `bars_path` 和 `meta_path`,因此这里按 Go 侧会生成的形态构造文件。
     """
     dataset_dir = root / "normalized" / "TEST.CHAN.1m" / "revision"
     dataset_dir.mkdir(parents=True)
@@ -32,6 +31,7 @@ def _write_chan_dataset(root: Path, *, count: int = 25) -> dict[str, str]:
                     [1_700_000_000_000 + index * 60_000 for index in range(count)],
                     type=pa.int64(),
                 ),
+                "open_i64": pa.array([value * 10 + 1 for value in values], type=pa.int64()),
                 "high_i64": pa.array([value * 10 + 5 for value in values], type=pa.int64()),
                 "low_i64": pa.array([value * 10 for value in values], type=pa.int64()),
                 "close_i64": pa.array([value * 10 + 2 for value in values], type=pa.int64()),
@@ -49,6 +49,7 @@ def _write_chan_dataset(root: Path, *, count: int = 25) -> dict[str, str]:
 
 
 def _payload(root: Path, *, output_path: str = "cache/chan/key") -> dict[str, object]:
+    """创建缠论计算任务载荷,供入口函数测试复用。"""
     paths = _write_chan_dataset(root)
     spec = definition()
     return {
@@ -68,10 +69,10 @@ def _payload(root: Path, *, output_path: str = "cache/chan/key") -> dict[str, ob
 
 
 def test_source_hash_is_stable_sha256_and_is_published_by_definition() -> None:
-    """Use `_source_hash()` only as the implementation identity for cache keys.
+    """测试源码哈希是否可作为缠论实现身份参与缓存键。
 
-    Expected: it is deterministic in one process, has the public `sha256:`
-    format, and `definition()` publishes exactly the same value for Go callers.
+    预期:同一进程内多次计算结果一致,格式为公开的 `sha256:` 前缀加
+    64 位十六进制摘要,并且 `definition()` 对 Go 调用方发布同一个值。
     """
     first = _source_hash()
     second = _source_hash()
@@ -84,10 +85,10 @@ def test_source_hash_is_stable_sha256_and_is_published_by_definition() -> None:
 
 
 def test_definition_documents_how_go_and_vue_should_call_chan() -> None:
-    """Use `definition()` to discover the only valid algorithm identity.
+    """测试缠论算法定义是否完整描述 Go 和 Vue 的调用契约。
 
-    Expected: callers copy the identity fields into calculation payloads, use
-    `causal_events`, and only configure the documented `checkpoint_interval`.
+    预期:定义中包含唯一有效的算法身份、因果计算模式、可配置的检查点参数,
+    以及前端对象树和图层需要使用的全部输出对象类型。
     """
     spec = definition()
 
@@ -112,10 +113,10 @@ def test_definition_documents_how_go_and_vue_should_call_chan() -> None:
 
 
 def test_run_chan_reads_declared_parquet_and_can_stop_at_a_prefix(tmp_path: Path) -> None:
-    """Use `run_chan()` when a caller needs the in-memory engine state.
+    """测试 `run_chan()` 是否只读取声明的 Parquet 并支持前缀停止。
 
-    Expected: it reads only the declared Parquet columns, starts from the first
-    bar, stops after `last_bar_index`, and does not write cache files itself.
+    预期:它从数据集第一根 K 线开始逐根运行,到 `last_bar_index` 停止,
+    可按间隔产生内存检查点,但不会自行写入正式缓存目录。
     """
     payload = _payload(tmp_path)
     guard = PathGuard(tmp_path)
@@ -126,18 +127,21 @@ def test_run_chan_reads_declared_parquet_and_can_stop_at_a_prefix(tmp_path: Path
 
     assert indices == list(range(11))
     assert [bar.bar_index for bar in runtime.raw_bars] == indices
+    assert [bar.open_i64 for bar in runtime.raw_bars] == [
+        value * 10 + 1 for value in [0, 1, 2, 3, 4, 3, 2, 1, 0, 1, 2]
+    ]
     assert checkpoints.keys() == {3, 7}
     assert not (tmp_path / "cache").exists()
 
 
 def test_run_chan_rejects_payloads_not_matching_the_current_definition(tmp_path: Path) -> None:
-    """Use the exact identity from `definition()`; stale algorithm metadata is invalid.
+    """测试入口是否拒绝与当前定义不一致的算法身份。
 
-    Expected: changing version/hash/kind/id fails before any result is trusted,
-    preventing old Chan caches from being reused with new semantics.
+    预期:篡改版本、源码哈希、算法类型或算法 ID 时立即失败,避免旧缠论缓存
+    被错误复用于新语义。
     """
     payload = _payload(tmp_path)
-    algorithm = dict(payload["algorithm"])  # type: ignore[arg-type]
+    algorithm = dict(payload["algorithm"])
     algorithm["source_hash"] = "sha256:" + "0" * 64
     payload["algorithm"] = algorithm
 
@@ -146,10 +150,10 @@ def test_run_chan_rejects_payloads_not_matching_the_current_definition(tmp_path:
 
 
 def test_run_chan_honors_cancellation_before_finishing(tmp_path: Path) -> None:
-    """Use the `cancelled` event to abort long calculations cooperatively.
+    """测试取消标记是否能中止缠论长任务。
 
-    Expected: a set event raises `InterruptedError` and returns no partial
-    runtime to callers.
+    预期:调用前已经设置取消标记时抛出 `InterruptedError`,不向调用方返回
+    可能被误用的半成品运行状态。
     """
     payload = _payload(tmp_path, output_path="cache/chan/cancelled")
     cancelled = threading.Event()
@@ -160,11 +164,10 @@ def test_run_chan_honors_cancellation_before_finishing(tmp_path: Path) -> None:
 
 
 def test_calculate_chan_writes_the_causal_cache_contract(tmp_path: Path) -> None:
-    """Use `calculate_chan()` for the normal Go calculation task path.
+    """测试 `calculate_chan()` 是否写出完整的因果缓存契约。
 
-    Expected: it returns a data_root-relative cache directory, writes `_SUCCESS`
-    last, emits all contract Parquet files, and records manifest coverage and
-    checkpoint metadata.
+    预期:返回 data_root 相对缓存目录,最终写出 `_SUCCESS`,生成所有契约
+    Parquet 文件,并在 manifest 中记录覆盖范围和检查点元数据。
     """
     payload = _payload(tmp_path, output_path="cache/chan/full")
     result_ref = calculate_chan(payload, PathGuard(tmp_path), threading.Event())
@@ -195,14 +198,13 @@ def test_calculate_chan_writes_the_causal_cache_contract(tmp_path: Path) -> None
 
 
 def test_calculate_chan_writes_structured_runtime_logs(tmp_path: Path) -> None:
-    """Use the process runtime logger to observe Chan algorithm milestones.
+    """测试缠论计算是否输出结构化运行日志。
 
-    Expected: callers use the process runtime logger configured by
-    `logging_proxy`, and Chan calculation writes fixed-text events to screen.
+    预期:计算路径使用 `logging_proxy` 配置的进程级日志器,并输出固定文本格式
+    的阶段日志,便于 Go 侧和人工排查任务状态。
     """
     payload = _payload(tmp_path, output_path="cache/chan/logged")
     payload["job_id"] = "job-chan-log"
     payload["trace_id"] = "trace-chan-log"
     calculate_chan(payload, PathGuard(tmp_path), threading.Event())
     logger.info("Chan runtime log smoke completed")
-

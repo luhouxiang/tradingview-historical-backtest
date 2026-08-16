@@ -74,8 +74,7 @@ Codex 开工前必须按以下顺序阅读：
 │   ├── examples/
 │   └── schemas/
 ├── docs/
-├── examples/
-└── samples/                         # 原样只读的通达信测试数据
+└── examples/
 ~~~
 
 本包是规范，不含业务实现代码。实际项目建议采用：
@@ -142,7 +141,7 @@ npm ci
 从仓库根目录运行：
 
 ~~~powershell
-# 一键准备样例、启动三端、导入行情并打开浏览器
+# 使用唯一历史数据源启动三端、导入行情并打开浏览器
 ./scripts/start-tvbt.ps1
 # 也可直接双击仓库根目录的“启动程序.cmd”
 
@@ -167,23 +166,26 @@ npm ci
 ./scripts/smoke-milestone0.ps1
 ~~~
 
-一键入口只在缺失时复制 `samples/30#AOL9.txt`，并以原子合并方式补充该样例所需的品种与交易日历配置，不覆盖已有历史文件；随后扫描、
+一键入口只使用 `trading-data/history/30#AOL9.txt` 这一持久行情源，并以原子合并方式补充该数据所需的品种与交易日历配置，不覆盖已有历史文件；随后扫描、
 导入并让前端优先选择 AOL9 数据集，因此页面打开后直接显示 K 线。底部选择“回测”并点击
 “开始正式回测”即可完成回测。Ctrl+C 会停止本次启动的精确进程树。
 
 VS Code 提供“Debug all services (fast)”和“Debug all services (checked)”两个复合启动项。
 Go、Python、Vite 的调试输出进入 Debug Console；构建门禁任务使用 Terminal。Vite 会等待 Go 的
-统一健康检查确认 Go/Python 均已就绪；若 catalog 为空，调试启动项只准备并通过 Go 扫描、导入
-AOL9 样例。AOL9 数据集就绪后，VS Code 调用系统默认浏览器打开 K 线页面；浏览器尚未运行时
+统一健康检查确认 Go/Python 均已就绪；若 catalog 为空，调试启动项通过 Go 扫描、导入
+`trading-data/history` 中的 AOL9 行情。AOL9 数据集就绪后，VS Code 调用系统默认浏览器打开 K 线页面；浏览器尚未运行时
 会启动浏览器，已经运行时会再次打开一个新标签页。
 复合启动会先统一检查 5173、8080、8091 三个端口；若旧实例仍占用端口，会在启动任何子服务前
 列出端口、服务名和 PID 并终止本次启动，避免只留下部分调试进程。
 
 ## 9. 里程碑 1：历史数据导入
 
-将只读通达信 TXT 放入 `storage.data_root/history`，并将
-`config/examples/instruments.json`、`sessions.json` 和按实际交易日补全的
-`trading_calendar.csv` 复制到 `storage.data_root/config`。前端数据集面板可发起扫描、轮询导入任务并查看数据集元数据；公共接口为：
+将只读通达信 TXT 放入 `storage.data_root/history`。扫描器先按 `exchange + product` 复用已有配置，
+再匹配带来源的内置规则；两者均未命中时，才联网下载公开期货交易参数，结构化读取品种、合约乘数
+和最小变动价位，并从原始 TDX 的实际时间记录生成交易时段。首个夜盘缺少前序交易日时，程序查询
+公开交易日序列，不按自然日直接减一天。生成结果原子写入 `storage.data_root/config`；任何联网或解析
+失败只会让对应源文件保持待映射并显示具体原因，不会猜测数据语义。前端数据集面板可发起扫描、
+轮询导入任务并查看数据集元数据；公共接口为：
 
 - `POST /api/v1/datasets/scan`
 - `GET /api/v1/source-files`

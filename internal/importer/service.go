@@ -55,17 +55,19 @@ type ImportRequest struct {
 }
 
 type Service struct {
-	mu      sync.RWMutex
-	errorMu sync.Mutex
-	guard   *storage.PathGuard
-	catalog *catalog.Store
-	config  appconfig.Config
-	logger  *logx.Logger
-	sources map[string]SourceFile
+	mu       sync.RWMutex
+	errorMu  sync.Mutex
+	configMu sync.Mutex
+	guard    *storage.PathGuard
+	catalog  *catalog.Store
+	config   appconfig.Config
+	logger   *logx.Logger
+	resolver instrumentResolver
+	sources  map[string]SourceFile
 }
 
 func NewService(guard *storage.PathGuard, store *catalog.Store, cfg appconfig.Config, logger *logx.Logger) *Service {
-	return &Service{guard: guard, catalog: store, config: cfg, logger: logger, sources: make(map[string]SourceFile)}
+	return &Service{guard: guard, catalog: store, config: cfg, logger: logger, resolver: newOnlineInstrumentResolver(), sources: make(map[string]SourceFile)}
 }
 
 func (s *Service) Scan(ctx context.Context) ([]SourceFile, error) {
@@ -77,8 +79,9 @@ func (s *Service) Scan(ctx context.Context) ([]SourceFile, error) {
 	if err := os.MkdirAll(historyPath, 0o750); err != nil {
 		return nil, err
 	}
-	runtimeConfig, configErr := loadRuntimeConfig(s.guard)
 	discovered := make([]SourceFile, 0)
+	autoSources := make([]autoConfigSource, 0)
+	autoSourceByID := make(map[string]autoConfigSource)
 	err = filepath.WalkDir(historyPath, func(path string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
@@ -115,22 +118,59 @@ func (s *Service) Scan(ctx context.Context) ([]SourceFile, error) {
 				"symbol": detection.Symbol, "display_name": detection.DisplayName, "timeframe": detection.Timeframe,
 				"encoding": detection.Encoding, "format": detection.Format, "title": detection.Title,
 			}
-			if configErr != nil {
-				source.Issues = append(source.Issues, QualityIssue{Level: "ERROR", Code: "IMPORT_CONFIG_UNAVAILABLE", Message: configErr.Error()})
-			} else if instrument, ok := findInstrument(runtimeConfig.instruments, detection.Symbol); ok {
-				source.Status = "importable"
-				source.Detected["exchange"] = instrument.Exchange
-				source.Detected["timezone"] = instrument.Timezone
-				source.Detected["date_semantics"] = "trading_day"
-				source.Detected["timestamp_semantics"] = "bar_end"
-			}
-			s.logger.Info("source.file.discovered", "source file discovered", map[string]any{"source_file_id": source.SourceFileID, "status": source.Status})
+			autoSource := autoConfigSource{SourceFileID: source.SourceFileID, Path: relative, Detection: detection, Data: data}
+			autoSources = append(autoSources, autoSource)
+			autoSourceByID[source.SourceFileID] = autoSource
 		}
 		discovered = append(discovered, source)
 		return nil
 	})
 	if err != nil {
 		return nil, err
+	}
+	s.configMu.Lock()
+	resolutionErrors, configErr := ensureAutoRuntimeConfig(ctx, s.guard, autoSources, s.resolver)
+	var runtimeConfig runtimeConfig
+	if configErr == nil {
+		runtimeConfig, configErr = loadRuntimeConfig(s.guard)
+	}
+	s.configMu.Unlock()
+	for index := range discovered {
+		source := &discovered[index]
+		autoSource, recognized := autoSourceByID[source.SourceFileID]
+		if !recognized {
+			continue
+		}
+		if configErr != nil {
+			source.Issues = append(source.Issues, QualityIssue{Level: "ERROR", Code: "IMPORT_CONFIG_UNAVAILABLE", Message: configErr.Error()})
+			continue
+		}
+		if resolutionErr, failed := resolutionErrors[source.SourceFileID]; failed {
+			source.Issues = append(source.Issues, QualityIssue{Level: "ERROR", Code: "INSTRUMENT_METADATA_LOOKUP_FAILED", Message: resolutionErr.Error()})
+			continue
+		}
+		instrument, ok := findInstrumentForExchange(runtimeConfig.instruments, exchangeFromTDXPath(autoSource.Path), autoSource.Detection.Symbol)
+		if !ok {
+			source.Issues = append(source.Issues, QualityIssue{Level: "ERROR", Code: "INSTRUMENT_METADATA_NOT_FOUND", Message: "缺少该品种的权威配置"})
+			continue
+		}
+		session, ok := runtimeConfig.sessions[instrument.SessionTemplateID]
+		if !ok {
+			source.Issues = append(source.Issues, QualityIssue{Level: "ERROR", Code: "SESSION_TEMPLATE_NOT_FOUND", Message: "缺少该品种对应的交易时段模板"})
+			continue
+		}
+		if day, missing := missingCalendarMapping(autoSource.Data, session, runtimeConfig.calendar); missing {
+			source.Issues = append(source.Issues, QualityIssue{Level: "ERROR", Code: "TRADING_CALENDAR_MAPPING_MISSING", Message: "缺少 " + day + " 的前一交易日，无法确定夜盘自然日期"})
+			continue
+		}
+		source.Status = "importable"
+		source.Detected["exchange"] = instrument.Exchange
+		source.Detected["timezone"] = instrument.Timezone
+		source.Detected["date_semantics"] = "trading_day"
+		source.Detected["timestamp_semantics"] = "bar_end"
+	}
+	for _, source := range discovered {
+		s.logger.Info("source.file.discovered", "source file discovered", map[string]any{"source_file_id": source.SourceFileID, "status": source.Status})
 	}
 	sort.Slice(discovered, func(i, j int) bool { return discovered[i].Path < discovered[j].Path })
 	s.mu.Lock()
@@ -176,7 +216,9 @@ func (s *Service) Import(ctx context.Context, request ImportRequest, progress fu
 		return catalog.DatasetMeta{}, false, ErrSourceChanged
 	}
 	progress(0.1)
+	s.configMu.Lock()
 	runtimeConfig, err := loadRuntimeConfig(s.guard)
+	s.configMu.Unlock()
 	if err != nil {
 		return catalog.DatasetMeta{}, false, err
 	}
@@ -331,8 +373,12 @@ func (s *Service) GetDataset(datasetID, revision string) (catalog.DatasetMeta, e
 }
 
 func findInstrument(instruments []InstrumentConfig, symbol string) (InstrumentConfig, bool) {
+	return findInstrumentForExchange(instruments, "", symbol)
+}
+
+func findInstrumentForExchange(instruments []InstrumentConfig, exchange, symbol string) (InstrumentConfig, bool) {
 	for _, instrument := range instruments {
-		if instrument.pattern.MatchString(symbol) {
+		if (exchange == "" || instrument.Exchange == exchange) && instrumentMatchesSymbol(instrument, symbol) {
 			return instrument, true
 		}
 	}

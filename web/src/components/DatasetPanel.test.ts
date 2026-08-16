@@ -68,6 +68,29 @@ describe('DatasetPanel', () => {
     expect(wrapper.emitted('selected')?.[0]).toEqual([metadata])
   })
 
+  it('shows a readable mapping status and issue message', async () => {
+    api.getSourceFiles.mockResolvedValue([
+      {
+        source_file_id: 'source-aol9',
+        path: 'history/30#AOL9.txt',
+        status: 'needs_mapping',
+        sha256: 'sha256:test',
+        size_bytes: 100,
+        detected: { symbol: 'AOL9', timeframe: '5m' },
+        issues: [{
+          level: 'ERROR',
+          code: 'TRADING_CALENDAR_MAPPING_MISSING',
+          message: '缺少 2023-06-20 的前一交易日，无法确定夜盘自然日期',
+        }],
+      },
+    ])
+    const wrapper = mount(DatasetPanel)
+    await flushPromises()
+    expect(wrapper.text()).toContain('待补充映射')
+    expect(wrapper.text()).toContain('缺少 2023-06-20 的前一交易日')
+    expect(wrapper.get('.issue').attributes('title')).toBe('TRADING_CALENDAR_MAPPING_MISSING')
+  })
+
   it('reflects a dataset selected by the global keyboard picker', async () => {
     const external = {
       dataset_id: 'SHFE.AO2609.5m', data_revision: `sha256:${'3'.repeat(64)}`,

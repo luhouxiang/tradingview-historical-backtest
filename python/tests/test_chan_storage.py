@@ -11,6 +11,7 @@ from tvbt.storage.path_guard import PathGuard
 
 
 def payload() -> dict[str, object]:
+    """构造写缓存测试使用的最小缠论任务载荷。"""
     digest = "sha256:" + "1" * 64
     return {
         "cache_key": "sha256:" + "3" * 64,
@@ -28,6 +29,12 @@ def payload() -> dict[str, object]:
 
 
 def test_chan_cache_writes_typed_tables_checkpoints_and_success_last(tmp_path: Path) -> None:
+    """测试缠论缓存是否写出类型化表、检查点和完成标记。
+
+    预期:缓存目录包含 `_SUCCESS`、检查点文件、全部 Parquet 表和 manifest;
+    `bi` 与 `segments` 使用相同线性对象 Schema,manifest 记录文件路径、数量、
+    哈希和最新检查点位置。
+    """
     guard = PathGuard(tmp_path)
     checkpoint = dump_checkpoint("1.0.0", 4, {"state": "test"})
     result = ChanResult(
@@ -98,6 +105,11 @@ def test_chan_cache_writes_typed_tables_checkpoints_and_success_last(tmp_path: P
 
 
 def test_completed_chan_cache_is_reused_without_overwrite(tmp_path: Path) -> None:
+    """测试已完成缠论缓存是否复用且不覆盖。
+
+    预期:同一输出路径已有 `_SUCCESS` 时再次写入直接复用原目录,manifest
+    内容保持不变,防止完成缓存被重复任务覆盖。
+    """
     guard = PathGuard(tmp_path)
     result = ChanResult(0, 0, 0, 0)
     first = write_chan_cache(payload(), guard, result)

@@ -49,20 +49,9 @@ trading-data/
 *.log.*
 *.partial
 
-# samples 只允许提交说明文件和唯一的原始行情测试样例。
 # 原始行情常用“周期#合约.txt”命名，无论放在何处都默认忽略。
 *#*.txt
 *#*.TXT
-/samples/**/*.txt
-/samples/**/*.csv
-/samples/**/*.dat
-/samples/**/*.data
-/samples/**/*.parquet
-/samples/**/*.arrow
-/samples/**/*.feather
-/samples/**/*.zip
-/samples/**/*.7z
-!/samples/30#AO2609.txt
 
 # Go：构建、测试、覆盖率和性能剖析产物
 /bin/

@@ -60,5 +60,5 @@ run/Study 提交和排名。Go 测试覆盖搜索值、Study 身份、预算、�
 
 ## 6. 样例数据
 
-未修改 `samples/30#AO2609.txt`。验收复制到隔离临时 data_root，动态生成交易日历，完成后
+未修改 `trading-data/history/30#AO2609.txt`。验收复制到隔离临时 data_root，动态生成交易日历，完成后
 安全清理；未新增或修改持久样例行情。

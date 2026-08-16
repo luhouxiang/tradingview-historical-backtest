@@ -25,6 +25,7 @@ def test_replay_writes_only_causal_events_through_requested_end(tmp_path: Path) 
                     [1_700_000_000_000 + index * 60_000 for index in range(30)],
                     type=pa.int64(),
                 ),
+                "open_i64": pa.array([value * 10 + 1 for value in values], type=pa.int64()),
                 "high_i64": pa.array([value * 10 + 5 for value in values], type=pa.int64()),
                 "low_i64": pa.array([value * 10 for value in values], type=pa.int64()),
                 "close_i64": pa.array([value * 10 + 2 for value in values], type=pa.int64()),

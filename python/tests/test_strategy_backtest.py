@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import pyarrow as pa
 import pyarrow.parquet as pq
+import pytest
 
 from tvbt.backtest import run_backtest
 from tvbt.replay import generate_replay
@@ -672,7 +673,9 @@ def test_chan_strategies_run_on_real_aol9_prefix(tmp_path: Path) -> None:
     guard = PathGuard(tmp_path)
     dataset = tmp_path / "normalized" / "SHFE.AOL9.5m" / "revision"
     dataset.mkdir(parents=True)
-    sample = Path(__file__).parents[2] / "samples" / "30#AOL9.txt"
+    sample = Path(__file__).parents[2] / "trading-data" / "history" / "30#AOL9.txt"
+    if not sample.is_file():
+        pytest.skip(f"唯一历史数据源中不存在完整测试文件：{sample}")
     rows = sample.read_text(encoding="gb18030").splitlines()[2:5002]
     values = [[field.strip() for field in row.split(",")] for row in rows]
     pq.write_table(

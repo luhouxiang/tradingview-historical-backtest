@@ -22,6 +22,18 @@ const status = ref('')
 const initialInstrument = (__TVBT_INITIAL_INSTRUMENT__ || 'AOL9').trim().toUpperCase()
 const initialDatasetId = `SHFE.${initialInstrument}.5m`
 
+const sourceStatusText: Record<SourceFile['status'], string> = {
+  detected: '已识别',
+  needs_mapping: '待补充映射',
+  importable: '可导入',
+  imported: '已导入',
+  rejected: '已拒绝',
+}
+
+function sourceIssueText(issue: SourceFile['issues'][number]): string {
+  return issue.message || issue.code
+}
+
 watch(() => props.selectedDataset, (dataset) => {
   if (dataset) selected.value = dataset
 })
@@ -86,7 +98,7 @@ onMounted(async () => {
     const preferred = datasets.value.find((dataset) => dataset.dataset_id === initialDatasetId) ?? datasets.value[0]
     if (preferred) await selectDataset(preferred)
   } catch {
-    // An empty catalog before the Go service starts is a recoverable shell state.
+    // Go 服务启动前目录为空属于可恢复的界面状态。
   }
 })
 </script>
@@ -101,9 +113,14 @@ onMounted(async () => {
     <div v-if="sources.length === 0" class="empty-panel">尚未扫描</div>
     <article v-for="source in sources" :key="source.source_file_id" class="dataset-card">
       <strong>{{ source.detected?.symbol ?? source.path }}</strong>
-      <span>{{ source.detected?.timeframe }} · {{ source.status }}</span>
+      <span>{{ source.detected?.timeframe }} · {{ sourceStatusText[source.status] }}</span>
       <button v-if="source.status === 'importable'" :disabled="busy" @click="runImport(source)">导入</button>
-      <small v-for="issue in source.issues" :key="issue.code" class="issue">{{ issue.code }}</small>
+      <small
+        v-for="issue in source.issues"
+        :key="`${issue.code}-${issue.source_line ?? 0}`"
+        class="issue"
+        :title="issue.code"
+      >{{ sourceIssueText(issue) }}</small>
     </article>
     <h3>数据集</h3>
     <div v-if="datasets.length === 0" class="empty-panel">暂无数据集</div>

@@ -26,13 +26,9 @@ function Write-Utf8Atomic([string]$Path, [string]$Content) {
 }
 
 $initialInstrument = Get-InitialInstrument
-$source = Join-Path $projectRoot "samples/30#$initialInstrument.txt"
-if (-not (Test-Path -LiteralPath $source)) {
-    throw "Configured initial instrument $initialInstrument has no sample file: $source"
-}
 $target = Join-Path $historyRoot "30#$initialInstrument.txt"
 if (-not (Test-Path -LiteralPath $target)) {
-    Copy-Item -LiteralPath $source -Destination $target
+    throw "Configured initial instrument $initialInstrument has no history file in the single data source: $target"
 }
 foreach ($name in @('sessions.json')) {
     $destination = Join-Path $runtimeConfigRoot $name
@@ -64,7 +60,7 @@ $sourceText = [Text.Encoding]::GetEncoding(54936).GetString([IO.File]::ReadAllBy
 $tradingDays = @($sourceText -split "`r?`n" |
     ForEach-Object { if ($_ -match '^(\d{4}/\d{2}/\d{2}),') { $matches[1] } } |
     Select-Object -Unique)
-if ($tradingDays.Count -lt 2) { throw "Cannot derive trading days from samples/30#$initialInstrument.txt." }
+if ($tradingDays.Count -lt 2) { throw "Cannot derive trading days from trading-data/history/30#$initialInstrument.txt." }
 $calendarByDay = @{}
 if (Test-Path -LiteralPath $calendarPath) {
     foreach ($entry in @(Import-Csv -LiteralPath $calendarPath)) { $calendarByDay[$entry.trading_day] = $entry }

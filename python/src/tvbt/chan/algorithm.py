@@ -229,7 +229,14 @@ def run_chan(
     )
     table = pq.read_table(
         bars_path,
-        columns=["bar_index", "timestamp_utc", "high_i64", "low_i64", "close_i64"],
+        columns=[
+            "bar_index",
+            "timestamp_utc",
+            "open_i64",
+            "high_i64",
+            "low_i64",
+            "close_i64",
+        ],
     ).to_pydict()
     logger.debug(
         "data.batch.transferred",
@@ -237,7 +244,14 @@ def run_chan(
         {
             **_log_context(payload),
             "bar_count": len(table["bar_index"]),
-            "input_columns": ["bar_index", "timestamp_utc", "high_i64", "low_i64", "close_i64"],
+            "input_columns": [
+                "bar_index",
+                "timestamp_utc",
+                "open_i64",
+                "high_i64",
+                "low_i64",
+                "close_i64",
+            ],
         },
     )
     runtime = ChanEngine(
@@ -258,6 +272,7 @@ def run_chan(
             RawBar(
                 bar_index=raw_index,
                 time=int(table["timestamp_utc"][position]),
+                open_i64=int(table["open_i64"][position]),
                 high_i64=int(table["high_i64"][position]),
                 low_i64=int(table["low_i64"][position]),
                 close_i64=int(table["close_i64"][position]),

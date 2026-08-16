@@ -4,15 +4,39 @@ from dataclasses import replace
 from itertools import pairwise
 from pathlib import Path
 
+import pytest
+
 from tvbt.chan.engine import ChanEngine, ChanParameters, Fractal, LineObject, RawBar
 from tvbt.chan.reference import reference_centers
 
 
 def bar(index: int, high: int, low: int) -> RawBar:
-    return RawBar(index, 1_700_000_000_000 + index * 60_000, high, low, (high + low) // 2)
+    """构造一根只包含缠论测试所需字段的原始 K 线。"""
+    middle = (high + low) // 2
+    return RawBar(
+        index,
+        1_700_000_000_000 + index * 60_000,
+        middle,
+        high,
+        low,
+        middle,
+    )
+
+
+def test_raw_bar_rejects_open_or_close_outside_high_low_range() -> None:
+    """测试原始 K 线是否校验完整 OHLC 价格关系。
+    预期: 开盘价或收盘价超出最低价到最高价的闭区间时, 引擎拒绝该 K 线。
+    """
+    runtime = engine()
+
+    with pytest.raises(ValueError, match="open is outside"):
+        runtime.update(RawBar(0, 1_700_000_000_000, 11, 10, 0, 5))
+    with pytest.raises(ValueError, match="close is outside"):
+        runtime.update(RawBar(0, 1_700_000_000_000, 5, 10, 0, -1))
 
 
 def wave_bars(count: int = 25) -> list[RawBar]:
+    """构造固定波形 K 线,用于稳定触发分型、笔和中枢。"""
     levels = [0, 1, 2, 3, 4, 3, 2, 1]
     result = []
     for index in range(count):
@@ -23,10 +47,12 @@ def wave_bars(count: int = 25) -> list[RawBar]:
 
 
 def engine() -> ChanEngine:
+    """创建检查点间隔较小的缠论引擎,方便测试检查点和事件。"""
     return ChanEngine(ChanParameters(checkpoint_interval=4))
 
 
 def line(index: int, start_price: int, end_price: int) -> LineObject:
+    """构造一条首尾相接的笔对象,供中枢扫描器测试使用。"""
     direction = "up" if end_price > start_price else "down"
     start = Fractal(
         f"f-{index}",
@@ -52,6 +78,11 @@ def line(index: int, start_price: int, end_price: int) -> LineObject:
 
 
 def test_reference_inclusion_merges_in_the_established_direction() -> None:
+    """测试包含关系是否按已经建立的方向合并。
+
+    预期:第三根 K 线被第二根包含时,不新增独立 K 线;在向上方向下取高高、
+    低高,并保留被合并的原始 K 线索引。
+    """
     runtime = engine()
     runtime.update(bar(0, 10, 0))
     runtime.update(bar(1, 12, 2))
@@ -66,6 +97,11 @@ def test_reference_inclusion_merges_in_the_established_direction() -> None:
 
 
 def test_reference_fractal_is_sealed_by_the_right_independent_bar() -> None:
+    """测试分型是否必须等右侧独立 K 线出现后才封存。
+
+    预期:顶部中间 K 线在右侧独立 K 线到来前不发布分型;右侧 K 线出现后,
+    顶分型锚定在真实最高价所在 bar,并把确认位置记为右侧 bar。
+    """
     runtime = engine()
     values = [0, 1, 2, 3, 4, 3, 2, 1]
     for index, value in enumerate(values[:5]):
@@ -80,6 +116,11 @@ def test_reference_fractal_is_sealed_by_the_right_independent_bar() -> None:
 
 
 def test_reference_extremes_build_alternating_bi_and_confirmed_center() -> None:
+    """测试标准波形是否能生成方向交替的笔和已确认笔中枢。
+
+    预期:确认笔至少包含向下、向上、向下三段交替结构,每笔跨度满足
+    5 根独立 K 线门槛,并且输出的笔中枢拥有合法价格区间和因果确认时间。
+    """
     runtime = engine()
     for item in wave_bars(40):
         runtime.update(item)
@@ -97,8 +138,12 @@ def test_reference_extremes_build_alternating_bi_and_confirmed_center() -> None:
 
 
 def test_kline_chart_reference_complex_endpoint_sequence_is_exact() -> None:
-    # First 60 AOL9 bars form the same close-range and containment cases used for
-    # the cross-repository golden comparison against kline-chart/c_bi.py.
+    """测试 AOL9 前 60 根复杂近距离与包含关系的成笔金样本。
+
+    预期:输出笔端点、方向和确认状态与跨仓库参考实现 `kline-chart/c_bi.py`
+    的金样本一致,并保持相邻笔首尾相接、方向严格交替。
+    """
+    # AOL9 前 60 根包含近距离波动和包含关系,用于和参考实现进行金样本对齐。
     high_low = [
         (2716, 2702),
         (2715, 2711),
@@ -178,7 +223,14 @@ def test_kline_chart_reference_complex_endpoint_sequence_is_exact() -> None:
 
 
 def test_algo_ui_segment_golden_for_aol9_prefix_is_exact() -> None:
-    sample = Path(__file__).parents[2] / "samples" / "30#AOL9.txt"
+    """测试 AOL9 前 300 根 K 线的首个段金样本。
+
+    预期:首个段的起止 K 线、起止价格和方向与 `algo-ui` 参考实现一致,
+    并且所有输出段保持方向交替。
+    """
+    sample = Path(__file__).parents[2] / "trading-data" / "history" / "30#AOL9.txt"
+    if not sample.is_file():
+        pytest.skip(f"唯一历史数据源中不存在完整测试文件：{sample}")
     runtime = engine()
     rows = sample.read_text(encoding="gb18030").splitlines()[2:302]
     for index, raw in enumerate(rows):
@@ -187,6 +239,7 @@ def test_algo_ui_segment_golden_for_aol9_prefix_is_exact() -> None:
             RawBar(
                 index,
                 1_700_000_000_000 + index * 300_000,
+                int(fields[2]),
                 int(fields[3]),
                 int(fields[4]),
                 int(fields[5]),
@@ -207,7 +260,14 @@ def test_algo_ui_segment_golden_for_aol9_prefix_is_exact() -> None:
 
 
 def test_standard_segment_centers_and_third_points_are_causal_on_aol9() -> None:
-    sample = Path(__file__).parents[2] / "samples" / "30#AOL9.txt"
+    """测试 AOL9 前缀上的标准线段中枢与三买信号因果性。
+
+    预期:标准线段中枢均满足 `ZD < ZG`,中枢监视对象具有合法强弱和相对位置,
+    三买信号出现在固定金样本位置,且背驰与买卖点不会早于确认 K 线发布。
+    """
+    sample = Path(__file__).parents[2] / "trading-data" / "history" / "30#AOL9.txt"
+    if not sample.is_file():
+        pytest.skip(f"唯一历史数据源中不存在完整测试文件：{sample}")
     runtime = engine()
     rows = sample.read_text(encoding="gb18030").splitlines()[2:5002]
     for index, raw in enumerate(rows):
@@ -216,6 +276,7 @@ def test_standard_segment_centers_and_third_points_are_causal_on_aol9() -> None:
             RawBar(
                 index,
                 1_700_000_000_000 + index * 300_000,
+                int(fields[2]),
                 int(fields[3]),
                 int(fields[4]),
                 int(fields[5]),
@@ -251,6 +312,11 @@ def test_standard_segment_centers_and_third_points_are_causal_on_aol9() -> None:
 
 
 def test_algo_ui_center_starts_from_three_same_parity_lines_and_extends() -> None:
+    """测试中枢是否从同奇偶三笔形成并可继续延伸。
+
+    预期:初始两条同奇偶笔冻结 `[ZD, ZG]` 核心,后续同奇偶相交笔只延长
+    时间范围,不改变核心;首次不相交时标记离开方向。
+    """
     lines = [
         line(0, 15, 20),
         line(1, 20, 0),
@@ -275,6 +341,11 @@ def test_algo_ui_center_starts_from_three_same_parity_lines_and_extends() -> Non
 
 
 def test_algo_ui_center_does_not_require_a_fourth_return_line() -> None:
+    """测试笔中枢形成是否不要求第四笔返回。
+
+    预期:只要基准同奇偶两笔存在交集,就能立即生成中枢,不需要额外等待
+    第四笔回到该区间。
+    """
     lines = [
         line(0, 15, 20),
         line(1, 20, 0),
@@ -289,6 +360,11 @@ def test_algo_ui_center_does_not_require_a_fourth_return_line() -> None:
 
 
 def test_algo_ui_center_base_progression_matches_reference_semantics() -> None:
+    """测试中枢扫描基点推进规则是否匹配参考语义。
+
+    预期:连续中枢的 `base_index` 与 `seed_end_index` 按参考实现的
+    `new_base - 1 / new_base - 2` 规则推进。
+    """
     lines = [
         line(0, 15, 20),
         line(1, 20, 0),
@@ -312,6 +388,11 @@ def test_algo_ui_center_base_progression_matches_reference_semantics() -> None:
 
 
 def test_center_known_at_is_the_latest_participating_line() -> None:
+    """测试中枢可知时间是否取参与笔中的最晚时间。
+
+    预期:若参与中枢的某条笔较晚才可知,中枢 `known_at_bar_index` 必须等于
+    该最晚可知位置,不能提前显示。
+    """
     lines = [
         line(0, 15, 20),
         line(1, 20, 0),
@@ -327,6 +408,11 @@ def test_center_known_at_is_the_latest_participating_line() -> None:
 
 
 def test_chan_event_stream_is_prefix_invariant_for_multiple_cutoffs() -> None:
+    """测试缠论事件流的多前缀不变性。
+
+    预期:任意前缀运行产生的事件,等于全量运行中在该前缀截止点以前已经
+    可知的事件集合,防止未来结构倒灌到更早回放时点。
+    """
     bars = wave_bars(30)
     full = engine()
     for item in bars:
@@ -341,6 +427,11 @@ def test_chan_event_stream_is_prefix_invariant_for_multiple_cutoffs() -> None:
 
 
 def test_engine_state_restore_matches_uninterrupted_events_and_objects() -> None:
+    """测试检查点恢复后的事件和对象是否等同于不间断运行。
+
+    预期:前缀导出状态再恢复继续运行后,事件序列和最终对象快照都与
+    从头连续运行完全一致。
+    """
     bars = wave_bars(30)
     full = engine()
     for item in bars:

@@ -31,6 +31,9 @@ type InstrumentConfig struct {
 	TickSizeI64        int64  `json:"tick_size_i64"`
 	ContractMultiplier int64  `json:"contract_multiplier"`
 	SessionTemplateID  string `json:"session_template_id"`
+	RuleSourceURL      string `json:"rule_source_url,omitempty"`
+	RuleVersion        string `json:"rule_version,omitempty"`
+	RuleCheckedAt      string `json:"rule_checked_at,omitempty"`
 	pattern            *regexp.Regexp
 }
 
@@ -40,12 +43,15 @@ type sessionFile struct {
 }
 
 type SessionConfig struct {
-	ID         string           `json:"id"`
-	Timezone   string           `json:"timezone"`
-	NightStart string           `json:"night_start"`
-	NightEnd   string           `json:"night_end"`
-	Segments   []SessionSegment `json:"segments"`
-	nightHHMM  int
+	ID            string           `json:"id"`
+	Timezone      string           `json:"timezone"`
+	NightStart    string           `json:"night_start"`
+	NightEnd      string           `json:"night_end"`
+	Segments      []SessionSegment `json:"segments"`
+	RuleSourceURL string           `json:"rule_source_url,omitempty"`
+	RuleVersion   string           `json:"rule_version,omitempty"`
+	RuleCheckedAt string           `json:"rule_checked_at,omitempty"`
+	nightHHMM     int
 }
 
 type SessionSegment struct {
@@ -59,6 +65,7 @@ type CalendarEntry struct {
 	TradingDay       string
 	NightSessionDate string
 	IsOpen           bool
+	Note             string
 }
 
 type runtimeConfig struct {
@@ -103,6 +110,9 @@ func loadRuntimeConfig(guard *storage.PathGuard) (runtimeConfig, error) {
 		return runtimeConfig{}, fmt.Errorf("unsupported instruments schema_version %d", instruments.SchemaVersion)
 	}
 	for index := range instruments.Instruments {
+		if err := validateInstrumentConfig(instruments.Instruments[index]); err != nil {
+			return runtimeConfig{}, fmt.Errorf("instrument %d: %w", index+1, err)
+		}
 		pattern, err := regexp.Compile(instruments.Instruments[index].SymbolPattern)
 		if err != nil {
 			return runtimeConfig{}, fmt.Errorf("compile instrument symbol pattern: %w", err)
@@ -145,11 +155,39 @@ func loadRuntimeConfig(guard *storage.PathGuard) (runtimeConfig, error) {
 
 func (c runtimeConfig) instrument(exchange, symbol string) (InstrumentConfig, bool) {
 	for _, instrument := range c.instruments {
-		if instrument.Exchange == exchange && instrument.pattern.MatchString(symbol) {
+		if instrument.Exchange == exchange && instrumentMatchesSymbol(instrument, symbol) {
 			return instrument, true
 		}
 	}
 	return InstrumentConfig{}, false
+}
+
+func instrumentMatchesSymbol(instrument InstrumentConfig, symbol string) bool {
+	if instrument.pattern != nil && instrument.pattern.MatchString(symbol) {
+		return true
+	}
+	if instrument.pattern == nil {
+		pattern, err := regexp.Compile(instrument.SymbolPattern)
+		if err == nil && pattern.MatchString(symbol) {
+			return true
+		}
+	}
+	return strings.EqualFold(instrument.Product, productFromSymbol(symbol))
+}
+
+func productFromSymbol(symbol string) string {
+	value := strings.ToUpper(strings.TrimSpace(symbol))
+	if len(value) >= 2 && value[len(value)-2] == 'L' && value[len(value)-1] >= '0' && value[len(value)-1] <= '9' {
+		value = value[:len(value)-2]
+	} else {
+		value = strings.TrimRight(value, "0123456789")
+	}
+	for _, character := range value {
+		if character < 'A' || character > 'Z' {
+			return ""
+		}
+	}
+	return value
 }
 
 func parseCalendar(data []byte) (map[string]CalendarEntry, error) {
@@ -158,7 +196,7 @@ func parseCalendar(data []byte) (map[string]CalendarEntry, error) {
 	if err != nil {
 		return nil, fmt.Errorf("decode trading calendar: %w", err)
 	}
-	if len(records) < 2 || len(records[0]) < 3 || records[0][0] != "trading_day" || records[0][1] != "night_session_date" {
+	if len(records) < 1 || len(records[0]) < 3 || records[0][0] != "trading_day" || records[0][1] != "night_session_date" {
 		return nil, fmt.Errorf("invalid trading calendar header")
 	}
 	entries := make(map[string]CalendarEntry, len(records)-1)
@@ -176,9 +214,36 @@ func parseCalendar(data []byte) (map[string]CalendarEntry, error) {
 		if err != nil {
 			return nil, fmt.Errorf("trading calendar row %d is_open: %w", row+2, err)
 		}
-		entries[record[0]] = CalendarEntry{record[0], record[1], isOpen}
+		note := ""
+		if len(record) > 3 {
+			note = record[3]
+		}
+		entries[record[0]] = CalendarEntry{TradingDay: record[0], NightSessionDate: record[1], IsOpen: isOpen, Note: note}
 	}
 	return entries, nil
+}
+
+func validateInstrumentConfig(instrument InstrumentConfig) error {
+	if instrument.Exchange == "" || instrument.Product == "" || instrument.SymbolPattern == "" {
+		return fmt.Errorf("exchange, product and symbol_pattern are required")
+	}
+	if instrument.PriceDecimals < 0 || instrument.PriceDecimals > 18 {
+		return fmt.Errorf("price_decimals must be between 0 and 18")
+	}
+	scale := int64(1)
+	for range instrument.PriceDecimals {
+		scale *= 10
+	}
+	if instrument.PriceScale != scale {
+		return fmt.Errorf("price_scale must equal 10^price_decimals")
+	}
+	if instrument.TickSizeI64 < 1 || instrument.ContractMultiplier < 1 {
+		return fmt.Errorf("tick_size_i64 and contract_multiplier must be positive")
+	}
+	if instrument.SessionTemplateID == "" {
+		return fmt.Errorf("session_template_id is required")
+	}
+	return nil
 }
 
 func parseClock(value string) (int, error) {

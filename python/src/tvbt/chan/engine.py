@@ -39,13 +39,15 @@ def _stable_id(prefix: str, *parts: object) -> str:
 
 @dataclass(frozen=True)
 class RawBar:
-    """Go 指定的标准化原始 K 线，仅保留缠论引擎需要的定点价格字段。"""
+    """Go 指定的标准化原始 K 线，完整保留 OHLC 定点价格字段。"""
 
-    # 全数据集内连续递增的原始 K 线序号。
+    # 全数据集内连续递增的原始 K 线序号，从0开始。
     bar_index: int
     # K 线时间戳，沿用上游传入的 UTC 毫秒语义。
     time: int
-    # 最高价、最低价、收盘价均使用定点整数，避免持久化与事件输出出现浮点误差。
+    # 开盘价、最高价、最低价、收盘价均使用定点整数，避免检查点出现浮点误差。
+    # 当前含义是：原始价格 * price_scale 后取整数，用定点数避免浮点误差。也就是说如果某个数据集的 price_scale = 1000，那就是放大 1000 倍；如果是 10000，就是放大 10000 倍
+    open_i64: int
     high_i64: int
     low_i64: int
     close_i64: int
@@ -153,7 +155,7 @@ class ChanEngine:
     """逐 K 线因果缠论引擎，负责分型、笔、线段、中枢和信号事件生成。"""
 
     # 算法版本参与缓存键；任何语义变化都必须升级版本，禁止复用旧缓存。
-    algorithm_version = "5.0.0"
+    algorithm_version = "5.0.1"
 
     def __init__(self, parameters: ChanParameters | None = None) -> None:
         # 运行参数。
@@ -189,6 +191,10 @@ class ChanEngine:
             raise ValueError("raw bar times must be strictly increasing")
         if bar.low_i64 > bar.high_i64:
             raise ValueError("raw bar low exceeds high")
+        if not bar.low_i64 <= bar.open_i64 <= bar.high_i64:
+            raise ValueError("raw bar open is outside high-low range")
+        if not bar.low_i64 <= bar.close_i64 <= bar.high_i64:
+            raise ValueError("raw bar close is outside high-low range")
         self.raw_bars.append(bar)
         self._append_macd(bar)
         # 包含关系只有在追加出新的独立 K 线时，才可能封存上一根独立 K 线的分型。

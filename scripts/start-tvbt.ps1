@@ -122,9 +122,9 @@ try {
         $catalog = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/v1/datasets'
         $preferredDataset = @($catalog.datasets | Where-Object { $_.dataset_id -eq $preferredDatasetId })[0]
     } elseif (-not $preferredDataset) {
-        throw "Prepared $initialInstrument sample was not detected as importable."
+        throw "History instrument $initialInstrument was not detected as importable from the single data source."
     }
-    if (-not $preferredDataset) { throw "The $initialInstrument demo dataset is not available after import." }
+    if (-not $preferredDataset) { throw "The $initialInstrument dataset is not available after import." }
 
     Write-Host ''
     Write-Host 'TVBT is ready: http://127.0.0.1:5173/' -ForegroundColor Green

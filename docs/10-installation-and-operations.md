@@ -27,7 +27,8 @@ Pop-Location
 
 - `storage.data_root` 是专用数据目录，不是仓库根、用户主目录或磁盘根目录。
 - `server.listen` 和 `python_engine.base_url` 仅使用回环地址。
-- `data_root/config` 中存在 instruments、sessions 和适用于数据日期的交易日历。
+- `data_root/config` 可由扫描器自动创建；首次发现本地未配置且没有内置规则的品种时，需要访问公开
+  期货交易参数与交易日序列。网络或远程页面不可用时，源文件保持待映射并显示具体失败原因。
 - 原始通达信 TXT 放在 `data_root/history`，程序不会原地修改它。
 
 ## 3. 启动
@@ -38,8 +39,8 @@ Pop-Location
 ./scripts/start-tvbt.ps1
 ~~~
 
-该入口会检查固定版本与 Python 依赖，只在缺失时准备 AO2609 样例和交易日历，构建 Go，启动
-Python/Go/Vue，扫描并导入样例，然后打开 `http://127.0.0.1:5173/`。前端自动选择第一个
+该入口会检查固定版本与 Python 依赖，确认 `trading-data/history` 中存在初始标的行情并准备交易日历，
+构建 Go，启动 Python/Go/Vue，扫描并导入该唯一数据源中的行情，然后打开 `http://127.0.0.1:5173/`。前端自动选择第一个
 就绪数据集并显示 K 线；打开底部“回测”页签，点击“开始正式回测”即可执行。运行窗口中按
 Ctrl+C 会按精确进程树停止三个服务。启动诊断输出位于 `bin/runtime`。
 
@@ -51,7 +52,7 @@ Ctrl+C 会按精确进程树停止三个服务。启动诊断输出位于 `bin/r
 
 在 VS Code 中运行 `Debug all services (fast)` 或 `Debug all services (checked)` 时，Vite 会在
 Go 的统一健康检查确认 Go/Python 均为 `ok` 后检查 catalog。若尚无就绪数据集，compound 的
-启动前任务只在缺失时准备 AO2609 样例，随后 Vite 开发插件通过 Go 公共 API 扫描并导入该样例；
+启动前任务确认唯一历史数据源中的初始标的文件，随后 Vite 开发插件通过 Go 公共 API 扫描并导入该行情；
 已有数据集时不扫描、不导入、不覆盖。首个数据集就绪后输出全栈就绪标记，VS Code 随后调用
 系统默认浏览器打开 `http://127.0.0.1:5173/`；浏览器未运行时会启动，已运行时会新开标签页。
 

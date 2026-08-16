@@ -32,7 +32,11 @@ $runtimeConfigRoot = Join-Path $dataRoot 'config'
 New-Item -ItemType Directory -Force $historyRoot, $runtimeConfigRoot | Out-Null
 
 $sourcePath = Join-Path $historyRoot '30#AO2609.txt'
-Copy-Item -LiteralPath "$projectRoot/samples/30#AO2609.txt" -Destination $sourcePath
+$canonicalSourcePath = Join-Path $projectRoot 'trading-data/history/30#AO2609.txt'
+if (-not (Test-Path -LiteralPath $canonicalSourcePath)) {
+    throw "Canonical history source is missing: $canonicalSourcePath"
+}
+Copy-Item -LiteralPath $canonicalSourcePath -Destination $sourcePath
 Copy-Item -LiteralPath "$projectRoot/config/examples/instruments.json" -Destination $runtimeConfigRoot
 Copy-Item -LiteralPath "$projectRoot/config/examples/sessions.json" -Destination $runtimeConfigRoot
 
@@ -40,7 +44,7 @@ $sourceText = [Text.Encoding]::GetEncoding(54936).GetString([IO.File]::ReadAllBy
 $tradingDays = @($sourceText -split "`r?`n" |
     ForEach-Object { if ($_ -match '^(\d{4}/\d{2}/\d{2}),') { $matches[1] } } |
     Select-Object -Unique)
-if ($tradingDays.Count -lt 2) { throw 'Could not derive trading days from the full sample.' }
+if ($tradingDays.Count -lt 2) { throw 'Could not derive trading days from the canonical history source.' }
 $calendarLines = [Collections.Generic.List[string]]::new()
 $calendarLines.Add('trading_day,night_session_date,is_open,note')
 for ($index = 0; $index -lt $tradingDays.Count; $index++) {
