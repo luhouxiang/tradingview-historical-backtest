@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/chanlun/bi_cases.schema.json",
+  "title": "Chanlun 108 strict bi test cases",
+  "type": "object",
+  "required": [
+    "spec_version",
+    "theory_profile",
+    "price_unit",
+    "floating_epsilon_allowed",
+    "pipeline",
+    "state_machine",
+    "cases"
+  ],
+  "properties": {
+    "spec_version": {"type": "string"},
+    "theory_profile": {"const": "chanlun_108_strict"},
+    "price_unit": {"const": "integer_ticks"},
+    "floating_epsilon_allowed": {"const": false},
+    "pipeline": {
+      "type": "array",
+      "items": {"type": "string"},
+      "minItems": 6,
+      "uniqueItems": true
+    },
+    "state_machine": {
+      "type": "object",
+      "required": ["encoding", "allowed_transitions", "source_rule"]
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 15,
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "category", "source", "input", "expected"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[A-Z0-9_]+$"},
+          "title": {"type": "string", "minLength": 3},
+          "category": {"type": "string"},
+          "source": {
+            "type": "object",
+            "required": ["lesson", "page", "evidence"],
+            "properties": {
+              "lesson": {"type": "integer", "minimum": 1, "maximum": 108},
+              "page": {"type": "string", "format": "uri"},
+              "image": {"type": "string"},
+              "region_id": {"type": "string"},
+              "evidence": {"type": "string"}
+            }
+          },
+          "input": {"type": "object"},
+          "expected": {"type": "object"}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+

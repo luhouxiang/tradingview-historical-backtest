@@ -1,0 +1,494 @@
+{
+  "spec_version": "1.0.0",
+  "theory_profile": "chanlun_108_strict",
+  "price_unit": "integer_ticks",
+  "floating_epsilon_allowed": false,
+  "pipeline": [
+    "raw_kline",
+    "sequential_directional_inclusion",
+    "processed_kline",
+    "fractal_detection",
+    "same_type_fractal_reduction",
+    "bi_assembly",
+    "bi_state_update"
+  ],
+  "state_machine": {
+    "encoding": {
+      "UP_EXTENDING": [1, 1],
+      "UP_TOP_FRACTAL_BUILDING": [1, 0],
+      "DOWN_EXTENDING": [-1, 1],
+      "DOWN_BOTTOM_FRACTAL_BUILDING": [-1, 0]
+    },
+    "allowed_transitions": {
+      "UP_EXTENDING": ["UP_TOP_FRACTAL_BUILDING"],
+      "UP_TOP_FRACTAL_BUILDING": ["UP_EXTENDING", "DOWN_EXTENDING"],
+      "DOWN_EXTENDING": ["DOWN_BOTTOM_FRACTAL_BUILDING"],
+      "DOWN_BOTTOM_FRACTAL_BUILDING": ["DOWN_EXTENDING", "UP_EXTENDING"]
+    },
+    "source_rule": "L91_STATE"
+  },
+  "cases": [
+    {
+      "id": "L62_F1_TOP_FRACTAL",
+      "title": "三根无包含K线构成顶分型",
+      "category": "fractal_detection",
+      "source": {
+        "lesson": 62,
+        "page": "https://chanlun108.cn/chanzhongshuochan108ke/62.html",
+        "image": "assets/original/lesson62.jpg",
+        "region_id": "L62_F1",
+        "evidence": "image_and_text"
+      },
+      "input": {
+        "processed_klines": [
+          {"id": "k0", "high": 10, "low": 5},
+          {"id": "k1", "high": 12, "low": 7},
+          {"id": "k2", "high": 11, "low": 6}
+        ]
+      },
+      "expected": {
+        "fractals": [
+          {"type": "top", "center": "k1", "price": 12, "members": ["k0", "k1", "k2"]}
+        ]
+      }
+    },
+    {
+      "id": "L62_F2_BOTTOM_FRACTAL",
+      "title": "三根无包含K线构成底分型",
+      "category": "fractal_detection",
+      "source": {
+        "lesson": 62,
+        "page": "https://chanlun108.cn/chanzhongshuochan108ke/62.html",
+        "image": "assets/original/lesson62.jpg",
+        "region_id": "L62_F2",
+        "evidence": "image_and_text"
+      },
+      "input": {
+        "processed_klines": [
+          {"id": "k0", "high": 11, "low": 6},
+          {"id": "k1", "high": 9, "low": 4},
+          {"id": "k2", "high": 10, "low": 5}
+        ]
+      },
+      "expected": {
+        "fractals": [
+          {"type": "bottom", "center": "k1", "price": 4, "members": ["k0", "k1", "k2"]}
+        ]
+      }
+    },
+    {
+      "id": "L62_F3_SHARED_K_INVALID_BI",
+      "title": "顶底分型共用K线时拒绝成笔",
+      "category": "bi_assembly",
+      "source": {
+        "lesson": 62,
+        "page": "https://chanlun108.cn/chanzhongshuochan108ke/62.html",
+        "image": "assets/original/lesson62.jpg",
+        "region_id": "L62_F3",
+        "evidence": "image_and_text"
+      },
+      "input": {
+        "processed_klines": [
+          {"id": "k0", "high": 10, "low": 5},
+          {"id": "k1", "high": 12, "low": 8},
+          {"id": "k2", "high": 11, "low": 4},
+          {"id": "k3", "high": 8, "low": 2},
+          {"id": "k4", "high": 9, "low": 3}
+        ],
+        "endpoint_fractals": [
+          {"type": "top", "center": "k1", "members": ["k0", "k1", "k2"]},
+          {"type": "bottom", "center": "k3", "members": ["k2", "k3", "k4"]}
+        ]
+      },
+      "expected": {
+        "completed_bi": [],
+        "rejected": true,
+        "reject_reason": "endpoint_fractals_share_processed_kline"
+      }
+    },
+    {
+      "id": "L62_F4_NO_FREE_K_INVALID_BI",
+      "title": "端点分型间无独立K线时拒绝成笔",
+      "category": "bi_assembly",
+      "source": {
+        "lesson": 62,
+        "page": "https://chanlun108.cn/chanzhongshuochan108ke/62.html",
+        "image": "assets/original/lesson62.jpg",
+        "region_id": "L62_F4",
+        "evidence": "image_and_text"
+      },
+      "input": {
+        "processed_klines": [
+          {"id": "k0", "high": 10, "low": 5},
+          {"id": "k1", "high": 12, "low": 8},
+          {"id": "k2", "high": 11, "low": 6},
+          {"id": "k3", "high": 9, "low": 4},
+          {"id": "k4", "high": 7, "low": 2},
+          {"id": "k5", "high": 8, "low": 3}
+        ],
+        "endpoint_fractals": [
+          {"type": "top", "center": "k1", "members": ["k0", "k1", "k2"]},
+          {"type": "bottom", "center": "k4", "members": ["k3", "k4", "k5"]}
+        ]
+      },
+      "expected": {
+        "completed_bi": [],
+        "rejected": true,
+        "reject_reason": "no_independent_processed_kline_between_endpoint_fractals"
+      }
+    },
+    {
+      "id": "L62_F5_MINIMAL_VALID_DOWN_BI",
+      "title": "一个独立K线构成最小有效向下笔",
+      "category": "bi_assembly",
+      "source": {
+        "lesson": 62,
+        "page": "https://chanlun108.cn/chanzhongshuochan108ke/62.html",
+        "image": "assets/original/lesson62.jpg",
+        "region_id": "L62_F5",
+        "evidence": "image_and_text"
+      },
+      "input": {
+        "processed_klines": [
+          {"id": "k0", "high": 10, "low": 5},
+          {"id": "k1", "high": 12, "low": 8},
+          {"id": "k2", "high": 11, "low": 6},
+          {"id": "k3", "high": 10, "low": 5},
+          {"id": "k4", "high": 9, "low": 4},
+          {"id": "k5", "high": 7, "low": 2},
+          {"id": "k6", "high": 8, "low": 3}
+        ]
+      },
+      "expected": {
+        "completed_bi": [
+          {
+            "direction": "down",
+            "start": {"fractal": "top", "center": "k1", "price": 12},
+            "end": {"fractal": "bottom", "center": "k5", "price": 2}
+          }
+        ]
+      }
+    },
+    {
+      "id": "L62_F5_MINIMAL_VALID_UP_BI",
+      "title": "一个独立K线构成最小有效向上笔",
+      "category": "bi_assembly",
+      "source": {
+        "lesson": 62,
+        "page": "https://chanlun108.cn/chanzhongshuochan108ke/62.html",
+        "image": "assets/original/lesson62.jpg",
+        "region_id": "L62_F5",
+        "evidence": "mirrored_image_rule"
+      },
+      "input": {
+        "processed_klines": [
+          {"id": "k0", "high": 8, "low": 3},
+          {"id": "k1", "high": 7, "low": 2},
+          {"id": "k2", "high": 9, "low": 4},
+          {"id": "k3", "high": 10, "low": 5},
+          {"id": "k4", "high": 11, "low": 6},
+          {"id": "k5", "high": 12, "low": 8},
+          {"id": "k6", "high": 10, "low": 5}
+        ]
+      },
+      "expected": {
+        "completed_bi": [
+          {
+            "direction": "up",
+            "start": {"fractal": "bottom", "center": "k1", "price": 2},
+            "end": {"fractal": "top", "center": "k5", "price": 12}
+          }
+        ]
+      }
+    },
+    {
+      "id": "L62_F6_UP_INCLUSION",
+      "title": "向上包含取较高高点与较高低点",
+      "category": "inclusion_processing",
+      "source": {
+        "lesson": 62,
+        "page": "https://chanlun108.cn/chanzhongshuochan108ke/62.html",
+        "image": "assets/original/lesson62.jpg",
+        "region_id": "L62_F6",
+        "evidence": "image_and_text"
+      },
+      "input": {
+        "direction": "up",
+        "raw_klines": [
+          {"id": "r0", "high": 10, "low": 5},
+          {"id": "r1", "high": 12, "low": 7},
+          {"id": "r2", "high": 11, "low": 8}
+        ],
+        "merge_pair": ["r1", "r2"]
+      },
+      "expected": {
+        "merged_kline": {
+          "high": 12,
+          "low": 8,
+          "members": ["r1", "r2"],
+          "high_source": "r1",
+          "low_source": "r2"
+        }
+      }
+    },
+    {
+      "id": "L62_F6_DOWN_INCLUSION",
+      "title": "向下包含取较低高点与较低低点",
+      "category": "inclusion_processing",
+      "source": {
+        "lesson": 62,
+        "page": "https://chanlun108.cn/chanzhongshuochan108ke/62.html",
+        "image": "assets/original/lesson62.jpg",
+        "region_id": "L62_F6",
+        "evidence": "image_and_text"
+      },
+      "input": {
+        "direction": "down",
+        "raw_klines": [
+          {"id": "r0", "high": 12, "low": 7},
+          {"id": "r1", "high": 10, "low": 5},
+          {"id": "r2", "high": 9, "low": 6}
+        ],
+        "merge_pair": ["r1", "r2"]
+      },
+      "expected": {
+        "merged_kline": {
+          "high": 9,
+          "low": 5,
+          "members": ["r1", "r2"],
+          "high_source": "r2",
+          "low_source": "r1"
+        }
+      }
+    },
+    {
+      "id": "L62_F7_THREE_K_CLASSIFICATION",
+      "title": "无包含三K的四种完全分类",
+      "category": "fractal_detection",
+      "source": {
+        "lesson": 62,
+        "page": "https://chanlun108.cn/chanzhongshuochan108ke/62.html",
+        "image": "assets/original/lesson62.jpg",
+        "region_id": "L62_F7",
+        "evidence": "image_and_text"
+      },
+      "input": {
+        "samples": {
+          "rising": [[10, 5], [11, 6], [12, 7]],
+          "top": [[10, 5], [12, 7], [11, 6]],
+          "falling": [[12, 7], [11, 6], [10, 5]],
+          "bottom": [[11, 6], [9, 4], [10, 5]]
+        },
+        "tuple_order": ["high", "low"]
+      },
+      "expected": {
+        "classification": {
+          "rising": "none",
+          "top": "top",
+          "falling": "none",
+          "bottom": "bottom"
+        }
+      }
+    },
+    {
+      "id": "L77_KEEP_LATER_HIGHER_TOP",
+      "title": "无反向底分型时后顶更高替换前顶",
+      "category": "same_type_fractal_reduction",
+      "source": {
+        "lesson": 77,
+        "page": "https://chanlun108.cn/chanzhongshuochan108ke/77.html",
+        "evidence": "text_rule"
+      },
+      "input": {
+        "fractal_candidates": [
+          {"id": "t1", "type": "top", "index": 3, "price": 12},
+          {"id": "t2", "type": "top", "index": 7, "price": 14},
+          {"id": "b1", "type": "bottom", "index": 12, "price": 5}
+        ]
+      },
+      "expected": {
+        "retained_fractals": ["t2", "b1"],
+        "invalidated_fractals": ["t1"],
+        "completed_bi": [{"direction": "down", "start": "t2", "end": "b1"}]
+      }
+    },
+    {
+      "id": "L77_KEEP_LATER_LOWER_BOTTOM",
+      "title": "无反向顶分型时后底更低替换前底",
+      "category": "same_type_fractal_reduction",
+      "source": {
+        "lesson": 77,
+        "page": "https://chanlun108.cn/chanzhongshuochan108ke/77.html",
+        "evidence": "text_rule"
+      },
+      "input": {
+        "fractal_candidates": [
+          {"id": "b1", "type": "bottom", "index": 3, "price": 5},
+          {"id": "b2", "type": "bottom", "index": 7, "price": 3},
+          {"id": "t1", "type": "top", "index": 12, "price": 14}
+        ]
+      },
+      "expected": {
+        "retained_fractals": ["b2", "t1"],
+        "invalidated_fractals": ["b1"],
+        "completed_bi": [{"direction": "up", "start": "b2", "end": "t1"}]
+      }
+    },
+    {
+      "id": "L77_EQUAL_TOPS_KEEP_FIRST_ON_OPPOSITE",
+      "title": "同价顶先暂存，反向底出现后保留先顶",
+      "category": "same_type_fractal_reduction",
+      "source": {
+        "lesson": 77,
+        "page": "https://chanlun108.cn/chanzhongshuochan108ke/77.html",
+        "evidence": "text_rule"
+      },
+      "input": {
+        "fractal_candidates": [
+          {"id": "t1", "type": "top", "index": 3, "price": 12},
+          {"id": "t2", "type": "top", "index": 7, "price": 12},
+          {"id": "b1", "type": "bottom", "index": 12, "price": 5}
+        ]
+      },
+      "expected": {
+        "retained_fractals": ["t1", "b1"],
+        "invalidated_fractals": ["t2"],
+        "completed_bi": [{"direction": "down", "start": "t1", "end": "b1"}]
+      }
+    },
+    {
+      "id": "L69_PROVISIONAL_ENDPOINT_REVISION",
+      "title": "图形未完成时笔端点可被更极端同类分型修订",
+      "category": "realtime_state",
+      "source": {
+        "lesson": 69,
+        "page": "https://chanlun108.cn/chanzhongshuochan108ke/69.html",
+        "image": "assets/original/lesson69_1.jpg",
+        "region_id": "L69_1_FULL",
+        "evidence": "image_and_text"
+      },
+      "input": {
+        "events": [
+          {"at": 1, "event": "confirm_bottom", "id": "b0", "price": 4},
+          {"at": 2, "event": "confirm_top_candidate", "id": "t1", "price": 12},
+          {"at": 3, "event": "confirm_higher_top_candidate", "id": "t2", "price": 14},
+          {"at": 4, "event": "confirm_bottom", "id": "b1", "price": 5}
+        ]
+      },
+      "expected": {
+        "after_event_2": {"candidate_up_bi": {"start": "b0", "end": "t1"}},
+        "after_event_3": {
+          "candidate_up_bi": {"start": "b0", "end": "t2"},
+          "invalidated_endpoint": "t1"
+        },
+        "after_event_4": {"confirmed_up_bi": {"start": "b0", "end": "t2"}}
+      }
+    },
+    {
+      "id": "L79_TOP_FRACTAL_NOT_NECESSARILY_BI",
+      "title": "顶分型出现后不保证形成向下笔",
+      "category": "realtime_state",
+      "source": {
+        "lesson": 79,
+        "page": "https://chanlun108.cn/chanzhongshuochan108ke/79.html",
+        "evidence": "text_rule"
+      },
+      "input": {
+        "confirmed_fractals": [
+          {"id": "t1", "type": "top", "index": 3, "price": 12}
+        ],
+        "subsequent_processed_kline_count": 2,
+        "valid_bottom_fractal": null
+      },
+      "expected": {
+        "completed_bi": [],
+        "state": "UP_TOP_FRACTAL_BUILDING",
+        "must_not_emit": "confirmed_down_bi"
+      }
+    },
+    {
+      "id": "L81_EXACT_TICK_COMPARISON",
+      "title": "0.08价格差必须按最小跳动单位精确比较",
+      "category": "precision",
+      "source": {
+        "lesson": 81,
+        "page": "https://chanlun108.cn/chanzhongshuochan108ke/81.html",
+        "image": "assets/original/lesson81.jpg",
+        "region_id": "L81_FULL",
+        "evidence": "text_rule_with_supplementary_image"
+      },
+      "input": {
+        "tick_size": "0.01",
+        "bottom_candidates": [
+          {"id": "b1", "price_ticks": 538647},
+          {"id": "b2", "price_ticks": 538639}
+        ]
+      },
+      "expected": {
+        "comparison": "b2_lower_than_b1",
+        "difference_ticks": 8,
+        "retained_bottom": "b2",
+        "epsilon_used": false
+      }
+    },
+    {
+      "id": "L91_STATE_TRANSITION_MATRIX",
+      "title": "笔当下四状态的允许转移",
+      "category": "state_machine",
+      "source": {
+        "lesson": 91,
+        "page": "https://chanlun108.cn/chanzhongshuochan108ke/91.html",
+        "evidence": "text_rule"
+      },
+      "input": {
+        "use_top_level_state_machine": true
+      },
+      "expected": {
+        "forbidden_examples": [
+          ["UP_EXTENDING", "DOWN_EXTENDING"],
+          ["UP_EXTENDING", "DOWN_BOTTOM_FRACTAL_BUILDING"],
+          ["DOWN_EXTENDING", "UP_EXTENDING"],
+          ["DOWN_EXTENDING", "UP_TOP_FRACTAL_BUILDING"]
+        ]
+      }
+    },
+    {
+      "id": "L78_SEGMENT_RULE_MUST_NOT_RELAX_BI",
+      "title": "线段端点非区间极值规则不得放宽笔端点",
+      "category": "module_boundary",
+      "source": {
+        "lesson": 78,
+        "page": "https://chanlun108.cn/chanzhongshuochan108ke/78.html",
+        "image": "assets/original/lesson71_xianduan2.jpg",
+        "region_id": "L71_FULL",
+        "evidence": "text_rule_with_supplementary_image"
+      },
+      "input": {
+        "object_type": "bi",
+        "proposed_exception": "internal_processed_high_above_down_bi_start"
+      },
+      "expected": {
+        "accepted": false,
+        "reason": "segment_normalization_exception_is_not_a_bi_rule"
+      }
+    },
+    {
+      "id": "L83_BI_CANNOT_BUILD_CENTER",
+      "title": "笔数组不得直接输入最低中枢构造器",
+      "category": "module_boundary",
+      "source": {
+        "lesson": 83,
+        "page": "https://chanlun108.cn/chanzhongshuochan108ke/83.html",
+        "evidence": "text_rule"
+      },
+      "input": {
+        "center_components": "bi[]"
+      },
+      "expected": {
+        "accepted": false,
+        "required_minimum_component": "segment"
+      }
+    }
+  ]
+}
+

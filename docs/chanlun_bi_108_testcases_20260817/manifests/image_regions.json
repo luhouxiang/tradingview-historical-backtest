@@ -1,0 +1,85 @@
+{
+  "coordinate_system": "top_left_origin_pixels",
+  "box_format": ["x", "y", "width", "height"],
+  "images": [
+    {
+      "id": "L62",
+      "file": "assets/original/lesson62.jpg",
+      "width": 512,
+      "height": 384,
+      "lesson": 62,
+      "regions": [
+        {"id": "L62_F1", "label": "图1 顶分型", "box": [14, 17, 55, 67]},
+        {"id": "L62_F2", "label": "图2 底分型", "box": [68, 17, 61, 67]},
+        {"id": "L62_F3", "label": "图3 共用K线，不成笔", "box": [129, 17, 64, 67]},
+        {"id": "L62_F4", "label": "图4 无独立K线，不成笔", "box": [194, 17, 67, 67]},
+        {"id": "L62_F5", "label": "图5 最小有效笔", "box": [260, 17, 82, 67]},
+        {"id": "L62_F6", "label": "图6 包含关系", "box": [14, 87, 158, 78]},
+        {"id": "L62_F7", "label": "图7 无包含三K完全分类", "box": [169, 84, 237, 86]},
+        {"id": "L62_F8", "label": "图8 线段基本形式", "box": [0, 164, 342, 101]},
+        {"id": "L62_F9", "label": "图9 线段破坏基本形式", "box": [0, 252, 392, 132]}
+      ]
+    },
+    {
+      "id": "L69_1",
+      "file": "assets/original/lesson69_1.jpg",
+      "width": 1024,
+      "height": 729,
+      "lesson": 69,
+      "regions": [
+        {"id": "L69_1_FULL", "label": "月线顶底分型及X标记", "box": [0, 0, 1024, 729]}
+      ]
+    },
+    {
+      "id": "L69_2",
+      "file": "assets/original/lesson69_2.jpg",
+      "width": 1024,
+      "height": 729,
+      "lesson": 69,
+      "regions": [
+        {"id": "L69_2_FULL", "label": "1分钟图中的不成笔X及段编号", "box": [0, 0, 1024, 729]}
+      ]
+    },
+    {
+      "id": "L67",
+      "file": "assets/original/lesson67_xianduan.jpg",
+      "width": 512,
+      "height": 384,
+      "lesson": 67,
+      "regions": [
+        {"id": "L67_FULL", "label": "线段特征序列边界", "box": [0, 0, 512, 384]}
+      ]
+    },
+    {
+      "id": "L71",
+      "file": "assets/original/lesson71_xianduan2.jpg",
+      "width": 512,
+      "height": 384,
+      "lesson": 71,
+      "regions": [
+        {"id": "L71_FULL", "label": "线段破坏两种情况", "box": [0, 0, 512, 384]}
+      ]
+    },
+    {
+      "id": "L79",
+      "file": "assets/original/lesson79.jpg",
+      "width": 556,
+      "height": 656,
+      "lesson": 79,
+      "regions": [
+        {"id": "L79_FULL", "label": "线段完成与未完成图", "box": [0, 0, 556, 656]}
+      ]
+    },
+    {
+      "id": "L81",
+      "file": "assets/original/lesson81.jpg",
+      "width": 380,
+      "height": 633,
+      "lesson": 81,
+      "regions": [
+        {"id": "L81_FULL", "label": "线段计数图例", "box": [0, 0, 380, 633]}
+      ]
+    }
+  ]
+}
+

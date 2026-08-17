@@ -1,0 +1,51 @@
+"""Copy into the target repository and replace `project_adapter` calls.
+
+The fixture is intentionally implementation-neutral. Keep source case IDs in
+test names or assertion messages so a failure can be traced to the lesson.
+"""
+
+import json
+from pathlib import Path
+
+import pytest
+
+# Replace with the target project's public API.
+import project_adapter
+
+
+FIXTURE = Path(__file__).with_name("bi_cases.json")
+DATA = json.loads(FIXTURE.read_text(encoding="utf-8"))
+
+
+def by_category(name):
+    return [case for case in DATA["cases"] if case["category"] == name]
+
+
+@pytest.mark.parametrize("case", by_category("fractal_detection"), ids=lambda c: c["id"])
+def test_fractal_detection(case):
+    if "processed_klines" not in case["input"]:
+        pytest.skip("multi-sample case: adapt separately")
+    actual = project_adapter.detect_fractals(case["input"]["processed_klines"])
+    assert actual == case["expected"]["fractals"]
+
+
+@pytest.mark.parametrize("case", by_category("inclusion_processing"), ids=lambda c: c["id"])
+def test_inclusion(case):
+    actual = project_adapter.merge_named_pair(
+        case["input"]["raw_klines"],
+        case["input"]["merge_pair"],
+        case["input"]["direction"],
+    )
+    assert actual == case["expected"]["merged_kline"]
+
+
+@pytest.mark.parametrize("case", by_category("bi_assembly"), ids=lambda c: c["id"])
+def test_bi_assembly(case):
+    actual = project_adapter.assemble_bi(case["input"])
+    assert actual == case["expected"].get("completed_bi", [])
+
+
+def test_no_float_epsilon_policy():
+    assert DATA["price_unit"] == "integer_ticks"
+    assert DATA["floating_epsilon_allowed"] is False
+

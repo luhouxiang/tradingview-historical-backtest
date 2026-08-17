@@ -1,0 +1,35 @@
+{
+  "retrieved_on": "2026-08-17",
+  "mirror_root": "https://chanlun108.cn/",
+  "scope": "Images and rules in the 108 lessons directly relevant to bi implementation",
+  "rule_pages": [
+    {"lesson": 62, "url": "https://chanlun108.cn/chanzhongshuochan108ke/62.html", "role": "core"},
+    {"lesson": 65, "url": "https://chanlun108.cn/chanzhongshuochan108ke/65.html", "role": "core"},
+    {"lesson": 69, "url": "https://chanlun108.cn/chanzhongshuochan108ke/69.html", "role": "core"},
+    {"lesson": 77, "url": "https://chanlun108.cn/chanzhongshuochan108ke/77.html", "role": "core"},
+    {"lesson": 78, "url": "https://chanlun108.cn/chanzhongshuochan108ke/78.html", "role": "boundary"},
+    {"lesson": 79, "url": "https://chanlun108.cn/chanzhongshuochan108ke/79.html", "role": "core"},
+    {"lesson": 81, "url": "https://chanlun108.cn/chanzhongshuochan108ke/81.html", "role": "precision"},
+    {"lesson": 83, "url": "https://chanlun108.cn/chanzhongshuochan108ke/83.html", "role": "boundary"},
+    {"lesson": 91, "url": "https://chanlun108.cn/chanzhongshuochan108ke/91.html", "role": "state_machine"}
+  ],
+  "image_files": [
+    {"file": "assets/original/lesson62.jpg", "url": "https://chanlun108.cn/uploads/62.jpg", "role": "core"},
+    {"file": "assets/original/lesson69_1.jpg", "url": "https://chanlun108.cn/uploads/69-1.jpg", "role": "core_visual"},
+    {"file": "assets/original/lesson69_2.jpg", "url": "https://chanlun108.cn/uploads/69-2.jpg", "role": "core_visual"},
+    {"file": "assets/original/lesson67_xianduan.jpg", "url": "https://chanlun108.cn/uploads/xianduan.jpg", "role": "segment_boundary"},
+    {"file": "assets/original/lesson71_xianduan2.jpg", "url": "https://chanlun108.cn/uploads/xianduan2.jpg", "role": "segment_boundary"},
+    {"file": "assets/original/lesson79.jpg", "url": "https://chanlun108.cn/uploads/79.jpg", "role": "segment_boundary"},
+    {"file": "assets/original/lesson81.jpg", "url": "https://chanlun108.cn/uploads/81.jpg", "role": "precision_boundary"}
+  ],
+  "excluded_image_lessons": [
+    {"lesson": 47, "reason": "pre-formal-definition intraday sub-trade divergence"},
+    {"lesson": 54, "reason": "movement and center decomposition, not bi construction"},
+    {"lesson": 60, "reason": "movement analysis, not bi construction"},
+    {"lesson": 63, "reason": "higher-level movement chart"},
+    {"lesson": 64, "reason": "line-segment chart"},
+    {"lesson": 70, "reason": "line-segment market examples"},
+    {"lesson": 88, "reason": "movement growth example"}
+  ]
+}
+
