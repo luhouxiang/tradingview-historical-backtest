@@ -104,6 +104,35 @@ type StrategySource struct {
 	Style              *IndicatorStyle           `json:"style,omitempty"`
 }
 
+type DynamicCategoryVisibility struct {
+	Fractals        bool `json:"fractals"`
+	Bi              bool `json:"bi"`
+	Segments        bool `json:"segments"`
+	Zhongshu        bool `json:"zhongshu"`
+	SegmentZhongshu bool `json:"segment_zhongshu"`
+	MovementStates  bool `json:"movement_states"`
+	CenterMonitors  bool `json:"center_monitors"`
+	Divergences     bool `json:"divergences"`
+	TradePoints     bool `json:"trade_points"`
+}
+
+type StrategySourcePreference struct {
+	DatasetID          string                    `json:"dataset_id"`
+	DataRevision       string                    `json:"data_revision"`
+	SourceID           string                    `json:"source_id"`
+	Visible            bool                      `json:"visible"`
+	CategoryVisibility DynamicCategoryVisibility `json:"category_visibility"`
+}
+
+type StrategySourceConfig struct {
+	RequestID       string                     `json:"request_id,omitempty"`
+	SchemaVersion   int                        `json:"schema_version"`
+	ProfileID       string                     `json:"profile_id"`
+	Revision        int                        `json:"revision"`
+	StrategySources []StrategySourcePreference `json:"strategy_sources"`
+	UpdatedAt       time.Time                  `json:"updated_at"`
+}
+
 type Layout struct {
 	RequestID       string           `json:"request_id,omitempty"`
 	SchemaVersion   int              `json:"schema_version"`
@@ -192,6 +221,44 @@ func (s *Store) PutLayout(profileID, layoutID string, expected int, document Lay
 	}
 	if current != expected {
 		return Layout{}, &ConflictError{CurrentRevision: current}
+	}
+	document.Revision = current + 1
+	document.RequestID = ""
+	document.UpdatedAt = time.Now().UTC()
+	return document, write(path, document)
+}
+
+func (s *Store) GetStrategySourceConfig(profileID string) (StrategySourceConfig, error) {
+	if !validID(profileID) {
+		return StrategySourceConfig{}, ErrInvalid
+	}
+	path, _ := s.guard.Resolve(fmt.Sprintf("workspaces/%s/strategy-source-config.json", profileID))
+	var document StrategySourceConfig
+	return document, read(path, &document)
+}
+
+func (s *Store) PutStrategySourceConfig(profileID string, expected int, document StrategySourceConfig) (StrategySourceConfig, error) {
+	if !validID(profileID) || document.SchemaVersion != 1 || document.ProfileID != profileID || document.Revision < 1 {
+		return StrategySourceConfig{}, ErrInvalid
+	}
+	sha256Pattern := regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
+	seen := make(map[string]bool, len(document.StrategySources))
+	for _, source := range document.StrategySources {
+		key := source.DatasetID + "\x00" + source.DataRevision + "\x00" + source.SourceID
+		if !validDatasetID(source.DatasetID) || !sha256Pattern.MatchString(source.DataRevision) || !validID(source.SourceID) || seen[key] {
+			return StrategySourceConfig{}, ErrInvalid
+		}
+		seen[key] = true
+	}
+	path, _ := s.guard.Resolve(fmt.Sprintf("workspaces/%s/strategy-source-config.json", profileID))
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	current, err := currentRevision[StrategySourceConfig](path)
+	if err != nil {
+		return StrategySourceConfig{}, err
+	}
+	if current != expected {
+		return StrategySourceConfig{}, &ConflictError{CurrentRevision: current}
 	}
 	document.Revision = current + 1
 	document.RequestID = ""
@@ -345,7 +412,9 @@ func write[T any](path string, value T) error {
 	return storage.AtomicWriteFile(path, append(data, '\n'), 0o640)
 }
 
-func currentRevision[T interface{ Layout | Drawings }](path string) (int, error) {
+func currentRevision[T interface {
+	Layout | Drawings | StrategySourceConfig
+}](path string) (int, error) {
 	var document T
 	if err := read(path, &document); errors.Is(err, ErrNotFound) {
 		return 0, nil

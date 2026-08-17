@@ -498,6 +498,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{profile_id}/strategy-source-config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 读取界面动态修改的 StrategySource 显示配置 */
+        get: operations["getStrategySourceConfig"];
+        /** 带修订号保存界面动态修改的 StrategySource 显示配置 */
+        put: operations["putStrategySourceConfig"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{profile_id}/drawings/{layout_id}/{dataset_id}": {
         parameters: {
             query?: never;
@@ -1485,6 +1503,33 @@ export interface components {
                 };
             };
         };
+        /** StrategySourceDynamicConfig */
+        "strategy-source-config.schema": {
+            request_id?: string;
+            /** @constant */
+            schema_version: 1;
+            profile_id: string;
+            revision: number;
+            strategy_sources: {
+                dataset_id: string;
+                data_revision: string;
+                source_id: string;
+                visible: boolean;
+                category_visibility: {
+                    fractals: boolean;
+                    bi: boolean;
+                    segments: boolean;
+                    zhongshu: boolean;
+                    segment_zhongshu: boolean;
+                    movement_states: boolean;
+                    center_monitors: boolean;
+                    divergences: boolean;
+                    trade_points: boolean;
+                };
+            }[];
+            /** Format: date-time */
+            updated_at: string;
+        };
         anchor: {
             time: number;
             price_i64: number;
@@ -2386,6 +2431,57 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            409: components["responses"]["Conflict"];
+        };
+    };
+    getStrategySourceConfig: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: components["parameters"]["ProfileId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description StrategySource dynamic configuration document */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["strategy-source-config.schema"];
+                };
+            };
+        };
+    };
+    putStrategySourceConfig: {
+        parameters: {
+            query?: never;
+            header: {
+                "If-Match": number;
+            };
+            path: {
+                profile_id: components["parameters"]["ProfileId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["strategy-source-config.schema"];
+            };
+        };
+        responses: {
+            /** @description Saved StrategySource dynamic configuration */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["strategy-source-config.schema"];
+                };
             };
             409: components["responses"]["Conflict"];
         };

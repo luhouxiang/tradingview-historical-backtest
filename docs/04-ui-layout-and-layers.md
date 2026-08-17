@@ -350,6 +350,11 @@ MACD 柱保留由数值正负决定的红/蓝绿色细柱，不开放颜色和�
 
 完整格式以 contracts/schemas/layout.schema.json 为准。
 
+通过界面动态修改的 `StrategySource` 总可见性和图层分类开关不以布局文件为权威来源，统一保存到
+`data_root/workspaces/{profile_id}/strategy-source-config.json`。Vue 只能通过 Go 的工作区 API 读写该文件；
+修改后采用短防抖自动保存，下次启动时按 `dataset_id + data_revision + source_id` 恢复并覆盖布局中的兼容回退值。
+完整格式以 `contracts/schemas/strategy-source-config.schema.json` 为准。
+
 ## 15. UI 验收重点
 
 - 拖动任意分隔线不触发 Python 计算。
@@ -359,3 +364,4 @@ MACD 柱保留由数值正负决定的红/蓝绿色细柱，不开放颜色和�
 - 对象树顺序与实际绘制顺序一致。
 - 10,000 个缠论语义对象不产生 10,000 个 Vue 组件。
 - 页面刷新后布局、绘图、指标实例和面板状态正确恢复。
+- 页面刷新或程序重启后，StrategySource 总显示开关和全部分类开关按独立动态配置文件恢复。

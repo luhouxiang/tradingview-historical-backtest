@@ -599,3 +599,20 @@ export interface WorkspaceLayout {
   strategy_sources: PersistedStrategySource[]
   updated_at: string
 }
+
+export interface StrategySourcePreference {
+  dataset_id: string
+  data_revision: string
+  source_id: string
+  visible: boolean
+  category_visibility: Required<StrategySource['category_visibility']>
+}
+
+export interface StrategySourceDynamicConfig {
+  request_id?: string
+  schema_version: 1
+  profile_id: string
+  revision: number
+  strategy_sources: StrategySourcePreference[]
+  updated_at: string
+}

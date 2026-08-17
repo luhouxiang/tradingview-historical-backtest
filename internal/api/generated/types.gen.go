@@ -3522,6 +3522,37 @@ type PutLayoutParams struct {
 	IfMatch int `json:"If-Match"`
 }
 
+// PutStrategySourceConfigJSONBody defines parameters for PutStrategySourceConfig.
+type PutStrategySourceConfigJSONBody struct {
+	ProfileId       string      `json:"profile_id"`
+	RequestId       *string     `json:"request_id,omitempty"`
+	Revision        int         `json:"revision"`
+	SchemaVersion   interface{} `json:"schema_version"`
+	StrategySources []struct {
+		CategoryVisibility struct {
+			Bi              bool `json:"bi"`
+			CenterMonitors  bool `json:"center_monitors"`
+			Divergences     bool `json:"divergences"`
+			Fractals        bool `json:"fractals"`
+			MovementStates  bool `json:"movement_states"`
+			SegmentZhongshu bool `json:"segment_zhongshu"`
+			Segments        bool `json:"segments"`
+			TradePoints     bool `json:"trade_points"`
+			Zhongshu        bool `json:"zhongshu"`
+		} `json:"category_visibility"`
+		DataRevision string `json:"data_revision"`
+		DatasetId    string `json:"dataset_id"`
+		SourceId     string `json:"source_id"`
+		Visible      bool   `json:"visible"`
+	} `json:"strategy_sources"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// PutStrategySourceConfigParams defines parameters for PutStrategySourceConfig.
+type PutStrategySourceConfigParams struct {
+	IfMatch int `json:"If-Match"`
+}
+
 // SubmitPythonJobJSONBody defines parameters for SubmitPythonJob.
 type SubmitPythonJobJSONBody struct {
 	Algorithm struct {
@@ -3572,6 +3603,9 @@ type PutDrawingsJSONRequestBody PutDrawingsJSONBody
 
 // PutLayoutJSONRequestBody defines body for PutLayout for application/json ContentType.
 type PutLayoutJSONRequestBody PutLayoutJSONBody
+
+// PutStrategySourceConfigJSONRequestBody defines body for PutStrategySourceConfig for application/json ContentType.
+type PutStrategySourceConfigJSONRequestBody PutStrategySourceConfigJSONBody
 
 // SubmitPythonJobJSONRequestBody defines body for SubmitPythonJob for application/json ContentType.
 type SubmitPythonJobJSONRequestBody SubmitPythonJobJSONBody

@@ -114,6 +114,36 @@ func TestIndicatorStylePersistenceAndValidation(t *testing.T) {
 	}
 }
 
+func TestStrategySourceConfigUsesDedicatedAtomicFile(t *testing.T) {
+	guard, _ := storage.NewPathGuard(t.TempDir())
+	store := NewStore(guard)
+	document := StrategySourceConfig{
+		SchemaVersion: 1, ProfileID: "default", Revision: 1,
+		StrategySources: []StrategySourcePreference{{
+			DatasetID: "SHFE.AO2609.5m", DataRevision: "sha256:" + repeat("1", 64), SourceID: "strategy-default-chan", Visible: true,
+			CategoryVisibility: DynamicCategoryVisibility{Bi: true, Segments: true, Zhongshu: true, SegmentZhongshu: true, MovementStates: true, CenterMonitors: true, Divergences: true, TradePoints: true},
+		}},
+	}
+	saved, err := store.PutStrategySourceConfig("default", 0, document)
+	if err != nil || saved.Revision != 1 || saved.UpdatedAt.IsZero() {
+		t.Fatalf("save strategy source config: %#v %v", saved, err)
+	}
+	path, _ := guard.Resolve("workspaces/default/strategy-source-config.json")
+	data, err := os.ReadFile(path)
+	if err != nil || !contains(string(data), `"strategy_sources"`) || contains(string(data), `"panes"`) {
+		t.Fatalf("dedicated dynamic config is invalid: %s %v", data, err)
+	}
+	read, err := store.GetStrategySourceConfig("default")
+	if err != nil || !read.StrategySources[0].CategoryVisibility.Bi {
+		t.Fatalf("read strategy source config: %#v %v", read, err)
+	}
+	_, err = store.PutStrategySourceConfig("default", 0, document)
+	var conflict *ConflictError
+	if !errors.As(err, &conflict) || conflict.CurrentRevision != 1 {
+		t.Fatalf("expected current revision 1, got %v", err)
+	}
+}
+
 func TestDrawingSaveUsesAnchorsAndRejectsEscapes(t *testing.T) {
 	guard, _ := storage.NewPathGuard(t.TempDir())
 	store := NewStore(guard)

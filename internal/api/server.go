@@ -136,6 +136,8 @@ func NewServer(cfg config.Config, python *pythonclient.Client, logger, vueLogger
 	mux.HandleFunc("GET /api/v1/studies/{study_id}/evaluations", s.getStudyEvaluations)
 	mux.HandleFunc("GET /api/v1/workspaces/{profile_id}/layouts/{layout_id}", s.getLayout)
 	mux.HandleFunc("PUT /api/v1/workspaces/{profile_id}/layouts/{layout_id}", s.putLayout)
+	mux.HandleFunc("GET /api/v1/workspaces/{profile_id}/strategy-source-config", s.getStrategySourceConfig)
+	mux.HandleFunc("PUT /api/v1/workspaces/{profile_id}/strategy-source-config", s.putStrategySourceConfig)
 	mux.HandleFunc("GET /api/v1/workspaces/{profile_id}/drawings/{layout_id}/{dataset_id}", s.getDrawings)
 	mux.HandleFunc("PUT /api/v1/workspaces/{profile_id}/drawings/{layout_id}/{dataset_id}", s.putDrawings)
 	mux.HandleFunc("POST /api/v1/client-logs", s.clientLogs)
@@ -498,6 +500,37 @@ func (s *Server) putLayout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	saved, err := s.workspace.PutLayout(r.PathValue("profile_id"), r.PathValue("layout_id"), expected, document)
+	s.writeWorkspaceResult(w, r, saved, err)
+}
+
+func (s *Server) getStrategySourceConfig(w http.ResponseWriter, r *http.Request) {
+	if s.workspace == nil {
+		s.notImplemented(w, r)
+		return
+	}
+	document, err := s.workspace.GetStrategySourceConfig(r.PathValue("profile_id"))
+	s.writeWorkspaceResult(w, r, document, err)
+}
+
+func (s *Server) putStrategySourceConfig(w http.ResponseWriter, r *http.Request) {
+	if s.workspace == nil {
+		s.notImplemented(w, r)
+		return
+	}
+	expected, err := expectedRevision(r)
+	if err != nil {
+		s.writeError(w, r, http.StatusBadRequest, "EXPECTED_REVISION_REQUIRED", "If-Match must contain the expected revision", nil)
+		return
+	}
+	defer r.Body.Close()
+	var document workspace.StrategySourceConfig
+	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1024*1024))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&document); err != nil {
+		s.writeError(w, r, http.StatusBadRequest, "INVALID_STRATEGY_SOURCE_CONFIG", "StrategySource configuration document is invalid", map[string]any{"reason": err.Error()})
+		return
+	}
+	saved, err := s.workspace.PutStrategySourceConfig(r.PathValue("profile_id"), expected, document)
 	s.writeWorkspaceResult(w, r, saved, err)
 }
 

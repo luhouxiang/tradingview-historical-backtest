@@ -35,6 +35,10 @@ await validateFile('schemas/log-event.schema.json', 'examples/log-event.json')
 await validateFile('schemas/run-manifest.schema.json', 'examples/run-manifest.json')
 await validateFile('schemas/drawings.schema.json', 'examples/drawings.json')
 await validateFile(
+  'schemas/strategy-source-config.schema.json',
+  'examples/strategy-source-config.json',
+)
+await validateFile(
   'schemas/indicator-cache-manifest.schema.json',
   'examples/indicator-cache-manifest.json',
 )
@@ -64,4 +68,4 @@ for (const [examplePath, schemaName] of [
   }
 }
 
-console.log('OpenAPI and 15 contract examples validated successfully.')
+console.log('OpenAPI and 16 contract examples validated successfully.')

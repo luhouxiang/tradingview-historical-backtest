@@ -10,12 +10,12 @@ import ReplayPanel from './ReplayPanel.vue'
 import BacktestPanel from './BacktestPanel.vue'
 import OptimizationPanel from './OptimizationPanel.vue'
 import KeyboardInstrumentPicker from './KeyboardInstrumentPicker.vue'
-import { ApiError, createCalculation, getCalculation, getCalculationResults, getDrawings, getLayout, listAlgorithms, putDrawings, putLayout } from '../api/client'
+import { ApiError, createCalculation, getCalculation, getCalculationResults, getDrawings, getLayout, getStrategySourceConfig, listAlgorithms, putDrawings, putLayout, putStrategySourceConfig } from '../api/client'
 import { DrawingHistory, LayerManager, type DrawingObject, type DrawingType } from '../drawing/model'
 import { defaultIndicatorSpecs } from '../indicators/defaults'
 import { defaultChanSpec } from '../chan/defaults'
 import type { ReplayObjects, ReplaySignal } from '../replay/eventIndex'
-import type { AlgorithmDefinition, ChanSignalPoint, ChanTreeObject, DatasetMeta, SeriesSource, StrategyRunSource, StrategySource, WorkspaceLayout } from '../types/api'
+import type { AlgorithmDefinition, ChanSignalPoint, ChanTreeObject, DatasetMeta, SeriesSource, StrategyRunSource, StrategySource, StrategySourceDynamicConfig, StrategySourcePreference, WorkspaceLayout } from '../types/api'
 
 defineProps<{ health: string }>()
 
@@ -41,6 +41,9 @@ const keepDrawingMode = ref(false)
 const workspaceStatus = ref('')
 const layoutRevision = ref(0)
 const drawingRevision = ref(0)
+const strategySourceConfigRevision = ref(0)
+const strategySourcePreferences = ref<StrategySourcePreference[]>([])
+const layoutStrategyPresentation = ref<Record<string, Pick<StrategySource, 'visible' | 'category_visibility'>>>({})
 const replayCursor = ref<number | null>(null)
 const replayObjects = ref<ReplayObjects | null>(null)
 const replaySignals = ref<ReplaySignal[]>([])
@@ -58,7 +61,12 @@ const drawingHistory = new DrawingHistory()
 const layerManager = new LayerManager()
 const profileId = 'default'
 const layoutId = 'default-three-pane'
+const strategyConfigurationSaveDelayMs = 300
 let signalLoadGeneration = 0
+let workspaceGeneration = 0
+let strategyConfigurationSaveTimer: number | undefined
+let layoutWriteQueue: Promise<void> = Promise.resolve()
+let strategyConfigWriteQueue: Promise<void> = Promise.resolve()
 const workspaceColumns = computed(() => rightOpen.value
   ? `48px minmax(320px, 1fr) 1px ${rightWidth.value}px`
   : '48px minmax(320px, 1fr)')
@@ -255,6 +263,28 @@ async function installDefaultIndicators(dataset: DatasetMeta, definitions?: Algo
   for (const source of created.filter((candidate) => candidate.status !== 'completed')) void trackCalculation(source)
 }
 
+function completeCategoryVisibility(value: StrategySource['category_visibility']): Required<StrategySource['category_visibility']> {
+  return {
+    fractals: value.fractals, bi: value.bi, segments: value.segments ?? true, zhongshu: value.zhongshu,
+    segment_zhongshu: value.segment_zhongshu ?? true, movement_states: value.movement_states ?? true,
+    center_monitors: value.center_monitors ?? true, divergences: value.divergences ?? true, trade_points: value.trade_points ?? true,
+  }
+}
+
+function rememberLayoutStrategyPresentation(source: StrategySource): void {
+  if (layoutStrategyPresentation.value[source.source_id]) return
+  layoutStrategyPresentation.value = {
+    ...layoutStrategyPresentation.value,
+    [source.source_id]: { visible: source.visible, category_visibility: completeCategoryVisibility(source.category_visibility) },
+  }
+}
+
+function applyDynamicStrategyConfig(source: StrategySource, dataset: DatasetMeta): StrategySource {
+  const saved = strategySourcePreferences.value.find((item) =>
+    item.dataset_id === dataset.dataset_id && item.data_revision === dataset.data_revision && item.source_id === source.source_id)
+  return saved ? { ...source, visible: saved.visible, category_visibility: saved.category_visibility } : source
+}
+
 async function installDefaultChan(dataset: DatasetMeta, definitions?: AlgorithmDefinition[]): Promise<void> {
   const spec = defaultChanSpec(definitions ?? await listAlgorithms())
   if (!spec) return
@@ -276,7 +306,8 @@ async function installDefaultChan(dataset: DatasetMeta, definitions?: AlgorithmD
     parameters: spec.parameters, job_id: accepted.job_id, status: accepted.status,
     visible: true, category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true, segment_zhongshu: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
   }
-  strategySources.value = [source]
+  rememberLayoutStrategyPresentation(source)
+  strategySources.value = [applyDynamicStrategyConfig(source, dataset)]
   if (source.status !== 'completed') void trackStrategyCalculation(source)
 }
 
@@ -327,8 +358,10 @@ async function restoreSources(layout: WorkspaceLayout, dataset: DatasetMeta): Pr
       },
       style: saved.style,
     }
-    restoredStrategies.push(source)
-    if (accepted.status !== 'completed') pendingStrategies.push(source)
+    rememberLayoutStrategyPresentation(source)
+    const configuredSource = applyDynamicStrategyConfig(source, dataset)
+    restoredStrategies.push(configuredSource)
+    if (accepted.status !== 'completed') pendingStrategies.push(configuredSource)
   }
   strategySources.value = restoredStrategies
   for (const source of pendingStrategies) void trackStrategyCalculation(source)
@@ -336,7 +369,13 @@ async function restoreSources(layout: WorkspaceLayout, dataset: DatasetMeta): Pr
 }
 
 async function selectDataset(dataset: DatasetMeta): Promise<void> {
+  workspaceGeneration += 1
+  if (strategyConfigurationSaveTimer !== undefined) {
+    window.clearTimeout(strategyConfigurationSaveTimer)
+    strategyConfigurationSaveTimer = undefined
+  }
   selectedDataset.value = dataset
+  layoutStrategyPresentation.value = {}
   indicatorSources.value = []
   strategySources.value = []
   strategyRunSources.value = []
@@ -348,9 +387,20 @@ async function selectDataset(dataset: DatasetMeta): Promise<void> {
   selectedSignal.value = null
   lockedSignalId.value = null
   workspaceStatus.value = ''
-  const [layoutResult, drawingResult] = await Promise.allSettled([
-    getLayout(profileId, layoutId), getDrawings<DrawingObject>(profileId, layoutId, dataset.dataset_id),
+  const [layoutResult, drawingResult, strategyConfigResult] = await Promise.allSettled([
+    getLayout(profileId, layoutId), getDrawings<DrawingObject>(profileId, layoutId, dataset.dataset_id), getStrategySourceConfig(profileId),
   ])
+  if (strategyConfigResult.status === 'fulfilled') {
+    strategySourceConfigRevision.value = strategyConfigResult.value.revision
+    strategySourcePreferences.value = strategyConfigResult.value.strategy_sources
+  } else if (strategyConfigResult.reason instanceof ApiError && strategyConfigResult.reason.code === 'WORKSPACE_NOT_FOUND') {
+    strategySourceConfigRevision.value = 0
+    strategySourcePreferences.value = []
+  } else {
+    strategySourceConfigRevision.value = 0
+    strategySourcePreferences.value = []
+    workspaceStatus.value = '策略动态配置恢复失败'
+  }
   if (layoutResult.status === 'fulfilled') {
     const layout = layoutResult.value
     layoutRevision.value = layout.revision
@@ -389,12 +439,12 @@ function updateReplay(value: { cursor: number | null; objects: ReplayObjects | n
   replaySignals.value = value.signals
 }
 
-async function saveWorkspace(): Promise<void> {
+function snapshotWorkspaceLayout(): WorkspaceLayout | null {
   const dataset = selectedDataset.value
   const snapshot = chartRef.value?.snapshotLayout()
-  if (!dataset || !snapshot) { workspaceStatus.value = '请先选择数据集'; return }
+  if (!dataset || !snapshot) return null
   const now = new Date().toISOString()
-  const layout: WorkspaceLayout = {
+  return {
     schema_version: 1, profile_id: profileId, layout_id: layoutId,
     revision: Math.max(1, layoutRevision.value), updated_at: now,
     panes: snapshot.panes.map((pane) => ({
@@ -420,19 +470,96 @@ async function saveWorkspace(): Promise<void> {
         algorithm_version: source.definition.algorithm_version, source_hash: source.definition.source_hash,
       }, parameters: source.parameters, style: source.style,
     })),
-    strategy_sources: strategySources.value.map((source, order) => ({
-      source_id: source.source_id, name: source.definition.name, pane_id: 'price',
-      visible: source.visible, locked: true, z_band: 500 as const, order_in_band: order,
-      dataset_id: dataset.dataset_id, data_revision: dataset.data_revision,
-      algorithm: {
-        kind: 'chan' as const, algorithm_id: source.definition.algorithm_id,
-        algorithm_version: source.definition.algorithm_version, source_hash: source.definition.source_hash,
-      }, parameters: source.parameters, category_visibility: source.category_visibility, style: source.style,
-    })),
+    strategy_sources: strategySources.value.map((source, order) => {
+      const presentation = layoutStrategyPresentation.value[source.source_id] ?? source
+      return {
+        source_id: source.source_id, name: source.definition.name, pane_id: 'price',
+        visible: presentation.visible, locked: true, z_band: 500 as const, order_in_band: order,
+        dataset_id: dataset.dataset_id, data_revision: dataset.data_revision,
+        algorithm: {
+          kind: 'chan' as const, algorithm_id: source.definition.algorithm_id,
+          algorithm_version: source.definition.algorithm_version, source_hash: source.definition.source_hash,
+        }, parameters: source.parameters, category_visibility: presentation.category_visibility, style: source.style,
+      }
+    }),
   }
+}
+
+function saveLayout(generation: number): Promise<WorkspaceLayout | null> {
+  const operation = layoutWriteQueue.then(async () => {
+    if (generation !== workspaceGeneration) return null
+    const layout = snapshotWorkspaceLayout()
+    if (!layout) return null
+    const saved = await putLayout(profileId, layoutId, layoutRevision.value, layout)
+    if (generation === workspaceGeneration) layoutRevision.value = saved.revision
+    return saved
+  })
+  layoutWriteQueue = operation.then(() => undefined, () => undefined)
+  return operation
+}
+
+function snapshotStrategySourceConfig(): StrategySourceDynamicConfig | null {
+  const dataset = selectedDataset.value
+  if (!dataset) return null
+  const otherDatasets = strategySourcePreferences.value.filter((item) =>
+    item.dataset_id !== dataset.dataset_id || item.data_revision !== dataset.data_revision)
+  return {
+    schema_version: 1, profile_id: profileId, revision: Math.max(1, strategySourceConfigRevision.value), updated_at: new Date().toISOString(),
+    strategy_sources: [
+      ...otherDatasets,
+      ...strategySources.value.map((source): StrategySourcePreference => ({
+        dataset_id: dataset.dataset_id, data_revision: dataset.data_revision, source_id: source.source_id,
+        visible: source.visible, category_visibility: completeCategoryVisibility(source.category_visibility),
+      })),
+    ],
+  }
+}
+
+function saveStrategySourceConfiguration(generation: number): Promise<StrategySourceDynamicConfig | null> {
+  const operation = strategyConfigWriteQueue.then(async () => {
+    if (generation !== workspaceGeneration) return null
+    const document = snapshotStrategySourceConfig()
+    if (!document) return null
+    const saved = await putStrategySourceConfig(profileId, strategySourceConfigRevision.value, document)
+    if (generation === workspaceGeneration) {
+      strategySourceConfigRevision.value = saved.revision
+      strategySourcePreferences.value = saved.strategy_sources
+    }
+    return saved
+  })
+  strategyConfigWriteQueue = operation.then(() => undefined, () => undefined)
+  return operation
+}
+
+function scheduleStrategyConfigurationSave(): void {
+  if (!selectedDataset.value || !chartRef.value) return
+  if (strategyConfigurationSaveTimer !== undefined) window.clearTimeout(strategyConfigurationSaveTimer)
+  const generation = workspaceGeneration
+  strategyConfigurationSaveTimer = window.setTimeout(() => {
+    strategyConfigurationSaveTimer = undefined
+    void saveStrategySourceConfiguration(generation).then((saved) => {
+      if (saved && generation === workspaceGeneration) workspaceStatus.value = `策略配置已自动保存 revision ${saved.revision}`
+    }).catch((error) => {
+      if (generation !== workspaceGeneration) return
+      workspaceStatus.value = error instanceof ApiError && error.code === 'WORKSPACE_REVISION_CONFLICT' ? '策略配置保存冲突，请重新加载' : '策略配置自动保存失败'
+    })
+  }, strategyConfigurationSaveDelayMs)
+}
+
+async function saveWorkspace(): Promise<void> {
+  const dataset = selectedDataset.value
+  if (!dataset || !chartRef.value) { workspaceStatus.value = '请先选择数据集'; return }
+  if (strategyConfigurationSaveTimer !== undefined) {
+    window.clearTimeout(strategyConfigurationSaveTimer)
+    strategyConfigurationSaveTimer = undefined
+  }
+  const generation = workspaceGeneration
+  const now = new Date().toISOString()
   try {
-    const savedLayout = await putLayout(profileId, layoutId, layoutRevision.value, layout)
-    layoutRevision.value = savedLayout.revision
+    const savedStrategyConfig = await saveStrategySourceConfiguration(generation)
+    if (!savedStrategyConfig || generation !== workspaceGeneration) return
+    const savedLayout = await saveLayout(generation)
+    if (!savedLayout || generation !== workspaceGeneration) return
     const savedDrawings = await putDrawings(profileId, layoutId, dataset.dataset_id, drawingRevision.value, {
       schema_version: 1, profile_id: profileId, layout_id: layoutId,
       dataset_id: dataset.dataset_id, data_revision: dataset.data_revision,
@@ -447,10 +574,18 @@ async function saveWorkspace(): Promise<void> {
 
 function patchStrategy(id: string, patch: Partial<StrategySource>): void {
   strategySources.value = strategySources.value.map((source) => source.source_id === id ? { ...source, ...patch } : source)
+  scheduleStrategyConfigurationSave()
 }
 
 function removeStrategy(id: string): void {
   strategySources.value = strategySources.value.filter((source) => source.source_id !== id)
+  scheduleStrategyConfigurationSave()
+}
+
+function updateStrategySources(sources: StrategySource[]): void {
+  for (const source of sources) rememberLayoutStrategyPresentation(source)
+  strategySources.value = sources
+  scheduleStrategyConfigurationSave()
 }
 
 function resizeRight(event: PointerEvent): void {
@@ -517,7 +652,7 @@ function resizeBottom(event: PointerEvent): void {
         <IndicatorManagerPanel
           v-else-if="rightTab === 'indicators'" :dataset="selectedDataset"
           :indicator-sources="indicatorSources" :strategy-sources="strategySources"
-          @update:indicator-sources="indicatorSources = $event" @update:strategy-sources="strategySources = $event"
+          @update:indicator-sources="indicatorSources = $event" @update:strategy-sources="updateStrategySources"
         />
         <div v-else-if="rightTab === 'strategies'" class="empty-panel">交易策略参数在回放、回测和优化面板中管理。</div>
         <ObjectTreePanel

@@ -625,6 +625,48 @@ paths:
         "409":
           $ref: "#/components/responses/Conflict"
 
+  /api/v1/workspaces/{profile_id}/strategy-source-config:
+    get:
+      tags: [Workspaces]
+      operationId: getStrategySourceConfig
+      summary: 读取界面动态修改的 StrategySource 显示配置
+      parameters:
+        - $ref: "#/components/parameters/ProfileId"
+      responses:
+        "200":
+          description: StrategySource dynamic configuration document
+          content:
+            application/json:
+              schema:
+                $ref: "./schemas/strategy-source-config.schema.json"
+    put:
+      tags: [Workspaces]
+      operationId: putStrategySourceConfig
+      summary: 带修订号保存界面动态修改的 StrategySource 显示配置
+      parameters:
+        - $ref: "#/components/parameters/ProfileId"
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "./schemas/strategy-source-config.schema.json"
+      responses:
+        "200":
+          description: Saved StrategySource dynamic configuration
+          content:
+            application/json:
+              schema:
+                $ref: "./schemas/strategy-source-config.schema.json"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
   /api/v1/workspaces/{profile_id}/drawings/{layout_id}/{dataset_id}:
     get:
       tags: [Workspaces]

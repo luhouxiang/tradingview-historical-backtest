@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/strategy-source-config.schema.json",
+  "title": "StrategySourceDynamicConfig",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "profile_id", "revision", "strategy_sources", "updated_at"],
+  "properties": {
+    "request_id": {"type": "string"},
+    "schema_version": {"const": 1},
+    "profile_id": {"type": "string", "minLength": 1},
+    "revision": {"type": "integer", "minimum": 1},
+    "strategy_sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["dataset_id", "data_revision", "source_id", "visible", "category_visibility"],
+        "properties": {
+          "dataset_id": {"type": "string", "minLength": 1},
+          "data_revision": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+          "source_id": {"type": "string", "minLength": 1},
+          "visible": {"type": "boolean"},
+          "category_visibility": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["fractals", "bi", "segments", "zhongshu", "segment_zhongshu", "movement_states", "center_monitors", "divergences", "trade_points"],
+            "properties": {
+              "fractals": {"type": "boolean"},
+              "bi": {"type": "boolean"},
+              "segments": {"type": "boolean"},
+              "zhongshu": {"type": "boolean"},
+              "segment_zhongshu": {"type": "boolean"},
+              "movement_states": {"type": "boolean"},
+              "center_monitors": {"type": "boolean"},
+              "divergences": {"type": "boolean"},
+              "trade_points": {"type": "boolean"}
+            }
+          }
+        }
+      }
+    },
+    "updated_at": {"type": "string", "format": "date-time"}
+  }
+}

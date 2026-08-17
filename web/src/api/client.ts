@@ -11,6 +11,7 @@ import type {
   CalculationRequest,
   CalculationResults,
   WorkspaceLayout,
+  StrategySourceDynamicConfig,
   ReplayRequest,
   ReplayStatus,
   ReplayEventsResponse,
@@ -202,6 +203,16 @@ export function getLayout(profileId: string, layoutId: string): Promise<Workspac
 
 export function putLayout(profileId: string, layoutId: string, expectedRevision: number, document: WorkspaceLayout): Promise<WorkspaceLayout> {
   return apiRequest(`/api/v1/workspaces/${encodeURIComponent(profileId)}/layouts/${encodeURIComponent(layoutId)}`, {
+    method: 'PUT', headers: { 'If-Match': String(expectedRevision) }, body: JSON.stringify(document),
+  })
+}
+
+export function getStrategySourceConfig(profileId: string): Promise<StrategySourceDynamicConfig> {
+  return apiRequest(`/api/v1/workspaces/${encodeURIComponent(profileId)}/strategy-source-config`)
+}
+
+export function putStrategySourceConfig(profileId: string, expectedRevision: number, document: StrategySourceDynamicConfig): Promise<StrategySourceDynamicConfig> {
+  return apiRequest(`/api/v1/workspaces/${encodeURIComponent(profileId)}/strategy-source-config`, {
     method: 'PUT', headers: { 'If-Match': String(expectedRevision) }, body: JSON.stringify(document),
   })
 }

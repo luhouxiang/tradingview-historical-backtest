@@ -107,6 +107,8 @@ POST /backtests 每次创建新 run_id，即使参数相同；响应可同时给
 |---|---|---|
 | GET | /api/v1/workspaces/{profile_id}/layouts/{layout_id} | 读取布局 |
 | PUT | /api/v1/workspaces/{profile_id}/layouts/{layout_id} | 带 revision 保存 |
+| GET | /api/v1/workspaces/{profile_id}/strategy-source-config | 读取独立的 StrategySource 动态显示配置 |
+| PUT | /api/v1/workspaces/{profile_id}/strategy-source-config | 带 revision 保存独立动态配置 |
 | GET | /api/v1/workspaces/{profile_id}/drawings/{layout_id}/{dataset_id} | 读取绘图 |
 | PUT | /api/v1/workspaces/{profile_id}/drawings/{layout_id}/{dataset_id} | 带 revision 保存 |
 
