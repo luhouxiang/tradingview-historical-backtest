@@ -1,0 +1,73 @@
+{
+  "dataset_id": "SSE.600000.1d",
+  "data_revision": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "strategy": {
+    "kind": "strategy",
+    "algorithm_id": "aux_ma_sector_rotation",
+    "algorithm_version": "1.0.0",
+    "source_hash": "sha256:6666666666666666666666666666666666666666666666666666666666666666"
+  },
+  "parameters": {
+    "checkpoint_interval": 1024,
+    "ma_period_1": 5,
+    "ma_period_2": 13,
+    "ma_period_3": 21,
+    "ma_period_4": 34,
+    "ma_period_5": 55,
+    "ma_period_6": 89,
+    "ma_period_7": 144,
+    "ma_period_8": 233,
+    "minimum_sector_coverage_milli": 800,
+    "capacity_lookback_bars": 20,
+    "minimum_average_volume": 1000000,
+    "maximum_rotation_candidates": 20
+  },
+  "ranking_context": {
+    "universe_id": "cn-a-share-sample",
+    "membership_revision": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "membership_mode": "point_in_time",
+    "price_adjustment_mode": "forward_adjusted",
+    "price_adjustment_revision": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+    "episode_id": "rebound-2026-08",
+    "episode_start_timestamp_utc": 1785456000000,
+    "episode_available_at_utc": 1785542400000,
+    "memberships": [
+      {
+        "dataset_id": "SSE.600000.1d",
+        "data_revision": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "sector_id": "bank",
+        "effective_from_utc": 1751328000000,
+        "effective_to_utc": null,
+        "available_at_utc": 1751241600000
+      },
+      {
+        "dataset_id": "SZSE.000001.1d",
+        "data_revision": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+        "sector_id": "bank",
+        "effective_from_utc": 1751328000000,
+        "effective_to_utc": null,
+        "available_at_utc": 1751241600000
+      }
+    ]
+  },
+  "range": {
+    "from_bar_index": 232,
+    "to_bar_index": 299,
+    "warmup_from_bar_index": 0
+  },
+  "execution": {
+    "signal_timing": "bar_close",
+    "fill_timing": "next_bar_open",
+    "commission": {"mode": "fixed_per_contract", "amount_i64": 0},
+    "slippage": {"mode": "ticks", "value": 0},
+    "contract_multiplier": 1,
+    "margin_ratio": 1,
+    "intrabar_conflict_rule": "worst_case"
+  },
+  "capital": {
+    "initial_cash_i64": 100000000,
+    "currency": "CNY",
+    "money_scale": 100
+  },
+  "random_seed": 20260821
+}

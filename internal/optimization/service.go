@@ -89,6 +89,7 @@ type Request struct {
 	Ranges         Ranges                    `json:"ranges"`
 	Execution      map[string]any            `json:"execution"`
 	Capital        map[string]any            `json:"capital"`
+	RiskOverlay    *backtest.RiskOverlay     `json:"risk_overlay,omitempty"`
 	TraceID        string                    `json:"trace_id,omitempty"`
 }
 
@@ -134,6 +135,11 @@ func (s *Service) Submit(ctx context.Context, requestID, traceID string, request
 		return Submission{}, ErrInvalidRequest
 	}
 	request.BaseParameters = parameters
+	riskOverlay, err := backtest.NormalizeRiskOverlay(definitions, request.RiskOverlay, request.DataRevision, meta.Coverage.FirstBarIndex, meta.Coverage.LastBarIndex)
+	if err != nil {
+		return Submission{}, ErrInvalidRequest
+	}
+	request.RiskOverlay = riskOverlay
 	if err := validateStudy(request, definition.ParameterSchema); err != nil {
 		return Submission{}, err
 	}
@@ -160,6 +166,9 @@ func (s *Service) start(studyID, requestID, traceID string, request Request, met
 			"constraints": request.Constraints, "search": request.Search, "ranges": request.Ranges,
 			"execution": request.Execution, "capital": request.Capital,
 			"calculation_mode": "causal_events", "output_path": ref,
+		}
+		if request.RiskOverlay != nil {
+			payload["risk_overlay"] = request.RiskOverlay
 		}
 		if _, err := s.python.Submit(ctx, "optimization", requestID, traceID, payload); err != nil {
 			return "", jobs.Fail("PYTHON_SUBMIT_FAILED", "Python optimization could not be submitted", err)
@@ -430,7 +439,7 @@ func studyKey(request Request, engineVersion string) (string, error) {
 		"base_parameters": request.BaseParameters, "search_space": request.SearchSpace,
 		"objectives": request.Objectives, "constraints": request.Constraints,
 		"search": request.Search, "ranges": request.Ranges, "execution": request.Execution,
-		"capital": request.Capital, "engine_version": engineVersion,
+		"capital": request.Capital, "risk_overlay": request.RiskOverlay, "engine_version": engineVersion,
 	})
 	if err != nil {
 		return "", fmt.Errorf("encode study key: %w", err)

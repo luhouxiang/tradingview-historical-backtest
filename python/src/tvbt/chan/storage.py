@@ -26,6 +26,8 @@ FRACTAL_SCHEMA = pa.schema(
         ("bar_index", pa.int64()),
         ("time", pa.int64()),
         ("price_i64", pa.int64()),
+        ("zone_low_i64", pa.int64()),
+        ("zone_high_i64", pa.int64()),
         ("extreme_source_bar_index", pa.int64()),
         ("fractal_type", pa.string()),
         ("confirmed", pa.bool_()),
@@ -98,7 +100,7 @@ MOVEMENT_STATE_SCHEMA = pa.schema(
         ("object_revision", pa.int64()),
     ]
 )
-# Z/Zn 监视对象：逐组件记录相对中枢中轴的位置、强弱和迁移预警。
+# Z/Zn 监视对象：逐组件记录相对中枢中轴的位置、强弱和越界/楔形预警。
 CENTER_MONITOR_SCHEMA = pa.schema(
     [
         ("object_id", pa.string()),
@@ -106,12 +108,24 @@ CENTER_MONITOR_SCHEMA = pa.schema(
         ("time", pa.int64()),
         ("z_i64", pa.int64()),
         ("zn_i64", pa.int64()),
+        ("z_twice_i64", pa.int64()),
+        ("zn_twice_i64", pa.int64()),
+        ("core_low_i64", pa.int64()),
+        ("core_high_i64", pa.int64()),
         ("range_high_i64", pa.int64()),
         ("range_low_i64", pa.int64()),
+        ("component_ordinal", pa.int64()),
         ("component_direction", pa.string()),
         ("relative_position", pa.string()),
-        ("strength", pa.string()),
-        ("migration_warning", pa.string()),
+        ("oscillation_bias", pa.string()),
+        ("breakout_warning", pa.string()),
+        ("catalog_algorithm_id", pa.string()),
+        ("semantic_namespace", pa.string()),
+        ("evidence_level", pa.string()),
+        ("level_mapping_profile", pa.string()),
+        ("standard_signal", pa.bool_()),
+        ("execution_allowed", pa.bool_()),
+        ("confirms_third_point", pa.bool_()),
         ("analysis_level", pa.string()),
         ("reference_object_id", pa.string()),
         ("confirmed", pa.bool_()),

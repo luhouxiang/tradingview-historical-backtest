@@ -18,7 +18,8 @@ type FractalPoint = Point & Pick<ChanFractal, 'fractal_type' | 'confirmed'>
 type Region = { left: number; right: number; top: number; bottom: number; confirmed: boolean }
 type SignalPoint = Point & Pick<ChanSignalPoint, 'signal_type' | 'divergence_kind' | 'signal_class' | 'strength'>
 type MovementLine = Line & Pick<ChanMovementState, 'state_type'>
-type MonitorPoint = Point & { zY: number } & Pick<ChanCenterMonitor, 'strength' | 'migration_warning'>
+type MonitorPoint = Point & { zY: number; referenceObjectId: string; componentOrdinal: number }
+  & Pick<ChanCenterMonitor, 'oscillation_bias' | 'breakout_warning'>
 
 export interface ChanGeometry {
   fractals: FractalPoint[]
@@ -29,6 +30,8 @@ export interface ChanGeometry {
   segmentEnvelopes: Region[]
   movementStates: MovementLine[]
   centerMonitors: MonitorPoint[]
+  centerMonitorCurves: Line[]
+  centerMonitorAxes: Line[]
   divergences: SignalPoint[]
   tradePoints: SignalPoint[]
 }
@@ -99,6 +102,39 @@ export function buildChanGeometry(
       strength: value.strength,
     }] : []
   })
+  const centerMonitors: MonitorPoint[] = objects.center_monitors.flatMap((value) => {
+    const projected = point(value.time, value.zn_twice_i64 / 2)
+    const z = point(value.time, value.z_twice_i64 / 2)
+    return projected && z ? [{
+      ...projected,
+      zY: z.y,
+      referenceObjectId: value.reference_object_id,
+      componentOrdinal: value.component_ordinal,
+      oscillation_bias: value.oscillation_bias,
+      breakout_warning: value.breakout_warning,
+    }] : []
+  })
+  const monitorGroups = new Map<string, MonitorPoint[]>()
+  for (const monitor of centerMonitors) {
+    const group = monitorGroups.get(monitor.referenceObjectId) ?? []
+    group.push(monitor)
+    monitorGroups.set(monitor.referenceObjectId, group)
+  }
+  const centerMonitorCurves: Line[] = []
+  const centerMonitorAxes: Line[] = []
+  for (const group of monitorGroups.values()) {
+    group.sort((left, right) => left.componentOrdinal - right.componentOrdinal || left.x - right.x)
+    if (group.length > 1) {
+      centerMonitorAxes.push({
+        start: { x: group[0]!.x, y: group[0]!.zY },
+        end: { x: group.at(-1)!.x, y: group.at(-1)!.zY },
+        confirmed: true,
+      })
+    }
+    for (let index = 1; index < group.length; index += 1) {
+      centerMonitorCurves.push({ start: group[index - 1]!, end: group[index]!, confirmed: true })
+    }
+  }
   return {
     fractals: objects.fractals.flatMap((value) => {
       const projected = point(value.time, value.price_i64)
@@ -114,11 +150,9 @@ export function buildChanGeometry(
       const end = point(value.end_time, value.price_i64)
       return start && end ? [{ start, end, confirmed: value.confirmed, state_type: value.state_type }] : []
     }),
-    centerMonitors: objects.center_monitors.flatMap((value) => {
-      const projected = point(value.time, value.zn_i64)
-      const z = point(value.time, value.z_i64)
-      return projected && z ? [{ ...projected, zY: z.y, strength: value.strength, migration_warning: value.migration_warning }] : []
-    }),
+    centerMonitors,
+    centerMonitorCurves,
+    centerMonitorAxes,
     divergences: signals(objects.divergences),
     tradePoints: signals(objects.trade_points),
   }
@@ -194,7 +228,7 @@ export class ChanPrimitive implements ISeriesPrimitive<Time> {
 
   geometry(): ChanGeometry {
     const attachment = this.attachment
-    if (!attachment) return { fractals: [], bi: [], segments: [], zhongshu: [], segmentZhongshu: [], segmentEnvelopes: [], movementStates: [], centerMonitors: [], divergences: [], tradePoints: [] }
+    if (!attachment) return { fractals: [], bi: [], segments: [], zhongshu: [], segmentZhongshu: [], segmentEnvelopes: [], movementStates: [], centerMonitors: [], centerMonitorCurves: [], centerMonitorAxes: [], divergences: [], tradePoints: [] }
     return buildChanGeometry(
       this.objects,
       this.priceScale,
@@ -265,7 +299,13 @@ function drawOverlay(context: CanvasRenderingContext2D, geometry: ChanGeometry, 
   drawLines(context, geometry.bi, style.bi)
   drawLines(context, geometry.segments, style.segment)
   drawMovementStates(context, geometry.movementStates, style.movementState)
-  drawCenterMonitors(context, geometry.centerMonitors, style.centerMonitor)
+  drawCenterMonitors(
+    context,
+    geometry.centerMonitors,
+    geometry.centerMonitorCurves,
+    geometry.centerMonitorAxes,
+    style.centerMonitor,
+  )
   drawSignals(context, geometry.divergences, style.divergence)
   drawSignals(context, geometry.tradePoints, style.tradePoint)
   for (const fractal of geometry.fractals) {
@@ -299,21 +339,26 @@ function drawMovementStates(context: CanvasRenderingContext2D, lines: MovementLi
   }
 }
 
-function drawCenterMonitors(context: CanvasRenderingContext2D, points: MonitorPoint[], style: IndicatorOutputStyle): void {
+function drawCenterMonitors(
+  context: CanvasRenderingContext2D,
+  points: MonitorPoint[],
+  curves: Line[],
+  axes: Line[],
+  style: IndicatorOutputStyle,
+): void {
   if (!style.visible) return
+  drawLines(context, axes, { ...style, line_style: 'dashed', opacity: style.opacity * 0.45 })
+  drawLines(context, curves, style)
   context.lineWidth = style.line_width
-  context.setLineDash(canvasDash(style.line_style, style.line_width))
+  context.setLineDash([])
   for (const point of points) {
-    const color = point.migration_warning === 'up' ? '#f23645'
-      : point.migration_warning === 'down' ? '#00b8a9'
-        : point.strength === 'strong' ? style.color : '#78909c'
+    const color = point.breakout_warning === 'cross_above_b' ? '#f23645'
+      : point.breakout_warning === 'cross_below_a' ? '#00b8a9'
+        : point.breakout_warning ? '#f0a000'
+          : point.oscillation_bias === 'strong' ? style.color
+            : point.oscillation_bias === 'weak' ? '#78909c' : '#b0bec5'
     context.beginPath()
-    context.moveTo(point.x, point.zY)
-    context.lineTo(point.x, point.y)
-    context.strokeStyle = colorWithOpacity(color, style.opacity)
-    context.stroke()
-    context.beginPath()
-    context.arc(point.x, point.y, point.migration_warning ? 3.5 : 2.5, 0, Math.PI * 2)
+    context.arc(point.x, point.y, point.breakout_warning ? 4 : 2.5, 0, Math.PI * 2)
     context.fillStyle = colorWithOpacity(color, style.opacity)
     context.fill()
   }

@@ -13,6 +13,7 @@ from tvbt.chan.reference import (
     update_reference_centers,
 )
 from tvbt.chan.signals import ChanSignal, chan_divergences, chan_trade_points
+from tvbt.chan.zn import classify_zn_components
 from tvbt.logging_proxy import logger
 
 """逐 K 线因果缠论引擎。
@@ -103,10 +104,21 @@ class Fractal:
     known_at_bar_index: int
     # 分型极值实际来源的原始 K 线位置；当前与 bar_index 相同，单独保存以防字段误读。
     extreme_source_bar_index: int = -1
+    # 分型中间处理后 K 线的完整价格区间，供上层粗略底/顶构造观察使用。
+    # 旧检查点缺少该字段时退化为极值点；10.0.0 新输出始终显式填写真实区间。
+    zone_low_i64: int | None = None
+    zone_high_i64: int | None = None
 
     def __post_init__(self) -> None:
         if self.extreme_source_bar_index < 0:
             object.__setattr__(self, "extreme_source_bar_index", self.bar_index)
+        if self.zone_low_i64 is None:
+            object.__setattr__(self, "zone_low_i64", self.price_i64)
+        if self.zone_high_i64 is None:
+            object.__setattr__(self, "zone_high_i64", self.price_i64)
+        assert self.zone_low_i64 is not None and self.zone_high_i64 is not None
+        if self.zone_low_i64 > self.zone_high_i64:
+            raise ValueError("fractal zone_low_i64 must not exceed zone_high_i64")
 
     def payload(self) -> dict[str, Any]:
         """转换为因果事件流载荷，字段名保持跨进程 snake_case 契约。"""
@@ -114,6 +126,8 @@ class Fractal:
             "bar_index": self.bar_index,
             "time": self.time,
             "price_i64": self.price_i64,
+            "zone_low_i64": self.zone_low_i64,
+            "zone_high_i64": self.zone_high_i64,
             "extreme_source_bar_index": self.extreme_source_bar_index,
             "fractal_type": self.fractal_type,
             "confirmed": True,
@@ -169,7 +183,7 @@ class ChanEngine:
     """逐 K 线因果缠论引擎，负责分型、笔、线段、中枢和信号事件生成。"""
 
     # 算法版本参与缓存键；任何语义变化都必须升级版本，禁止复用旧缓存。
-    algorithm_version = "6.0.0"
+    algorithm_version = "11.0.0"
 
     def __init__(self, parameters: ChanParameters | None = None) -> None:
         # 运行参数。
@@ -349,6 +363,8 @@ class ChanEngine:
             confirmed_at_bar_index=confirmed_at,
             known_at_bar_index=confirmed_at,
             extreme_source_bar_index=pivot_index,
+            zone_low_i64=center.low_i64,
+            zone_high_i64=center.high_i64,
         )
 
     def _consume_fractal(self, endpoint: Fractal) -> int | None:
@@ -628,8 +644,7 @@ class ChanEngine:
         segments = [value for value, _ in segment_records]
         segment_lines = [line for _, line in segment_records if line is not None]
 
-        # 第 18 课定义的初始中枢是开放价格区间（低点最大值、高点最小值）。
-        # 仅点接触没有区间宽度，所以不能作为标准线段中枢；笔中枢扫描器保留该兼容情形。
+        # 标准中枢使用闭区间交集；三条已确认线段的重叠可以退化为 ZD == ZG 的点中枢。
         changed_confirmed_segment_index = self._common_prefix_length(
             self._segment_lines,
             segment_lines,
@@ -657,15 +672,16 @@ class ChanEngine:
             segment_lines,
             self._all_segment_centers,
             changed_confirmed_segment_index,
+            minimum_line_count=4,
         )
         segment_centers = [
-            center for center in self._all_segment_centers if center.zd_i64 < center.zg_i64
+            center for center in self._all_segment_centers if center.zd_i64 <= center.zg_i64
         ]
         segment_center_ids: list[str] = []
         segment_center_values: list[tuple[str, dict[str, Any], int]] = []
         # 走势状态事件：记录中枢震荡、盘整和中枢迁移。
         movement_state_values: list[tuple[str, dict[str, Any], int]] = []
-        # Z/Zn 监控事件：跟踪各线段相对中枢中轴的位置、强弱和迁移预警。
+        # Z/Zn 监控事件：跟踪各线段相对中枢中轴的位置、强弱和越界/楔形预警。
         center_monitor_values: list[tuple[str, dict[str, Any], int]] = []
         previous_center: tuple[ReferenceCenter, str, int, int] | None = None
         for center in segment_centers:
@@ -749,53 +765,43 @@ class ChanEngine:
                     )
             previous_center = (center, object_id, dd_i64, gg_i64)
 
-            zn_values: list[int] = []
-            for component in components:
-                # Zn 使用单个组成线段的价格中轴，与中枢 Z 比较判断相对强弱。
-                low = min(component.start.price_i64, component.end.price_i64)
-                high = max(component.start.price_i64, component.end.price_i64)
-                zn_i64 = (low + high) // 2
-                zn_values.append(zn_i64)
-                relative = "above" if zn_i64 > z_i64 else "below" if zn_i64 < z_i64 else "equal"
-                strength = (
-                    "strong"
-                    if (component.direction == "up" and zn_i64 > z_i64)
-                    or (component.direction == "down" and zn_i64 < z_i64)
-                    else "weak"
-                    if zn_i64 != z_i64
-                    else "neutral"
-                )
-                warning = None
-                if len(zn_values) >= 3:
-                    # 最近三个 Zn 单调变化时输出迁移预警，但不直接生成交易信号。
-                    tail = zn_values[-3:]
-                    warning = (
-                        "up"
-                        if tail[0] < tail[1] < tail[2]
-                        else "down"
-                        if tail[0] > tail[1] > tail[2]
-                        else None
-                    )
+            for observation in classify_zn_components(
+                core_low_i64=center.zd_i64,
+                core_high_i64=center.zg_i64,
+                components=components,
+            ):
                 center_monitor_values.append(
                     (
-                        _stable_id("center-monitor", object_id, component.object_id),
+                        _stable_id("center-monitor", object_id, observation.component_object_id),
                         {
-                            "bar_index": component.end.bar_index,
-                            "time": component.end.time,
-                            "z_i64": z_i64,
-                            "zn_i64": zn_i64,
-                            "range_high_i64": high,
-                            "range_low_i64": low,
-                            "component_direction": component.direction,
-                            "relative_position": relative,
-                            "strength": strength,
-                            "migration_warning": warning,
+                            "bar_index": observation.bar_index,
+                            "time": observation.time,
+                            "z_i64": observation.z_i64,
+                            "zn_i64": observation.zn_i64,
+                            "z_twice_i64": observation.z_twice_i64,
+                            "zn_twice_i64": observation.zn_twice_i64,
+                            "core_low_i64": observation.core_low_i64,
+                            "core_high_i64": observation.core_high_i64,
+                            "range_high_i64": observation.range_high_i64,
+                            "range_low_i64": observation.range_low_i64,
+                            "component_ordinal": observation.component_ordinal,
+                            "component_direction": observation.component_direction,
+                            "relative_position": observation.relative_position,
+                            "oscillation_bias": observation.oscillation_bias,
+                            "breakout_warning": observation.breakout_warning,
+                            "catalog_algorithm_id": "ALG-AUX-004",
+                            "semantic_namespace": "auxiliary",
+                            "evidence_level": "AUXILIARY",
+                            "level_mapping_profile": "segment_center_components_v1",
+                            "standard_signal": False,
+                            "execution_allowed": False,
+                            "confirms_third_point": False,
                             "analysis_level": "segment",
                             "reference_object_id": object_id,
                             "confirmed": True,
-                            "confirmed_at_bar_index": component.known_at_bar_index,
+                            "confirmed_at_bar_index": observation.known_at_bar_index,
                         },
-                        component.known_at_bar_index,
+                        observation.known_at_bar_index,
                     )
                 )
 

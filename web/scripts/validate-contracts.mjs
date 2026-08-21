@@ -20,10 +20,15 @@ async function json(relative) {
   return JSON.parse(await fs.readFile(path.join(contractRoot, relative), 'utf8'))
 }
 
+const fileValidators = new Map()
+
 async function validateFile(schemaPath, examplePath) {
-  const schema = await json(schemaPath)
   const example = await json(examplePath)
-  const validate = ajv.compile(schema)
+  let validate = fileValidators.get(schemaPath)
+  if (!validate) {
+    validate = ajv.compile(await json(schemaPath))
+    fileValidators.set(schemaPath, validate)
+  }
   if (!validate(example)) {
     throw new Error(`${examplePath} failed ${schemaPath}: ${ajv.errorsText(validate.errors)}`)
   }
@@ -33,6 +38,8 @@ await validateFile('schemas/dataset-meta.schema.json', 'examples/dataset-meta.js
 await validateFile('schemas/layout.schema.json', 'examples/layout.json')
 await validateFile('schemas/log-event.schema.json', 'examples/log-event.json')
 await validateFile('schemas/run-manifest.schema.json', 'examples/run-manifest.json')
+await validateFile('schemas/run-manifest.schema.json', 'examples/ranking-run-manifest.json')
+await validateFile('schemas/run-manifest.schema.json', 'examples/risk-run-manifest.json')
 await validateFile('schemas/drawings.schema.json', 'examples/drawings.json')
 await validateFile(
   'schemas/strategy-source-config.schema.json',
@@ -57,6 +64,8 @@ for (const [examplePath, schemaName] of [
   ['examples/chan-job.json', 'CalculationRequest'],
   ['examples/replay-job.json', 'ReplayRequest'],
   ['examples/backtest-job.json', 'BacktestRequest'],
+  ['examples/ranking-backtest-job.json', 'BacktestRequest'],
+  ['examples/risk-backtest-job.json', 'BacktestRequest'],
   ['examples/study-job.json', 'StudyRequest'],
   ['examples/chan-calculation-results.json', 'CalculationResults'],
 ]) {
@@ -68,4 +77,4 @@ for (const [examplePath, schemaName] of [
   }
 }
 
-console.log('OpenAPI and 16 contract examples validated successfully.')
+console.log('OpenAPI and 20 contract examples validated successfully.')

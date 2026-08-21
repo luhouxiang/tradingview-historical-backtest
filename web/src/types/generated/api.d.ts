@@ -717,7 +717,7 @@ export interface components {
         };
         AlgorithmRef: {
             /** @enum {unknown} */
-            kind: "indicator" | "chan" | "strategy";
+            kind: "indicator" | "chan" | "strategy" | "risk_filter";
             algorithm_id: string;
             algorithm_version: string;
             source_hash: string;
@@ -737,7 +737,7 @@ export interface components {
                 /** @enum {unknown} */
                 series_type: "line" | "histogram" | "semantic_objects";
                 /** @enum {unknown} */
-                object_type?: "fractal" | "bi" | "segment" | "zhongshu" | "segment_zhongshu" | "movement_state" | "center_monitor" | "divergence" | "trade_point" | "strategy_state" | "stage_signal" | "trade_signal" | "chart_event";
+                object_type?: "fractal" | "bi" | "segment" | "zhongshu" | "segment_zhongshu" | "movement_state" | "center_monitor" | "divergence" | "trade_point" | "strategy_state" | "stage_signal" | "trade_signal" | "chart_event" | "risk_decision";
             }[];
             warmup: {
                 /** @constant */
@@ -801,6 +801,8 @@ export interface components {
             bar_index: number;
             time: number;
             price_i64: number;
+            zone_low_i64: number;
+            zone_high_i64: number;
             extreme_source_bar_index: number;
             /** @enum {unknown} */
             fractal_type: "top" | "bottom";
@@ -874,16 +876,35 @@ export interface components {
             time: number;
             z_i64: number;
             zn_i64: number;
+            z_twice_i64: number;
+            zn_twice_i64: number;
+            core_low_i64: number;
+            core_high_i64: number;
             range_high_i64: number;
             range_low_i64: number;
+            component_ordinal: number;
             /** @enum {string} */
             component_direction: "up" | "down";
             /** @enum {string} */
             relative_position: "above" | "below" | "equal";
             /** @enum {string} */
-            strength: "strong" | "weak" | "neutral";
+            oscillation_bias: "strong" | "weak" | "neutral";
             /** @enum {string|null} */
-            migration_warning: "up" | "down" | null;
+            breakout_warning: "cross_above_b" | "cross_below_a" | "rising_wedge_below_b" | "falling_wedge_above_a" | null;
+            /** @constant */
+            catalog_algorithm_id: "ALG-AUX-004";
+            /** @constant */
+            semantic_namespace: "auxiliary";
+            /** @constant */
+            evidence_level: "AUXILIARY";
+            /** @constant */
+            level_mapping_profile: "segment_center_components_v1";
+            /** @constant */
+            standard_signal: false;
+            /** @constant */
+            execution_allowed: false;
+            /** @constant */
+            confirms_third_point: false;
             analysis_level: string;
             reference_object_id: string;
             confirmed: boolean;
@@ -940,6 +961,8 @@ export interface components {
             parameters: {
                 [key: string]: unknown;
             };
+            ranking_context?: components["schemas"]["RankingContext"];
+            risk_overlay?: components["schemas"]["RiskOverlay"];
             range: {
                 from_bar_index: number;
                 to_bar_index: number;
@@ -976,6 +999,56 @@ export interface components {
             random_seed: number;
             trace_id?: string;
         };
+        RankingContext: {
+            universe_id: string;
+            membership_revision: string;
+            /** @constant */
+            membership_mode: "point_in_time";
+            /** @enum {unknown} */
+            price_adjustment_mode: "forward_adjusted" | "back_adjusted" | "total_return";
+            price_adjustment_revision: string;
+            episode_id: string;
+            /** Format: int64 */
+            episode_start_timestamp_utc: number;
+            /** Format: int64 */
+            episode_available_at_utc: number;
+            memberships: components["schemas"]["RankingMembership"][];
+        };
+        RankingMembership: {
+            dataset_id: string;
+            data_revision: string;
+            sector_id: string;
+            /** Format: int64 */
+            effective_from_utc: number;
+            /** Format: int64 */
+            effective_to_utc: number | null;
+            /** Format: int64 */
+            available_at_utc: number;
+        };
+        RiskOverlay: {
+            algorithm: components["schemas"]["AlgorithmRef"];
+            parameters: {
+                [key: string]: unknown;
+            };
+            context: components["schemas"]["RiskContext"];
+        };
+        RiskContext: {
+            market_state_revision: string;
+            sector_id: string;
+            legal_future_branches: string[];
+            handled_future_branches: string[];
+            observations: components["schemas"]["RiskMarketObservation"][];
+        };
+        RiskMarketObservation: {
+            effective_from_bar_index: number;
+            available_at_bar_index: number;
+            data_revision: string;
+            /** @enum {unknown} */
+            trading_status: "normal" | "suspended" | "limit_up" | "limit_down";
+            stale_bars: number;
+            data_gap_bars: number;
+            event_risk_active: boolean;
+        };
         StudyRequest: {
             dataset_id: string;
             data_revision: string;
@@ -997,6 +1070,7 @@ export interface components {
             capital: {
                 [key: string]: unknown;
             };
+            risk_overlay?: components["schemas"]["RiskOverlay"];
             trace_id?: string;
         };
         SearchParameter: {
@@ -1125,6 +1199,10 @@ export interface components {
             expectancy_i64?: number | null;
             total_commission_i64: number;
             total_slippage_i64: number;
+            risk_approved_count: number;
+            risk_reduced_count: number;
+            risk_blocked_count: number;
+            risk_kill_switch_count: number;
         } & {
             [key: string]: unknown;
         };
@@ -1191,6 +1269,37 @@ export interface components {
             };
         };
         sha256: string;
+        risk_market_observation: {
+            effective_from_bar_index: number;
+            available_at_bar_index: number;
+            data_revision: components["schemas"]["sha256"];
+            /** @enum {unknown} */
+            trading_status: "normal" | "suspended" | "limit_up" | "limit_down";
+            stale_bars: number;
+            data_gap_bars: number;
+            event_risk_active: boolean;
+        };
+        risk_context: {
+            market_state_revision: components["schemas"]["sha256"];
+            sector_id: string;
+            legal_future_branches: string[];
+            handled_future_branches: string[];
+            observations: components["schemas"]["risk_market_observation"][];
+        };
+        risk_overlay: {
+            algorithm: {
+                /** @constant */
+                kind: "risk_filter";
+                /** @constant */
+                algorithm_id: "unified_risk_execution_overlay";
+                algorithm_version: string;
+                source_hash: components["schemas"]["sha256"];
+            };
+            parameters: {
+                [key: string]: unknown;
+            };
+            context: components["schemas"]["risk_context"];
+        };
         /** BacktestRunManifest */
         "run-manifest.schema": {
             /** @constant */
@@ -1220,6 +1329,27 @@ export interface components {
                     source_hash: components["schemas"]["sha256"];
                 }[];
             };
+            ranking_context?: {
+                universe_id: string;
+                membership_revision: components["schemas"]["sha256"];
+                /** @constant */
+                membership_mode: "point_in_time";
+                /** @enum {unknown} */
+                price_adjustment_mode: "forward_adjusted" | "back_adjusted" | "total_return";
+                price_adjustment_revision: components["schemas"]["sha256"];
+                episode_id: string;
+                episode_start_timestamp_utc: number;
+                episode_available_at_utc: number;
+                memberships: {
+                    dataset_id: string;
+                    data_revision: components["schemas"]["sha256"];
+                    sector_id: string;
+                    effective_from_utc: number;
+                    effective_to_utc: number | null;
+                    available_at_utc: number;
+                }[];
+            };
+            risk_overlay?: components["schemas"]["risk_overlay"];
             execution: {
                 /** @enum {unknown} */
                 signal_timing: "bar_close";
@@ -1252,6 +1382,37 @@ export interface components {
             created_at: string;
             $defs: {
                 sha256: string;
+                risk_overlay: {
+                    algorithm: {
+                        /** @constant */
+                        kind: "risk_filter";
+                        /** @constant */
+                        algorithm_id: "unified_risk_execution_overlay";
+                        algorithm_version: string;
+                        source_hash: components["schemas"]["sha256"];
+                    };
+                    parameters: {
+                        [key: string]: unknown;
+                    };
+                    context: components["schemas"]["risk_context"];
+                };
+                risk_context: {
+                    market_state_revision: components["schemas"]["sha256"];
+                    sector_id: string;
+                    legal_future_branches: string[];
+                    handled_future_branches: string[];
+                    observations: components["schemas"]["risk_market_observation"][];
+                };
+                risk_market_observation: {
+                    effective_from_bar_index: number;
+                    available_at_bar_index: number;
+                    data_revision: components["schemas"]["sha256"];
+                    /** @enum {unknown} */
+                    trading_status: "normal" | "suspended" | "limit_up" | "limit_down";
+                    stale_bars: number;
+                    data_gap_bars: number;
+                    event_risk_active: boolean;
+                };
             };
         };
         /** @enum {unknown} */
@@ -1333,6 +1494,7 @@ export interface components {
                 currency: string;
                 money_scale: number;
             };
+            risk_overlay?: components["schemas"]["risk_overlay"];
             evaluation_count: number;
             selected_evaluation_index: number;
             engine: {
@@ -1345,6 +1507,37 @@ export interface components {
             created_at: string;
             $defs: {
                 sha256: string;
+                risk_overlay: {
+                    algorithm: {
+                        /** @constant */
+                        kind: "risk_filter";
+                        /** @constant */
+                        algorithm_id: "unified_risk_execution_overlay";
+                        algorithm_version: string;
+                        source_hash: components["schemas"]["sha256"];
+                    };
+                    parameters: {
+                        [key: string]: unknown;
+                    };
+                    context: components["schemas"]["risk_context"];
+                };
+                risk_context: {
+                    market_state_revision: components["schemas"]["sha256"];
+                    sector_id: string;
+                    legal_future_branches: string[];
+                    handled_future_branches: string[];
+                    observations: components["schemas"]["risk_market_observation"][];
+                };
+                risk_market_observation: {
+                    effective_from_bar_index: number;
+                    available_at_bar_index: number;
+                    data_revision: components["schemas"]["sha256"];
+                    /** @enum {unknown} */
+                    trading_status: "normal" | "suspended" | "limit_up" | "limit_down";
+                    stale_bars: number;
+                    data_gap_bars: number;
+                    event_risk_active: boolean;
+                };
                 /** @enum {unknown} */
                 metric: "total_return" | "sharpe" | "max_drawdown" | "win_rate" | "trade_count" | "profit_factor" | "expectancy_i64";
                 search_parameter: {

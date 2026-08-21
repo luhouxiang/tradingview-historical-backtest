@@ -106,6 +106,7 @@ function objectSide(value: ChanTreeObject): 'buy' | 'sell' | 'semantic' {
           <span class="tree-elbow">└</span>
           <span class="signal-object-content">
             <strong :class="objectSide(signal)">{{ objectLabel(signal) }}</strong>
+            <small v-if="signal.detail" class="signal-object-detail">{{ signal.detail }}</small>
             <small>{{ formatSignalTime(signal.time) }} · {{ formatSignalPrice(signal) }} · #{{ signal.bar_index }}</small>
           </span>
           <button
@@ -123,7 +124,10 @@ function objectSide(value: ChanTreeObject): 'buy' | 'sell' | 'semantic' {
         <span class="strategy-status">{{ source.run_id }}</span>
       </header>
       <div class="strategy-children">
-        <div class="signal-branch-title"><span>策略状态与信号</span><small>{{ source.objects.length }}</small></div>
+        <div class="signal-branch-title">
+          <span>{{ source.definition.algorithm_id?.startsWith('aux_') ? '辅助事件（非标准/不交易）' : '策略状态与信号' }}</span>
+          <small>{{ source.objects.length }}</small>
+        </div>
         <div
           v-for="item in [...source.objects].sort((left, right) => right.bar_index - left.bar_index || right.object_revision - left.object_revision)"
           :key="item.object_id" class="signal-object-node" :class="{ selected: selectedSignalId === item.object_id }"

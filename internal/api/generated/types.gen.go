@@ -9,6 +9,33 @@ import (
 	"time"
 )
 
+// Defines values for CalculationResultsObjectsCenterMonitorsBreakoutWarning.
+const (
+	CalculationResultsObjectsCenterMonitorsBreakoutWarningCrossAboveB        CalculationResultsObjectsCenterMonitorsBreakoutWarning = "cross_above_b"
+	CalculationResultsObjectsCenterMonitorsBreakoutWarningCrossBelowA        CalculationResultsObjectsCenterMonitorsBreakoutWarning = "cross_below_a"
+	CalculationResultsObjectsCenterMonitorsBreakoutWarningFallingWedgeAboveA CalculationResultsObjectsCenterMonitorsBreakoutWarning = "falling_wedge_above_a"
+	CalculationResultsObjectsCenterMonitorsBreakoutWarningLessThannil        CalculationResultsObjectsCenterMonitorsBreakoutWarning = "<nil>"
+	CalculationResultsObjectsCenterMonitorsBreakoutWarningRisingWedgeBelowB  CalculationResultsObjectsCenterMonitorsBreakoutWarning = "rising_wedge_below_b"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsCenterMonitorsBreakoutWarning enum.
+func (e CalculationResultsObjectsCenterMonitorsBreakoutWarning) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsCenterMonitorsBreakoutWarningCrossAboveB:
+		return true
+	case CalculationResultsObjectsCenterMonitorsBreakoutWarningCrossBelowA:
+		return true
+	case CalculationResultsObjectsCenterMonitorsBreakoutWarningFallingWedgeAboveA:
+		return true
+	case CalculationResultsObjectsCenterMonitorsBreakoutWarningLessThannil:
+		return true
+	case CalculationResultsObjectsCenterMonitorsBreakoutWarningRisingWedgeBelowB:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CalculationResultsObjectsCenterMonitorsComponentDirection.
 const (
 	CalculationResultsObjectsCenterMonitorsComponentDirectionDown CalculationResultsObjectsCenterMonitorsComponentDirection = "down"
@@ -27,21 +54,21 @@ func (e CalculationResultsObjectsCenterMonitorsComponentDirection) Valid() bool 
 	}
 }
 
-// Defines values for CalculationResultsObjectsCenterMonitorsMigrationWarning.
+// Defines values for CalculationResultsObjectsCenterMonitorsOscillationBias.
 const (
-	CalculationResultsObjectsCenterMonitorsMigrationWarningDown        CalculationResultsObjectsCenterMonitorsMigrationWarning = "down"
-	CalculationResultsObjectsCenterMonitorsMigrationWarningLessThannil CalculationResultsObjectsCenterMonitorsMigrationWarning = "<nil>"
-	CalculationResultsObjectsCenterMonitorsMigrationWarningUp          CalculationResultsObjectsCenterMonitorsMigrationWarning = "up"
+	CalculationResultsObjectsCenterMonitorsOscillationBiasNeutral CalculationResultsObjectsCenterMonitorsOscillationBias = "neutral"
+	CalculationResultsObjectsCenterMonitorsOscillationBiasStrong  CalculationResultsObjectsCenterMonitorsOscillationBias = "strong"
+	CalculationResultsObjectsCenterMonitorsOscillationBiasWeak    CalculationResultsObjectsCenterMonitorsOscillationBias = "weak"
 )
 
-// Valid indicates whether the value is a known member of the CalculationResultsObjectsCenterMonitorsMigrationWarning enum.
-func (e CalculationResultsObjectsCenterMonitorsMigrationWarning) Valid() bool {
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsCenterMonitorsOscillationBias enum.
+func (e CalculationResultsObjectsCenterMonitorsOscillationBias) Valid() bool {
 	switch e {
-	case CalculationResultsObjectsCenterMonitorsMigrationWarningDown:
+	case CalculationResultsObjectsCenterMonitorsOscillationBiasNeutral:
 		return true
-	case CalculationResultsObjectsCenterMonitorsMigrationWarningLessThannil:
+	case CalculationResultsObjectsCenterMonitorsOscillationBiasStrong:
 		return true
-	case CalculationResultsObjectsCenterMonitorsMigrationWarningUp:
+	case CalculationResultsObjectsCenterMonitorsOscillationBiasWeak:
 		return true
 	default:
 		return false
@@ -63,27 +90,6 @@ func (e CalculationResultsObjectsCenterMonitorsRelativePosition) Valid() bool {
 	case CalculationResultsObjectsCenterMonitorsRelativePositionBelow:
 		return true
 	case CalculationResultsObjectsCenterMonitorsRelativePositionEqual:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for CalculationResultsObjectsCenterMonitorsStrength.
-const (
-	CalculationResultsObjectsCenterMonitorsStrengthNeutral CalculationResultsObjectsCenterMonitorsStrength = "neutral"
-	CalculationResultsObjectsCenterMonitorsStrengthStrong  CalculationResultsObjectsCenterMonitorsStrength = "strong"
-	CalculationResultsObjectsCenterMonitorsStrengthWeak    CalculationResultsObjectsCenterMonitorsStrength = "weak"
-)
-
-// Valid indicates whether the value is a known member of the CalculationResultsObjectsCenterMonitorsStrength enum.
-func (e CalculationResultsObjectsCenterMonitorsStrength) Valid() bool {
-	switch e {
-	case CalculationResultsObjectsCenterMonitorsStrengthNeutral:
-		return true
-	case CalculationResultsObjectsCenterMonitorsStrengthStrong:
-		return true
-	case CalculationResultsObjectsCenterMonitorsStrengthWeak:
 		return true
 	default:
 		return false
@@ -495,6 +501,33 @@ func (e CalculationResultsObjectsZhongshuStatus) Valid() bool {
 	}
 }
 
+// Defines values for ChanCenterMonitorBreakoutWarning.
+const (
+	ChanCenterMonitorBreakoutWarningCrossAboveB        ChanCenterMonitorBreakoutWarning = "cross_above_b"
+	ChanCenterMonitorBreakoutWarningCrossBelowA        ChanCenterMonitorBreakoutWarning = "cross_below_a"
+	ChanCenterMonitorBreakoutWarningFallingWedgeAboveA ChanCenterMonitorBreakoutWarning = "falling_wedge_above_a"
+	ChanCenterMonitorBreakoutWarningLessThannil        ChanCenterMonitorBreakoutWarning = "<nil>"
+	ChanCenterMonitorBreakoutWarningRisingWedgeBelowB  ChanCenterMonitorBreakoutWarning = "rising_wedge_below_b"
+)
+
+// Valid indicates whether the value is a known member of the ChanCenterMonitorBreakoutWarning enum.
+func (e ChanCenterMonitorBreakoutWarning) Valid() bool {
+	switch e {
+	case ChanCenterMonitorBreakoutWarningCrossAboveB:
+		return true
+	case ChanCenterMonitorBreakoutWarningCrossBelowA:
+		return true
+	case ChanCenterMonitorBreakoutWarningFallingWedgeAboveA:
+		return true
+	case ChanCenterMonitorBreakoutWarningLessThannil:
+		return true
+	case ChanCenterMonitorBreakoutWarningRisingWedgeBelowB:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ChanCenterMonitorComponentDirection.
 const (
 	ChanCenterMonitorComponentDirectionDown ChanCenterMonitorComponentDirection = "down"
@@ -513,21 +546,21 @@ func (e ChanCenterMonitorComponentDirection) Valid() bool {
 	}
 }
 
-// Defines values for ChanCenterMonitorMigrationWarning.
+// Defines values for ChanCenterMonitorOscillationBias.
 const (
-	ChanCenterMonitorMigrationWarningDown        ChanCenterMonitorMigrationWarning = "down"
-	ChanCenterMonitorMigrationWarningLessThannil ChanCenterMonitorMigrationWarning = "<nil>"
-	ChanCenterMonitorMigrationWarningUp          ChanCenterMonitorMigrationWarning = "up"
+	ChanCenterMonitorOscillationBiasNeutral ChanCenterMonitorOscillationBias = "neutral"
+	ChanCenterMonitorOscillationBiasStrong  ChanCenterMonitorOscillationBias = "strong"
+	ChanCenterMonitorOscillationBiasWeak    ChanCenterMonitorOscillationBias = "weak"
 )
 
-// Valid indicates whether the value is a known member of the ChanCenterMonitorMigrationWarning enum.
-func (e ChanCenterMonitorMigrationWarning) Valid() bool {
+// Valid indicates whether the value is a known member of the ChanCenterMonitorOscillationBias enum.
+func (e ChanCenterMonitorOscillationBias) Valid() bool {
 	switch e {
-	case ChanCenterMonitorMigrationWarningDown:
+	case ChanCenterMonitorOscillationBiasNeutral:
 		return true
-	case ChanCenterMonitorMigrationWarningLessThannil:
+	case ChanCenterMonitorOscillationBiasStrong:
 		return true
-	case ChanCenterMonitorMigrationWarningUp:
+	case ChanCenterMonitorOscillationBiasWeak:
 		return true
 	default:
 		return false
@@ -549,27 +582,6 @@ func (e ChanCenterMonitorRelativePosition) Valid() bool {
 	case ChanCenterMonitorRelativePositionBelow:
 		return true
 	case ChanCenterMonitorRelativePositionEqual:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for ChanCenterMonitorStrength.
-const (
-	ChanCenterMonitorStrengthNeutral ChanCenterMonitorStrength = "neutral"
-	ChanCenterMonitorStrengthStrong  ChanCenterMonitorStrength = "strong"
-	ChanCenterMonitorStrengthWeak    ChanCenterMonitorStrength = "weak"
-)
-
-// Valid indicates whether the value is a known member of the ChanCenterMonitorStrength enum.
-func (e ChanCenterMonitorStrength) Valid() bool {
-	switch e {
-	case ChanCenterMonitorStrengthNeutral:
-		return true
-	case ChanCenterMonitorStrengthStrong:
-		return true
-	case ChanCenterMonitorStrengthWeak:
 		return true
 	default:
 		return false
@@ -621,6 +633,33 @@ func (e ChanMovementStateStateType) Valid() bool {
 	}
 }
 
+// Defines values for ChanObjectsCenterMonitorsBreakoutWarning.
+const (
+	ChanObjectsCenterMonitorsBreakoutWarningCrossAboveB        ChanObjectsCenterMonitorsBreakoutWarning = "cross_above_b"
+	ChanObjectsCenterMonitorsBreakoutWarningCrossBelowA        ChanObjectsCenterMonitorsBreakoutWarning = "cross_below_a"
+	ChanObjectsCenterMonitorsBreakoutWarningFallingWedgeAboveA ChanObjectsCenterMonitorsBreakoutWarning = "falling_wedge_above_a"
+	ChanObjectsCenterMonitorsBreakoutWarningLessThannil        ChanObjectsCenterMonitorsBreakoutWarning = "<nil>"
+	ChanObjectsCenterMonitorsBreakoutWarningRisingWedgeBelowB  ChanObjectsCenterMonitorsBreakoutWarning = "rising_wedge_below_b"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsCenterMonitorsBreakoutWarning enum.
+func (e ChanObjectsCenterMonitorsBreakoutWarning) Valid() bool {
+	switch e {
+	case ChanObjectsCenterMonitorsBreakoutWarningCrossAboveB:
+		return true
+	case ChanObjectsCenterMonitorsBreakoutWarningCrossBelowA:
+		return true
+	case ChanObjectsCenterMonitorsBreakoutWarningFallingWedgeAboveA:
+		return true
+	case ChanObjectsCenterMonitorsBreakoutWarningLessThannil:
+		return true
+	case ChanObjectsCenterMonitorsBreakoutWarningRisingWedgeBelowB:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ChanObjectsCenterMonitorsComponentDirection.
 const (
 	ChanObjectsCenterMonitorsComponentDirectionDown ChanObjectsCenterMonitorsComponentDirection = "down"
@@ -639,21 +678,21 @@ func (e ChanObjectsCenterMonitorsComponentDirection) Valid() bool {
 	}
 }
 
-// Defines values for ChanObjectsCenterMonitorsMigrationWarning.
+// Defines values for ChanObjectsCenterMonitorsOscillationBias.
 const (
-	ChanObjectsCenterMonitorsMigrationWarningDown        ChanObjectsCenterMonitorsMigrationWarning = "down"
-	ChanObjectsCenterMonitorsMigrationWarningLessThannil ChanObjectsCenterMonitorsMigrationWarning = "<nil>"
-	ChanObjectsCenterMonitorsMigrationWarningUp          ChanObjectsCenterMonitorsMigrationWarning = "up"
+	ChanObjectsCenterMonitorsOscillationBiasNeutral ChanObjectsCenterMonitorsOscillationBias = "neutral"
+	ChanObjectsCenterMonitorsOscillationBiasStrong  ChanObjectsCenterMonitorsOscillationBias = "strong"
+	ChanObjectsCenterMonitorsOscillationBiasWeak    ChanObjectsCenterMonitorsOscillationBias = "weak"
 )
 
-// Valid indicates whether the value is a known member of the ChanObjectsCenterMonitorsMigrationWarning enum.
-func (e ChanObjectsCenterMonitorsMigrationWarning) Valid() bool {
+// Valid indicates whether the value is a known member of the ChanObjectsCenterMonitorsOscillationBias enum.
+func (e ChanObjectsCenterMonitorsOscillationBias) Valid() bool {
 	switch e {
-	case ChanObjectsCenterMonitorsMigrationWarningDown:
+	case ChanObjectsCenterMonitorsOscillationBiasNeutral:
 		return true
-	case ChanObjectsCenterMonitorsMigrationWarningLessThannil:
+	case ChanObjectsCenterMonitorsOscillationBiasStrong:
 		return true
-	case ChanObjectsCenterMonitorsMigrationWarningUp:
+	case ChanObjectsCenterMonitorsOscillationBiasWeak:
 		return true
 	default:
 		return false
@@ -675,27 +714,6 @@ func (e ChanObjectsCenterMonitorsRelativePosition) Valid() bool {
 	case ChanObjectsCenterMonitorsRelativePositionBelow:
 		return true
 	case ChanObjectsCenterMonitorsRelativePositionEqual:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for ChanObjectsCenterMonitorsStrength.
-const (
-	ChanObjectsCenterMonitorsStrengthNeutral ChanObjectsCenterMonitorsStrength = "neutral"
-	ChanObjectsCenterMonitorsStrengthStrong  ChanObjectsCenterMonitorsStrength = "strong"
-	ChanObjectsCenterMonitorsStrengthWeak    ChanObjectsCenterMonitorsStrength = "weak"
-)
-
-// Valid indicates whether the value is a known member of the ChanObjectsCenterMonitorsStrength enum.
-func (e ChanObjectsCenterMonitorsStrength) Valid() bool {
-	switch e {
-	case ChanObjectsCenterMonitorsStrengthNeutral:
-		return true
-	case ChanObjectsCenterMonitorsStrengthStrong:
-		return true
-	case ChanObjectsCenterMonitorsStrengthWeak:
 		return true
 	default:
 		return false
@@ -1287,6 +1305,33 @@ func (e ChanZhongshuStatus) Valid() bool {
 	}
 }
 
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarning.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarningCrossAboveB        GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarning = "cross_above_b"
+	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarningCrossBelowA        GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarning = "cross_below_a"
+	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarningFallingWedgeAboveA GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarning = "falling_wedge_above_a"
+	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarningLessThannil        GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarning = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarningRisingWedgeBelowB  GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarning = "rising_wedge_below_b"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarning enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarning) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarningCrossAboveB:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarningCrossBelowA:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarningFallingWedgeAboveA:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarningLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarningRisingWedgeBelowB:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsComponentDirection.
 const (
 	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsComponentDirectionDown GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsComponentDirection = "down"
@@ -1305,21 +1350,21 @@ func (e GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsComponentDi
 	}
 }
 
-// Defines values for GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarning.
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsOscillationBias.
 const (
-	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarningDown        GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarning = "down"
-	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarningLessThannil GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarning = "<nil>"
-	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarningUp          GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarning = "up"
+	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsOscillationBiasNeutral GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsOscillationBias = "neutral"
+	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsOscillationBiasStrong  GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsOscillationBias = "strong"
+	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsOscillationBiasWeak    GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsOscillationBias = "weak"
 )
 
-// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarning enum.
-func (e GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarning) Valid() bool {
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsOscillationBias enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsOscillationBias) Valid() bool {
 	switch e {
-	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarningDown:
+	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsOscillationBiasNeutral:
 		return true
-	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarningLessThannil:
+	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsOscillationBiasStrong:
 		return true
-	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarningUp:
+	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsOscillationBiasWeak:
 		return true
 	default:
 		return false
@@ -1341,27 +1386,6 @@ func (e GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePos
 	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePositionBelow:
 		return true
 	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePositionEqual:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrength.
-const (
-	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrengthNeutral GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrength = "neutral"
-	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrengthStrong  GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrength = "strong"
-	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrengthWeak    GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrength = "weak"
-)
-
-// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrength enum.
-func (e GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrength) Valid() bool {
-	switch e {
-	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrengthNeutral:
-		return true
-	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrengthStrong:
-		return true
-	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrengthWeak:
 		return true
 	default:
 		return false
@@ -1829,6 +1853,48 @@ type BacktestRequest struct {
 		ToBarIndex         int `json:"to_bar_index"`
 		WarmupFromBarIndex int `json:"warmup_from_bar_index"`
 	} `json:"range"`
+	RankingContext *struct {
+		EpisodeAvailableAtUtc    int64       `json:"episode_available_at_utc"`
+		EpisodeId                string      `json:"episode_id"`
+		EpisodeStartTimestampUtc int64       `json:"episode_start_timestamp_utc"`
+		MembershipMode           interface{} `json:"membership_mode"`
+		MembershipRevision       string      `json:"membership_revision"`
+		Memberships              []struct {
+			AvailableAtUtc   int64  `json:"available_at_utc"`
+			DataRevision     string `json:"data_revision"`
+			DatasetId        string `json:"dataset_id"`
+			EffectiveFromUtc int64  `json:"effective_from_utc"`
+			EffectiveToUtc   *int64 `json:"effective_to_utc"`
+			SectorId         string `json:"sector_id"`
+		} `json:"memberships"`
+		PriceAdjustmentMode     interface{} `json:"price_adjustment_mode"`
+		PriceAdjustmentRevision string      `json:"price_adjustment_revision"`
+		UniverseId              string      `json:"universe_id"`
+	} `json:"ranking_context,omitempty"`
+	RiskOverlay *struct {
+		Algorithm struct {
+			AlgorithmId      string      `json:"algorithm_id"`
+			AlgorithmVersion string      `json:"algorithm_version"`
+			Kind             interface{} `json:"kind"`
+			SourceHash       string      `json:"source_hash"`
+		} `json:"algorithm"`
+		Context struct {
+			HandledFutureBranches []string `json:"handled_future_branches"`
+			LegalFutureBranches   []string `json:"legal_future_branches"`
+			MarketStateRevision   string   `json:"market_state_revision"`
+			Observations          []struct {
+				AvailableAtBarIndex   int         `json:"available_at_bar_index"`
+				DataGapBars           int         `json:"data_gap_bars"`
+				DataRevision          string      `json:"data_revision"`
+				EffectiveFromBarIndex int         `json:"effective_from_bar_index"`
+				EventRiskActive       bool        `json:"event_risk_active"`
+				StaleBars             int         `json:"stale_bars"`
+				TradingStatus         interface{} `json:"trading_status"`
+			} `json:"observations"`
+			SectorId string `json:"sector_id"`
+		} `json:"context"`
+		Parameters map[string]interface{} `json:"parameters"`
+	} `json:"risk_overlay,omitempty"`
 	Strategy struct {
 		AlgorithmId      string      `json:"algorithm_id"`
 		AlgorithmVersion string      `json:"algorithm_version"`
@@ -1861,6 +1927,10 @@ type BacktestSummary struct {
 	ProfitFactor         *float32               `json:"profit_factor,omitempty"`
 	ProfitLossRatio      *float32               `json:"profit_loss_ratio,omitempty"`
 	RequestId            string                 `json:"request_id"`
+	RiskApprovedCount    int                    `json:"risk_approved_count"`
+	RiskBlockedCount     int                    `json:"risk_blocked_count"`
+	RiskKillSwitchCount  int                    `json:"risk_kill_switch_count"`
+	RiskReducedCount     int                    `json:"risk_reduced_count"`
 	RunId                string                 `json:"run_id"`
 	Sharpe               *float32               `json:"sharpe,omitempty"`
 	TotalCommissionI64   int                    `json:"total_commission_i64"`
@@ -1962,21 +2032,33 @@ type CalculationResults struct {
 		CenterMonitors []struct {
 			AnalysisLevel       string                                                    `json:"analysis_level"`
 			BarIndex            int                                                       `json:"bar_index"`
+			BreakoutWarning     *CalculationResultsObjectsCenterMonitorsBreakoutWarning   `json:"breakout_warning"`
+			CatalogAlgorithmId  interface{}                                               `json:"catalog_algorithm_id"`
 			ComponentDirection  CalculationResultsObjectsCenterMonitorsComponentDirection `json:"component_direction"`
+			ComponentOrdinal    int                                                       `json:"component_ordinal"`
 			Confirmed           bool                                                      `json:"confirmed"`
 			ConfirmedAtBarIndex *int                                                      `json:"confirmed_at_bar_index"`
+			ConfirmsThirdPoint  interface{}                                               `json:"confirms_third_point"`
+			CoreHighI64         int                                                       `json:"core_high_i64"`
+			CoreLowI64          int                                                       `json:"core_low_i64"`
+			EvidenceLevel       interface{}                                               `json:"evidence_level"`
+			ExecutionAllowed    interface{}                                               `json:"execution_allowed"`
 			KnownAtBarIndex     int                                                       `json:"known_at_bar_index"`
-			MigrationWarning    *CalculationResultsObjectsCenterMonitorsMigrationWarning  `json:"migration_warning"`
+			LevelMappingProfile interface{}                                               `json:"level_mapping_profile"`
 			ObjectId            string                                                    `json:"object_id"`
 			ObjectRevision      int                                                       `json:"object_revision"`
+			OscillationBias     CalculationResultsObjectsCenterMonitorsOscillationBias    `json:"oscillation_bias"`
 			RangeHighI64        int                                                       `json:"range_high_i64"`
 			RangeLowI64         int                                                       `json:"range_low_i64"`
 			ReferenceObjectId   string                                                    `json:"reference_object_id"`
 			RelativePosition    CalculationResultsObjectsCenterMonitorsRelativePosition   `json:"relative_position"`
-			Strength            CalculationResultsObjectsCenterMonitorsStrength           `json:"strength"`
+			SemanticNamespace   interface{}                                               `json:"semantic_namespace"`
+			StandardSignal      interface{}                                               `json:"standard_signal"`
 			Time                int                                                       `json:"time"`
 			ZI64                int                                                       `json:"z_i64"`
+			ZTwiceI64           int                                                       `json:"z_twice_i64"`
 			ZnI64               int                                                       `json:"zn_i64"`
+			ZnTwiceI64          int                                                       `json:"zn_twice_i64"`
 		} `json:"center_monitors"`
 		Divergences []struct {
 			BarIndex            int                                                 `json:"bar_index"`
@@ -2006,6 +2088,8 @@ type CalculationResults struct {
 			ObjectRevision        int         `json:"object_revision"`
 			PriceI64              int         `json:"price_i64"`
 			Time                  int         `json:"time"`
+			ZoneHighI64           int         `json:"zone_high_i64"`
+			ZoneLowI64            int         `json:"zone_low_i64"`
 		} `json:"fractals"`
 		MovementStates []struct {
 			AnalysisLevel       string                                            `json:"analysis_level"`
@@ -2104,17 +2188,17 @@ type CalculationResults struct {
 	Values     *map[string][]*float32 `json:"values,omitempty"`
 }
 
+// CalculationResultsObjectsCenterMonitorsBreakoutWarning defines model for CalculationResults.Objects.CenterMonitors.BreakoutWarning.
+type CalculationResultsObjectsCenterMonitorsBreakoutWarning string
+
 // CalculationResultsObjectsCenterMonitorsComponentDirection defines model for CalculationResults.Objects.CenterMonitors.ComponentDirection.
 type CalculationResultsObjectsCenterMonitorsComponentDirection string
 
-// CalculationResultsObjectsCenterMonitorsMigrationWarning defines model for CalculationResults.Objects.CenterMonitors.MigrationWarning.
-type CalculationResultsObjectsCenterMonitorsMigrationWarning string
+// CalculationResultsObjectsCenterMonitorsOscillationBias defines model for CalculationResults.Objects.CenterMonitors.OscillationBias.
+type CalculationResultsObjectsCenterMonitorsOscillationBias string
 
 // CalculationResultsObjectsCenterMonitorsRelativePosition defines model for CalculationResults.Objects.CenterMonitors.RelativePosition.
 type CalculationResultsObjectsCenterMonitorsRelativePosition string
-
-// CalculationResultsObjectsCenterMonitorsStrength defines model for CalculationResults.Objects.CenterMonitors.Strength.
-type CalculationResultsObjectsCenterMonitorsStrength string
 
 // CalculationResultsObjectsDivergencesDivergenceKind defines model for CalculationResults.Objects.Divergences.DivergenceKind.
 type CalculationResultsObjectsDivergencesDivergenceKind string
@@ -2179,34 +2263,46 @@ type CausalEvent struct {
 type ChanCenterMonitor struct {
 	AnalysisLevel       string                              `json:"analysis_level"`
 	BarIndex            int                                 `json:"bar_index"`
+	BreakoutWarning     *ChanCenterMonitorBreakoutWarning   `json:"breakout_warning"`
+	CatalogAlgorithmId  interface{}                         `json:"catalog_algorithm_id"`
 	ComponentDirection  ChanCenterMonitorComponentDirection `json:"component_direction"`
+	ComponentOrdinal    int                                 `json:"component_ordinal"`
 	Confirmed           bool                                `json:"confirmed"`
 	ConfirmedAtBarIndex *int                                `json:"confirmed_at_bar_index"`
+	ConfirmsThirdPoint  interface{}                         `json:"confirms_third_point"`
+	CoreHighI64         int                                 `json:"core_high_i64"`
+	CoreLowI64          int                                 `json:"core_low_i64"`
+	EvidenceLevel       interface{}                         `json:"evidence_level"`
+	ExecutionAllowed    interface{}                         `json:"execution_allowed"`
 	KnownAtBarIndex     int                                 `json:"known_at_bar_index"`
-	MigrationWarning    *ChanCenterMonitorMigrationWarning  `json:"migration_warning"`
+	LevelMappingProfile interface{}                         `json:"level_mapping_profile"`
 	ObjectId            string                              `json:"object_id"`
 	ObjectRevision      int                                 `json:"object_revision"`
+	OscillationBias     ChanCenterMonitorOscillationBias    `json:"oscillation_bias"`
 	RangeHighI64        int                                 `json:"range_high_i64"`
 	RangeLowI64         int                                 `json:"range_low_i64"`
 	ReferenceObjectId   string                              `json:"reference_object_id"`
 	RelativePosition    ChanCenterMonitorRelativePosition   `json:"relative_position"`
-	Strength            ChanCenterMonitorStrength           `json:"strength"`
+	SemanticNamespace   interface{}                         `json:"semantic_namespace"`
+	StandardSignal      interface{}                         `json:"standard_signal"`
 	Time                int                                 `json:"time"`
 	ZI64                int                                 `json:"z_i64"`
+	ZTwiceI64           int                                 `json:"z_twice_i64"`
 	ZnI64               int                                 `json:"zn_i64"`
+	ZnTwiceI64          int                                 `json:"zn_twice_i64"`
 }
+
+// ChanCenterMonitorBreakoutWarning defines model for ChanCenterMonitor.BreakoutWarning.
+type ChanCenterMonitorBreakoutWarning string
 
 // ChanCenterMonitorComponentDirection defines model for ChanCenterMonitor.ComponentDirection.
 type ChanCenterMonitorComponentDirection string
 
-// ChanCenterMonitorMigrationWarning defines model for ChanCenterMonitor.MigrationWarning.
-type ChanCenterMonitorMigrationWarning string
+// ChanCenterMonitorOscillationBias defines model for ChanCenterMonitor.OscillationBias.
+type ChanCenterMonitorOscillationBias string
 
 // ChanCenterMonitorRelativePosition defines model for ChanCenterMonitor.RelativePosition.
 type ChanCenterMonitorRelativePosition string
-
-// ChanCenterMonitorStrength defines model for ChanCenterMonitor.Strength.
-type ChanCenterMonitorStrength string
 
 // ChanFractal defines model for ChanFractal.
 type ChanFractal struct {
@@ -2220,6 +2316,8 @@ type ChanFractal struct {
 	ObjectRevision        int         `json:"object_revision"`
 	PriceI64              int         `json:"price_i64"`
 	Time                  int         `json:"time"`
+	ZoneHighI64           int         `json:"zone_high_i64"`
+	ZoneLowI64            int         `json:"zone_low_i64"`
 }
 
 // ChanLineObject defines model for ChanLineObject.
@@ -2285,21 +2383,33 @@ type ChanObjects struct {
 	CenterMonitors []struct {
 		AnalysisLevel       string                                      `json:"analysis_level"`
 		BarIndex            int                                         `json:"bar_index"`
+		BreakoutWarning     *ChanObjectsCenterMonitorsBreakoutWarning   `json:"breakout_warning"`
+		CatalogAlgorithmId  interface{}                                 `json:"catalog_algorithm_id"`
 		ComponentDirection  ChanObjectsCenterMonitorsComponentDirection `json:"component_direction"`
+		ComponentOrdinal    int                                         `json:"component_ordinal"`
 		Confirmed           bool                                        `json:"confirmed"`
 		ConfirmedAtBarIndex *int                                        `json:"confirmed_at_bar_index"`
+		ConfirmsThirdPoint  interface{}                                 `json:"confirms_third_point"`
+		CoreHighI64         int                                         `json:"core_high_i64"`
+		CoreLowI64          int                                         `json:"core_low_i64"`
+		EvidenceLevel       interface{}                                 `json:"evidence_level"`
+		ExecutionAllowed    interface{}                                 `json:"execution_allowed"`
 		KnownAtBarIndex     int                                         `json:"known_at_bar_index"`
-		MigrationWarning    *ChanObjectsCenterMonitorsMigrationWarning  `json:"migration_warning"`
+		LevelMappingProfile interface{}                                 `json:"level_mapping_profile"`
 		ObjectId            string                                      `json:"object_id"`
 		ObjectRevision      int                                         `json:"object_revision"`
+		OscillationBias     ChanObjectsCenterMonitorsOscillationBias    `json:"oscillation_bias"`
 		RangeHighI64        int                                         `json:"range_high_i64"`
 		RangeLowI64         int                                         `json:"range_low_i64"`
 		ReferenceObjectId   string                                      `json:"reference_object_id"`
 		RelativePosition    ChanObjectsCenterMonitorsRelativePosition   `json:"relative_position"`
-		Strength            ChanObjectsCenterMonitorsStrength           `json:"strength"`
+		SemanticNamespace   interface{}                                 `json:"semantic_namespace"`
+		StandardSignal      interface{}                                 `json:"standard_signal"`
 		Time                int                                         `json:"time"`
 		ZI64                int                                         `json:"z_i64"`
+		ZTwiceI64           int                                         `json:"z_twice_i64"`
 		ZnI64               int                                         `json:"zn_i64"`
+		ZnTwiceI64          int                                         `json:"zn_twice_i64"`
 	} `json:"center_monitors"`
 	Divergences []struct {
 		BarIndex            int                                   `json:"bar_index"`
@@ -2329,6 +2439,8 @@ type ChanObjects struct {
 		ObjectRevision        int         `json:"object_revision"`
 		PriceI64              int         `json:"price_i64"`
 		Time                  int         `json:"time"`
+		ZoneHighI64           int         `json:"zone_high_i64"`
+		ZoneLowI64            int         `json:"zone_low_i64"`
 	} `json:"fractals"`
 	MovementStates []struct {
 		AnalysisLevel       string                              `json:"analysis_level"`
@@ -2423,17 +2535,17 @@ type ChanObjects struct {
 	} `json:"zhongshu"`
 }
 
+// ChanObjectsCenterMonitorsBreakoutWarning defines model for ChanObjects.CenterMonitors.BreakoutWarning.
+type ChanObjectsCenterMonitorsBreakoutWarning string
+
 // ChanObjectsCenterMonitorsComponentDirection defines model for ChanObjects.CenterMonitors.ComponentDirection.
 type ChanObjectsCenterMonitorsComponentDirection string
 
-// ChanObjectsCenterMonitorsMigrationWarning defines model for ChanObjects.CenterMonitors.MigrationWarning.
-type ChanObjectsCenterMonitorsMigrationWarning string
+// ChanObjectsCenterMonitorsOscillationBias defines model for ChanObjects.CenterMonitors.OscillationBias.
+type ChanObjectsCenterMonitorsOscillationBias string
 
 // ChanObjectsCenterMonitorsRelativePosition defines model for ChanObjects.CenterMonitors.RelativePosition.
 type ChanObjectsCenterMonitorsRelativePosition string
-
-// ChanObjectsCenterMonitorsStrength defines model for ChanObjects.CenterMonitors.Strength.
-type ChanObjectsCenterMonitorsStrength string
 
 // ChanObjectsDivergencesDivergenceKind defines model for ChanObjects.Divergences.DivergenceKind.
 type ChanObjectsDivergencesDivergenceKind string
@@ -2672,6 +2784,36 @@ type PythonJobRequest struct {
 	TraceId    string                  `json:"trace_id"`
 }
 
+// RankingContext defines model for RankingContext.
+type RankingContext struct {
+	EpisodeAvailableAtUtc    int64       `json:"episode_available_at_utc"`
+	EpisodeId                string      `json:"episode_id"`
+	EpisodeStartTimestampUtc int64       `json:"episode_start_timestamp_utc"`
+	MembershipMode           interface{} `json:"membership_mode"`
+	MembershipRevision       string      `json:"membership_revision"`
+	Memberships              []struct {
+		AvailableAtUtc   int64  `json:"available_at_utc"`
+		DataRevision     string `json:"data_revision"`
+		DatasetId        string `json:"dataset_id"`
+		EffectiveFromUtc int64  `json:"effective_from_utc"`
+		EffectiveToUtc   *int64 `json:"effective_to_utc"`
+		SectorId         string `json:"sector_id"`
+	} `json:"memberships"`
+	PriceAdjustmentMode     interface{} `json:"price_adjustment_mode"`
+	PriceAdjustmentRevision string      `json:"price_adjustment_revision"`
+	UniverseId              string      `json:"universe_id"`
+}
+
+// RankingMembership defines model for RankingMembership.
+type RankingMembership struct {
+	AvailableAtUtc   int64  `json:"available_at_utc"`
+	DataRevision     string `json:"data_revision"`
+	DatasetId        string `json:"dataset_id"`
+	EffectiveFromUtc int64  `json:"effective_from_utc"`
+	EffectiveToUtc   *int64 `json:"effective_to_utc"`
+	SectorId         string `json:"sector_id"`
+}
+
 // ReplayRequest defines model for ReplayRequest.
 type ReplayRequest struct {
 	DataRevision string                 `json:"data_revision"`
@@ -2701,6 +2843,60 @@ type ReplayStatus struct {
 	RequestId string      `json:"request_id"`
 	ResultRef *string     `json:"result_ref,omitempty"`
 	Status    interface{} `json:"status"`
+}
+
+// RiskContext defines model for RiskContext.
+type RiskContext struct {
+	HandledFutureBranches []string `json:"handled_future_branches"`
+	LegalFutureBranches   []string `json:"legal_future_branches"`
+	MarketStateRevision   string   `json:"market_state_revision"`
+	Observations          []struct {
+		AvailableAtBarIndex   int         `json:"available_at_bar_index"`
+		DataGapBars           int         `json:"data_gap_bars"`
+		DataRevision          string      `json:"data_revision"`
+		EffectiveFromBarIndex int         `json:"effective_from_bar_index"`
+		EventRiskActive       bool        `json:"event_risk_active"`
+		StaleBars             int         `json:"stale_bars"`
+		TradingStatus         interface{} `json:"trading_status"`
+	} `json:"observations"`
+	SectorId string `json:"sector_id"`
+}
+
+// RiskMarketObservation defines model for RiskMarketObservation.
+type RiskMarketObservation struct {
+	AvailableAtBarIndex   int         `json:"available_at_bar_index"`
+	DataGapBars           int         `json:"data_gap_bars"`
+	DataRevision          string      `json:"data_revision"`
+	EffectiveFromBarIndex int         `json:"effective_from_bar_index"`
+	EventRiskActive       bool        `json:"event_risk_active"`
+	StaleBars             int         `json:"stale_bars"`
+	TradingStatus         interface{} `json:"trading_status"`
+}
+
+// RiskOverlay defines model for RiskOverlay.
+type RiskOverlay struct {
+	Algorithm struct {
+		AlgorithmId      string      `json:"algorithm_id"`
+		AlgorithmVersion string      `json:"algorithm_version"`
+		Kind             interface{} `json:"kind"`
+		SourceHash       string      `json:"source_hash"`
+	} `json:"algorithm"`
+	Context struct {
+		HandledFutureBranches []string `json:"handled_future_branches"`
+		LegalFutureBranches   []string `json:"legal_future_branches"`
+		MarketStateRevision   string   `json:"market_state_revision"`
+		Observations          []struct {
+			AvailableAtBarIndex   int         `json:"available_at_bar_index"`
+			DataGapBars           int         `json:"data_gap_bars"`
+			DataRevision          string      `json:"data_revision"`
+			EffectiveFromBarIndex int         `json:"effective_from_bar_index"`
+			EventRiskActive       bool        `json:"event_risk_active"`
+			StaleBars             int         `json:"stale_bars"`
+			TradingStatus         interface{} `json:"trading_status"`
+		} `json:"observations"`
+		SectorId string `json:"sector_id"`
+	} `json:"context"`
+	Parameters map[string]interface{} `json:"parameters"`
 }
 
 // RunAccepted defines model for RunAccepted.
@@ -2749,6 +2945,48 @@ type RunStatus struct {
 			ToBarIndex         int `json:"to_bar_index"`
 			WarmupFromBarIndex int `json:"warmup_from_bar_index"`
 		} `json:"range"`
+		RankingContext *struct {
+			EpisodeAvailableAtUtc    int         `json:"episode_available_at_utc"`
+			EpisodeId                string      `json:"episode_id"`
+			EpisodeStartTimestampUtc int         `json:"episode_start_timestamp_utc"`
+			MembershipMode           interface{} `json:"membership_mode"`
+			MembershipRevision       string      `json:"membership_revision"`
+			Memberships              []struct {
+				AvailableAtUtc   int    `json:"available_at_utc"`
+				DataRevision     string `json:"data_revision"`
+				DatasetId        string `json:"dataset_id"`
+				EffectiveFromUtc int    `json:"effective_from_utc"`
+				EffectiveToUtc   *int   `json:"effective_to_utc"`
+				SectorId         string `json:"sector_id"`
+			} `json:"memberships"`
+			PriceAdjustmentMode     interface{} `json:"price_adjustment_mode"`
+			PriceAdjustmentRevision string      `json:"price_adjustment_revision"`
+			UniverseId              string      `json:"universe_id"`
+		} `json:"ranking_context,omitempty"`
+		RiskOverlay *struct {
+			Algorithm struct {
+				AlgorithmId      interface{} `json:"algorithm_id"`
+				AlgorithmVersion string      `json:"algorithm_version"`
+				Kind             interface{} `json:"kind"`
+				SourceHash       string      `json:"source_hash"`
+			} `json:"algorithm"`
+			Context struct {
+				HandledFutureBranches []string `json:"handled_future_branches"`
+				LegalFutureBranches   []string `json:"legal_future_branches"`
+				MarketStateRevision   string   `json:"market_state_revision"`
+				Observations          []struct {
+					AvailableAtBarIndex   int         `json:"available_at_bar_index"`
+					DataGapBars           int         `json:"data_gap_bars"`
+					DataRevision          string      `json:"data_revision"`
+					EffectiveFromBarIndex int         `json:"effective_from_bar_index"`
+					EventRiskActive       bool        `json:"event_risk_active"`
+					StaleBars             int         `json:"stale_bars"`
+					TradingStatus         interface{} `json:"trading_status"`
+				} `json:"observations"`
+				SectorId string `json:"sector_id"`
+			} `json:"context"`
+			Parameters map[string]interface{} `json:"parameters"`
+		} `json:"risk_overlay,omitempty"`
 		RunId         string      `json:"run_id"`
 		RunSignature  string      `json:"run_signature"`
 		SchemaVersion interface{} `json:"schema_version"`
@@ -2890,6 +3128,30 @@ type StudyRequest struct {
 			WarmupFromBarIndex int `json:"warmup_from_bar_index"`
 		} `json:"validation"`
 	} `json:"ranges"`
+	RiskOverlay *struct {
+		Algorithm struct {
+			AlgorithmId      string      `json:"algorithm_id"`
+			AlgorithmVersion string      `json:"algorithm_version"`
+			Kind             interface{} `json:"kind"`
+			SourceHash       string      `json:"source_hash"`
+		} `json:"algorithm"`
+		Context struct {
+			HandledFutureBranches []string `json:"handled_future_branches"`
+			LegalFutureBranches   []string `json:"legal_future_branches"`
+			MarketStateRevision   string   `json:"market_state_revision"`
+			Observations          []struct {
+				AvailableAtBarIndex   int         `json:"available_at_bar_index"`
+				DataGapBars           int         `json:"data_gap_bars"`
+				DataRevision          string      `json:"data_revision"`
+				EffectiveFromBarIndex int         `json:"effective_from_bar_index"`
+				EventRiskActive       bool        `json:"event_risk_active"`
+				StaleBars             int         `json:"stale_bars"`
+				TradingStatus         interface{} `json:"trading_status"`
+			} `json:"observations"`
+			SectorId string `json:"sector_id"`
+		} `json:"context"`
+		Parameters map[string]interface{} `json:"parameters"`
+	} `json:"risk_overlay,omitempty"`
 	Search struct {
 		Budget     int         `json:"budget"`
 		Method     interface{} `json:"method"`
@@ -2967,6 +3229,30 @@ type StudyStatus struct {
 				WarmupFromBarIndex int `json:"warmup_from_bar_index"`
 			} `json:"validation"`
 		} `json:"ranges"`
+		RiskOverlay *struct {
+			Algorithm struct {
+				AlgorithmId      interface{} `json:"algorithm_id"`
+				AlgorithmVersion string      `json:"algorithm_version"`
+				Kind             interface{} `json:"kind"`
+				SourceHash       string      `json:"source_hash"`
+			} `json:"algorithm"`
+			Context struct {
+				HandledFutureBranches []string `json:"handled_future_branches"`
+				LegalFutureBranches   []string `json:"legal_future_branches"`
+				MarketStateRevision   string   `json:"market_state_revision"`
+				Observations          []struct {
+					AvailableAtBarIndex   int         `json:"available_at_bar_index"`
+					DataGapBars           int         `json:"data_gap_bars"`
+					DataRevision          string      `json:"data_revision"`
+					EffectiveFromBarIndex int         `json:"effective_from_bar_index"`
+					EventRiskActive       bool        `json:"event_risk_active"`
+					StaleBars             int         `json:"stale_bars"`
+					TradingStatus         interface{} `json:"trading_status"`
+				} `json:"observations"`
+				SectorId string `json:"sector_id"`
+			} `json:"context"`
+			Parameters map[string]interface{} `json:"parameters"`
+		} `json:"risk_overlay,omitempty"`
 		SchemaVersion interface{} `json:"schema_version"`
 		Search        struct {
 			Budget     int         `json:"budget"`
@@ -3092,6 +3378,48 @@ type CreateBacktestJSONBody struct {
 		ToBarIndex         int `json:"to_bar_index"`
 		WarmupFromBarIndex int `json:"warmup_from_bar_index"`
 	} `json:"range"`
+	RankingContext *struct {
+		EpisodeAvailableAtUtc    int64       `json:"episode_available_at_utc"`
+		EpisodeId                string      `json:"episode_id"`
+		EpisodeStartTimestampUtc int64       `json:"episode_start_timestamp_utc"`
+		MembershipMode           interface{} `json:"membership_mode"`
+		MembershipRevision       string      `json:"membership_revision"`
+		Memberships              []struct {
+			AvailableAtUtc   int64  `json:"available_at_utc"`
+			DataRevision     string `json:"data_revision"`
+			DatasetId        string `json:"dataset_id"`
+			EffectiveFromUtc int64  `json:"effective_from_utc"`
+			EffectiveToUtc   *int64 `json:"effective_to_utc"`
+			SectorId         string `json:"sector_id"`
+		} `json:"memberships"`
+		PriceAdjustmentMode     interface{} `json:"price_adjustment_mode"`
+		PriceAdjustmentRevision string      `json:"price_adjustment_revision"`
+		UniverseId              string      `json:"universe_id"`
+	} `json:"ranking_context,omitempty"`
+	RiskOverlay *struct {
+		Algorithm struct {
+			AlgorithmId      string      `json:"algorithm_id"`
+			AlgorithmVersion string      `json:"algorithm_version"`
+			Kind             interface{} `json:"kind"`
+			SourceHash       string      `json:"source_hash"`
+		} `json:"algorithm"`
+		Context struct {
+			HandledFutureBranches []string `json:"handled_future_branches"`
+			LegalFutureBranches   []string `json:"legal_future_branches"`
+			MarketStateRevision   string   `json:"market_state_revision"`
+			Observations          []struct {
+				AvailableAtBarIndex   int         `json:"available_at_bar_index"`
+				DataGapBars           int         `json:"data_gap_bars"`
+				DataRevision          string      `json:"data_revision"`
+				EffectiveFromBarIndex int         `json:"effective_from_bar_index"`
+				EventRiskActive       bool        `json:"event_risk_active"`
+				StaleBars             int         `json:"stale_bars"`
+				TradingStatus         interface{} `json:"trading_status"`
+			} `json:"observations"`
+			SectorId string `json:"sector_id"`
+		} `json:"context"`
+		Parameters map[string]interface{} `json:"parameters"`
+	} `json:"risk_overlay,omitempty"`
 	Strategy struct {
 		AlgorithmId      string      `json:"algorithm_id"`
 		AlgorithmVersion string      `json:"algorithm_version"`
@@ -3129,6 +3457,10 @@ type GetBacktestSummary200JSONResponseBody struct {
 	ProfitFactor         *float32               `json:"profit_factor,omitempty"`
 	ProfitLossRatio      *float32               `json:"profit_loss_ratio,omitempty"`
 	RequestId            string                 `json:"request_id"`
+	RiskApprovedCount    int                    `json:"risk_approved_count"`
+	RiskBlockedCount     int                    `json:"risk_blocked_count"`
+	RiskKillSwitchCount  int                    `json:"risk_kill_switch_count"`
+	RiskReducedCount     int                    `json:"risk_reduced_count"`
 	RunId                string                 `json:"run_id"`
 	Sharpe               *float32               `json:"sharpe,omitempty"`
 	TotalCommissionI64   int                    `json:"total_commission_i64"`
@@ -3165,17 +3497,17 @@ type GetCalculationResultsParams struct {
 	ToBarIndex   int `form:"to_bar_index" json:"to_bar_index"`
 }
 
+// GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarning defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarning string
+
 // GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsComponentDirection defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsComponentDirection string
 
-// GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarning defines parameters for GetCalculationResults.
-type GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsMigrationWarning string
+// GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsOscillationBias defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsOscillationBias string
 
 // GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePosition defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePosition string
-
-// GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrength defines parameters for GetCalculationResults.
-type GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsStrength string
 
 // GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKind defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKind string
@@ -3351,6 +3683,30 @@ type CreateStudyJSONBody struct {
 			WarmupFromBarIndex int `json:"warmup_from_bar_index"`
 		} `json:"validation"`
 	} `json:"ranges"`
+	RiskOverlay *struct {
+		Algorithm struct {
+			AlgorithmId      string      `json:"algorithm_id"`
+			AlgorithmVersion string      `json:"algorithm_version"`
+			Kind             interface{} `json:"kind"`
+			SourceHash       string      `json:"source_hash"`
+		} `json:"algorithm"`
+		Context struct {
+			HandledFutureBranches []string `json:"handled_future_branches"`
+			LegalFutureBranches   []string `json:"legal_future_branches"`
+			MarketStateRevision   string   `json:"market_state_revision"`
+			Observations          []struct {
+				AvailableAtBarIndex   int         `json:"available_at_bar_index"`
+				DataGapBars           int         `json:"data_gap_bars"`
+				DataRevision          string      `json:"data_revision"`
+				EffectiveFromBarIndex int         `json:"effective_from_bar_index"`
+				EventRiskActive       bool        `json:"event_risk_active"`
+				StaleBars             int         `json:"stale_bars"`
+				TradingStatus         interface{} `json:"trading_status"`
+			} `json:"observations"`
+			SectorId string `json:"sector_id"`
+		} `json:"context"`
+		Parameters map[string]interface{} `json:"parameters"`
+	} `json:"risk_overlay,omitempty"`
 	Search struct {
 		Budget     int         `json:"budget"`
 		Method     interface{} `json:"method"`
@@ -3844,6 +4200,38 @@ func (a *BacktestSummary) UnmarshalJSON(b []byte) error {
 		delete(object, "request_id")
 	}
 
+	if raw, found := object["risk_approved_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskApprovedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_approved_count': %w", err)
+		}
+		delete(object, "risk_approved_count")
+	}
+
+	if raw, found := object["risk_blocked_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskBlockedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_blocked_count': %w", err)
+		}
+		delete(object, "risk_blocked_count")
+	}
+
+	if raw, found := object["risk_kill_switch_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskKillSwitchCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_kill_switch_count': %w", err)
+		}
+		delete(object, "risk_kill_switch_count")
+	}
+
+	if raw, found := object["risk_reduced_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskReducedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_reduced_count': %w", err)
+		}
+		delete(object, "risk_reduced_count")
+	}
+
 	if raw, found := object["run_id"]; found {
 		err = json.Unmarshal(raw, &a.RunId)
 		if err != nil {
@@ -3969,6 +4357,26 @@ func (a BacktestSummary) MarshalJSON() ([]byte, error) {
 	object["request_id"], err = json.Marshal(a.RequestId)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'request_id': %w", err)
+	}
+
+	object["risk_approved_count"], err = json.Marshal(a.RiskApprovedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_approved_count': %w", err)
+	}
+
+	object["risk_blocked_count"], err = json.Marshal(a.RiskBlockedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_blocked_count': %w", err)
+	}
+
+	object["risk_kill_switch_count"], err = json.Marshal(a.RiskKillSwitchCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_kill_switch_count': %w", err)
+	}
+
+	object["risk_reduced_count"], err = json.Marshal(a.RiskReducedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_reduced_count': %w", err)
 	}
 
 	object["run_id"], err = json.Marshal(a.RunId)
@@ -4251,6 +4659,38 @@ func (a *GetBacktestSummary200JSONResponseBody) UnmarshalJSON(b []byte) error {
 		delete(object, "request_id")
 	}
 
+	if raw, found := object["risk_approved_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskApprovedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_approved_count': %w", err)
+		}
+		delete(object, "risk_approved_count")
+	}
+
+	if raw, found := object["risk_blocked_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskBlockedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_blocked_count': %w", err)
+		}
+		delete(object, "risk_blocked_count")
+	}
+
+	if raw, found := object["risk_kill_switch_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskKillSwitchCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_kill_switch_count': %w", err)
+		}
+		delete(object, "risk_kill_switch_count")
+	}
+
+	if raw, found := object["risk_reduced_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskReducedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_reduced_count': %w", err)
+		}
+		delete(object, "risk_reduced_count")
+	}
+
 	if raw, found := object["run_id"]; found {
 		err = json.Unmarshal(raw, &a.RunId)
 		if err != nil {
@@ -4376,6 +4816,26 @@ func (a GetBacktestSummary200JSONResponseBody) MarshalJSON() ([]byte, error) {
 	object["request_id"], err = json.Marshal(a.RequestId)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'request_id': %w", err)
+	}
+
+	object["risk_approved_count"], err = json.Marshal(a.RiskApprovedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_approved_count': %w", err)
+	}
+
+	object["risk_blocked_count"], err = json.Marshal(a.RiskBlockedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_blocked_count': %w", err)
+	}
+
+	object["risk_kill_switch_count"], err = json.Marshal(a.RiskKillSwitchCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_kill_switch_count': %w", err)
+	}
+
+	object["risk_reduced_count"], err = json.Marshal(a.RiskReducedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_reduced_count': %w", err)
 	}
 
 	object["run_id"], err = json.Marshal(a.RunId)

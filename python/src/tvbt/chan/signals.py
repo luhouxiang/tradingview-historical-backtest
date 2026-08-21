@@ -101,6 +101,37 @@ def _previous_same_direction(
     )
 
 
+def _center_component_known_at(
+    center: ReferenceCenter,
+    segments: Sequence[LineLike],
+    component_index: int,
+) -> int:
+    """Return when an oscillation component is known to belong to the center.
+
+    The frozen center is first available after its three seed components.  An
+    intervening opposite-direction component is only proven to be part of an
+    extension when the following same-parity component overlaps the core.  The
+    derived divergence therefore uses the later structural discovery time
+    instead of backfilling the component's earlier endpoint time.
+    """
+    initial_known_at = max(
+        segments[index].known_at_bar_index
+        for index in range(center.base_index, center.seed_end_index + 1)
+    )
+    if component_index <= center.seed_end_index:
+        return initial_known_at
+    membership_index = (
+        component_index
+        if (component_index - center.base_index) % 2 == 0
+        else min(component_index + 1, center.end_index)
+    )
+    return max(
+        initial_known_at,
+        segments[component_index].known_at_bar_index,
+        segments[membership_index].known_at_bar_index,
+    )
+
+
 def _macd_area(
     line: LineLike,
     histogram: Mapping[int, float],
@@ -185,6 +216,33 @@ def chan_divergences(
     """
     result: list[ChanSignal] = []
     seen: set[tuple[DivergenceKind, int]] = set()
+
+    # Active-center oscillation: compare each completed component with the
+    # immediately preceding component in the same direction and center.  This
+    # is the confirmed lower-level exhaustion consumed by ALG-STR-004; Zn is
+    # deliberately absent from the structural decision.
+    for center, center_id in zip(centers, center_ids, strict=True):
+        previous_by_direction: dict[str, int] = {}
+        for current_index in range(center.base_index, center.end_index + 1):
+            current = segments[current_index]
+            reference_index = previous_by_direction.get(current.direction)
+            previous_by_direction[current.direction] = current_index
+            if reference_index is None:
+                continue
+            value = _divergence(
+                "consolidation",
+                segments[reference_index],
+                current,
+                current_index,
+                center_id,
+                _center_component_known_at(center, segments, current_index),
+                histogram,
+                area_cache,
+                require_new_extreme=False,
+            )
+            if value is not None:
+                result.append(value)
+                seen.add(("consolidation", current_index))
 
     # One center: a + Z + c.  A completed counter leg after c confirms c's endpoint.
     for center, center_id in zip(centers, center_ids, strict=True):
@@ -285,8 +343,8 @@ def _third_points(
 ) -> list[ChanSignal]:
     """扫描严格三买/三卖。
 
-    三买要求向上离开中枢后的第一次已完成向下回试，其低点严格大于 `ZG`；
-    三卖是镜像规则，回试高点严格小于 `ZD`。触边不算三类点。
+    三买要求向上离开中枢后的第一次已完成向下回试，其低点不低于 `ZG`；
+    三卖是镜像规则，回试高点不高于 `ZD`。边界接触按闭区间确认三类点。
     """
     result: list[ChanSignal] = []
     for center, center_id in zip(centers, center_ids, strict=True):
@@ -302,7 +360,7 @@ def _third_points(
             if (
                 leaving.direction != "up"
                 or returning.direction != "down"
-                or _low(returning) <= center.zg_i64
+                or _low(returning) < center.zg_i64
             ):
                 continue
             signal_type: SignalType = "buy_3"
@@ -311,7 +369,7 @@ def _third_points(
             if (
                 leaving.direction != "down"
                 or returning.direction != "up"
-                or _high(returning) >= center.zd_i64
+                or _high(returning) > center.zd_i64
             ):
                 continue
             signal_type = "sell_3"

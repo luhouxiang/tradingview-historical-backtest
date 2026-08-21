@@ -33,6 +33,21 @@ func TestSearchValuesAndStudyKeyAreDeterministic(t *testing.T) {
 	if first != second || len(first) != 71 {
 		t.Fatalf("study key is not reproducible: %q %q", first, second)
 	}
+	request.RiskOverlay = &backtest.RiskOverlay{
+		Algorithm: pythonclient.AlgorithmRef{
+			Kind: "risk_filter", AlgorithmID: "unified_risk_execution_overlay",
+			AlgorithmVersion: "1.0.0", SourceHash: "sha256:" + repeat("3", 64),
+		},
+		Parameters: map[string]any{"leverage_allowed": false},
+		Context: backtest.RiskContext{
+			MarketStateRevision: "sha256:" + repeat("4", 64), SectorID: "metals",
+		},
+	}
+	riskChanged, _ := studyKey(request, "engine-1")
+	if riskChanged == first {
+		t.Fatal("risk overlay did not change study key")
+	}
+	request.RiskOverlay = nil
 	request.Search.RandomSeed++
 	changed, _ := studyKey(request, "engine-1")
 	if changed == first {

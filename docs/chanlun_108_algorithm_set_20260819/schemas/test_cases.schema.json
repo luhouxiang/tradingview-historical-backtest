@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/chanlun/test_cases.schema.json",
+  "title": "Chanlun 108 Test Cases",
+  "type": "object",
+  "required": ["spec_version", "cases"],
+  "properties": {
+    "spec_version": {"type": "string"},
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "algorithm_id", "category", "source_lessons", "input", "expected"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "algorithm_id": {"type": "string", "pattern": "^ALG-[A-Z]+-[0-9]{3}$"},
+          "category": {"type": "string", "minLength": 1},
+          "source_lessons": {"type": "array", "items": {"type": "integer", "minimum": 1, "maximum": 108}, "minItems": 1},
+          "input": {"type": "object"},
+          "expected": {"type": "object"},
+          "notes": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

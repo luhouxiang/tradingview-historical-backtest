@@ -1,0 +1,26 @@
+{
+  "manifest_version": "1.0.0",
+  "scan": {
+    "corpus": "缠中说禅：教你炒股票108课",
+    "lessons_scanned": {"start": 1, "end": 108, "count": 108},
+    "scan_date": "2026-08-19",
+    "course_index": "https://chanlun108.cn/",
+    "lesson_url_template": "https://chanlun108.cn/chanzhongshuochan108ke/{lesson}.html",
+    "source_type": "third_party_course_transcription",
+    "source_priority": 2,
+    "original_author_blog_snapshot_available": false
+  },
+  "primary_rule_lessons": {
+    "legacy_ma": [9, 11, 12, 14],
+    "movement_and_center": [17, 18, 20, 21, 33, 35, 36, 38, 39, 40, 49, 53, 72, 84, 99, 101, 102, 107, 108],
+    "divergence": [15, 24, 25, 27, 29, 37, 43, 44, 50, 61],
+    "fractal_bi_segment": [62, 65, 67, 69, 71, 77, 78, 79, 81, 82, 83, 91, 93, 105, 106],
+    "live_state_and_strategy": [31, 41, 45, 46, 47, 55, 56, 73, 74, 79, 86, 88, 89, 90, 92, 98, 100, 103, 107, 108]
+  },
+  "citation_policy": {
+    "full_text_redistributed": false,
+    "rules_paraphrased": true,
+    "course_images_preserved_as_test_oracles": true,
+    "commercial_redistribution_rights_verified": false
+  }
+}

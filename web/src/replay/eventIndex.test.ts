@@ -41,4 +41,18 @@ describe('ReplayEventIndex', () => {
     const elapsed = performance.now() - started
     expect(elapsed).toBeLessThan(500)
   })
+
+  it('exposes risk decisions as causal chart signals', () => {
+    const index = new ReplayEventIndex([{
+      event_seq: 1, known_at_bar_index: 12, object_type: 'risk_decision',
+      object_id: 'risk-kill-12', operation: 'upsert', object_revision: 1,
+      payload: { event_type: 'kill_switch', timestamp_utc: 1_700_000_000_000, price_i64: 100 },
+    }])
+    index.seek(11)
+    expect(index.signals()).toEqual([])
+    index.seek(12)
+    expect(index.signals()).toEqual([
+      expect.objectContaining({ object_type: 'risk_decision', object_id: 'risk-kill-12', event_type: 'kill_switch' }),
+    ])
+  })
 })

@@ -189,6 +189,8 @@ button:disabled { color: #787b86; }
 .backtest-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .backtest-controls label { display: flex; align-items: center; gap: 4px; }
 .backtest-controls input { width: 100px; padding: 4px; border: 1px solid #363a45; background: #131722; color: #d1d4dc; }
+.backtest-controls .ranking-context-field { width: 100%; align-items: flex-start; flex-direction: column; }
+.backtest-controls .ranking-context-field textarea { width: min(100%, 960px); box-sizing: border-box; resize: vertical; padding: 6px; border: 1px solid #363a45; background: #131722; color: #d1d4dc; font: 11px/1.35 ui-monospace, monospace; }
 .backtest-controls button { border: 1px solid #363a45; background: #2a2e39; cursor: pointer; }
 .backtest-panel .issue { color: #f23645; }
 .summary-grid { display: grid; grid-template-columns: repeat(3, minmax(120px, 1fr)); gap: 8px; }
@@ -215,7 +217,65 @@ button:disabled { color: #787b86; }
 .drawing-capture { fill: transparent; pointer-events: all; cursor: crosshair; }
 .drawing-object { pointer-events: visiblePainted; cursor: pointer; }
 .replay-signal { pointer-events: none; fill: #f23645; font-size: 9px; }
-.replay-signal.close_short, .replay-signal.open_long { fill: #089981; }
+.replay-signal.close_short, .replay-signal.open_long,
+.replay-signal.add_long, .replay-signal.reduce_short,
+.replay-signal.reenter, .replay-signal.trend_handoff,
+.replay-signal.rebound_started, .replay-signal.bottom_building,
+.replay-signal.bottom_build_success, .replay-signal.coarse_bottom_success { fill: #089981; }
+.replay-signal.add_short, .replay-signal.reduce_long,
+.replay-signal.partial_take_profit, .replay-signal.segmented_operation_exit,
+.replay-signal.callback_started, .replay-signal.top_building,
+.replay-signal.top_build_success, .replay-signal.coarse_top_success,
+.replay-signal.bottom_build_failure, .replay-signal.top_build_failure,
+.replay-signal.coarse_bottom_failure, .replay-signal.coarse_top_failure { fill: #f23645; }
+.replay-signal.swing_buy, .replay-signal.handoff_to_trend,
+.replay-signal.same_level_buy, .replay-signal.continue_original_center,
+.replay-signal.low_turn_active, .replay-signal.mid_center_continue { fill: #089981; }
+.replay-signal.mid_third_point { fill: #f23645; }
+.replay-signal.stop_oscillation, .replay-signal.swing_buy_filtered, .replay-signal.swing_sell_filtered,
+.replay-signal.swing_buy_hold, .replay-signal.swing_sell_hold,
+.replay-signal.same_level_hold, .replay-signal.same_level_buy_hold, .replay-signal.same_level_sell_hold,
+.replay-signal.same_level_buy_filtered, .replay-signal.same_level_sell_filtered,
+.replay-signal.wait_new_same_level_structure, .replay-signal.promote_level_candidate,
+.replay-signal.same_level_decomposition_reset, .replay-signal.wait_low_turn,
+.replay-signal.low_turn_participation_blocked, .replay-signal.participation_cap,
+.replay-signal.high_change_candidate, .replay-signal.three_level_context_reset,
+.replay-signal.target_center_confirmed, .replay-signal.trend_handoff_wait,
+.replay-signal.unfavorable_execution_exit, .replay-signal.segmented_operation_dependency_exit,
+.replay-signal.segmented_operation_reset, .replay-signal.bottom_resulting_center,
+.replay-signal.top_resulting_center, .replay-signal.coarse_bottom_zone,
+.replay-signal.coarse_top_zone, .replay-signal.coarse_construction_superseded,
+.replay-signal.coarse_construction_reset, .replay-signal.bottom_top_construction_handoff,
+.replay-signal.bottom_top_construction_reset { fill: #f0a000; }
+.replay-signal.aux_flying_kiss { fill: #42a5f5; }
+.replay-signal.aux_lip_kiss { fill: #f0a000; }
+.replay-signal.aux_wet_kiss { fill: #ab47bc; }
+.replay-signal.aux_legacy_B1_candidate, .replay-signal.aux_legacy_B2_candidate { fill: #26a69a; }
+.replay-signal.aux_macd_risk_off { fill: #f23645; }
+.replay-signal.aux_macd_risk_on_candidate { fill: #42a5f5; }
+.replay-signal.aux_boll_superstrong_exit { fill: #ab47bc; }
+.replay-signal.aux_boll_second_buy_zone { fill: #26a69a; }
+.replay-signal.aux_boll_second_sell_zone { fill: #f23645; }
+.replay-signal.aux_boll_bardo_end_or_promotion_warning { fill: #f0a000; }
+.replay-signal.aux_daily_30m_classification { fill: #ffc107; }
+.replay-signal.aux_daily_30m_profile_rejected { fill: #78909c; }
+.replay-signal.aux_ma_strength_class { fill: #ffc107; }
+.replay-signal.aux_rotation_candidate { fill: #42a5f5; }
+.replay-signal.approved_order_intent { fill: #089981; }
+.replay-signal.reduced_order_intent { fill: #f0a000; }
+.replay-signal.blocked_decision { fill: #78909c; }
+.replay-signal.kill_switch { fill: #f23645; font-weight: 700; }
+.daily-overlap-region {
+  fill: rgba(255, 193, 7, 0.12);
+  stroke: #ffc107;
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+  pointer-events: none;
+}
+.daily-overlap-region.center-2 {
+  fill: rgba(38, 198, 218, 0.12);
+  stroke: #26c6da;
+}
 .signal-selection { pointer-events: none; fill: #131722; stroke: #fff; stroke-width: 2; }
 .signal-selection line { stroke: #fff; stroke-width: 1; stroke-dasharray: 4 3; }
 .signal-selection.locked { stroke: #2962ff; }

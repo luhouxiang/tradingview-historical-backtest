@@ -15,7 +15,7 @@ import { DrawingHistory, LayerManager, type DrawingObject, type DrawingType } fr
 import { defaultIndicatorSpecs } from '../indicators/defaults'
 import { defaultChanSpec } from '../chan/defaults'
 import type { ReplayObjects, ReplaySignal } from '../replay/eventIndex'
-import type { AlgorithmDefinition, ChanSignalPoint, ChanTreeObject, DatasetMeta, SeriesSource, StrategyRunSource, StrategySource, StrategySourceDynamicConfig, StrategySourcePreference, WorkspaceLayout } from '../types/api'
+import type { AlgorithmDefinition, ChanCenterMonitor, ChanSignalPoint, ChanTreeObject, DatasetMeta, SeriesSource, StrategyRunSource, StrategySource, StrategySourceDynamicConfig, StrategySourcePreference, WorkspaceLayout } from '../types/api'
 
 defineProps<{ health: string }>()
 
@@ -71,6 +71,19 @@ const workspaceColumns = computed(() => rightOpen.value
   ? `48px minmax(320px, 1fr) 1px ${rightWidth.value}px`
   : '48px minmax(320px, 1fr)')
 const shellRows = computed(() => `44px minmax(0, 1fr) ${bottomOpen.value ? bottomHeight.value : 28}px`)
+
+const znWarningLabels: Record<Exclude<ChanCenterMonitor['breakout_warning'], null>, string> = {
+  cross_above_b: '严格越过 B',
+  cross_below_a: '严格越过 A',
+  rising_wedge_below_b: '抬高未破 B·上升楔形预警',
+  falling_wedge_above_a: '降低未破 A·下降楔形预警',
+}
+
+function znMonitorDetail(monitor: ChanCenterMonitor): string {
+  return monitor.breakout_warning
+    ? `${znWarningLabels[monitor.breakout_warning]}·不确认三类点`
+    : `${monitor.relative_position}·辅助监视`
+}
 
 function commitDrawings(value: DrawingObject[]): void {
   drawings.value = drawingHistory.commit(value)
@@ -156,8 +169,8 @@ async function loadSignalObjects(): Promise<void> {
               bar_index: monitor.bar_index, time: monitor.time, price_i64: monitor.zn_i64,
               confirmed_at_bar_index: monitor.confirmed_at_bar_index,
               known_at_bar_index: monitor.known_at_bar_index, object_revision: monitor.object_revision,
-              label: `Zn ${monitor.strength === 'strong' ? '强' : monitor.strength === 'weak' ? '弱' : '平'}`,
-              detail: monitor.migration_warning ? `迁移预警 ${monitor.migration_warning === 'up' ? '↑' : '↓'}` : monitor.relative_position,
+              label: `Zn${monitor.component_ordinal} ${monitor.oscillation_bias === 'strong' ? '强' : monitor.oscillation_bias === 'weak' ? '弱' : '平'}`,
+              detail: znMonitorDetail(monitor),
             })),
           )
         }

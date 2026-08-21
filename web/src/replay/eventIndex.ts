@@ -56,7 +56,7 @@ export class ReplayEventIndex {
     for (const [key, payload] of this.objects) {
       const separator = key.indexOf(':')
       const objectType = key.slice(0, separator)
-      if (!['strategy_state', 'stage_signal', 'trade_signal', 'chart_event'].includes(objectType)) continue
+      if (!['strategy_state', 'stage_signal', 'trade_signal', 'chart_event', 'risk_decision'].includes(objectType)) continue
       result.push({ ...payload, object_type: objectType, object_id: key.slice(separator + 1) })
     }
     return result

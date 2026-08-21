@@ -98,7 +98,7 @@ export interface BarRangeResponse {
 }
 
 export interface AlgorithmRef {
-  kind: 'indicator' | 'chan' | 'strategy'
+  kind: 'indicator' | 'chan' | 'strategy' | 'risk_filter'
   algorithm_id: string
   algorithm_version: string
   source_hash: string
@@ -109,7 +109,7 @@ export interface AlgorithmOutput {
   display_name: string
   pane: 'main' | 'indicator'
   series_type: 'line' | 'histogram' | 'semantic_objects'
-  object_type?: 'fractal' | 'bi' | 'segment' | 'zhongshu' | 'segment_zhongshu' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event'
+  object_type?: 'fractal' | 'bi' | 'segment' | 'zhongshu' | 'segment_zhongshu' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event' | 'risk_decision'
 }
 
 export interface AlgorithmDefinition extends AlgorithmRef {
@@ -128,7 +128,7 @@ export interface AlgorithmDefinition extends AlgorithmRef {
     additionalProperties: false
   }
   outputs: AlgorithmOutput[]
-  warmup: { kind: 'formula'; expression: string }
+  warmup: { kind: 'formula'; expression: string } | { kind: 'fixed_bars'; bars: number }
   causal: true
 }
 
@@ -275,12 +275,24 @@ export interface ChanCenterMonitor {
   time: number
   z_i64: number
   zn_i64: number
+  z_twice_i64: number
+  zn_twice_i64: number
+  core_low_i64: number
+  core_high_i64: number
   range_high_i64: number
   range_low_i64: number
+  component_ordinal: number
   component_direction: 'up' | 'down'
   relative_position: 'above' | 'below' | 'equal'
-  strength: 'strong' | 'weak' | 'neutral'
-  migration_warning: 'up' | 'down' | null
+  oscillation_bias: 'strong' | 'weak' | 'neutral'
+  breakout_warning: 'cross_above_b' | 'cross_below_a' | 'rising_wedge_below_b' | 'falling_wedge_above_a' | null
+  catalog_algorithm_id: 'ALG-AUX-004'
+  semantic_namespace: 'auxiliary'
+  evidence_level: 'AUXILIARY'
+  level_mapping_profile: 'segment_center_components_v1'
+  standard_signal: false
+  execution_allowed: false
+  confirms_third_point: false
   analysis_level: string
   reference_object_id: string
   confirmed: boolean
@@ -329,7 +341,7 @@ export interface ReplayStatus {
 export interface CausalEvent {
   event_seq: number
   known_at_bar_index: number
-  object_type: 'fractal' | 'bi' | 'segment' | 'zhongshu' | 'segment_zhongshu' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event'
+  object_type: 'fractal' | 'bi' | 'segment' | 'zhongshu' | 'segment_zhongshu' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event' | 'risk_decision'
   object_id: string
   operation: 'upsert' | 'delete'
   object_revision: number
@@ -351,6 +363,8 @@ export interface BacktestRequest {
   data_revision: string
   strategy: AlgorithmRef
   parameters: Record<string, string | number | boolean>
+  ranking_context?: RankingContext
+  risk_overlay?: RiskOverlay
   range: { warmup_from_bar_index: number; from_bar_index: number; to_bar_index: number }
   execution: {
     signal_timing: 'bar_close'
@@ -399,6 +413,10 @@ export interface BacktestSummary {
   expectancy_i64: number | null
   total_commission_i64: number
   total_slippage_i64: number
+  risk_approved_count: number
+  risk_reduced_count: number
+  risk_blocked_count: number
+  risk_kill_switch_count: number
 }
 
 export interface BacktestTrade {
@@ -451,6 +469,7 @@ export interface StudyRequest {
   }
   execution: BacktestRequest['execution']
   capital: BacktestRequest['capital']
+  risk_overlay?: RiskOverlay
 }
 
 export interface StudyAccepted {
@@ -514,6 +533,51 @@ export interface SeriesSource {
   status: JobStatus['status']
   style?: IndicatorStyle
   error?: string
+}
+
+export interface RankingMembership {
+  dataset_id: string
+  data_revision: string
+  sector_id: string
+  effective_from_utc: number
+  effective_to_utc: number | null
+  available_at_utc: number
+}
+
+export interface RankingContext {
+  universe_id: string
+  membership_revision: string
+  membership_mode: 'point_in_time'
+  price_adjustment_mode: 'forward_adjusted' | 'back_adjusted' | 'total_return'
+  price_adjustment_revision: string
+  episode_id: string
+  episode_start_timestamp_utc: number
+  episode_available_at_utc: number
+  memberships: RankingMembership[]
+}
+
+export interface RiskMarketObservation {
+  effective_from_bar_index: number
+  available_at_bar_index: number
+  data_revision: string
+  trading_status: 'normal' | 'suspended' | 'limit_up' | 'limit_down'
+  stale_bars: number
+  data_gap_bars: number
+  event_risk_active: boolean
+}
+
+export interface RiskContext {
+  market_state_revision: string
+  sector_id: string
+  legal_future_branches: string[]
+  handled_future_branches: string[]
+  observations: RiskMarketObservation[]
+}
+
+export interface RiskOverlay {
+  algorithm: AlgorithmRef
+  parameters: Record<string, string | number | boolean>
+  context: RiskContext
 }
 
 export interface StrategySource {

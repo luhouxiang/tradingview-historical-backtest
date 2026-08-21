@@ -5,6 +5,8 @@ import type { AlgorithmDefinition, DatasetMeta, StudyEvaluation, StudyMetric } f
 
 const props = defineProps<{ dataset: DatasetMeta | null }>()
 const strategy = ref<AlgorithmDefinition | null>(null)
+const riskFilter = ref<AlgorithmDefinition | null>(null)
+const riskEnabled = ref(true)
 const status = ref('idle')
 const progress = ref(0)
 const error = ref('')
@@ -59,6 +61,19 @@ async function run(): Promise<void> {
     const baseParameters = Object.fromEntries(Object.entries(definition.parameter_schema.properties)
       .map(([name, rule]) => [name, rule.default!]))
     const parameterRule = definition.parameter_schema.properties[parameterName.value]
+    const risk = riskEnabled.value && riskFilter.value ? {
+      algorithm: {
+        kind: riskFilter.value.kind, algorithm_id: riskFilter.value.algorithm_id,
+        algorithm_version: riskFilter.value.algorithm_version, source_hash: riskFilter.value.source_hash,
+      },
+      parameters: Object.fromEntries(Object.entries(riskFilter.value.parameter_schema.properties)
+        .map(([name, rule]) => [name, rule.default ?? ''])),
+      context: {
+        market_state_revision: dataset.data_revision,
+        sector_id: dataset.instrument?.product || dataset.dataset_id,
+        legal_future_branches: [], handled_future_branches: [], observations: [],
+      },
+    } : null
     const accepted = await createStudy({
       dataset_id: dataset.dataset_id,
       data_revision: dataset.data_revision,
@@ -67,6 +82,7 @@ async function run(): Promise<void> {
         algorithm_version: definition.algorithm_version, source_hash: definition.source_hash,
       },
       base_parameters: baseParameters,
+      ...(risk ? { risk_overlay: risk } : {}),
       search_space: [{
         name: parameterName.value,
         type: parameterRule?.type === 'number' ? 'number' : 'integer',
@@ -109,7 +125,9 @@ async function run(): Promise<void> {
 
 onMounted(async () => {
   try {
-    strategy.value = (await listAlgorithms()).find((value) => value.kind === 'strategy') ?? null
+    const definitions = await listAlgorithms()
+    strategy.value = definitions.find((value) => value.kind === 'strategy') ?? null
+    riskFilter.value = definitions.find((value) => value.kind === 'risk_filter' && value.algorithm_id === 'unified_risk_execution_overlay') ?? null
     const preferred = numericParameters.value.find(([name]) => name === 'ma_period') ?? numericParameters.value[0]
     if (preferred) configureParameter(preferred[0])
   } catch (cause) {
@@ -143,8 +161,10 @@ onMounted(async () => {
         </select>
       </label>
       <label>最少交易 <input v-model.number="minimumTrades" type="number" min="0" /></label>
+      <label><input v-model="riskEnabled" type="checkbox" />统一风险覆盖</label>
+      <small v-if="riskEnabled">{{ riskFilter?.name ?? '风险覆盖层不可用' }}（采用已发布默认参数）</small>
       <label v-if="method === 'random'">随机种子 <input v-model.number="randomSeed" type="number" /></label>
-      <button :disabled="!dataset || !strategy || !parameterName || ['queued', 'running'].includes(status)" @click="run">开始训练/验证</button>
+      <button :disabled="!dataset || !strategy || !parameterName || riskEnabled && !riskFilter || ['queued', 'running'].includes(status)" @click="run">开始训练/验证</button>
       <span>{{ status }} {{ Math.round(progress * 100) }}% <small v-if="studyId">{{ studyId }}</small></span>
       <span v-if="error" class="issue">{{ error }}</span>
     </div>

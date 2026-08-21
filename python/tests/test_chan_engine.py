@@ -162,6 +162,10 @@ def test_reference_fractal_is_sealed_by_the_right_independent_bar() -> None:
     assert fractal.fractal_type == "top"
     assert fractal.bar_index == 4
     assert fractal.extreme_source_bar_index == 4
+    assert fractal.zone_low_i64 == 40
+    assert fractal.zone_high_i64 == 45
+    assert fractal.payload()["zone_low_i64"] == 40
+    assert fractal.payload()["zone_high_i64"] == 45
     assert fractal.confirmed_at_bar_index == 5
 
 
@@ -391,12 +395,35 @@ def test_standard_segment_centers_and_third_points_are_causal_on_aol9() -> None:
     assert all(
         value["known_at_bar_index"] >= value["confirmed_at_bar_index"]
         and value["relative_position"] in {"above", "below", "equal"}
-        and value["strength"] in {"strong", "weak", "neutral"}
+        and value["oscillation_bias"] in {"strong", "weak", "neutral"}
+        and value["z_twice_i64"] == value["core_low_i64"] + value["core_high_i64"]
+        and value["zn_twice_i64"] == value["range_low_i64"] + value["range_high_i64"]
+        and value["component_ordinal"] <= 9
+        and value["catalog_algorithm_id"] == "ALG-AUX-004"
+        and value["semantic_namespace"] == "auxiliary"
+        and value["standard_signal"] is False
+        and value["execution_allowed"] is False
+        and value["confirms_third_point"] is False
+        and value["breakout_warning"]
+        in {
+            None,
+            "cross_above_b",
+            "cross_below_a",
+            "rising_wedge_below_b",
+            "falling_wedge_above_a",
+        }
         for value in result["center_monitors"]
     )
-    assert [(value["signal_type"], value["bar_index"]) for value in result["trade_points"]] == [
-        ("buy_3", 4689),
-    ]
+    assert [
+        (value["signal_type"], value["bar_index"])
+        for value in result["trade_points"]
+        if value["signal_class"] == "standard"
+    ] == [("buy_3", 4689)]
+    assert any(
+        value["signal_class"] == "class_like"
+        and value["signal_type"] in {"class_buy_1", "class_sell_1"}
+        for value in result["trade_points"]
+    )
     assert all(
         value["known_at_bar_index"] >= value["confirmed_at_bar_index"]
         for value in [*result["divergences"], *result["trade_points"]]

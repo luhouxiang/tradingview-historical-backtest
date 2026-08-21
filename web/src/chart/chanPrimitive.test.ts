@@ -38,7 +38,7 @@ describe('ChanPrimitive', () => {
     const source = objects(0)
     source.segment_zhongshu.push({
       object_id: 'segment-center-1', start_bar_index: 1, start_time: 60_000,
-      end_bar_index: 3, end_time: 180_000, zg_i64: 120, zd_i64: 100,
+      end_bar_index: 3, end_time: 180_000, zg_i64: 121, zd_i64: 100,
       gg_i64: 130, dd_i64: 90, z_i64: 110, analysis_level: 'segment', component_kind: 'segment', component_count: 3,
       confirmed: true, confirmed_at_bar_index: 3, status: 'confirmed', leave_direction: null,
       known_at_bar_index: 3, object_revision: 1,
@@ -50,7 +50,7 @@ describe('ChanPrimitive', () => {
       confirmed_at_bar_index: 4, known_at_bar_index: 4, object_revision: 1,
     })
     source.trade_points.push({
-      ...source.divergences[0]!, object_id: 'point-1', signal_type: 'buy_1', divergence_kind: null, signal_class: 'standard', strength: null,
+      ...source.divergences[0]!, object_id: 'point-1', signal_type: 'buy_3', divergence_kind: null, signal_class: 'standard', strength: null,
       macd_area_reference: null, macd_area_current: null,
     })
     source.movement_states.push({
@@ -61,18 +61,51 @@ describe('ChanPrimitive', () => {
     })
     source.center_monitors.push({
       object_id: 'monitor-1', bar_index: 3, time: 180_000, z_i64: 110, zn_i64: 115,
-      range_high_i64: 130, range_low_i64: 100, component_direction: 'up',
-      relative_position: 'above', strength: 'strong', migration_warning: 'up',
+      z_twice_i64: 221, zn_twice_i64: 231, core_low_i64: 100, core_high_i64: 121,
+      range_high_i64: 131, range_low_i64: 100, component_ordinal: 1, component_direction: 'up',
+      relative_position: 'above', oscillation_bias: 'strong', breakout_warning: null,
+      catalog_algorithm_id: 'ALG-AUX-004', semantic_namespace: 'auxiliary', evidence_level: 'AUXILIARY',
+      level_mapping_profile: 'segment_center_components_v1', standard_signal: false,
+      execution_allowed: false, confirms_third_point: false,
       analysis_level: 'segment', reference_object_id: 'segment-center-1', confirmed: true,
       confirmed_at_bar_index: 3, known_at_bar_index: 3, object_revision: 1,
+    })
+    source.center_monitors.push({
+      ...source.center_monitors[0]!, object_id: 'monitor-2', bar_index: 4, time: 240_000,
+      zn_i64: 121, zn_twice_i64: 243, range_high_i64: 132, range_low_i64: 111,
+      component_ordinal: 2, component_direction: 'down', breakout_warning: 'cross_above_b',
+      confirmed_at_bar_index: 4, known_at_bar_index: 4,
     })
     const geometry = buildChanGeometry(source, 10, (time) => Number(time), (price) => price)
     expect(geometry.segmentZhongshu).toHaveLength(1)
     expect(geometry.divergences[0]).toMatchObject({ x: 240, y: 9, signal_type: 'bottom_divergence' })
-    expect(geometry.tradePoints[0]?.signal_type).toBe('buy_1')
+    expect(geometry.tradePoints[0]?.signal_type).toBe('buy_3')
     expect(geometry.segmentEnvelopes).toHaveLength(1)
     expect(geometry.movementStates[0]?.state_type).toBe('centre_oscillation')
-    expect(geometry.centerMonitors[0]).toMatchObject({ x: 180, y: 11.5, zY: 11, migration_warning: 'up' })
+    expect(geometry.centerMonitors[0]).toMatchObject({ x: 180, y: 11.55, zY: 11.05, oscillation_bias: 'strong' })
+    expect(geometry.centerMonitorCurves).toEqual([{
+      start: expect.objectContaining({ x: 180, y: 11.55 }),
+      end: expect.objectContaining({ x: 240, y: 12.15 }),
+      confirmed: true,
+    }])
+    expect(geometry.centerMonitorAxes).toEqual([{
+      start: { x: 180, y: 11.05 }, end: { x: 240, y: 11.05 }, confirmed: true,
+    }])
+  })
+
+  it('projects a point center as a zero-height semantic region', () => {
+    const source = objects(0)
+    source.segment_zhongshu.push({
+      object_id: 'point-center-1', start_bar_index: 1, start_time: 60_000,
+      end_bar_index: 3, end_time: 180_000, zg_i64: 100, zd_i64: 100,
+      gg_i64: 130, dd_i64: 90, z_i64: 100, analysis_level: 'segment', component_kind: 'segment', component_count: 3,
+      confirmed: true, confirmed_at_bar_index: 4, status: 'confirmed', leave_direction: null,
+      known_at_bar_index: 4, object_revision: 1,
+    })
+
+    const geometry = buildChanGeometry(source, 10, (time) => Number(time), (price) => price)
+
+    expect(geometry.segmentZhongshu).toEqual([{ left: 60, right: 180, top: 10, bottom: 10, confirmed: true }])
   })
 
   it('updates semantic object rendering styles as one primitive', () => {
@@ -107,5 +140,6 @@ describe('chanSignalLabel', () => {
     expect(chanSignalLabel({ signal_type: 'buy_2', divergence_kind: null, strength: 'strongest' })).toBe('最强二买')
     expect(chanSignalLabel({ signal_type: 'class_sell_2', divergence_kind: null, strength: 'weakest' })).toBe('最弱类二卖')
     expect(chanSignalLabel({ signal_type: 'class_buy_3', divergence_kind: null, strength: null })).toBe('类三买')
+    expect(chanSignalLabel({ signal_type: 'buy_3', divergence_kind: null, strength: null })).toBe('三买')
   })
 })

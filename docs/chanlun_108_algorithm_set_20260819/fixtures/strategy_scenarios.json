@@ -1,0 +1,117 @@
+{
+  "spec_version": "1.0.0",
+  "cases": [
+    {
+      "id": "STR-B2-MERGED-001",
+      "algorithm_id": "ALG-STR-002",
+      "category": "B2_variant",
+      "source_lessons": [21, 101],
+      "input": {"events": ["B1_confirmed", "lower_up_completed", "lower_down_completed"], "B2_price": 10, "B1_price": 9, "last_center_ZG": 10},
+      "expected": {"variant": "B2_equals_B3", "action": "enter_after_confirmation", "priority": "highest"}
+    },
+    {
+      "id": "STR-B2-WEAK-001",
+      "algorithm_id": "ALG-STR-002",
+      "category": "B2_variant",
+      "source_lessons": [101],
+      "input": {"events": ["B1_confirmed", "lower_up_completed", "lower_down_completed", "consolidation_divergence_confirmed"], "B2_price": 8, "B1_price": 9, "last_center_ZG": 10},
+      "expected": {"variant": "B2_below_B1", "action": "enter_reduced_size_after_confirmation", "priority": "low"}
+    },
+    {
+      "id": "STR-B3-FIRST-CENTER-001",
+      "algorithm_id": "ALG-STR-003",
+      "category": "B3_only",
+      "source_lessons": [20, 79],
+      "input": {"center_ordinal_in_trend": 1, "event": "B3_confirmed", "next_up_new_high": true, "next_up_divergence": false},
+      "expected": {"action": "enter_then_hold", "priority": "high"}
+    },
+    {
+      "id": "STR-B3-FAILED-FOLLOWTHROUGH-001",
+      "algorithm_id": "ALG-STR-003",
+      "category": "B3_only",
+      "source_lessons": [79],
+      "input": {"center_ordinal_in_trend": 1, "event": "B3_confirmed", "next_up_new_high": false, "next_up_divergence": true},
+      "expected": {"action": "exit_after_followthrough_confirmation", "priority": "normal"}
+    },
+    {
+      "id": "STR-ZS-OSC-STOP-B3-001",
+      "algorithm_id": "ALG-STR-004",
+      "category": "center_oscillation",
+      "source_lessons": [33, 92],
+      "input": {"state": "INSIDE_CENTER", "lower_signal": "bottom_consolidation_divergence", "next_event": "B3_confirmed"},
+      "expected": {"actions": ["swing_buy", "stop_oscillation", "handoff_to_trend"]}
+    },
+    {
+      "id": "STR-MULTILEVEL-WAIT-001",
+      "algorithm_id": "ALG-STR-007",
+      "category": "three_level",
+      "source_lessons": [100, 102],
+      "input": {"L2": "downtrend", "L1": "leaving_center_down_no_S3_yet", "L0": "downtrend_no_divergence"},
+      "expected": {"state": "WAIT_LOW_TURN", "max_participation": 0.0}
+    },
+    {
+      "id": "STR-MULTILEVEL-BRANCH-001",
+      "algorithm_id": "ALG-STR-007",
+      "category": "three_level",
+      "source_lessons": [100],
+      "input": {"L2": "downtrend", "L1": "leaving_center_down_no_S3_yet", "L0": "B1_confirmed", "can_handle_L1_S3": false},
+      "expected": {"state": "LOW_TURN_ACTIVE", "max_participation": 0.0, "reason": "legal_branch_unmanageable"}
+    },
+    {
+      "id": "STR-REBOUND-FIRST-UP-001",
+      "algorithm_id": "ALG-STR-008",
+      "category": "rebound",
+      "source_lessons": [107],
+      "input": {"target_level": "L2", "execution_level": "L1", "first_up_completed": true, "target_center_confirmed": false},
+      "expected": {"action": "allow_partial_take_profit", "assume_second_up_new_high": false}
+    },
+    {
+      "id": "STR-BOTTOM-SUCCESS-001",
+      "algorithm_id": "ALG-STR-009",
+      "category": "bottom_build",
+      "source_lessons": [108],
+      "input": {"events": ["B1_confirmed", "resulting_center_confirmed", "B3_confirmed"]},
+      "expected": {"final_state": "SUCCESS", "meaning": "bottom_complete"}
+    },
+    {
+      "id": "STR-BOTTOM-FAIL-001",
+      "algorithm_id": "ALG-STR-009",
+      "category": "bottom_build",
+      "source_lessons": [108],
+      "input": {"events": ["B1_confirmed", "resulting_center_confirmed", "S3_confirmed"]},
+      "expected": {"final_state": "FAILED", "meaning": "bottom_failed"}
+    },
+    {
+      "id": "AUX-BOLL-WARN-NOT-CONFIRM-001",
+      "algorithm_id": "ALG-AUX-003",
+      "category": "auxiliary_boundary",
+      "source_lessons": [90],
+      "input": {"BOLL_contracting": true, "structural_third_point": false},
+      "expected": {"warning": "bardo_end_or_promotion", "structural_signal": null}
+    },
+    {
+      "id": "AUX-ZN-CROSS-NOT-B3-001",
+      "algorithm_id": "ALG-AUX-004",
+      "category": "auxiliary_boundary",
+      "source_lessons": [92],
+      "input": {"Zn_crossed_B": true, "first_return_completed": false},
+      "expected": {"warning": "breakout_risk", "structural_signal": null}
+    },
+    {
+      "id": "RISK-CONFIRMATION-DELAY-001",
+      "algorithm_id": "ALG-RISK-001",
+      "category": "execution",
+      "source_lessons": [32, 98, 100],
+      "input": {"signal_endpoint_time": 100, "signal_available_at": 104, "requested_execution_time": 100},
+      "expected": {"approved": false, "reason": "lookahead_execution"}
+    },
+    {
+      "id": "RISK-BRANCH-UNMANAGEABLE-001",
+      "algorithm_id": "ALG-RISK-001",
+      "category": "ability_constraint",
+      "source_lessons": [100],
+      "input": {"legal_future_branches": ["center_continue", "S3_downtrend"], "handled_branches": ["center_continue"]},
+      "expected": {"approved": false, "reason": "unhandled_legal_branch"}
+    }
+  ]
+}

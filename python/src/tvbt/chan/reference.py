@@ -521,15 +521,17 @@ def reference_centers(
     lines: Sequence[LineLike],
     *,
     start_base: int = 1,
+    minimum_line_count: int = 5,
 ) -> list[ReferenceCenter]:
     """按参考 `compute_bi_pivots/process_down_up` 扫描同奇偶组件中枢。
 
     从 `base=1` 开始，使用 `base` 与 `base+2` 的价格交集冻结 `ZD/ZG`，
     后续同奇偶组件只延长中枢时间范围，不改变冻结核心；首个不相交组件记录为
-    `exit_index` 和 `leave_direction`。
+    `exit_index` 和 `leave_direction`。遗留笔中枢保留至少 5 条输入线的门槛；
+    标准线段中枢传入 4，使基点前导线加三条已完成构件即可确认。
     """
     result: list[ReferenceCenter] = []
-    if len(lines) < 5:
+    if len(lines) < minimum_line_count:
         return result
     base = start_base
     while base < len(lines) - 2:
@@ -582,6 +584,8 @@ def update_reference_centers(
     lines: Sequence[LineLike],
     previous: list[ReferenceCenter],
     changed_component_index: int,
+    *,
+    minimum_line_count: int = 5,
 ) -> list[ReferenceCenter]:
     """保留离开位置早于变化点的中枢，只从首个不确定中枢基点继续扫描。"""
     stable: list[ReferenceCenter] = []
@@ -592,4 +596,11 @@ def update_reference_centers(
         stable.append(center)
         new_base = center.exit_index
         restart_base = new_base - 1 if center.base_index == new_base - 2 else new_base - 2
-    return [*stable, *reference_centers(lines, start_base=max(restart_base, 1))]
+    return [
+        *stable,
+        *reference_centers(
+            lines,
+            start_base=max(restart_base, 1),
+            minimum_line_count=minimum_line_count,
+        ),
+    ]

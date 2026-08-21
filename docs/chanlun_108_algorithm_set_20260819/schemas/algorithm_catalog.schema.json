@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/chanlun/algorithm_catalog.schema.json",
+  "title": "Chanlun 108 Algorithm Catalog",
+  "type": "object",
+  "required": ["spec_version", "catalog_name", "default_research_only", "profit_guarantee", "algorithms"],
+  "properties": {
+    "spec_version": {"type": "string"},
+    "catalog_name": {"type": "string"},
+    "default_research_only": {"const": true},
+    "profit_guarantee": {"const": false},
+    "algorithms": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/algorithm"}
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "nonEmptyStringArray": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "algorithm": {
+      "type": "object",
+      "required": ["id", "name_zh", "kind", "evidence_level", "source_lessons", "depends_on", "consumes", "emits", "preconditions", "steps", "invalidation"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^ALG-[A-Z]+-[0-9]{3}$"},
+        "name_zh": {"type": "string", "minLength": 1},
+        "kind": {"enum": ["detector", "classifier", "state_machine", "signal", "strategy", "auxiliary", "ranking", "risk_filter"]},
+        "evidence_level": {"enum": ["FORMAL", "DERIVED", "AUXILIARY", "HEURISTIC", "EXPERIMENTAL"]},
+        "source_lessons": {"type": "array", "items": {"type": "integer", "minimum": 1, "maximum": 108}, "minItems": 1},
+        "depends_on": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "consumes": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "emits": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "preconditions": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "steps": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "invalidation": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "forbidden_shortcuts": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "risk_controls": {"$ref": "#/$defs/nonEmptyStringArray"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

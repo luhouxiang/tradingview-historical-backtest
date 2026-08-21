@@ -80,6 +80,7 @@
         "money_scale": {"type": "integer", "minimum": 1}
       }
     },
+    "risk_overlay": {"$ref": "#/$defs/risk_overlay"},
     "evaluation_count": {"type": "integer", "minimum": 1},
     "selected_evaluation_index": {"type": "integer", "minimum": 0},
     "engine": {
@@ -96,6 +97,52 @@
   },
   "$defs": {
     "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "risk_overlay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "parameters", "context"],
+      "properties": {
+        "algorithm": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "algorithm_id", "algorithm_version", "source_hash"],
+          "properties": {
+            "kind": {"const": "risk_filter"},
+            "algorithm_id": {"const": "unified_risk_execution_overlay"},
+            "algorithm_version": {"type": "string", "minLength": 1},
+            "source_hash": {"$ref": "#/$defs/sha256"}
+          }
+        },
+        "parameters": {"type": "object", "additionalProperties": true},
+        "context": {"$ref": "#/$defs/risk_context"}
+      }
+    },
+    "risk_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["market_state_revision", "sector_id", "legal_future_branches", "handled_future_branches", "observations"],
+      "properties": {
+        "market_state_revision": {"$ref": "#/$defs/sha256"},
+        "sector_id": {"type": "string", "minLength": 1},
+        "legal_future_branches": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "handled_future_branches": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "observations": {"type": "array", "items": {"$ref": "#/$defs/risk_market_observation"}}
+      }
+    },
+    "risk_market_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["effective_from_bar_index", "available_at_bar_index", "data_revision", "trading_status", "stale_bars", "data_gap_bars", "event_risk_active"],
+      "properties": {
+        "effective_from_bar_index": {"type": "integer", "minimum": 0},
+        "available_at_bar_index": {"type": "integer", "minimum": 0},
+        "data_revision": {"$ref": "#/$defs/sha256"},
+        "trading_status": {"enum": ["normal", "suspended", "limit_up", "limit_down"]},
+        "stale_bars": {"type": "integer", "minimum": 0},
+        "data_gap_bars": {"type": "integer", "minimum": 0},
+        "event_risk_active": {"type": "boolean"}
+      }
+    },
     "metric": {"enum": ["total_return", "sharpe", "max_drawdown", "win_rate", "trade_count", "profit_factor", "expectancy_i64"]},
     "search_parameter": {
       "type": "object",

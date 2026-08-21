@@ -5,6 +5,12 @@ import json
 import pytest
 
 from tvbt.chan import CheckpointVersionError, EventEmitter, dump_checkpoint, load_checkpoint
+from tvbt.chan.engine import ChanEngine
+
+
+def test_chan_oscillation_divergence_semantics_publish_new_algorithm_version() -> None:
+    """测试 9.0.0 身份使中枢内背驰语义与 8.x 缓存隔离。"""
+    assert ChanEngine.algorithm_version == "11.0.0"
 
 
 def test_event_emitter_is_deterministic_and_suppresses_unchanged_upserts() -> None:

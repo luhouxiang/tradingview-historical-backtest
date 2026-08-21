@@ -1,0 +1,40 @@
+{
+  "manifest_version": "1.0.0",
+  "source_base": "https://chanlun108.cn/uploads/",
+  "count": 24,
+  "images": [
+    {"lesson": 14, "file": "assets/original/lesson14.png", "source_url": "https://chanlun108.cn/uploads/14.png", "roles": ["legacy_ma_kiss", "MACD", "B1_B2_example"], "priority": "auxiliary"},
+    {"lesson": 47, "file": "assets/original/lesson47.jpg", "source_url": "https://chanlun108.cn/uploads/47.jpg", "roles": ["intraday_center", "third_sell", "sub_bi_divergence"], "priority": "scenario"},
+    {"lesson": 54, "file": "assets/original/lesson54.jpg", "source_url": "https://chanlun108.cn/uploads/54.jpg", "roles": ["center", "movement", "buy_sell_points"], "priority": "core"},
+    {"lesson": 56, "file": "assets/original/lesson56.jpg", "source_url": "https://chanlun108.cn/uploads/56.jpg", "roles": ["gap", "second_sell", "third_sell", "center_promotion"], "priority": "core"},
+    {"lesson": 57, "file": "assets/original/lesson57.jpg", "source_url": "https://chanlun108.cn/uploads/57.jpg", "roles": ["live_segment_decomposition", "center"], "priority": "core"},
+    {"lesson": 58, "file": "assets/original/lesson58.jpg", "source_url": "https://chanlun108.cn/uploads/58.jpg", "roles": ["worked_analysis"], "priority": "scenario"},
+    {"lesson": 59, "file": "assets/original/lesson59_fenxi1.jpg", "source_url": "https://chanlun108.cn/uploads/fenxi1.jpg", "roles": ["worked_analysis_sequence_1"], "priority": "scenario"},
+    {"lesson": 59, "file": "assets/original/lesson59_fenxi2.jpg", "source_url": "https://chanlun108.cn/uploads/fenxi2.jpg", "roles": ["worked_analysis_sequence_2"], "priority": "scenario"},
+    {"lesson": 59, "file": "assets/original/lesson59_fenxi3.jpg", "source_url": "https://chanlun108.cn/uploads/fenxi3.jpg", "roles": ["worked_analysis_sequence_3"], "priority": "scenario"},
+    {"lesson": 60, "file": "assets/original/lesson60.jpg", "source_url": "https://chanlun108.cn/uploads/60.jpg", "roles": ["center", "buy_sell_points"], "priority": "core"},
+    {"lesson": 61, "file": "assets/original/lesson61_fenxi6.jpg", "source_url": "https://chanlun108.cn/uploads/fenxi6.jpg", "roles": ["interval_nesting", "divergence_location"], "priority": "core"},
+    {"lesson": 62, "file": "assets/original/lesson62.jpg", "source_url": "https://chanlun108.cn/uploads/62.jpg", "roles": ["fractal", "minimal_bi", "inclusion", "segment"], "priority": "highest"},
+    {"lesson": 63, "file": "assets/original/lesson63.jpg", "source_url": "https://chanlun108.cn/uploads/63.jpg", "roles": ["segment", "center_basics"], "priority": "core"},
+    {"lesson": 64, "file": "assets/original/lesson64.jpg", "source_url": "https://chanlun108.cn/uploads/64.jpg", "roles": ["segment", "micro_center_example"], "priority": "boundary"},
+    {"lesson": 67, "file": "assets/original/lesson67_xianduan.jpg", "source_url": "https://chanlun108.cn/uploads/xianduan.jpg", "roles": ["feature_sequence", "segment_break_two_cases"], "priority": "highest"},
+    {"lesson": 69, "file": "assets/original/lesson69_1.jpg", "source_url": "https://chanlun108.cn/uploads/69-1.jpg", "roles": ["monthly_fractal", "same_type_reduction"], "priority": "highest"},
+    {"lesson": 69, "file": "assets/original/lesson69_2.jpg", "source_url": "https://chanlun108.cn/uploads/69-2.jpg", "roles": ["live_partition", "invalid_bi_marks"], "priority": "highest"},
+    {"lesson": 70, "file": "assets/original/lesson70_1.jpg", "source_url": "https://chanlun108.cn/uploads/70-1.jpg", "roles": ["textbook_movement_1"], "priority": "core"},
+    {"lesson": 70, "file": "assets/original/lesson70_2.jpg", "source_url": "https://chanlun108.cn/uploads/70-2.jpg", "roles": ["textbook_movement_2"], "priority": "core"},
+    {"lesson": 71, "file": "assets/original/lesson71_xianduan2.jpg", "source_url": "https://chanlun108.cn/uploads/xianduan2.jpg", "roles": ["segment_break_boundary"], "priority": "highest"},
+    {"lesson": 79, "file": "assets/original/lesson79.jpg", "source_url": "https://chanlun108.cn/uploads/79.jpg", "roles": ["fractal_assistance", "segment_complete_incomplete"], "priority": "core"},
+    {"lesson": 81, "file": "assets/original/lesson81.jpg", "source_url": "https://chanlun108.cn/uploads/81.jpg", "roles": ["tiny_price_difference", "partition_correction"], "priority": "boundary"},
+    {"lesson": 88, "file": "assets/original/lesson88.jpg", "source_url": "https://chanlun108.cn/uploads/88.jpg", "roles": ["graph_growth", "bardo"], "priority": "core"},
+    {"lesson": 98, "file": "assets/original/lesson98.jpg", "source_url": "https://chanlun108.cn/uploads/98.jpg", "roles": ["complete_classification", "segment_break"], "priority": "scenario"}
+  ],
+  "user_cases": [
+    {
+      "file": "assets/user_cases/user_case_pen_or_segment_endpoint.png",
+      "source": "current_conversation_upload",
+      "roles": ["object_type_resolution", "bi_vs_segment_endpoint_regression"],
+      "status": "needs_raw_OHLC_and_object_log",
+      "is_course_evidence": false
+    }
+  ]
+}

@@ -178,6 +178,8 @@ def _validate_payload(payload: dict[str, Any]) -> None:
     for name in ("search_space", "objectives", "constraints"):
         if not isinstance(payload.get(name), list):
             raise ValueError(f"{name} must be an array")
+    if payload.get("risk_overlay") is not None and not isinstance(payload["risk_overlay"], dict):
+        raise ValueError("risk_overlay must be an object")
     objectives = payload["objectives"]
     if not objectives:
         raise ValueError("at least one objective is required")
@@ -251,6 +253,7 @@ def run_study(
                     "range": payload["ranges"][split],
                     "execution": payload["execution"],
                     "capital": payload["capital"],
+                    "risk_overlay": payload.get("risk_overlay"),
                     "random_seed": int(search["random_seed"]),
                     "engine_version": ENGINE_VERSION,
                 }
@@ -274,6 +277,8 @@ def run_study(
                     "random_seed": int(search["random_seed"]),
                     "output_path": f"runs/{run_id}",
                 }
+                if payload.get("risk_overlay") is not None:
+                    run_payload["risk_overlay"] = payload["risk_overlay"]
                 result_ref = run_backtest(run_payload, guard, cancelled)
                 summary_path = guard.resolve(f"{result_ref}/summary.json")
                 summaries[split] = json.loads(summary_path.read_text(encoding="utf-8"))
@@ -368,6 +373,8 @@ def run_study(
             },
             "created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         }
+        if payload.get("risk_overlay") is not None:
+            manifest["risk_overlay"] = payload["risk_overlay"]
         (temporary / "study.json").write_text(
             json.dumps(manifest, separators=(",", ":")), encoding="utf-8"
         )

@@ -351,39 +351,56 @@ def test_bi_zhongshu_allows_zero_width_reference_overlap() -> None:
     assert centers[0].status == "confirmed"
 
 
-def test_segment_zhongshu_cases_use_positive_width_segment_core() -> None:
-    """测试标准线段中枢的正宽核心和段级语义。
+def test_segment_zhongshu_cases_use_closed_interval_segment_core() -> None:
+    """测试标准线段中枢的闭区间核心和段级语义。
 
     预期:段中枢在调用方保持 `analysis_level=segment` 语义,暴露给图表和存储前
-    必须满足正宽核心,并在后续段延伸或离开时保持冻结核心不变。
+    必须满足闭区间交集,并在后续段延伸或离开时保持冻结核心不变。
     """
     lines = center_fixture(leave_direction="up")
-    centers = [center for center in reference_centers(lines) if center.zd_i64 < center.zg_i64]
+    centers = [
+        center
+        for center in reference_centers(lines, minimum_line_count=4)
+        if center.zd_i64 <= center.zg_i64
+    ]
 
     assert [
         (center.status, center.leave_direction, center.zd_i64, center.zg_i64) for center in centers
-    ] == [("left", "up", 2, 10)]
+    ] == [("left", "up", 2, 10), ("confirmed", None, 12, 12)]
     components = lines[centers[0].base_index : centers[0].end_index + 1]
     dd_i64 = min(min(line.start.price_i64, line.end.price_i64) for line in components)
     gg_i64 = max(max(line.start.price_i64, line.end.price_i64) for line in components)
     assert (dd_i64, centers[0].zd_i64, centers[0].zg_i64, gg_i64) == (0, 2, 10, 20)
 
 
-def test_segment_zhongshu_rejects_touch_only_core_before_exposure() -> None:
-    """测试标准线段中枢是否过滤仅点接触的核心。
+def test_segment_zhongshu_accepts_point_core_after_three_completed_components() -> None:
+    """测试标准线段中枢是否接受点接触核心并使用完成时点。
 
-    预期:原始中枢扫描器可以识别点接触交集,但标准线段中枢暴露规则要求
-    `ZD < ZG`,因此会过滤该零宽中枢。
+    预期:前导线后的三条已完成线段在价格 2 形成闭区间点交集时,
+    不等待额外构件即可确认,且确认时点取参与构件的最晚已知位置。
     """
-    raw_centers = reference_centers(
-        [
-            component_line(0, 0, 10),
-            component_line(1, 2, 0),
-            component_line(2, 0, 8),
-            component_line(3, 8, 2),
-            component_line(4, 2, 8),
-        ]
-    )
+    lines = [
+        component_line(0, 0, 10),
+        component_line(1, 2, 0),
+        component_line(2, 0, 8),
+        component_line(3, 8, 2),
+    ]
+    centers = reference_centers(lines, minimum_line_count=4)
 
-    assert [(center.zd_i64, center.zg_i64) for center in raw_centers] == [(2, 2)]
-    assert [center for center in raw_centers if center.zd_i64 < center.zg_i64] == []
+    assert len(centers) == 1
+    assert centers[0].zd_i64 == centers[0].zg_i64 == 2
+    assert centers[0].known_at_bar_index == 4
+
+
+def test_segment_zhongshu_rejects_no_overlap_and_unfinished_components() -> None:
+    """测试无交集或不足三条已完成构件时不生成标准中枢。"""
+    no_overlap = [
+        component_line(0, 0, 10),
+        component_line(1, 2, 0),
+        component_line(2, 0, 8),
+        component_line(3, 8, 3),
+    ]
+    unfinished = no_overlap[:-1]
+
+    assert reference_centers(no_overlap, minimum_line_count=4) == []
+    assert reference_centers(unfinished, minimum_line_count=4) == []

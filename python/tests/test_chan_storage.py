@@ -48,6 +48,8 @@ def test_chan_cache_writes_typed_tables_checkpoints_and_success_last(tmp_path: P
                 "bar_index": 2,
                 "time": 120_000,
                 "price_i64": 110,
+                "zone_low_i64": 100,
+                "zone_high_i64": 110,
                 "extreme_source_bar_index": 2,
                 "fractal_type": "top",
                 "confirmed": True,
@@ -73,7 +75,9 @@ def test_chan_cache_writes_typed_tables_checkpoints_and_success_last(tmp_path: P
     directory = tmp_path / relative
     assert (directory / "_SUCCESS").is_file()
     assert (directory / "checkpoints" / "4.bin").read_bytes() == checkpoint
-    assert pq.read_table(directory / "fractals.parquet").num_rows == 1
+    fractals = pq.read_table(directory / "fractals.parquet").to_pylist()
+    assert len(fractals) == 1
+    assert (fractals[0]["zone_low_i64"], fractals[0]["zone_high_i64"]) == (100, 110)
     assert pq.read_table(directory / "bi.parquet").schema.names == [
         "object_id",
         "start_bar_index",

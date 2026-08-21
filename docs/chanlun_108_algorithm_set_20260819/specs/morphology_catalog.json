@@ -1,0 +1,432 @@
+{
+  "spec_version": "1.0.0",
+  "theory_profile": "chanlun_108_strict",
+  "price_unit": "integer_ticks",
+  "interval_semantics": "closed",
+  "objects": [
+    {
+      "id": "BAR-INCLUDE-UP",
+      "layer": "bar_preprocess",
+      "name_zh": "向上包含合并",
+      "evidence_level": "FORMAL",
+      "source_lessons": [62, 65],
+      "inputs": ["previous_processed_bar", "incoming_bar", "direction=up"],
+      "predicate": "interval_contains(a,b) or interval_contains(b,a)",
+      "output": {"high": "max(a.high,b.high)", "low": "max(a.low,b.low)"},
+      "confirmation": "incoming_bar_closed",
+      "notes": "sequential; preserve raw member and extreme provenance"
+    },
+    {
+      "id": "BAR-INCLUDE-DOWN",
+      "layer": "bar_preprocess",
+      "name_zh": "向下包含合并",
+      "evidence_level": "FORMAL",
+      "source_lessons": [62, 65],
+      "inputs": ["previous_processed_bar", "incoming_bar", "direction=down"],
+      "predicate": "interval_contains(a,b) or interval_contains(b,a)",
+      "output": {"high": "min(a.high,b.high)", "low": "min(a.low,b.low)"},
+      "confirmation": "incoming_bar_closed",
+      "notes": "sequential; preserve raw member and extreme provenance"
+    },
+    {
+      "id": "FX-TOP",
+      "layer": "fractal",
+      "name_zh": "顶分型",
+      "mirror_id": "FX-BOTTOM",
+      "evidence_level": "FORMAL",
+      "source_lessons": [62, 77],
+      "inputs": ["three_consecutive_processed_bars"],
+      "predicate": "mid.high>left.high and mid.high>right.high and mid.low>left.low and mid.low>right.low",
+      "extreme_price": "mid.high",
+      "endpoint_time": "mid.time",
+      "confirmation": "right_bar_closed"
+    },
+    {
+      "id": "FX-BOTTOM",
+      "layer": "fractal",
+      "name_zh": "底分型",
+      "mirror_id": "FX-TOP",
+      "evidence_level": "FORMAL",
+      "source_lessons": [62, 77],
+      "inputs": ["three_consecutive_processed_bars"],
+      "predicate": "mid.high<left.high and mid.high<right.high and mid.low<left.low and mid.low<right.low",
+      "extreme_price": "mid.low",
+      "endpoint_time": "mid.time",
+      "confirmation": "right_bar_closed"
+    },
+    {
+      "id": "FX-TOP-STRONG",
+      "layer": "fractal_auxiliary",
+      "name_zh": "强顶分型",
+      "mirror_id": "FX-BOTTOM-STRONG",
+      "evidence_level": "HEURISTIC",
+      "source_lessons": [82],
+      "predicate": "third.low<first.low and third.close<midpoint(first.range), or second has strong upper rejection and third confirms",
+      "output": "aux_strength=strong",
+      "forbidden": "cannot create S1/S2/S3"
+    },
+    {
+      "id": "FX-BOTTOM-STRONG",
+      "layer": "fractal_auxiliary",
+      "name_zh": "强底分型",
+      "mirror_id": "FX-TOP-STRONG",
+      "evidence_level": "HEURISTIC",
+      "source_lessons": [82],
+      "predicate": "mirror(FX-TOP-STRONG)",
+      "output": "aux_strength=strong",
+      "forbidden": "cannot create B1/B2/B3"
+    },
+    {
+      "id": "BI-UP",
+      "layer": "bi",
+      "name_zh": "向上笔",
+      "mirror_id": "BI-DOWN",
+      "evidence_level": "FORMAL",
+      "source_lessons": [62, 69, 77, 91, 106],
+      "inputs": ["selected_bottom_fractal", "selected_top_fractal"],
+      "preconditions": [
+        "opposite_fractal_types",
+        "endpoint_fractal_members_disjoint",
+        "at_least_one_processed_bar_belongs_to_neither_endpoint_fractal",
+        "top_fractal_high_exceeds_bottom_fractal_high_low_separation_rule",
+        "same_type_competitors_reduced"
+      ],
+      "endpoint_price": "selected_top_fractal.high",
+      "confirmation": "valid_top_fractal_and_spacing_confirmed",
+      "replacement": "higher_top_replaces_unconfirmed_top_candidate"
+    },
+    {
+      "id": "BI-DOWN",
+      "layer": "bi",
+      "name_zh": "向下笔",
+      "mirror_id": "BI-UP",
+      "evidence_level": "FORMAL",
+      "source_lessons": [62, 69, 77, 91, 106],
+      "inputs": ["selected_top_fractal", "selected_bottom_fractal"],
+      "preconditions": [
+        "opposite_fractal_types",
+        "endpoint_fractal_members_disjoint",
+        "at_least_one_processed_bar_belongs_to_neither_endpoint_fractal",
+        "top_fractal_high_exceeds_bottom_fractal_high_low_separation_rule",
+        "same_type_competitors_reduced"
+      ],
+      "endpoint_price": "selected_bottom_fractal.low",
+      "confirmation": "valid_bottom_fractal_and_spacing_confirmed",
+      "replacement": "lower_bottom_replaces_unconfirmed_bottom_candidate"
+    },
+    {
+      "id": "BI-LIVE-4STATE",
+      "layer": "bi",
+      "name_zh": "笔在线四状态",
+      "evidence_level": "FORMAL",
+      "source_lessons": [91, 93],
+      "states": {
+        "UP_EXTENDING": [1, 1],
+        "TOP_FORMING": [1, 0],
+        "DOWN_EXTENDING": [-1, 1],
+        "BOTTOM_FORMING": [-1, 0]
+      },
+      "allowed_transitions": {
+        "UP_EXTENDING": ["TOP_FORMING"],
+        "TOP_FORMING": ["UP_EXTENDING", "DOWN_EXTENDING"],
+        "DOWN_EXTENDING": ["BOTTOM_FORMING"],
+        "BOTTOM_FORMING": ["DOWN_EXTENDING", "UP_EXTENDING"]
+      }
+    },
+    {
+      "id": "SEG-BASE-UP",
+      "layer": "segment",
+      "name_zh": "向上线段候选",
+      "mirror_id": "SEG-BASE-DOWN",
+      "evidence_level": "FORMAL",
+      "source_lessons": [62, 65, 67, 77],
+      "preconditions": ["odd_bi_count>=3", "first_three_bi_overlap", "first_bi_direction=up"],
+      "confirmation": "destroyed_by_confirmed_opposite_segment"
+    },
+    {
+      "id": "SEG-BASE-DOWN",
+      "layer": "segment",
+      "name_zh": "向下线段候选",
+      "mirror_id": "SEG-BASE-UP",
+      "evidence_level": "FORMAL",
+      "source_lessons": [62, 65, 67, 77],
+      "preconditions": ["odd_bi_count>=3", "first_three_bi_overlap", "first_bi_direction=down"],
+      "confirmation": "destroyed_by_confirmed_opposite_segment"
+    },
+    {
+      "id": "SEG-BREAK-NOGAP",
+      "layer": "segment",
+      "name_zh": "无缺口特征序列分型破坏",
+      "evidence_level": "FORMAL",
+      "source_lessons": [67, 71, 77],
+      "preconditions": ["standardized_feature_sequence", "no_gap_between_first_two_feature_elements"],
+      "confirmation": "feature_sequence_fractal_confirmed"
+    },
+    {
+      "id": "SEG-BREAK-GAP",
+      "layer": "segment",
+      "name_zh": "有缺口线段破坏",
+      "evidence_level": "FORMAL",
+      "source_lessons": [67, 71, 77, 78],
+      "preconditions": ["standardized_feature_sequence", "gap_between_first_two_feature_elements"],
+      "confirmation": "reverse_feature_sequence_forms_reverse_fractal"
+    },
+    {
+      "id": "SEG-ODD-ENDPOINT",
+      "layer": "segment",
+      "name_zh": "线段结构端点非全段绝对极值",
+      "evidence_level": "FORMAL",
+      "source_lessons": [78],
+      "predicate": "bi_break_does_not_develop_into_segment_break_and_original_segment_continues",
+      "required_fields": ["structural_endpoint", "range_high", "range_low", "normalized_interval"],
+      "forbidden": "must not be generalized to bi endpoints"
+    },
+    {
+      "id": "ZS-NEW",
+      "layer": "center",
+      "name_zh": "标准中枢形成",
+      "evidence_level": "FORMAL",
+      "source_lessons": [17, 20, 33, 83, 91],
+      "inputs": ["at_least_three_consecutive_completed_same_level_components"],
+      "allowed_component_types": ["segment", "sublevel_movement"],
+      "forbidden_component_types": ["bi"],
+      "formula": {"ZD": "max(low_1,low_2,low_3)", "ZG": "min(high_1,high_2,high_3)"},
+      "predicate": "ZD<=ZG",
+      "confirmation": "third_component_confirmed"
+    },
+    {
+      "id": "ZS-EXTEND",
+      "layer": "center",
+      "name_zh": "中枢延伸",
+      "evidence_level": "FORMAL",
+      "source_lessons": [20, 33],
+      "preconditions": ["confirmed_center", "next_component_touches_original_core"],
+      "effect": "increment_extension_count_and_update_DD_GG_only",
+      "forbidden": "change_ZD_or_ZG"
+    },
+    {
+      "id": "ZS-PROMOTE-9",
+      "layer": "center",
+      "name_zh": "九段延伸升级",
+      "evidence_level": "FORMAL",
+      "source_lessons": [33],
+      "preconditions": ["center_component_count>=9", "same_center_extension_not_terminated"],
+      "output": "higher_level_center_candidate"
+    },
+    {
+      "id": "ZS-EXPAND-OVERLAP",
+      "layer": "center",
+      "name_zh": "两同级中枢重叠扩张",
+      "evidence_level": "FORMAL",
+      "source_lessons": [20],
+      "preconditions": ["two_consecutive_same_level_centers", "their_fluctuation_ranges_overlap"],
+      "output": "higher_level_center_candidate",
+      "forbidden": "classify_as_same_level_trend"
+    },
+    {
+      "id": "MOVE-CONSOLIDATION",
+      "layer": "movement",
+      "name_zh": "盘整",
+      "evidence_level": "FORMAL",
+      "source_lessons": [17, 18],
+      "predicate": "completed_movement_has_exactly_one_same_level_center"
+    },
+    {
+      "id": "MOVE-UPTREND",
+      "layer": "movement",
+      "name_zh": "上涨趋势",
+      "mirror_id": "MOVE-DOWNTREND",
+      "evidence_level": "FORMAL",
+      "source_lessons": [17, 20, 107],
+      "predicate": "completed_movement_has_at_least_two_upward_ordered_non_overlapping_same_level_centers"
+    },
+    {
+      "id": "MOVE-DOWNTREND",
+      "layer": "movement",
+      "name_zh": "下跌趋势",
+      "mirror_id": "MOVE-UPTREND",
+      "evidence_level": "FORMAL",
+      "source_lessons": [17, 20],
+      "predicate": "completed_movement_has_at_least_two_downward_ordered_non_overlapping_same_level_centers"
+    },
+    {
+      "id": "DIV-TREND-BOTTOM",
+      "layer": "divergence",
+      "name_zh": "下跌趋势底背驰",
+      "mirror_id": "DIV-TREND-TOP",
+      "evidence_level": "FORMAL",
+      "source_lessons": [15, 24, 27, 37, 50],
+      "preconditions": ["a+A+b+B+c_is_downtrend", "A_and_B_same_level", "c_new_low", "c_contains_B_S3", "c_lower_level", "c_completed"],
+      "predicate": "force(c)<force(a)",
+      "indicator_role": "MACD_optional_proxy_only"
+    },
+    {
+      "id": "DIV-TREND-TOP",
+      "layer": "divergence",
+      "name_zh": "上涨趋势顶背驰",
+      "mirror_id": "DIV-TREND-BOTTOM",
+      "evidence_level": "FORMAL",
+      "source_lessons": [15, 24, 27, 37, 50],
+      "preconditions": ["a+A+b+B+c_is_uptrend", "A_and_B_same_level", "c_new_high", "c_contains_B_B3", "c_lower_level", "c_completed"],
+      "predicate": "force(c)<force(a)",
+      "indicator_role": "MACD_optional_proxy_only"
+    },
+    {
+      "id": "DIV-CONSOLIDATION-BOTTOM",
+      "layer": "divergence",
+      "name_zh": "向下盘整背驰",
+      "mirror_id": "DIV-CONSOLIDATION-TOP",
+      "evidence_level": "DERIVED",
+      "source_lessons": [24, 27, 37, 39],
+      "preconditions": ["one_center_context", "two_comparable_down_legs", "later_leg_completed"],
+      "predicate": "force(later)<force(earlier)",
+      "forbidden": "label_as_standard_B1"
+    },
+    {
+      "id": "DIV-CONSOLIDATION-TOP",
+      "layer": "divergence",
+      "name_zh": "向上盘整背驰",
+      "mirror_id": "DIV-CONSOLIDATION-BOTTOM",
+      "evidence_level": "DERIVED",
+      "source_lessons": [24, 27, 37, 39],
+      "preconditions": ["one_center_context", "two_comparable_up_legs", "later_leg_completed"],
+      "predicate": "force(later)<force(earlier)",
+      "forbidden": "label_as_standard_S1"
+    },
+    {
+      "id": "SIG-B1",
+      "layer": "signal",
+      "name_zh": "第一类买点",
+      "mirror_id": "SIG-S1",
+      "evidence_level": "FORMAL",
+      "source_lessons": [17, 21, 24, 53],
+      "preconditions": ["confirmed_same_level_bottom_divergence", "lower_level_turn_completed"],
+      "endpoint": "divergence_turn_low",
+      "confirmation": "lower_level_turn_confirmation"
+    },
+    {
+      "id": "SIG-S1",
+      "layer": "signal",
+      "name_zh": "第一类卖点",
+      "mirror_id": "SIG-B1",
+      "evidence_level": "FORMAL",
+      "source_lessons": [17, 21, 24, 53],
+      "preconditions": ["confirmed_same_level_top_divergence", "lower_level_turn_completed"],
+      "endpoint": "divergence_turn_high",
+      "confirmation": "lower_level_turn_confirmation"
+    },
+    {
+      "id": "SIG-B2",
+      "layer": "signal",
+      "name_zh": "第二类买点",
+      "mirror_id": "SIG-S2",
+      "evidence_level": "FORMAL",
+      "source_lessons": [14, 17, 53, 101],
+      "preconditions": ["confirmed_B1", "first_lower_level_up_after_B1_completed", "following_first_lower_level_down_completed"],
+      "endpoint": "that_down_movement_end",
+      "variants": ["B2_equals_B3", "B2_below_B1", "B1_below_B2_below_B3"]
+    },
+    {
+      "id": "SIG-S2",
+      "layer": "signal",
+      "name_zh": "第二类卖点",
+      "mirror_id": "SIG-B2",
+      "evidence_level": "FORMAL",
+      "source_lessons": [14, 17, 53, 101],
+      "preconditions": ["confirmed_S1", "first_lower_level_down_after_S1_completed", "following_first_lower_level_up_completed"],
+      "endpoint": "that_up_movement_end",
+      "variants": ["S2_equals_S3", "S2_above_S1", "S1_above_S2_above_S3"]
+    },
+    {
+      "id": "SIG-B3",
+      "layer": "signal",
+      "name_zh": "第三类买点",
+      "mirror_id": "SIG-S3",
+      "evidence_level": "FORMAL",
+      "source_lessons": [20, 21, 49, 79],
+      "preconditions": ["confirmed_center", "completed_lower_level_up_departure", "first_completed_lower_level_down_return", "return_not_previously_consumed"],
+      "predicate": "first_return.low>=center.ZG",
+      "boundary": "inclusive",
+      "confirmation": "first_return_completed"
+    },
+    {
+      "id": "SIG-S3",
+      "layer": "signal",
+      "name_zh": "第三类卖点",
+      "mirror_id": "SIG-B3",
+      "evidence_level": "FORMAL",
+      "source_lessons": [20, 21, 49, 79],
+      "preconditions": ["confirmed_center", "completed_lower_level_down_departure", "first_completed_lower_level_up_return", "return_not_previously_consumed"],
+      "predicate": "first_return.high<=center.ZD",
+      "boundary": "inclusive",
+      "confirmation": "first_return_completed"
+    },
+    {
+      "id": "TURN-3WAY",
+      "layer": "transition",
+      "name_zh": "背驰后转折三分类",
+      "evidence_level": "FORMAL",
+      "source_lessons": [29],
+      "branches": ["last_center_expansion", "higher_level_consolidation", "same_or_higher_level_reverse_trend"]
+    },
+    {
+      "id": "BARDO",
+      "layer": "transition",
+      "name_zh": "中阴未定阶段",
+      "evidence_level": "DERIVED",
+      "source_lessons": [88, 89, 90, 99, 101],
+      "entry": "old_movement_divergence_completed",
+      "exit": ["new_third_point", "new_movement_type_confirmed", "center_promoted"],
+      "operation": "treat_as_center_oscillation_until_classified"
+    },
+    {
+      "id": "BARDO-HEALTHY",
+      "layer": "transition",
+      "name_zh": "健康中阴",
+      "evidence_level": "DERIVED",
+      "source_lessons": [99],
+      "predicate": "first_higher_level_center_overlaps_old_movement_last_center"
+    },
+    {
+      "id": "BARDO-DANGEROUS",
+      "layer": "transition",
+      "name_zh": "危险中阴",
+      "evidence_level": "DERIVED",
+      "source_lessons": [99],
+      "predicate": "new_center_reaches_old_movement_second_last_or_earlier_center",
+      "perspective": "dangerous_for_old_direction"
+    },
+    {
+      "id": "BOTTOM-BUILD",
+      "layer": "transition",
+      "name_zh": "底部构造",
+      "mirror_id": "TOP-BUILD",
+      "evidence_level": "FORMAL",
+      "source_lessons": [108],
+      "entry": "SIG-B1",
+      "success": "first_SIG-B3_from_resulting_center",
+      "failure": "first_SIG-S3_from_resulting_center"
+    },
+    {
+      "id": "TOP-BUILD",
+      "layer": "transition",
+      "name_zh": "顶部构造",
+      "mirror_id": "BOTTOM-BUILD",
+      "evidence_level": "FORMAL",
+      "source_lessons": [108],
+      "entry": "SIG-S1",
+      "success": "first_SIG-S3_from_resulting_center",
+      "failure": "first_SIG-B3_from_resulting_center"
+    },
+    {
+      "id": "EXPERIMENTAL-BI-OVERLAP",
+      "layer": "experimental",
+      "name_zh": "三笔公共重叠实验对象",
+      "evidence_level": "EXPERIMENTAL",
+      "source_lessons": [64, 83, 91],
+      "standard": false,
+      "forbidden_outputs": ["SIG-B3", "SIG-S3", "standard_center"],
+      "notes": "kept only for legacy compatibility; separate namespace and backtest"
+    }
+  ]
+}

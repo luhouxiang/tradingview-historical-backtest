@@ -1091,7 +1091,7 @@ components:
       required: [kind, algorithm_id, algorithm_version, source_hash]
       properties:
         kind:
-          enum: [indicator, chan, strategy]
+          enum: [indicator, chan, strategy, risk_filter]
         algorithm_id:
           type: string
         algorithm_version:
@@ -1126,7 +1126,7 @@ components:
                   display_name: {type: string, minLength: 1}
                   pane: {enum: [main, indicator]}
                   series_type: {enum: [line, histogram, semantic_objects]}
-                  object_type: {enum: [fractal, bi, segment, zhongshu, segment_zhongshu, movement_state, center_monitor, divergence, trade_point, strategy_state, stage_signal, trade_signal, chart_event]}
+                  object_type: {enum: [fractal, bi, segment, zhongshu, segment_zhongshu, movement_state, center_monitor, divergence, trade_point, strategy_state, stage_signal, trade_signal, chart_event, risk_decision]}
             warmup:
               type: object
               additionalProperties: false
@@ -1274,6 +1274,8 @@ components:
         - bar_index
         - time
         - price_i64
+        - zone_low_i64
+        - zone_high_i64
         - extreme_source_bar_index
         - fractal_type
         - confirmed
@@ -1285,6 +1287,8 @@ components:
         bar_index: {type: integer, minimum: 0}
         time: {type: integer}
         price_i64: {type: integer}
+        zone_low_i64: {type: integer}
+        zone_high_i64: {type: integer}
         extreme_source_bar_index: {type: integer, minimum: 0}
         fractal_type: {enum: [top, bottom]}
         confirmed: {type: boolean}
@@ -1374,19 +1378,33 @@ components:
     ChanCenterMonitor:
       type: object
       additionalProperties: false
-      required: [object_id, bar_index, time, z_i64, zn_i64, range_high_i64, range_low_i64, component_direction, relative_position, strength, migration_warning, analysis_level, reference_object_id, confirmed, confirmed_at_bar_index, known_at_bar_index, object_revision]
+      required: [object_id, bar_index, time, z_i64, zn_i64, z_twice_i64, zn_twice_i64, core_low_i64, core_high_i64, range_high_i64, range_low_i64, component_ordinal, component_direction, relative_position, oscillation_bias, breakout_warning, catalog_algorithm_id, semantic_namespace, evidence_level, level_mapping_profile, standard_signal, execution_allowed, confirms_third_point, analysis_level, reference_object_id, confirmed, confirmed_at_bar_index, known_at_bar_index, object_revision]
       properties:
         object_id: {type: string, minLength: 1}
         bar_index: {type: integer, minimum: 0}
         time: {type: integer}
+        # Compatibility projections on the dataset tick grid. Exact midpoint
+        # comparisons and chart projection use the doubled fixed-point fields.
         z_i64: {type: integer}
         zn_i64: {type: integer}
+        z_twice_i64: {type: integer}
+        zn_twice_i64: {type: integer}
+        core_low_i64: {type: integer}
+        core_high_i64: {type: integer}
         range_high_i64: {type: integer}
         range_low_i64: {type: integer}
+        component_ordinal: {type: integer, minimum: 1, maximum: 9}
         component_direction: {type: string, enum: [up, down]}
         relative_position: {type: string, enum: [above, below, equal]}
-        strength: {type: string, enum: [strong, weak, neutral]}
-        migration_warning: {type: [string, "null"], enum: [up, down, null]}
+        oscillation_bias: {type: string, enum: [strong, weak, neutral]}
+        breakout_warning: {type: [string, "null"], enum: [cross_above_b, cross_below_a, rising_wedge_below_b, falling_wedge_above_a, null]}
+        catalog_algorithm_id: {const: ALG-AUX-004}
+        semantic_namespace: {const: auxiliary}
+        evidence_level: {const: AUXILIARY}
+        level_mapping_profile: {const: segment_center_components_v1}
+        standard_signal: {const: false}
+        execution_allowed: {const: false}
+        confirms_third_point: {const: false}
         analysis_level: {type: string, minLength: 1}
         reference_object_id: {type: string, minLength: 1}
         confirmed: {type: boolean}
@@ -1483,6 +1501,10 @@ components:
         parameters:
           type: object
           additionalProperties: true
+        ranking_context:
+          $ref: "#/components/schemas/RankingContext"
+        risk_overlay:
+          $ref: "#/components/schemas/RiskOverlay"
         range:
           type: object
           additionalProperties: false
@@ -1527,6 +1549,148 @@ components:
         trace_id:
           type: string
 
+    RankingContext:
+      type: object
+      additionalProperties: false
+      required:
+        - universe_id
+        - membership_revision
+        - membership_mode
+        - price_adjustment_mode
+        - price_adjustment_revision
+        - episode_id
+        - episode_start_timestamp_utc
+        - episode_available_at_utc
+        - memberships
+      properties:
+        universe_id:
+          type: string
+          minLength: 1
+        membership_revision:
+          type: string
+          pattern: "^sha256:[0-9a-f]{64}$"
+        membership_mode:
+          const: point_in_time
+        price_adjustment_mode:
+          enum: [forward_adjusted, back_adjusted, total_return]
+        price_adjustment_revision:
+          type: string
+          pattern: "^sha256:[0-9a-f]{64}$"
+        episode_id:
+          type: string
+          minLength: 1
+        episode_start_timestamp_utc:
+          type: integer
+          format: int64
+          minimum: 0
+        episode_available_at_utc:
+          type: integer
+          format: int64
+          minimum: 0
+        memberships:
+          type: array
+          minItems: 2
+          items:
+            $ref: "#/components/schemas/RankingMembership"
+
+    RankingMembership:
+      type: object
+      additionalProperties: false
+      required:
+        - dataset_id
+        - data_revision
+        - sector_id
+        - effective_from_utc
+        - effective_to_utc
+        - available_at_utc
+      properties:
+        dataset_id:
+          type: string
+          minLength: 1
+        data_revision:
+          type: string
+          pattern: "^sha256:[0-9a-f]{64}$"
+        sector_id:
+          type: string
+          minLength: 1
+        effective_from_utc:
+          type: integer
+          format: int64
+          minimum: 0
+        effective_to_utc:
+          type: [integer, "null"]
+          format: int64
+          minimum: 0
+        available_at_utc:
+          type: integer
+          format: int64
+          minimum: 0
+
+    RiskOverlay:
+      type: object
+      additionalProperties: false
+      required: [algorithm, parameters, context]
+      properties:
+        algorithm:
+          $ref: "#/components/schemas/AlgorithmRef"
+        parameters:
+          type: object
+          additionalProperties: true
+        context:
+          $ref: "#/components/schemas/RiskContext"
+
+    RiskContext:
+      type: object
+      additionalProperties: false
+      required:
+        - market_state_revision
+        - sector_id
+        - legal_future_branches
+        - handled_future_branches
+        - observations
+      properties:
+        market_state_revision:
+          type: string
+          pattern: "^sha256:[0-9a-f]{64}$"
+        sector_id:
+          type: string
+          minLength: 1
+        legal_future_branches:
+          type: array
+          uniqueItems: true
+          items: {type: string, minLength: 1}
+        handled_future_branches:
+          type: array
+          uniqueItems: true
+          items: {type: string, minLength: 1}
+        observations:
+          type: array
+          items:
+            $ref: "#/components/schemas/RiskMarketObservation"
+
+    RiskMarketObservation:
+      type: object
+      additionalProperties: false
+      required:
+        - effective_from_bar_index
+        - available_at_bar_index
+        - data_revision
+        - trading_status
+        - stale_bars
+        - data_gap_bars
+        - event_risk_active
+      properties:
+        effective_from_bar_index: {type: integer, minimum: 0}
+        available_at_bar_index: {type: integer, minimum: 0}
+        data_revision:
+          type: string
+          pattern: "^sha256:[0-9a-f]{64}$"
+        trading_status:
+          enum: [normal, suspended, limit_up, limit_down]
+        stale_bars: {type: integer, minimum: 0}
+        data_gap_bars: {type: integer, minimum: 0}
+        event_risk_active: {type: boolean}
+
     StudyRequest:
       type: object
       additionalProperties: false
@@ -1564,6 +1728,8 @@ components:
         capital:
           type: object
           additionalProperties: true
+        risk_overlay:
+          $ref: "#/components/schemas/RiskOverlay"
         trace_id: {type: string}
 
     SearchParameter:
@@ -1736,7 +1902,7 @@ components:
     BacktestSummary:
       type: object
       additionalProperties: true
-      required: [request_id, run_id, total_return, max_drawdown, trade_count, win_rate, total_commission_i64, total_slippage_i64]
+      required: [request_id, run_id, total_return, max_drawdown, trade_count, win_rate, total_commission_i64, total_slippage_i64, risk_approved_count, risk_reduced_count, risk_blocked_count, risk_kill_switch_count]
       properties:
         request_id: {type: string}
         run_id: {type: string}
@@ -1753,6 +1919,10 @@ components:
         expectancy_i64: {type: [number, "null"]}
         total_commission_i64: {type: integer, minimum: 0}
         total_slippage_i64: {type: integer, minimum: 0}
+        risk_approved_count: {type: integer, minimum: 0}
+        risk_reduced_count: {type: integer, minimum: 0}
+        risk_blocked_count: {type: integer, minimum: 0}
+        risk_kill_switch_count: {type: integer, minimum: 0}
 
     EquityRow:
       type: object

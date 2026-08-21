@@ -101,6 +101,13 @@ K 线查询：
 
 POST /backtests 每次创建新 run_id，即使参数相同；响应可同时给出相同 run_signature，供用户判断重复。
 
+`BacktestRequest` 和 `StudyRequest` 可携带同构的 `risk_overlay`，其中包含已发布
+`kind=risk_filter` AlgorithmRef、完整显式参数和点时 `RiskContext`。context 保存市场状态
+revision、板块 ID、合法/已处理未来分支以及严格按 `effective_from_bar_index` 排序的 observation；
+每条 observation 的 `available_at_bar_index` 不得晚于生效 K 线。该字段可选是为了兼容旧调用，
+不是允许启用时省略阈值；当前 Vue 的正式回测与 Study 默认启用。规范化后的全部事实参与
+run/study 签名并写入对应 manifest。
+
 ## 5. 工作区 API
 
 | 方法 | 路径 | 作用 |
@@ -146,6 +153,18 @@ POST /api/v1/client-logs：
 - AlgorithmRef 和参数。
 - 输出目录相对路径。
 - 范围、预热、引擎配置。
+
+`aux_ma_sector_rotation` 的公共 `BacktestRequest` 额外携带不含路径的 `ranking_context`：点时
+universe/membership revision、统一复权模式/revision、episode 起点/可用时间及成员有效区间。
+Go 必须逐成员核对活动 catalog revision、日线元数据和路径边界，再在内部 backtest 载荷中增加
+按 dataset_id 排序的 `ranking_datasets`（显式 DatasetRef）；Python 不得自行扫描目录。相同公共
+上下文写入正式 `run.json` 并参与 `run_signature`，内部路径不进入公共 manifest。
+
+公共 `risk_overlay` 经 Go 校验 AlgorithmRef、参数 Schema、revision、观察时点和无杠杆审批后，
+原样作为不含路径的内部事实交给 Python。Python 在逐 K 线执行入口产生
+`risk_decisions.parquet`，并把 `approved_order_intent/reduced_order_intent/blocked_decision/kill_switch`
+作为 `object_type=risk_decision` 因果事件写入 `chart_events.parquet`；Go 不实现第二套风险算法。
+Study 的每个训练/验证 run 必须携带同一覆盖事实，study manifest 也保存该配置。
 
 Python 不返回完整结果表，只返回：
 

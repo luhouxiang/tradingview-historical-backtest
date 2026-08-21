@@ -160,6 +160,64 @@ describe('ChartGroup', () => {
     wrapper.unmount()
   })
 
+  it('renders all sector-strength lines and filters foreign-instrument price anchors', async () => {
+    const wrapper = mount(ChartGroup, { props: { dataset: dataset() } })
+    await flushPromises()
+    await wrapper.setProps({ replaySignals: [
+      {
+        object_type: 'chart_event', object_id: 'sector-a', event_type: 'aux_sector_strength_mean',
+        chart_dataset_id: 'SHFE.AO2609.5m', sector_id: 'bank', sector_strength_mean_milli: 4500,
+        timestamp_utc: 1_700_000_000_000, known_at_bar_index: 0,
+      },
+      {
+        object_type: 'chart_event', object_id: 'sector-b', event_type: 'aux_sector_strength_mean',
+        chart_dataset_id: 'SHFE.AO2609.5m', sector_id: 'technology', sector_strength_mean_milli: 6250,
+        timestamp_utc: 1_700_000_300_000, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'current-class', event_type: 'aux_ma_strength_class',
+        chart_dataset_id: 'SHFE.AO2609.5m', timestamp_utc: 1_700_000_000_000, price_i64: 11,
+      },
+      {
+        object_type: 'chart_event', object_id: 'foreign-class', event_type: 'aux_ma_strength_class',
+        chart_dataset_id: 'SZSE.000001.1d', timestamp_utc: 1_700_000_000_000, price_i64: 9999,
+      },
+    ] })
+    await wrapper.vm.$nextTick()
+    const sectorCalls = chartMocks.chart.addSeries.mock.calls.filter((call) => (call[1] as { priceScaleId?: string }).priceScaleId === 'sector-strength')
+    expect(sectorCalls).toHaveLength(2)
+    expect(sectorCalls.map((call) => call[2])).toEqual([1, 1])
+    expect(chartMocks.macd.setData).toHaveBeenCalledWith([{ time: 1_700_000_000, value: 4.5 }])
+    expect(chartMocks.macd.setData).toHaveBeenCalledWith([{ time: 1_700_000_300, value: 6.25 }])
+    expect(wrapper.get('[data-pane-id="macd"]').text()).toContain('MACD / 板块强度')
+    expect(wrapper.get('[data-pane-id="macd"]').text()).toContain('bank 4.500')
+    expect(wrapper.find('.replay-signal.aux_ma_strength_class').exists()).toBe(true)
+    expect(wrapper.text()).not.toContain('foreign-class')
+    expect(wrapper.find('.replay-signal.aux_sector_strength_mean').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('projects causal risk decisions onto the price chart', async () => {
+    const wrapper = mount(ChartGroup, { props: { dataset: dataset() } })
+    await flushPromises()
+    await wrapper.setProps({ replaySignals: [
+      {
+        object_type: 'risk_decision', object_id: 'risk-approved-0',
+        event_type: 'approved_order_intent', display_label: '风控·订单意图批准',
+        timestamp_utc: 1_700_000_000_000, price_i64: 11, known_at_bar_index: 0,
+      },
+      {
+        object_type: 'risk_decision', object_id: 'risk-kill-1',
+        event_type: 'kill_switch', display_label: '风控·熔断',
+        timestamp_utc: 1_700_000_300_000, price_i64: 10, known_at_bar_index: 1,
+      },
+    ] })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.get('.replay-signal.approved_order_intent').text()).toBe('风控·订单意图批准')
+    expect(wrapper.get('.replay-signal.kill_switch').text()).toBe('风控·熔断')
+    wrapper.unmount()
+  })
+
   it('renders MACD lines and sign-colored histogram values returned by Python', async () => {
     apiMocks.getCalculationResults.mockResolvedValue({
       result_kind: 'indicator', bar_index: [0, 1],
@@ -297,6 +355,157 @@ describe('ChartGroup', () => {
       expect.objectContaining({ time: 1_700_000_300 }),
     ]))
     expect(apiMocks.createCalculation).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  it('draws Chan strategy and auxiliary events on the shared price chart layer', async () => {
+    const wrapper = mount(ChartGroup, {
+      props: {
+        dataset: dataset(),
+      },
+    })
+    await flushPromises()
+    await wrapper.setProps({ replaySignals: [
+      {
+        object_type: 'chart_event', object_id: 'handoff-B2', event_type: 'handoff_to_B3_trend',
+        timestamp_utc: 1_700_000_300_000, price_i64: 12, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'hold-B3', event_type: 'hold_new_center',
+        timestamp_utc: 1_700_000_000_000, price_i64: 11, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'swing-OSC', event_type: 'swing_buy',
+        timestamp_utc: 1_700_000_300_000, price_i64: 10, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'stop-OSC', event_type: 'stop_oscillation',
+        timestamp_utc: 1_700_000_000_000, price_i64: 12, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'buy-SLD', event_type: 'same_level_buy',
+        timestamp_utc: 1_700_000_300_000, price_i64: 10, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'wait-SLD', event_type: 'wait_new_same_level_structure',
+        timestamp_utc: 1_700_000_000_000, price_i64: 12, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'promote-SLD', event_type: 'promote_level_candidate',
+        timestamp_utc: 1_700_000_300_000, price_i64: 11, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'low-turn-3LC', event_type: 'low_turn_active',
+        timestamp_utc: 1_700_000_300_000, price_i64: 10, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'middle-third-3LC', event_type: 'mid_third_point',
+        timestamp_utc: 1_700_000_000_000, price_i64: 12, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'high-change-3LC', event_type: 'high_change_candidate',
+        timestamp_utc: 1_700_000_300_000, price_i64: 11, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'partial-RBS', event_type: 'partial_take_profit',
+        timestamp_utc: 1_700_000_000_000, price_i64: 12, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'reenter-RBS', event_type: 'reenter',
+        timestamp_utc: 1_700_000_300_000, price_i64: 10, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'handoff-RBS', event_type: 'trend_handoff',
+        timestamp_utc: 1_700_000_300_000, price_i64: 11, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'bottom-BTC', event_type: 'bottom_build_success',
+        timestamp_utc: 1_700_000_300_000, price_i64: 10, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'top-BTC', event_type: 'top_build_failure',
+        timestamp_utc: 1_700_000_000_000, price_i64: 12, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'coarse-bottom-BTC', event_type: 'coarse_bottom_zone',
+        timestamp_utc: 1_700_000_300_000, price_i64: 11, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'aux-lip', event_type: 'aux_lip_kiss',
+        timestamp_utc: 1_700_000_300_000, price_i64: 11, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'aux-B1', event_type: 'aux_legacy_B1_candidate',
+        timestamp_utc: 1_700_000_000_000, price_i64: 10, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'aux-risk-off', event_type: 'aux_macd_risk_off',
+        timestamp_utc: 1_700_000_300_000, price_i64: 10, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'aux-risk-on', event_type: 'aux_macd_risk_on_candidate',
+        timestamp_utc: 1_700_000_000_000, price_i64: 11, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'aux-boll-exit', event_type: 'aux_boll_superstrong_exit',
+        timestamp_utc: 1_700_000_300_000, price_i64: 12, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'aux-boll-buy-zone', event_type: 'aux_boll_second_buy_zone',
+        timestamp_utc: 1_700_000_000_000, price_i64: 10, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'aux-boll-sell-zone', event_type: 'aux_boll_second_sell_zone',
+        timestamp_utc: 1_700_000_300_000, price_i64: 11, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'aux-boll-warning', event_type: 'aux_boll_bardo_end_or_promotion_warning',
+        timestamp_utc: 1_700_000_000_000, price_i64: 11, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'aux-daily-30m', event_type: 'aux_daily_30m_classification',
+        timestamp_utc: 1_700_000_300_000, price_i64: 12, known_at_bar_index: 1,
+        display_label: '日内双重叠区·向上·收于上方重叠区上方', classification: 'daily_two_center',
+        center_1_start_timestamp_utc: 1_700_000_000_000,
+        center_1_end_timestamp_utc: 1_700_000_300_000,
+        center_1_low_i64: 10, center_1_high_i64: 12,
+        center_2_start_timestamp_utc: 1_700_000_000_000,
+        center_2_end_timestamp_utc: 1_700_000_300_000,
+        center_2_low_i64: 11, center_2_high_i64: 13,
+      },
+    ] })
+    const B2Event = wrapper.get('.replay-signal.handoff_to_B3_trend')
+    expect(B2Event.text()).toBe('handoff_to_B3_trend')
+    expect(B2Event.get('path').attributes('d')).toContain('M 300 120')
+    expect(wrapper.get('.replay-signal.hold_new_center').text()).toBe('hold_new_center')
+    expect(wrapper.get('.replay-signal.swing_buy').text()).toBe('swing_buy')
+    expect(wrapper.get('.replay-signal.stop_oscillation').text()).toBe('stop_oscillation')
+    expect(wrapper.get('.replay-signal.same_level_buy').text()).toBe('same_level_buy')
+    expect(wrapper.get('.replay-signal.wait_new_same_level_structure').text()).toBe('wait_new_same_level_structure')
+    expect(wrapper.get('.replay-signal.promote_level_candidate').text()).toBe('promote_level_candidate')
+    expect(wrapper.get('.replay-signal.low_turn_active').text()).toBe('low_turn_active')
+    expect(wrapper.get('.replay-signal.mid_third_point').text()).toBe('mid_third_point')
+    expect(wrapper.get('.replay-signal.high_change_candidate').text()).toBe('high_change_candidate')
+    expect(wrapper.get('.replay-signal.partial_take_profit').text()).toBe('partial_take_profit')
+    expect(wrapper.get('.replay-signal.reenter').text()).toBe('reenter')
+    expect(wrapper.get('.replay-signal.trend_handoff').text()).toBe('trend_handoff')
+    expect(wrapper.get('.replay-signal.bottom_build_success').text()).toBe('bottom_build_success')
+    expect(wrapper.get('.replay-signal.top_build_failure').text()).toBe('top_build_failure')
+    expect(wrapper.get('.replay-signal.coarse_bottom_zone').text()).toBe('coarse_bottom_zone')
+    expect(wrapper.get('.replay-signal.aux_lip_kiss').text()).toBe('aux_lip_kiss')
+    expect(wrapper.get('.replay-signal.aux_legacy_B1_candidate').text()).toBe('aux_legacy_B1_candidate')
+    expect(wrapper.get('.replay-signal.aux_macd_risk_off').text()).toBe('aux_macd_risk_off')
+    expect(wrapper.get('.replay-signal.aux_macd_risk_on_candidate').text()).toBe('aux_macd_risk_on_candidate')
+    expect(wrapper.get('.replay-signal.aux_boll_superstrong_exit').text()).toBe('aux_boll_superstrong_exit')
+    expect(wrapper.get('.replay-signal.aux_boll_second_buy_zone').text()).toBe('aux_boll_second_buy_zone')
+    expect(wrapper.get('.replay-signal.aux_boll_second_sell_zone').text()).toBe('aux_boll_second_sell_zone')
+    expect(wrapper.get('.replay-signal.aux_boll_bardo_end_or_promotion_warning').text()).toBe('aux_boll_bardo_end_or_promotion_warning')
+    expect(wrapper.get('.replay-signal.aux_daily_30m_classification').text()).toBe('日内双重叠区·向上·收于上方重叠区上方')
+    const dailyCenters = wrapper.findAll('[data-daily-center]')
+    expect(dailyCenters).toHaveLength(2)
+    expect(dailyCenters[0]?.attributes('data-daily-center')).toBe('1')
+    expect(dailyCenters[0]?.classes()).toContain('daily_two_center')
+    expect(dailyCenters[1]?.classes()).toContain('center-2')
     wrapper.unmount()
   })
 

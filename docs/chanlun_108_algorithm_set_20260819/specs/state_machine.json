@@ -1,0 +1,83 @@
+{
+  "spec_version": "1.0.0",
+  "machines": {
+    "bi_live": {
+      "source_lessons": [91, 93],
+      "initial": "SEEK_FIRST_FRACTAL",
+      "states": ["SEEK_FIRST_FRACTAL", "UP_EXTENDING", "TOP_FORMING", "DOWN_EXTENDING", "BOTTOM_FORMING"],
+      "encoding": {
+        "UP_EXTENDING": [1, 1],
+        "TOP_FORMING": [1, 0],
+        "DOWN_EXTENDING": [-1, 1],
+        "BOTTOM_FORMING": [-1, 0]
+      },
+      "transitions": [
+        {"from": "SEEK_FIRST_FRACTAL", "event": "bottom_confirmed", "to": "UP_EXTENDING"},
+        {"from": "SEEK_FIRST_FRACTAL", "event": "top_confirmed", "to": "DOWN_EXTENDING"},
+        {"from": "UP_EXTENDING", "event": "top_candidate", "to": "TOP_FORMING"},
+        {"from": "TOP_FORMING", "event": "higher_top_or_top_invalidated", "to": "UP_EXTENDING"},
+        {"from": "TOP_FORMING", "event": "valid_down_bi_confirmed", "to": "DOWN_EXTENDING"},
+        {"from": "DOWN_EXTENDING", "event": "bottom_candidate", "to": "BOTTOM_FORMING"},
+        {"from": "BOTTOM_FORMING", "event": "lower_bottom_or_bottom_invalidated", "to": "DOWN_EXTENDING"},
+        {"from": "BOTTOM_FORMING", "event": "valid_up_bi_confirmed", "to": "UP_EXTENDING"}
+      ]
+    },
+    "object_lifecycle": {
+      "initial": "CANDIDATE",
+      "states": ["CANDIDATE", "CONFIRMED", "INVALIDATED", "ACTIVE", "CONSUMED", "EXPIRED", "SUPERSEDED"],
+      "transitions": [
+        {"from": "CANDIDATE", "event": "all_preconditions_satisfied", "to": "CONFIRMED"},
+        {"from": "CANDIDATE", "event": "contradicting_data", "to": "INVALIDATED"},
+        {"from": "CONFIRMED", "event": "strategy_window_opens", "to": "ACTIVE"},
+        {"from": "ACTIVE", "event": "one_shot_eligibility_used", "to": "CONSUMED"},
+        {"from": "ACTIVE", "event": "window_timeout_or_state_change", "to": "EXPIRED"},
+        {"from": "CONFIRMED", "event": "higher_level_object_replaces_role", "to": "SUPERSEDED"}
+      ],
+      "terminal": ["INVALIDATED", "CONSUMED", "EXPIRED", "SUPERSEDED"]
+    },
+    "center_relative_five_state": {
+      "source_lessons": [20, 49],
+      "initial": "INSIDE_CENTER",
+      "states": ["INSIDE_CENTER", "ABOVE_NO_B3", "ABOVE_AFTER_B3", "BELOW_NO_S3", "BELOW_AFTER_S3", "CENTER_PROMOTED", "NO_ACTIVE_CENTER"],
+      "transitions": [
+        {"from": "INSIDE_CENTER", "event": "completed_up_departure", "to": "ABOVE_NO_B3"},
+        {"from": "INSIDE_CENTER", "event": "completed_down_departure", "to": "BELOW_NO_S3"},
+        {"from": "ABOVE_NO_B3", "event": "first_return_low_ge_ZG", "to": "ABOVE_AFTER_B3"},
+        {"from": "ABOVE_NO_B3", "event": "first_return_enters_core", "to": "INSIDE_CENTER"},
+        {"from": "BELOW_NO_S3", "event": "first_return_high_le_ZD", "to": "BELOW_AFTER_S3"},
+        {"from": "BELOW_NO_S3", "event": "first_return_enters_core", "to": "INSIDE_CENTER"},
+        {"from": "ABOVE_AFTER_B3", "event": "new_same_level_center", "to": "INSIDE_CENTER"},
+        {"from": "BELOW_AFTER_S3", "event": "new_same_level_center", "to": "INSIDE_CENTER"},
+        {"from": "INSIDE_CENTER", "event": "nine_component_promotion", "to": "CENTER_PROMOTED"},
+        {"from": "ABOVE_NO_B3", "event": "higher_level_center_confirmed", "to": "CENTER_PROMOTED"},
+        {"from": "BELOW_NO_S3", "event": "higher_level_center_confirmed", "to": "CENTER_PROMOTED"},
+        {"from": "CENTER_PROMOTED", "event": "new_level_context_selected", "to": "INSIDE_CENTER"}
+      ]
+    },
+    "bottom_build": {
+      "source_lessons": [108],
+      "initial": "NO_BUILD",
+      "states": ["NO_BUILD", "BUILDING", "SUCCESS", "FAILED"],
+      "transitions": [
+        {"from": "NO_BUILD", "event": "B1_confirmed", "to": "BUILDING"},
+        {"from": "BUILDING", "event": "first_resulting_center_B3", "to": "SUCCESS"},
+        {"from": "BUILDING", "event": "first_resulting_center_S3", "to": "FAILED"}
+      ],
+      "terminal": ["SUCCESS", "FAILED"]
+    },
+    "bardo": {
+      "source_lessons": [88, 89, 90, 99, 101],
+      "initial": "OUTSIDE",
+      "states": ["OUTSIDE", "ACTIVE", "HEALTHY", "DANGEROUS_FOR_OLD_DIRECTION", "ENDED_BY_THIRD_POINT", "ENDED_BY_PROMOTION"],
+      "transitions": [
+        {"from": "OUTSIDE", "event": "old_movement_divergence_completed", "to": "ACTIVE"},
+        {"from": "ACTIVE", "event": "new_center_in_old_last_center_range", "to": "HEALTHY"},
+        {"from": "ACTIVE", "event": "new_center_reaches_old_second_last_or_earlier_center", "to": "DANGEROUS_FOR_OLD_DIRECTION"},
+        {"from": "HEALTHY", "event": "B3_or_S3_confirmed", "to": "ENDED_BY_THIRD_POINT"},
+        {"from": "DANGEROUS_FOR_OLD_DIRECTION", "event": "B3_or_S3_confirmed", "to": "ENDED_BY_THIRD_POINT"},
+        {"from": "ACTIVE", "event": "center_promoted", "to": "ENDED_BY_PROMOTION"}
+      ],
+      "auxiliary_events": ["BOLL_contraction_warning", "Zn_boundary_cross_warning"]
+    }
+  }
+}

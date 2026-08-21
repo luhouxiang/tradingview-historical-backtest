@@ -96,6 +96,7 @@ let savedWeights: number[] | null = null
 let resizeObserver: ResizeObserver | null = null
 let dragDrawings: DrawingObject[] | null = null
 const indicatorSeries = new Map<string, ISeriesApi<'Line'> | ISeriesApi<'Histogram'> | ISeriesApi<'Custom'>>()
+const sectorStrengthSeries = new Map<string, ISeriesApi<'Line'>>()
 const indicatorValuesByBarIndex = new Map<number, Record<string, number>>()
 const chanPrimitive = new ChanPrimitive()
 const pendingProjected = computed(() => {
@@ -105,14 +106,39 @@ const pendingProjected = computed(() => {
   return x === null || y === null ? null : { x, y }
 })
 const projectedReplaySignals = computed(() => props.replaySignals.flatMap((signal) => {
-  if (!['strategy_state', 'chart_event'].includes(signal.object_type) || !chart || !candles) return []
+  if (!['strategy_state', 'chart_event', 'risk_decision'].includes(signal.object_type) || !chart || !candles) return []
+  if (signal.event_type === 'aux_sector_strength_mean') return []
+  if (typeof signal.chart_dataset_id === 'string' && signal.chart_dataset_id !== props.dataset?.dataset_id) return []
   const timestamp = Number(signal.timestamp_utc)
   const price = Number(signal.price_i64)
   if (!Number.isFinite(timestamp) || !Number.isFinite(price) || !props.dataset) return []
   const x = chart.timeScale().timeToCoordinate(Math.floor(timestamp / 1000) as UTCTimestamp)
   const y = candles.priceToCoordinate(price / props.dataset.price.price_scale)
   const type = String(signal.event_type ?? signal.action ?? signal.state_to ?? signal.stage ?? signal.object_type)
-  return x === null || y === null ? [] : [{ x, y, type, id: signal.object_id }]
+  const label = String(signal.display_label ?? type)
+  return x === null || y === null ? [] : [{ x, y, type, label, id: signal.object_id }]
+}))
+const projectedDailyOverlapRegions = computed(() => props.replaySignals.flatMap((signal) => {
+  projectionRevision.value
+  if (signal.object_type !== 'chart_event' || signal.event_type !== 'aux_daily_30m_classification' || !chart || !candles || !props.dataset) return []
+  return [1, 2].flatMap((ordinal) => {
+    const startTimestamp = Number(signal[`center_${ordinal}_start_timestamp_utc`])
+    const endTimestamp = Number(signal[`center_${ordinal}_end_timestamp_utc`])
+    const low = Number(signal[`center_${ordinal}_low_i64`])
+    const high = Number(signal[`center_${ordinal}_high_i64`])
+    if (![startTimestamp, endTimestamp, low, high].every(Number.isFinite)) return []
+    const startX = chart!.timeScale().timeToCoordinate(Math.floor(startTimestamp / 1000) as UTCTimestamp)
+    const endX = chart!.timeScale().timeToCoordinate(Math.floor(endTimestamp / 1000) as UTCTimestamp)
+    const top = candles!.priceToCoordinate(high / props.dataset!.price.price_scale)
+    const bottom = candles!.priceToCoordinate(low / props.dataset!.price.price_scale)
+    if (startX === null || endX === null || top === null || bottom === null) return []
+    return [{
+      id: `${signal.object_id}-center-${ordinal}`, ordinal,
+      x: Math.min(startX, endX), y: Math.min(top, bottom),
+      width: Math.max(2, Math.abs(endX - startX)), height: Math.max(1, Math.abs(bottom - top)),
+      classification: String(signal.classification ?? ''),
+    }]
+  })
 }))
 const projectedSelectedSignal = computed(() => {
   projectionRevision.value
@@ -156,6 +182,17 @@ const maLegendItems = computed(() => props.indicatorSources
   }))
   .sort((left, right) => left.period - right.period))
 const macdSource = computed(() => props.indicatorSources.find((source) => source.status === 'completed' && source.definition.algorithm_id === 'macd') ?? null)
+const sectorStrengthLegendItems = computed(() => {
+  const latest = new Map<string, number>()
+  for (const signal of props.replaySignals) {
+    if (signal.object_type !== 'chart_event' || signal.event_type !== 'aux_sector_strength_mean') continue
+    if (typeof signal.chart_dataset_id === 'string' && signal.chart_dataset_id !== props.dataset?.dataset_id) continue
+    const sectorId = String(signal.sector_id ?? '')
+    const meanMilli = Number(signal.sector_strength_mean_milli)
+    if (sectorId && Number.isFinite(meanMilli)) latest.set(sectorId, meanMilli / 1000)
+  }
+  return [...latest].sort(([left], [right]) => left.localeCompare(right)).map(([sectorId, value]) => ({ sectorId, value, color: sectorStrengthColor(sectorId) }))
+})
 const chanSource = computed(() => props.strategySources.find((source) => source.visible) ?? null)
 
 function paneControlTop(index: number): string {
@@ -213,6 +250,50 @@ function chartLineStyle(value: 'solid' | 'dashed' | 'dotted'): LineStyle {
   if (value === 'dashed') return LineStyle.Dashed
   if (value === 'dotted') return LineStyle.Dotted
   return LineStyle.Solid
+}
+
+function sectorStrengthColor(sectorId: string): string {
+  const palette = ['#ff6b6b', '#4dabf7', '#ffd43b', '#69db7c', '#da77f2', '#ffa94d', '#38d9a9', '#748ffc']
+  let hash = 0
+  for (const character of sectorId) hash = (hash * 31 + character.codePointAt(0)!) >>> 0
+  return palette[hash % palette.length]!
+}
+
+function renderSectorStrength(): void {
+  if (!chart) return
+  const grouped = new Map<string, Map<number, number>>()
+  for (const signal of props.replaySignals) {
+    if (signal.object_type !== 'chart_event' || signal.event_type !== 'aux_sector_strength_mean') continue
+    if (typeof signal.chart_dataset_id === 'string' && signal.chart_dataset_id !== props.dataset?.dataset_id) continue
+    if (props.replayCursor !== null && Number(signal.known_at_bar_index) > props.replayCursor) continue
+    const sectorId = String(signal.sector_id ?? '')
+    const timestamp = Number(signal.timestamp_utc)
+    const meanMilli = Number(signal.sector_strength_mean_milli)
+    if (!sectorId || !Number.isFinite(timestamp) || !Number.isFinite(meanMilli)) continue
+    const values = grouped.get(sectorId) ?? new Map<number, number>()
+    values.set(timestamp, meanMilli / 1000)
+    grouped.set(sectorId, values)
+  }
+  for (const [sectorId, series] of sectorStrengthSeries) {
+    if (grouped.has(sectorId)) continue
+    chart.removeSeries(series)
+    sectorStrengthSeries.delete(sectorId)
+  }
+  for (const [sectorId, values] of grouped) {
+    let series = sectorStrengthSeries.get(sectorId)
+    if (!series) {
+      series = chart.addSeries(LineSeries, {
+        color: sectorStrengthColor(sectorId), lineWidth: 2, priceLineVisible: false,
+        lastValueVisible: true, title: sectorId, priceScaleId: 'sector-strength',
+        priceFormat: { type: 'price', precision: 3, minMove: 0.001 },
+      }, 1)
+      sectorStrengthSeries.set(sectorId, series)
+      series.priceScale().applyOptions({ autoScale: true, scaleMargins: { top: 0.08, bottom: 0.08 } })
+    }
+    series.setData([...values].sort(([left], [right]) => left - right).map(([timestamp, value]) => ({
+      time: Math.floor(timestamp / 1000) as UTCTimestamp, value,
+    })))
+  }
 }
 
 function applyWeights(): void {
@@ -737,6 +818,7 @@ onMounted(() => {
     resizeObserver.observe(host.value)
   }
   if (props.dataset) void openDataset(props.dataset)
+  renderSectorStrength()
 })
 
 watch(() => props.dataset, (next) => {
@@ -756,8 +838,14 @@ watch(() => props.strategySources, () => {
 
 watch(() => [props.replayCursor, props.replayObjects], () => {
   renderBars()
+  renderSectorStrength()
   const range = chart?.timeScale().getVisibleLogicalRange()
   if (range) scheduleIndicatorRange(range)
+}, { deep: true })
+
+watch(() => props.replaySignals, () => {
+  renderSectorStrength()
+  projectionRevision.value += 1
 }, { deep: true })
 
 watch(() => props.drawings, () => projectDrawings(), { deep: true })
@@ -799,9 +887,15 @@ onBeforeUnmount(() => {
     <div ref="host" class="chart-host" />
     <svg class="drawing-layer" aria-label="用户绘图图层" @pointermove="drawingPointerMove">
       <rect v-if="drawingTool !== 'cursor'" class="drawing-capture" width="100%" height="100%" @pointerdown="createDrawing" />
+      <rect
+        v-for="region in projectedDailyOverlapRegions" :key="region.id"
+        class="daily-overlap-region" :class="[`center-${region.ordinal}`, region.classification]"
+        :data-daily-center="region.ordinal" :x="region.x" :y="region.y"
+        :width="region.width" :height="region.height"
+      />
       <g v-for="signal in projectedReplaySignals" :key="signal.id" class="replay-signal" :class="signal.type">
         <path :d="`M ${signal.x} ${signal.y} l -5 9 h 10 z`" />
-        <text :x="signal.x + 7" :y="signal.y + 9">{{ signal.type }}</text>
+        <text :x="signal.x + 7" :y="signal.y + 9">{{ signal.label }}</text>
       </g>
       <g v-if="projectedSelectedSignal" class="signal-selection" :class="{ locked: signalLocked }" data-selected-signal="true">
         <line :x1="projectedSelectedSignal.startX" :y1="projectedSelectedSignal.y" :x2="projectedSelectedSignal.endX" :y2="projectedSelectedSignal.y" />
@@ -857,7 +951,7 @@ onBeforeUnmount(() => {
         :style="{ top: paneControlTop(index) }" :data-pane-id="pane.id" :data-weight="pane.weight"
       >
         <strong v-if="pane.id === 'price'">{{ dataset?.instrument.symbol ?? '主图' }}</strong>
-        <strong v-else-if="pane.id === 'macd'" class="legend-macd-title">MACD({{ macdParameters() }})</strong>
+        <strong v-else-if="pane.id === 'macd'" class="legend-macd-title">{{ sectorStrengthLegendItems.length ? 'MACD / 板块强度' : `MACD(${macdParameters()})` }}</strong>
         <strong v-else>{{ pane.id.toUpperCase() }}</strong>
         <template v-if="pane.id === 'price'">
           <span class="legend-value legend-ohlc">
@@ -877,6 +971,9 @@ onBeforeUnmount(() => {
           <span class="legend-value legend-dea">DEA {{ formatLegendValue(macdLegendValue('signal')) }}</span>
           <span class="legend-value" :style="{ color: macdLegendValue('histogram') === null ? '#787b86' : histogramColor(macdLegendValue('histogram')!) }">
             MACD {{ formatLegendValue(macdLegendValue('histogram')) }}
+          </span>
+          <span v-for="item in sectorStrengthLegendItems" :key="item.sectorId" class="legend-value" :style="{ color: item.color }">
+            {{ item.sectorId }} {{ item.value.toFixed(3) }}
           </span>
         </template>
         <span v-else-if="pane.id === 'volume'" class="legend-value legend-volume">成交量 {{ crosshairActive ? (hoveredBar?.volume ?? '--') : (latestVolume ?? '--') }}</span>

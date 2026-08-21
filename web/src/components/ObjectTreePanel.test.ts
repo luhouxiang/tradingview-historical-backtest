@@ -85,4 +85,17 @@ describe('ObjectTreePanel', () => {
     await node.get('.signal-object-lock').trigger('click')
     expect(wrapper.emitted('lockSignal')?.at(-1)).toEqual([item])
   })
+
+  it('labels auxiliary run objects as non-standard and non-trading', () => {
+    const wrapper = mount(ObjectTreePanel, { props: {
+      dataset: { time: { timezone: 'Asia/Shanghai' }, price: { price_scale: 1, price_decimals: 0 } } as never,
+      drawings: [], sources: [], strategySources: [], selectedId: null,
+      strategyRunSources: [{
+        source_type: 'StrategyRunSource', source_id: 'run-source-aux', run_id: 'run-aux',
+        definition: { algorithm_id: 'aux_ma_kiss_legacy', name: '辅助·均线“吻”旧系统（候选不交易）' },
+        status: 'completed', visible: true, objects: [], signals: [],
+      }] as never,
+    } })
+    expect(wrapper.get('.signal-branch-title').text()).toContain('辅助事件（非标准/不交易）')
+  })
 })

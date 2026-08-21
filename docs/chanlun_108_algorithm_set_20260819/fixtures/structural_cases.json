@@ -1,0 +1,312 @@
+{
+  "spec_version": "1.0.0",
+  "cases": [
+    {
+      "id": "INC-UP-001",
+      "algorithm_id": "ALG-GEO-001",
+      "category": "inclusion_up",
+      "source_lessons": [62],
+      "input": {"a": {"high": 12, "low": 6}, "b": {"high": 11, "low": 7}, "direction": "up"},
+      "expected": {"high": 12, "low": 7}
+    },
+    {
+      "id": "INC-DOWN-001",
+      "algorithm_id": "ALG-GEO-001",
+      "category": "inclusion_down",
+      "source_lessons": [62],
+      "input": {"a": {"high": 12, "low": 6}, "b": {"high": 11, "low": 7}, "direction": "down"},
+      "expected": {"high": 11, "low": 6}
+    },
+    {
+      "id": "FX-TOP-001",
+      "algorithm_id": "ALG-GEO-002",
+      "category": "fractal",
+      "source_lessons": [62],
+      "input": {"bars": [{"high": 10, "low": 4}, {"high": 13, "low": 7}, {"high": 11, "low": 5}]},
+      "expected": {"type": "top", "extreme": 13}
+    },
+    {
+      "id": "FX-BOTTOM-001",
+      "algorithm_id": "ALG-GEO-002",
+      "category": "fractal",
+      "source_lessons": [62],
+      "input": {"bars": [{"high": 11, "low": 5}, {"high": 8, "low": 2}, {"high": 10, "low": 4}]},
+      "expected": {"type": "bottom", "extreme": 2}
+    },
+    {
+      "id": "FX-NONE-MONOTONE-001",
+      "algorithm_id": "ALG-GEO-002",
+      "category": "fractal",
+      "source_lessons": [62],
+      "input": {"bars": [{"high": 8, "low": 2}, {"high": 10, "low": 4}, {"high": 12, "low": 6}]},
+      "expected": {"type": null, "extreme": null}
+    },
+    {
+      "id": "BI-UP-MIN-001",
+      "algorithm_id": "ALG-GEO-003",
+      "category": "bi_validation",
+      "source_lessons": [62, 77],
+      "input": {
+        "start": {"type": "bottom", "extreme": 2, "member_indices": [0, 1, 2]},
+        "end": {"type": "top", "extreme": 12, "member_indices": [4, 5, 6]},
+        "processed_bar_count": 7,
+        "declared_endpoint_price": 12
+      },
+      "expected": {"valid": true, "direction": "up", "reason": null}
+    },
+    {
+      "id": "BI-DOWN-MIN-001",
+      "algorithm_id": "ALG-GEO-003",
+      "category": "bi_validation",
+      "source_lessons": [62, 77],
+      "input": {
+        "start": {"type": "top", "extreme": 12, "member_indices": [0, 1, 2]},
+        "end": {"type": "bottom", "extreme": 2, "member_indices": [4, 5, 6]},
+        "processed_bar_count": 7,
+        "declared_endpoint_price": 2
+      },
+      "expected": {"valid": true, "direction": "down", "reason": null}
+    },
+    {
+      "id": "BI-SHARED-K-REJECT-001",
+      "algorithm_id": "ALG-GEO-003",
+      "category": "bi_validation",
+      "source_lessons": [62, 77],
+      "input": {
+        "start": {"type": "top", "extreme": 12, "member_indices": [0, 1, 2]},
+        "end": {"type": "bottom", "extreme": 2, "member_indices": [2, 3, 4]},
+        "processed_bar_count": 5,
+        "declared_endpoint_price": 2
+      },
+      "expected": {"valid": false, "direction": null, "reason": "endpoint_fractals_share_processed_bar"}
+    },
+    {
+      "id": "BI-NO-INDEPENDENT-K-REJECT-001",
+      "algorithm_id": "ALG-GEO-003",
+      "category": "bi_validation",
+      "source_lessons": [62, 77],
+      "input": {
+        "start": {"type": "top", "extreme": 12, "member_indices": [0, 1, 2]},
+        "end": {"type": "bottom", "extreme": 2, "member_indices": [3, 4, 5]},
+        "processed_bar_count": 6,
+        "declared_endpoint_price": 2
+      },
+      "expected": {"valid": false, "direction": null, "reason": "no_independent_processed_bar"}
+    },
+    {
+      "id": "BI-ENDPOINT-NONEXTREME-REJECT-001",
+      "algorithm_id": "ALG-GEO-003",
+      "category": "bi_validation",
+      "source_lessons": [62, 77, 78],
+      "input": {
+        "start": {"type": "bottom", "extreme": 2, "member_indices": [0, 1, 2]},
+        "end": {"type": "top", "extreme": 12, "member_indices": [4, 5, 6]},
+        "processed_bar_count": 7,
+        "declared_endpoint_price": 11
+      },
+      "expected": {"valid": false, "direction": null, "reason": "bi_endpoint_must_equal_selected_fractal_extreme"},
+      "notes": "第78课的非极值例外属于线段，不属于笔。"
+    },
+    {
+      "id": "SEG-BASE-VALID-001",
+      "algorithm_id": "ALG-GEO-004",
+      "category": "segment_base",
+      "source_lessons": [62, 77],
+      "input": {"bi": [{"low": 2, "high": 10}, {"low": 5, "high": 12}, {"low": 4, "high": 9}]},
+      "expected": {"valid_candidate": true, "overlap": {"low": 5, "high": 9}}
+    },
+    {
+      "id": "SEG-NO-OVERLAP-REJECT-001",
+      "algorithm_id": "ALG-GEO-004",
+      "category": "segment_base",
+      "source_lessons": [77],
+      "input": {"bi": [{"low": 2, "high": 4}, {"low": 5, "high": 8}, {"low": 9, "high": 12}]},
+      "expected": {"valid_candidate": false, "overlap": null}
+    },
+    {
+      "id": "SEG-EVEN-BI-REJECT-001",
+      "algorithm_id": "ALG-GEO-004",
+      "category": "segment_base",
+      "source_lessons": [77],
+      "input": {"bi": [{"low": 2, "high": 10}, {"low": 5, "high": 12}, {"low": 4, "high": 9}, {"low": 3, "high": 8}]},
+      "expected": {"valid_candidate": false, "overlap": null}
+    },
+    {
+      "id": "ZS-VALID-001",
+      "algorithm_id": "ALG-GEO-005",
+      "category": "center_build",
+      "source_lessons": [17, 20],
+      "input": {"components": [{"type": "segment", "level": "L0", "low": 5, "high": 12, "status": "confirmed"}, {"type": "segment", "level": "L0", "low": 6, "high": 11, "status": "confirmed"}, {"type": "segment", "level": "L0", "low": 4, "high": 10, "status": "confirmed"}]},
+      "expected": {"accepted": true, "ZD": 6, "ZG": 10, "point_center": false, "reason": null}
+    },
+    {
+      "id": "ZS-POINT-001",
+      "algorithm_id": "ALG-GEO-005",
+      "category": "center_build",
+      "source_lessons": [17, 20],
+      "input": {"components": [{"type": "segment", "level": "L0", "low": 5, "high": 10, "status": "confirmed"}, {"type": "segment", "level": "L0", "low": 4, "high": 12, "status": "confirmed"}, {"type": "segment", "level": "L0", "low": 10, "high": 14, "status": "confirmed"}]},
+      "expected": {"accepted": true, "ZD": 10, "ZG": 10, "point_center": true, "reason": null}
+    },
+    {
+      "id": "ZS-NO-OVERLAP-001",
+      "algorithm_id": "ALG-GEO-005",
+      "category": "center_build",
+      "source_lessons": [17, 20],
+      "input": {"components": [{"type": "segment", "level": "L0", "low": 8, "high": 10, "status": "confirmed"}, {"type": "segment", "level": "L0", "low": 4, "high": 9, "status": "confirmed"}, {"type": "segment", "level": "L0", "low": 2, "high": 7, "status": "confirmed"}]},
+      "expected": {"accepted": false, "ZD": 8, "ZG": 7, "point_center": false, "reason": "no_common_overlap"}
+    },
+    {
+      "id": "ZS-BI-COMPONENT-REJECT-001",
+      "algorithm_id": "ALG-GEO-005",
+      "category": "center_build",
+      "source_lessons": [83, 91],
+      "input": {"components": [{"type": "bi", "level": "L0", "low": 5, "high": 12, "status": "confirmed"}, {"type": "bi", "level": "L0", "low": 6, "high": 11, "status": "confirmed"}, {"type": "bi", "level": "L0", "low": 4, "high": 10, "status": "confirmed"}]},
+      "expected": {"accepted": false, "ZD": null, "ZG": null, "point_center": false, "reason": "bi_cannot_form_standard_center"}
+    },
+    {
+      "id": "ZS-MIXED-LEVEL-REJECT-001",
+      "algorithm_id": "ALG-GEO-005",
+      "category": "center_build",
+      "source_lessons": [17, 20],
+      "input": {"components": [{"type": "segment", "level": "L0", "low": 5, "high": 12, "status": "confirmed"}, {"type": "segment", "level": "L1", "low": 6, "high": 11, "status": "confirmed"}, {"type": "segment", "level": "L0", "low": 4, "high": 10, "status": "confirmed"}]},
+      "expected": {"accepted": false, "ZD": null, "ZG": null, "point_center": false, "reason": "mixed_levels"}
+    },
+    {
+      "id": "MOVE-CONSOLIDATION-001",
+      "algorithm_id": "ALG-GEO-006",
+      "category": "movement_class",
+      "source_lessons": [17],
+      "input": {"centers": [{"ZD": 6, "ZG": 10, "DD": 4, "GG": 12}]},
+      "expected": {"class": "consolidation"}
+    },
+    {
+      "id": "MOVE-UPTREND-001",
+      "algorithm_id": "ALG-GEO-006",
+      "category": "movement_class",
+      "source_lessons": [17, 20],
+      "input": {"centers": [{"ZD": 4, "ZG": 6, "DD": 3, "GG": 7}, {"ZD": 9, "ZG": 11, "DD": 8, "GG": 12}]},
+      "expected": {"class": "uptrend"}
+    },
+    {
+      "id": "MOVE-DOWNTREND-001",
+      "algorithm_id": "ALG-GEO-006",
+      "category": "movement_class",
+      "source_lessons": [17, 20],
+      "input": {"centers": [{"ZD": 9, "ZG": 11, "DD": 8, "GG": 12}, {"ZD": 4, "ZG": 6, "DD": 3, "GG": 7}]},
+      "expected": {"class": "downtrend"}
+    },
+    {
+      "id": "MOVE-OVERLAP-PROMOTE-001",
+      "algorithm_id": "ALG-GEO-006",
+      "category": "movement_class",
+      "source_lessons": [20],
+      "input": {"centers": [{"ZD": 4, "ZG": 7, "DD": 3, "GG": 10}, {"ZD": 8, "ZG": 11, "DD": 9, "GG": 12}]},
+      "expected": {"class": "higher_level_center_candidate"},
+      "notes": "核心不重叠但围绕中枢的波动区间重叠。"
+    },
+    {
+      "id": "B3-STRICTLY-ABOVE-001",
+      "algorithm_id": "ALG-SIG-004",
+      "category": "third_point",
+      "source_lessons": [20],
+      "input": {"side": "buy", "center": {"ZD": 6, "ZG": 10}, "departure_completed": true, "return_completed": true, "first_return": true, "return_low": 11, "return_high": 14},
+      "expected": {"signal": "B3", "reason": null}
+    },
+    {
+      "id": "B3-EQUALITY-001",
+      "algorithm_id": "ALG-SIG-004",
+      "category": "third_point",
+      "source_lessons": [20],
+      "input": {"side": "buy", "center": {"ZD": 6, "ZG": 10}, "departure_completed": true, "return_completed": true, "first_return": true, "return_low": 10, "return_high": 14},
+      "expected": {"signal": "B3", "reason": null}
+    },
+    {
+      "id": "B3-RETURN-INSIDE-001",
+      "algorithm_id": "ALG-SIG-004",
+      "category": "third_point",
+      "source_lessons": [20],
+      "input": {"side": "buy", "center": {"ZD": 6, "ZG": 10}, "departure_completed": true, "return_completed": true, "first_return": true, "return_low": 9, "return_high": 14},
+      "expected": {"signal": null, "reason": "return_enters_center"}
+    },
+    {
+      "id": "S3-EQUALITY-001",
+      "algorithm_id": "ALG-SIG-004",
+      "category": "third_point",
+      "source_lessons": [20],
+      "input": {"side": "sell", "center": {"ZD": 6, "ZG": 10}, "departure_completed": true, "return_completed": true, "first_return": true, "return_low": 2, "return_high": 6},
+      "expected": {"signal": "S3", "reason": null}
+    },
+    {
+      "id": "B3-NOT-FIRST-REJECT-001",
+      "algorithm_id": "ALG-SIG-004",
+      "category": "third_point",
+      "source_lessons": [20],
+      "input": {"side": "buy", "center": {"ZD": 6, "ZG": 10}, "departure_completed": true, "return_completed": true, "first_return": false, "return_low": 11, "return_high": 14},
+      "expected": {"signal": null, "reason": "not_first_return"}
+    },
+    {
+      "id": "B3-UNFINISHED-REJECT-001",
+      "algorithm_id": "ALG-SIG-004",
+      "category": "third_point",
+      "source_lessons": [20, 32],
+      "input": {"side": "buy", "center": {"ZD": 6, "ZG": 10}, "departure_completed": true, "return_completed": false, "first_return": true, "return_low": 11, "return_high": 14},
+      "expected": {"signal": null, "reason": "return_unfinished"}
+    },
+    {
+      "id": "DIV-TREND-BOTTOM-VALID-001",
+      "algorithm_id": "ALG-SIG-001",
+      "category": "trend_divergence",
+      "source_lessons": [27, 37],
+      "input": {"direction": "down", "same_level_center_count": 2, "centers_nonoverlap": true, "final_leg_new_extreme": true, "final_leg_completed": true, "force_a": 100, "force_c": 60},
+      "expected": {"divergence": true, "side": "bottom", "reason": null}
+    },
+    {
+      "id": "DIV-ONE-CENTER-REJECT-001",
+      "algorithm_id": "ALG-SIG-001",
+      "category": "trend_divergence",
+      "source_lessons": [27, 37],
+      "input": {"direction": "down", "same_level_center_count": 1, "centers_nonoverlap": true, "final_leg_new_extreme": true, "final_leg_completed": true, "force_a": 100, "force_c": 60},
+      "expected": {"divergence": false, "side": null, "reason": "fewer_than_two_centers"}
+    },
+    {
+      "id": "DIV-NO-NEW-LOW-REJECT-001",
+      "algorithm_id": "ALG-SIG-001",
+      "category": "trend_divergence",
+      "source_lessons": [37],
+      "input": {"direction": "down", "same_level_center_count": 2, "centers_nonoverlap": true, "final_leg_new_extreme": false, "final_leg_completed": true, "force_a": 100, "force_c": 60},
+      "expected": {"divergence": false, "side": null, "reason": "no_new_extreme"}
+    },
+    {
+      "id": "DIV-NOT-WEAKER-REJECT-001",
+      "algorithm_id": "ALG-SIG-001",
+      "category": "trend_divergence",
+      "source_lessons": [24, 37],
+      "input": {"direction": "up", "same_level_center_count": 2, "centers_nonoverlap": true, "final_leg_new_extreme": true, "final_leg_completed": true, "force_a": 100, "force_c": 105},
+      "expected": {"divergence": false, "side": null, "reason": "force_not_weaker"}
+    },
+    {
+      "id": "TIME-NO-LOOKAHEAD-001",
+      "algorithm_id": "ALG-RISK-001",
+      "category": "event_time",
+      "source_lessons": [32, 98, 100],
+      "input": {"endpoint_time": 100, "confirmed_at": 103, "available_at": 104, "execution_time": 105},
+      "expected": {"valid": true, "reason": null}
+    },
+    {
+      "id": "TIME-FUTURE-FUNCTION-REJECT-001",
+      "algorithm_id": "ALG-RISK-001",
+      "category": "event_time",
+      "source_lessons": [32, 98, 100],
+      "input": {"endpoint_time": 100, "confirmed_at": 103, "available_at": 104, "execution_time": 101},
+      "expected": {"valid": false, "reason": "execution_before_available"}
+    },
+    {
+      "id": "ZN-BIAS-ABOVE-001",
+      "algorithm_id": "ALG-AUX-004",
+      "category": "Zn_monitor",
+      "source_lessons": [92],
+      "input": {"center": {"A": 6, "B": 10}, "oscillation": {"low": 8, "high": 13}},
+      "expected": {"Z": 8.0, "Zn": 10.5, "bias": "strong", "boundary_cross": "B"}
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "profile": "chanlun_108_strict",
+  "price": {
+    "tick_size": 0.01,
+    "adjustment": "forward_adjusted",
+    "interval_semantics": "closed"
+  },
+  "bi": {
+    "minimum_independent_processed_bars": 1,
+    "min_basic_span_units": 6,
+    "span_measure": "endpoint_center_distance",
+    "equal_same_type_extreme_policy": "keep_earliest_until_opposite_fractal"
+  },
+  "center": {
+    "standard_component_types": ["segment", "sublevel_movement"],
+    "allow_bi_as_standard_component": false,
+    "freeze_core_after_confirmation": true,
+    "third_point_boundary": "inclusive"
+  },
+  "levels": {
+    "structural_names": ["L0", "L1", "L2"],
+    "bar_timeframes": ["1m", "5m", "30m"],
+    "timeframe_is_not_level": true
+  },
+  "force": {
+    "provider": "macd_area_proxy",
+    "macd_fast": 12,
+    "macd_slow": 26,
+    "macd_signal": 9,
+    "require_structure_before_indicator": true
+  },
+  "auxiliary": {
+    "boll_period": 20,
+    "boll_stddev": 2.0,
+    "ma_ladder": [5, 13, 21, 34, 55, 89, 144, 233],
+    "macd_zero_axis_defense_timeframe": "60m",
+    "fractal_strength_enabled": true,
+    "Zn_monitor_enabled": true
+  },
+  "execution": {
+    "market_rule": "T_plus_1",
+    "execute_no_earlier_than": "next_executable_bar_after_available_at",
+    "commission_bps": 3.0,
+    "tax_bps": 5.0,
+    "slippage_bps": 5.0,
+    "max_participation_rate": 0.05,
+    "price_limit_model": true,
+    "suspension_model": true
+  },
+  "risk": {
+    "leverage_allowed": false,
+    "max_position_weight": 0.1,
+    "max_sector_weight": 0.3,
+    "max_daily_loss_fraction": 0.02,
+    "max_strategy_drawdown_fraction": 0.15,
+    "kill_switch_on_data_revision": true
+  },
+  "research": {
+    "walk_forward": true,
+    "out_of_sample_required": true,
+    "report_by_pattern_id": true,
+    "profit_guarantee": false
+  }
+}

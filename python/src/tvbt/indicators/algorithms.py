@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import math
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -110,6 +111,32 @@ def _atr(columns: dict[str, list[float]], parameters: dict[str, Any]) -> dict[st
     return {"atr": result}
 
 
+def _boll(values: list[float], parameters: dict[str, Any]) -> dict[str, Series]:
+    period = int(parameters["period"])
+    standard_deviations = float(parameters["standard_deviations"])
+    middle: Series = [None] * len(values)
+    upper: Series = [None] * len(values)
+    lower: Series = [None] * len(values)
+    running = 0.0
+    running_squares = 0.0
+    for index, value in enumerate(values):
+        running += value
+        running_squares += value * value
+        if index >= period:
+            expired = values[index - period]
+            running -= expired
+            running_squares -= expired * expired
+        if index < period - 1:
+            continue
+        mean = running / period
+        variance = max(0.0, running_squares / period - mean * mean)
+        deviation = math.sqrt(variance) * standard_deviations
+        middle[index] = mean
+        upper[index] = mean + deviation
+        lower[index] = mean - deviation
+    return {"middle": middle, "upper": upper, "lower": lower}
+
+
 _SOURCE_PARAMETER = {
     "type": "string",
     "enum": ["open", "high", "low", "close"],
@@ -180,6 +207,37 @@ _REGISTRY: dict[str, tuple[dict[str, Any], Compute]] = {
         [{"name": "atr", "display_name": "ATR", "pane": "indicator", "series_type": "line"}],
         "period - 1",
         _atr,
+    ),
+    "boll": _definition(
+        "boll",
+        "Bollinger Bands",
+        {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "period": {"type": "integer", "minimum": 2, "maximum": 10000, "default": 20},
+                "standard_deviations": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 100,
+                    "default": 2.0,
+                },
+                "source": _SOURCE_PARAMETER,
+            },
+            "required": ["period", "standard_deviations", "source"],
+        },
+        [
+            {"name": "upper", "display_name": "BOLL Upper", "pane": "main", "series_type": "line"},
+            {
+                "name": "middle",
+                "display_name": "BOLL Middle",
+                "pane": "main",
+                "series_type": "line",
+            },
+            {"name": "lower", "display_name": "BOLL Lower", "pane": "main", "series_type": "line"},
+        ],
+        "period - 1",
+        lambda columns, parameters: _boll(columns[str(parameters["source"])], parameters),
     ),
 }
 

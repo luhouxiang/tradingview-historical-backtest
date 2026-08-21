@@ -145,6 +145,8 @@ type ChanFractal struct {
 	BarIndex              int64  `json:"bar_index" parquet:"bar_index"`
 	Time                  int64  `json:"time" parquet:"time"`
 	PriceI64              int64  `json:"price_i64" parquet:"price_i64"`
+	ZoneLowI64            int64  `json:"zone_low_i64" parquet:"zone_low_i64"`
+	ZoneHighI64           int64  `json:"zone_high_i64" parquet:"zone_high_i64"`
 	ExtremeSourceBarIndex int64  `json:"extreme_source_bar_index" parquet:"extreme_source_bar_index"`
 	FractalType           string `json:"fractal_type" parquet:"fractal_type"`
 	Confirmed             bool   `json:"confirmed" parquet:"confirmed"`
@@ -215,12 +217,24 @@ type ChanCenterMonitor struct {
 	Time                int64   `json:"time" parquet:"time"`
 	ZI64                int64   `json:"z_i64" parquet:"z_i64"`
 	ZnI64               int64   `json:"zn_i64" parquet:"zn_i64"`
+	ZTwiceI64           int64   `json:"z_twice_i64" parquet:"z_twice_i64"`
+	ZnTwiceI64          int64   `json:"zn_twice_i64" parquet:"zn_twice_i64"`
+	CoreLowI64          int64   `json:"core_low_i64" parquet:"core_low_i64"`
+	CoreHighI64         int64   `json:"core_high_i64" parquet:"core_high_i64"`
 	RangeHighI64        int64   `json:"range_high_i64" parquet:"range_high_i64"`
 	RangeLowI64         int64   `json:"range_low_i64" parquet:"range_low_i64"`
+	ComponentOrdinal    int64   `json:"component_ordinal" parquet:"component_ordinal"`
 	ComponentDirection  string  `json:"component_direction" parquet:"component_direction"`
 	RelativePosition    string  `json:"relative_position" parquet:"relative_position"`
-	Strength            string  `json:"strength" parquet:"strength"`
-	MigrationWarning    *string `json:"migration_warning" parquet:"migration_warning,optional"`
+	OscillationBias     string  `json:"oscillation_bias" parquet:"oscillation_bias"`
+	BreakoutWarning     *string `json:"breakout_warning" parquet:"breakout_warning,optional"`
+	CatalogAlgorithmID  string  `json:"catalog_algorithm_id" parquet:"catalog_algorithm_id"`
+	SemanticNamespace   string  `json:"semantic_namespace" parquet:"semantic_namespace"`
+	EvidenceLevel       string  `json:"evidence_level" parquet:"evidence_level"`
+	LevelMappingProfile string  `json:"level_mapping_profile" parquet:"level_mapping_profile"`
+	StandardSignal      bool    `json:"standard_signal" parquet:"standard_signal"`
+	ExecutionAllowed    bool    `json:"execution_allowed" parquet:"execution_allowed"`
+	ConfirmsThirdPoint  bool    `json:"confirms_third_point" parquet:"confirms_third_point"`
 	AnalysisLevel       string  `json:"analysis_level" parquet:"analysis_level"`
 	ReferenceObjectID   string  `json:"reference_object_id" parquet:"reference_object_id"`
 	Confirmed           bool    `json:"confirmed" parquet:"confirmed"`

@@ -161,9 +161,21 @@ describe('AppShell', () => {
       reference_object_id: null, macd_area_reference: null, macd_area_current: null,
       confirmed: true, confirmed_at_bar_index: 81, known_at_bar_index: 81, object_revision: 1,
     }
+    const monitor = {
+      object_id: 'monitor-3', bar_index: 70, time: 1_699_999_900_000,
+      z_i64: 2600, zn_i64: 2620, z_twice_i64: 5201, zn_twice_i64: 5241,
+      core_low_i64: 2550, core_high_i64: 2651, range_high_i64: 2670, range_low_i64: 2571,
+      component_ordinal: 3, component_direction: 'up' as const, relative_position: 'above' as const,
+      oscillation_bias: 'strong' as const, breakout_warning: 'rising_wedge_below_b' as const,
+      catalog_algorithm_id: 'ALG-AUX-004' as const, semantic_namespace: 'auxiliary' as const,
+      evidence_level: 'AUXILIARY' as const, level_mapping_profile: 'segment_center_components_v1' as const,
+      standard_signal: false as const, execution_allowed: false as const, confirms_third_point: false as const,
+      analysis_level: 'segment', reference_object_id: 'center-1', confirmed: true,
+      confirmed_at_bar_index: 71, known_at_bar_index: 71, object_revision: 1,
+    }
     api.getCalculationResults.mockResolvedValue({
-      result_kind: 'chan', objects: { fractals: [], bi: [], segments: [], zhongshu: [], segment_zhongshu: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [signal] },
-      coverage: { first_bar_index: 0, last_bar_index: 100, returned_count: 1 },
+      result_kind: 'chan', objects: { fractals: [], bi: [], segments: [], zhongshu: [], segment_zhongshu: [], movement_states: [], center_monitors: [monitor], divergences: [], trade_points: [signal] },
+      coverage: { first_bar_index: 0, last_bar_index: 100, returned_count: 2 },
     })
     const wrapper = mount(AppShell, {
       props: { health: 'ok' }, global: { stubs: { ChartGroup: ChartStub, DatasetPanel: true } },
@@ -171,6 +183,8 @@ describe('AppShell', () => {
     wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset)
     await flushPromises()
     await wrapper.findAll('.right-dock nav button')[3]?.trigger('click')
+    expect(wrapper.text()).toContain('Zn3 强')
+    expect(wrapper.text()).toContain('抬高未破 B·上升楔形预警·不确认三类点')
     const row = wrapper.get('[data-object-type="ChanSignalObject"]')
     expect(row.text()).toContain('一买')
     await row.trigger('click')

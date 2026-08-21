@@ -239,11 +239,13 @@ func TestChanCacheHitAndSemanticRangeRead(t *testing.T) {
 		t.Fatal(err)
 	}
 	confirmedAt := int64(14)
-	fractals := []ChanFractal{{ObjectID: "fractal-1", BarIndex: 10, Time: 1000, PriceI64: 110, ExtremeSourceBarIndex: 10, FractalType: "top", Confirmed: true, ConfirmedAtBarIndex: &confirmedAt, KnownAtBarIndex: 12, ObjectRevision: 1}}
+	fractals := []ChanFractal{{ObjectID: "fractal-1", BarIndex: 10, Time: 1000, PriceI64: 110, ZoneLowI64: 100, ZoneHighI64: 110, ExtremeSourceBarIndex: 10, FractalType: "top", Confirmed: true, ConfirmedAtBarIndex: &confirmedAt, KnownAtBarIndex: 12, ObjectRevision: 1}}
 	lines := []ChanLineObject{{ObjectID: "bi-1", StartBarIndex: 10, StartTime: 1000, StartPriceI64: 110, StartExtremeSourceBarIndex: 10, EndBarIndex: 20, EndTime: 2000, EndPriceI64: 90, EndExtremeSourceBarIndex: 20, Direction: "down", Confirmed: true, ConfirmedAtBarIndex: &confirmedAt, KnownAtBarIndex: 14, ObjectRevision: 2}}
-	centres := []ChanZhongshu{{ObjectID: "zhongshu-1", StartBarIndex: 18, StartTime: 1800, EndBarIndex: 30, EndTime: 3000, ZGI64: 105, ZDI64: 95, Confirmed: false, KnownAtBarIndex: 30, ObjectRevision: 1}}
+	centres := []ChanZhongshu{{ObjectID: "zhongshu-1", StartBarIndex: 18, StartTime: 1800, EndBarIndex: 30, EndTime: 3000, ZGI64: 100, ZDI64: 100, Confirmed: true, ConfirmedAtBarIndex: &confirmedAt, KnownAtBarIndex: 30, ObjectRevision: 1}}
 	signals := []ChanSignalPoint{{ObjectID: "signal-1", BarIndex: 20, Time: 2000, PriceI64: 90, SignalType: "buy_1", Confirmed: true, ConfirmedAtBarIndex: &confirmedAt, KnownAtBarIndex: 20, ObjectRevision: 1}}
-	for name, value := range map[string]any{"fractals.parquet": fractals, "bi.parquet": lines, "segments.parquet": lines, "zhongshu.parquet": centres, "segment_zhongshu.parquet": centres, "movement_states.parquet": []ChanMovementState{}, "center_monitors.parquet": []ChanCenterMonitor{}, "divergences.parquet": signals, "trade_points.parquet": signals, "events.parquet": []chanEventTestRow{}} {
+	breakoutWarning := "rising_wedge_below_b"
+	monitors := []ChanCenterMonitor{{ObjectID: "monitor-1", BarIndex: 20, Time: 2000, ZI64: 100, ZnI64: 101, ZTwiceI64: 201, ZnTwiceI64: 203, CoreLowI64: 90, CoreHighI64: 111, RangeHighI64: 113, RangeLowI64: 90, ComponentOrdinal: 3, ComponentDirection: "up", RelativePosition: "above", OscillationBias: "strong", BreakoutWarning: &breakoutWarning, CatalogAlgorithmID: "ALG-AUX-004", SemanticNamespace: "auxiliary", EvidenceLevel: "AUXILIARY", LevelMappingProfile: "segment_center_components_v1", StandardSignal: false, ExecutionAllowed: false, ConfirmsThirdPoint: false, AnalysisLevel: "segment", ReferenceObjectID: "zhongshu-1", Confirmed: true, ConfirmedAtBarIndex: &confirmedAt, KnownAtBarIndex: 20, ObjectRevision: 1}}
+	for name, value := range map[string]any{"fractals.parquet": fractals, "bi.parquet": lines, "segments.parquet": lines, "zhongshu.parquet": centres, "segment_zhongshu.parquet": centres, "movement_states.parquet": []ChanMovementState{}, "center_monitors.parquet": monitors, "divergences.parquet": signals, "trade_points.parquet": signals, "events.parquet": []chanEventTestRow{}} {
 		var err error
 		switch rows := value.(type) {
 		case []ChanFractal:
@@ -277,11 +279,25 @@ func TestChanCacheHitAndSemanticRangeRead(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.ResultKind != "chan" || result.Objects == nil || len(result.Objects.Fractals) != 0 || len(result.Objects.Bi) != 1 || len(result.Objects.Segments) != 1 || len(result.Objects.Zhongshu) != 1 || len(result.Objects.SegmentZhongshu) != 1 || len(result.Objects.Divergences) != 1 || len(result.Objects.TradePoints) != 1 || result.Coverage.ReturnedCount != 6 {
+	if result.ResultKind != "chan" || result.Objects == nil || len(result.Objects.Fractals) != 0 || len(result.Objects.Bi) != 1 || len(result.Objects.Segments) != 1 || len(result.Objects.Zhongshu) != 1 || len(result.Objects.SegmentZhongshu) != 1 || len(result.Objects.CenterMonitors) != 1 || len(result.Objects.Divergences) != 1 || len(result.Objects.TradePoints) != 1 || result.Coverage.ReturnedCount != 7 {
 		t.Fatalf("unexpected Chan range result: %#v", result)
 	}
 	if result.Objects.Bi[0].StartExtremeSourceBarIndex != 10 || result.Objects.Bi[0].EndExtremeSourceBarIndex != 20 {
 		t.Fatalf("unexpected Chan extreme source indexes: %#v", result.Objects.Bi[0])
+	}
+	if result.Objects.SegmentZhongshu[0].ZDI64 != result.Objects.SegmentZhongshu[0].ZGI64 {
+		t.Fatalf("point center boundary was not preserved: %#v", result.Objects.SegmentZhongshu[0])
+	}
+	monitor := result.Objects.CenterMonitors[0]
+	if monitor.ZTwiceI64 != 201 || monitor.ZnTwiceI64 != 203 || monitor.ComponentOrdinal != 3 || monitor.OscillationBias != "strong" || monitor.BreakoutWarning == nil || *monitor.BreakoutWarning != breakoutWarning || monitor.StandardSignal || monitor.ExecutionAllowed || monitor.ConfirmsThirdPoint {
+		t.Fatalf("Zn monitor contract was not preserved: %#v", monitor)
+	}
+	fractalResult, err := service.Results(created.Job.ID, 0, 14)
+	if err != nil || fractalResult.Objects == nil || len(fractalResult.Objects.Fractals) != 1 {
+		t.Fatalf("unexpected fractal range result: %#v %v", fractalResult, err)
+	}
+	if fractalResult.Objects.Fractals[0].ZoneLowI64 != 100 || fractalResult.Objects.Fractals[0].ZoneHighI64 != 110 {
+		t.Fatalf("fractal zone was not preserved: %#v", fractalResult.Objects.Fractals[0])
 	}
 }
 
