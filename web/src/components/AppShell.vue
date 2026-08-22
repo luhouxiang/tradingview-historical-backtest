@@ -9,6 +9,7 @@ import ChartGroup from './ChartGroup.vue'
 import ReplayPanel from './ReplayPanel.vue'
 import BacktestPanel from './BacktestPanel.vue'
 import OptimizationPanel from './OptimizationPanel.vue'
+import StrategyResearchPanel from './StrategyResearchPanel.vue'
 import KeyboardInstrumentPicker from './KeyboardInstrumentPicker.vue'
 import { ApiError, createCalculation, getCalculation, getCalculationResults, getDrawings, getLayout, getStrategySourceConfig, listAlgorithms, putDrawings, putLayout, putStrategySourceConfig } from '../api/client'
 import { DrawingHistory, LayerManager, type DrawingObject, type DrawingType } from '../drawing/model'
@@ -24,7 +25,7 @@ const rightOpen = ref(true)
 const rightWidth = ref(320)
 const bottomOpen = ref(false)
 const bottomHeight = ref(260)
-const bottomTab = ref<'replay' | 'backtest' | 'trades' | 'equity' | 'optimization' | 'tasks' | 'logs'>('replay')
+const bottomTab = ref<'replay' | 'backtest' | 'trades' | 'equity' | 'optimization' | 'research' | 'tasks' | 'logs'>('replay')
 const rightTab = ref<'datasets' | 'indicators' | 'strategies' | 'objects'>('datasets')
 const indicatorSources = ref<SeriesSource[]>([])
 const strategySources = ref<StrategySource[]>([])
@@ -154,8 +155,33 @@ async function loadSignalObjects(): Promise<void> {
         const result = await getCalculationResults(source.job_id, from, to)
         if (result.result_kind === 'chan') {
           signals.push(
+            ...result.objects.bi_states.map((state): ChanTreeObject => ({
+              object_id: state.object_id, object_type: 'bi_state',
+              bar_index: state.bar_index, time: state.time, price_i64: state.price_i64,
+              confirmed_at_bar_index: null, known_at_bar_index: state.known_at_bar_index,
+              object_revision: state.object_revision, label: state.state,
+              detail: state.trigger,
+            })),
             ...result.objects.divergences.map((signal) => treeSignal(signal, 'divergence')),
             ...result.objects.trade_points.map((signal) => treeSignal(signal, 'trade_point')),
+            ...(result.objects.level_centers ?? []).map((center): ChanTreeObject => ({
+              object_id: center.object_id, object_type: 'level_center',
+              bar_index: center.end_bar_index, time: center.end_time,
+              price_i64: Math.trunc((center.zd_i64 + center.zg_i64) / 2),
+              confirmed_at_bar_index: center.confirmed_at_bar_index,
+              known_at_bar_index: center.known_at_bar_index, object_revision: center.object_revision,
+              label: `${center.level_id} 中枢${center.status === 'candidate' ? '候选' : '提升'}`,
+              detail: center.promotion_reason === 'nine_component_extension' ? '九组件延伸升级' : '同级振幅重叠',
+            })),
+            ...(result.objects.level_movements ?? []).map((movement): ChanTreeObject => ({
+              object_id: movement.object_id, object_type: 'level_movement',
+              bar_index: movement.end_bar_index, time: movement.end_time,
+              price_i64: Math.trunc((movement.low_i64 + movement.high_i64) / 2),
+              confirmed_at_bar_index: movement.confirmed_at_bar_index,
+              known_at_bar_index: movement.known_at_bar_index, object_revision: movement.object_revision,
+              label: `${movement.level_id} ${movement.classification === 'uptrend' ? '上涨趋势' : movement.classification === 'downtrend' ? '下跌趋势' : movement.classification === 'consolidation' ? '盘整' : '升层候选'}`,
+              detail: movement.status,
+            })),
             ...result.objects.movement_states.map((state): ChanTreeObject => ({
               object_id: state.object_id, object_type: 'movement_state',
               bar_index: state.end_bar_index, time: state.end_time, price_i64: state.price_i64,
@@ -215,7 +241,11 @@ function treeSignal(signal: ChanSignalPoint, objectType: 'divergence' | 'trade_p
     time: signal.time, price_i64: signal.price_i64,
     confirmed_at_bar_index: signal.confirmed_at_bar_index,
     known_at_bar_index: signal.known_at_bar_index, object_revision: signal.object_revision,
-    label, signal,
+    label,
+    detail: signal.status === 'candidate' ? `${signal.level_id ?? ''} 等待下层转折确认`
+      : signal.status === 'invalidated' ? `候选失效：${signal.invalidation_reason ?? '结构修订'}`
+        : signal.lower_level_turn_object_id ? `${signal.level_id ?? ''} 下层转折已确认` : undefined,
+    signal,
   }
 }
 
@@ -278,8 +308,9 @@ async function installDefaultIndicators(dataset: DatasetMeta, definitions?: Algo
 
 function completeCategoryVisibility(value: StrategySource['category_visibility']): Required<StrategySource['category_visibility']> {
   return {
-    fractals: value.fractals, bi: value.bi, segments: value.segments ?? true, zhongshu: value.zhongshu,
-    segment_zhongshu: value.segment_zhongshu ?? true, movement_states: value.movement_states ?? true,
+    processed_bars: value.processed_bars ?? false, fractals: value.fractals, bi: value.bi, bi_states: value.bi_states ?? true, segments: value.segments ?? true, zhongshu: value.zhongshu,
+    segment_zhongshu: value.segment_zhongshu ?? true, level_centers: value.level_centers ?? true,
+    level_movements: value.level_movements ?? true, movement_states: value.movement_states ?? true,
     center_monitors: value.center_monitors ?? true, divergences: value.divergences ?? true, trade_points: value.trade_points ?? true,
   }
 }
@@ -317,7 +348,7 @@ async function installDefaultChan(dataset: DatasetMeta, definitions?: AlgorithmD
   const source: StrategySource = {
     source_type: 'StrategySource', source_id: spec.sourceId, definition: spec.definition,
     parameters: spec.parameters, job_id: accepted.job_id, status: accepted.status,
-    visible: true, category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true, segment_zhongshu: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
+    visible: true, category_visibility: { processed_bars: false, fractals: false, bi: true, bi_states: true, segments: true, zhongshu: true, segment_zhongshu: true, level_centers: true, level_movements: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
   }
   rememberLayoutStrategyPresentation(source)
   strategySources.value = [applyDynamicStrategyConfig(source, dataset)]
@@ -362,8 +393,12 @@ async function restoreSources(layout: WorkspaceLayout, dataset: DatasetMeta): Pr
       visible: saved.visible,
       category_visibility: {
         ...saved.category_visibility,
+        processed_bars: saved.category_visibility.processed_bars ?? false,
+        bi_states: saved.category_visibility.bi_states ?? true,
         segments: saved.category_visibility.segments ?? true,
         segment_zhongshu: saved.category_visibility.segment_zhongshu ?? true,
+        level_centers: saved.category_visibility.level_centers ?? true,
+        level_movements: saved.category_visibility.level_movements ?? true,
         movement_states: saved.category_visibility.movement_states ?? true,
         center_monitors: saved.category_visibility.center_monitors ?? true,
         divergences: saved.category_visibility.divergences ?? true,
@@ -685,12 +720,14 @@ function resizeBottom(event: PointerEvent): void {
         <button :class="{ active: bottomTab === 'trades' }" @click="bottomTab = 'trades'; bottomOpen = true">交易</button>
         <button :class="{ active: bottomTab === 'equity' }" @click="bottomTab = 'equity'; bottomOpen = true">权益</button>
         <button :class="{ active: bottomTab === 'optimization' }" @click="bottomTab = 'optimization'; bottomOpen = true">优化</button>
+        <button :class="{ active: bottomTab === 'research' }" @click="bottomTab = 'research'; bottomOpen = true; bottomHeight = Math.max(bottomHeight, 420)">策略研究</button>
         <button @click="bottomOpen = !bottomOpen">{{ bottomOpen ? '收起' : '展开' }}</button>
       </nav>
       <div v-if="bottomOpen" class="bottom-content">
         <ReplayPanel v-if="bottomTab === 'replay'" :dataset="selectedDataset" :source="replaySource" @update="updateReplay" />
         <BacktestPanel v-else-if="['backtest', 'trades', 'equity'].includes(bottomTab)" :dataset="selectedDataset" :view="bottomTab === 'trades' ? 'trades' : bottomTab === 'equity' ? 'equity' : 'backtest'" @completed="addStrategyRunSource" />
         <OptimizationPanel v-else-if="bottomTab === 'optimization'" :dataset="selectedDataset" />
+        <StrategyResearchPanel v-else-if="bottomTab === 'research'" :dataset="selectedDataset" />
       </div>
       <span v-else>{{ workspaceStatus || '底部面板已收起' }}</span>
     </footer>

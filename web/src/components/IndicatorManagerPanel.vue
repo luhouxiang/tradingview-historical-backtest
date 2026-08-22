@@ -127,7 +127,7 @@ async function submit(definition: AlgorithmDefinition, parameters: Record<string
       const source: StrategySource = {
         source_type: 'StrategySource', source_id: id, definition, parameters,
         job_id: accepted.job_id, status: accepted.status, visible: existing?.visible ?? true,
-        category_visibility: existing?.category_visibility ?? { fractals: false, bi: true, segments: true, zhongshu: true, segment_zhongshu: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
+        category_visibility: existing?.category_visibility ?? { processed_bars: false, fractals: false, bi: true, bi_states: true, segments: true, zhongshu: true, segment_zhongshu: true, level_centers: true, level_movements: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
         style: existing?.style,
       }
       emit('update:strategy-sources', existing
@@ -181,11 +181,15 @@ function applyStyle(style: IndicatorStyle): void {
     for (const output of entry.source.definition.outputs) {
       const visible = style.outputs[output.name]?.visible
       if (visible === undefined) continue
-      if (output.object_type === 'fractal') categoryVisibility.fractals = visible
+      if (output.object_type === 'processed_bar') categoryVisibility.processed_bars = visible
+      else if (output.object_type === 'fractal') categoryVisibility.fractals = visible
       else if (output.object_type === 'bi') categoryVisibility.bi = visible
+      else if (output.object_type === 'bi_state') categoryVisibility.bi_states = visible
       else if (output.object_type === 'segment') categoryVisibility.segments = visible
       else if (output.object_type === 'zhongshu') categoryVisibility.zhongshu = visible
       else if (output.object_type === 'segment_zhongshu') categoryVisibility.segment_zhongshu = visible
+      else if (output.object_type === 'level_center') categoryVisibility.level_centers = visible
+      else if (output.object_type === 'level_movement') categoryVisibility.level_movements = visible
       else if (output.object_type === 'movement_state') categoryVisibility.movement_states = visible
       else if (output.object_type === 'center_monitor') categoryVisibility.center_monitors = visible
       else if (output.object_type === 'divergence') categoryVisibility.divergences = visible

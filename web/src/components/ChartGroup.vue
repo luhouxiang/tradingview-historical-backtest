@@ -532,11 +532,15 @@ async function renderChan(fromBarIndex: number, toBarIndex: number): Promise<voi
     const source = props.strategySources.find((value) => value.status === 'completed')
     chanPrimitive.setStyle(chanStyleForRendering(source))
     const filtered: ReplayObjects = {
+      processed_bars: source?.visible && (source.category_visibility.processed_bars ?? false) ? props.replayObjects.processed_bars : [],
       fractals: source?.visible && source.category_visibility.fractals ? props.replayObjects.fractals : [],
       bi: source?.visible && source.category_visibility.bi ? props.replayObjects.bi : [],
+      bi_states: source?.visible && (source.category_visibility.bi_states ?? true) ? props.replayObjects.bi_states : [],
       segments: source?.visible && source.category_visibility.segments ? props.replayObjects.segments : [],
       zhongshu: source?.visible && source.category_visibility.zhongshu ? props.replayObjects.zhongshu : [],
       segment_zhongshu: source?.visible && source.category_visibility.segment_zhongshu ? props.replayObjects.segment_zhongshu : [],
+      level_centers: source?.visible && (source.category_visibility.level_centers ?? true) ? props.replayObjects.level_centers : [],
+      level_movements: source?.visible && (source.category_visibility.level_movements ?? true) ? props.replayObjects.level_movements : [],
       movement_states: source?.visible && (source.category_visibility.movement_states ?? true) ? props.replayObjects.movement_states : [],
       center_monitors: source?.visible && (source.category_visibility.center_monitors ?? true) ? props.replayObjects.center_monitors : [],
       divergences: source?.visible && source.category_visibility.divergences ? props.replayObjects.divergences : [],
@@ -548,15 +552,19 @@ async function renderChan(fromBarIndex: number, toBarIndex: number): Promise<voi
   }
   const sources = props.strategySources.filter((source) => source.status === 'completed' && source.visible)
   chanPrimitive.setStyle(chanStyleForRendering(sources[0]))
-  const merged: ChanCalculationResults['objects'] = { fractals: [], bi: [], segments: [], zhongshu: [], segment_zhongshu: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] }
+  const merged: ChanCalculationResults['objects'] = { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], zhongshu: [], segment_zhongshu: [], level_centers: [], level_movements: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] }
   await Promise.all(sources.map(async (source) => {
     const result = await getCalculationResults(source.job_id, fromBarIndex, toBarIndex)
     if (result.result_kind !== 'chan') return
+    if (source.category_visibility.processed_bars ?? false) merged.processed_bars.push(...result.objects.processed_bars)
     if (source.category_visibility.fractals) merged.fractals.push(...result.objects.fractals)
     if (source.category_visibility.bi) merged.bi.push(...result.objects.bi)
+    if (source.category_visibility.bi_states ?? true) merged.bi_states.push(...result.objects.bi_states)
     if (source.category_visibility.segments) merged.segments.push(...result.objects.segments)
     if (source.category_visibility.zhongshu) merged.zhongshu.push(...result.objects.zhongshu)
     if (source.category_visibility.segment_zhongshu) merged.segment_zhongshu.push(...result.objects.segment_zhongshu)
+    if (source.category_visibility.level_centers ?? true) merged.level_centers.push(...(result.objects.level_centers ?? []))
+    if (source.category_visibility.level_movements ?? true) merged.level_movements.push(...(result.objects.level_movements ?? []))
     if (source.category_visibility.movement_states ?? true) merged.movement_states.push(...result.objects.movement_states)
     if (source.category_visibility.center_monitors ?? true) merged.center_monitors.push(...result.objects.center_monitors)
     if (source.category_visibility.divergences) merged.divergences.push(...result.objects.divergences)

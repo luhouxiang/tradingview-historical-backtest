@@ -26,8 +26,12 @@
             "additionalProperties": false,
             "required": ["fractals", "bi", "segments", "zhongshu", "segment_zhongshu", "movement_states", "center_monitors", "divergences", "trade_points"],
             "properties": {
+              "processed_bars": {"type": "boolean"},
               "fractals": {"type": "boolean"},
               "bi": {"type": "boolean"},
+                "bi_states": {"type": "boolean"},
+                "level_centers": {"type": "boolean"},
+                "level_movements": {"type": "boolean"},
               "segments": {"type": "boolean"},
               "zhongshu": {"type": "boolean"},
               "segment_zhongshu": {"type": "boolean"},

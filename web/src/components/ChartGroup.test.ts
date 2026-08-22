@@ -316,11 +316,12 @@ describe('ChartGroup', () => {
   it('queries a completed StrategySource into the single Chan primitive without recalculation', async () => {
     apiMocks.getCalculationResults.mockResolvedValue({
       result_kind: 'chan', objects: {
+        processed_bars: [],
         fractals: [],
         bi: [{ object_id: 'bi-1', start_time: 1_700_000_000_000, start_price_i64: 10, end_time: 1_700_000_300_000, end_price_i64: 12, confirmed: true }],
         segments: [{ object_id: 'segment-1', start_time: 1_700_000_000_000, start_price_i64: 10, end_time: 1_700_000_300_000, end_price_i64: 12, confirmed: true }],
         zhongshu: [{ object_id: 'zs-1', start_time: 1_700_000_000_000, end_time: 1_700_000_300_000, zg_i64: 12, zd_i64: 10, confirmed: true }],
-        segment_zhongshu: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [],
+        bi_states: [], segment_zhongshu: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [],
       },
       coverage: { first_bar_index: 0, last_bar_index: 1, returned_count: 2 },
     })
@@ -345,7 +346,7 @@ describe('ChartGroup', () => {
   })
 
   it('hides future bars when replay cursor moves without creating calculations', async () => {
-    const wrapper = mount(ChartGroup, { props: { dataset: dataset(), replayCursor: 0, replayObjects: { fractals: [], bi: [], segments: [], zhongshu: [], segment_zhongshu: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] } } })
+    const wrapper = mount(ChartGroup, { props: { dataset: dataset(), replayCursor: 0, replayObjects: { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], zhongshu: [], segment_zhongshu: [], level_centers: [], level_movements: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] } } })
     await flushPromises()
     expect(chartMocks.candle.setData).toHaveBeenLastCalledWith([
       expect.objectContaining({ time: 1_700_000_000, open: 10, high: 12, low: 9, close: 11 }),
@@ -392,6 +393,10 @@ describe('ChartGroup', () => {
       },
       {
         object_type: 'chart_event', object_id: 'promote-SLD', event_type: 'promote_level_candidate',
+        timestamp_utc: 1_700_000_300_000, price_i64: 11, known_at_bar_index: 1,
+      },
+      {
+        object_type: 'chart_event', object_id: 'promoted-SLD', event_type: 'promote_level',
         timestamp_utc: 1_700_000_300_000, price_i64: 11, known_at_bar_index: 1,
       },
       {
@@ -483,6 +488,7 @@ describe('ChartGroup', () => {
     expect(wrapper.get('.replay-signal.same_level_buy').text()).toBe('same_level_buy')
     expect(wrapper.get('.replay-signal.wait_new_same_level_structure').text()).toBe('wait_new_same_level_structure')
     expect(wrapper.get('.replay-signal.promote_level_candidate').text()).toBe('promote_level_candidate')
+    expect(wrapper.get('.replay-signal.promote_level').text()).toBe('promote_level')
     expect(wrapper.get('.replay-signal.low_turn_active').text()).toBe('low_turn_active')
     expect(wrapper.get('.replay-signal.mid_third_point').text()).toBe('mid_third_point')
     expect(wrapper.get('.replay-signal.high_change_candidate').text()).toBe('high_change_candidate')

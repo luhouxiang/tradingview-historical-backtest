@@ -71,6 +71,22 @@ class ChanSignal:
     macd_area_reference: float | None
     macd_area_current: float | None
     known_at_bar_index: int
+    status: Literal["candidate", "confirmed", "invalidated"] = "confirmed"
+    invalidation_reason: str | None = None
+    level_id: str | None = "L0"
+    lower_level_turn_object_id: str | None = None
+    catalog_event: (
+        Literal[
+            "B1_candidate",
+            "B1_confirmed",
+            "B1_invalidated",
+            "S1_candidate",
+            "S1_confirmed",
+            "S1_invalidated",
+        ]
+        | None
+    ) = None
+    catalog_algorithm_id: Literal["ALG-SIG-001"] | None = None
 
 
 def _low(line: LineLike) -> int:
@@ -318,10 +334,101 @@ def chan_divergences(
     ]
 
 
+def chan_first_point_candidates(
+    segments: Sequence[LineLike],
+    centers: list[ReferenceCenter],
+    center_ids: list[str],
+    histogram: Mapping[int, float],
+    area_cache: MutableMapping[MacdAreaKey, float] | None = None,
+    *,
+    level_id: str = "L0",
+) -> list[ChanSignal]:
+    """Publish B1/S1 as soon as the fixed trend leg is complete.
+
+    Structure and force are fixed at the completed exit leg ``c``.  The point
+    remains a candidate until the following opposite segment confirms the
+    lower-level turn.  At that point this function returns the same semantic
+    point as confirmed; callers merge revisions by a stable level-and-leg ID.
+    """
+    result: list[ChanSignal] = []
+    for index in range(1, len(centers)):
+        first = centers[index - 1]
+        second = centers[index]
+        if first.exit_index is None or second.exit_index is None:
+            continue
+        if first.end_index >= second.base_index:
+            continue
+        first_dd, first_gg = _outer_range(first, segments)
+        second_dd, second_gg = _outer_range(second, segments)
+        if second_dd > first_gg:
+            direction = "up"
+        elif second_gg < first_dd:
+            direction = "down"
+        else:
+            continue
+        reference_index = first.exit_index
+        current_index = second.exit_index
+        reference = segments[reference_index]
+        current = segments[current_index]
+        if (
+            reference.direction != direction
+            or current.direction != direction
+            or second.leave_direction != direction
+        ):
+            continue
+        divergence = _divergence(
+            "trend",
+            reference,
+            current,
+            current_index,
+            center_ids[index],
+            current.known_at_bar_index,
+            histogram,
+            area_cache,
+        )
+        if divergence is None:
+            continue
+        buy_side = direction == "down"
+        turn_index = current_index + 1
+        turn = segments[turn_index] if turn_index < len(segments) else None
+        confirmed = turn is not None and turn.direction != current.direction
+        result.append(
+            ChanSignal(
+                signal_type="buy_1" if buy_side else "sell_1",
+                divergence_kind=None,
+                signal_class="standard",
+                strength=None,
+                segment_index=current_index,
+                bar_index=divergence.bar_index,
+                time=divergence.time,
+                price_i64=divergence.price_i64,
+                reference_object_id=center_ids[index],
+                macd_area_reference=None,
+                macd_area_current=None,
+                known_at_bar_index=(
+                    turn.known_at_bar_index
+                    if confirmed and turn is not None
+                    else current.known_at_bar_index
+                ),
+                status="confirmed" if confirmed else "candidate",
+                level_id=level_id,
+                lower_level_turn_object_id=(
+                    turn.object_id if confirmed and turn is not None else None
+                ),
+                catalog_event=("B1_confirmed" if buy_side else "S1_confirmed")
+                if confirmed
+                else ("B1_candidate" if buy_side else "S1_candidate"),
+                catalog_algorithm_id="ALG-SIG-001",
+            )
+        )
+    return result
+
+
 def _point_from_divergence(
     divergence_id: str, divergence: ChanSignal, signal_type: SignalType, signal_class: SignalClass
 ) -> ChanSignal:
     """把背驰端点转换成一类买卖点端点。"""
+    standard_first = signal_class == "standard" and signal_type in {"buy_1", "sell_1"}
     return ChanSignal(
         signal_type=signal_type,
         divergence_kind=None,
@@ -335,6 +442,10 @@ def _point_from_divergence(
         macd_area_reference=None,
         macd_area_current=None,
         known_at_bar_index=divergence.known_at_bar_index,
+        catalog_event=("B1_confirmed" if signal_type == "buy_1" else "S1_confirmed")
+        if standard_first
+        else None,
+        catalog_algorithm_id="ALG-SIG-001" if standard_first else None,
     )
 
 
@@ -426,6 +537,11 @@ def chan_trade_points(
             first_type = "class_buy_1" if buy_side else "class_sell_1"
             signal_class = "class_like"
         first = _point_from_divergence(divergence_id, divergence, first_type, signal_class)
+        if signal_class == "standard" and divergence.segment_index + 1 < len(segments):
+            first = replace(
+                first,
+                lower_level_turn_object_id=segments[divergence.segment_index + 1].object_id,
+            )
         result.append(first)
         origins.append(first)
 

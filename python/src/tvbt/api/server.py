@@ -16,6 +16,7 @@ from tvbt.algorithms import definitions
 from tvbt.api.jobs import Job, JobStore
 from tvbt.backtest import run_backtest
 from tvbt.calculation import calculate
+from tvbt.comparison import run_comparison
 from tvbt.logging_config import StructuredLogger, set_runtime_logger
 from tvbt.logging_proxy import logger
 from tvbt.optimization import run_study
@@ -23,7 +24,7 @@ from tvbt.replay import generate_replay
 from tvbt.storage.path_guard import PathGuard
 
 ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
-VALID_KINDS = {"calculation", "replay", "backtest", "optimization"}
+VALID_KINDS = {"calculation", "replay", "backtest", "optimization", "comparison"}
 
 
 class InternalServer(ThreadingHTTPServer):
@@ -80,6 +81,24 @@ class InternalServer(ThreadingHTTPServer):
             logger.info(
                 "optimization.finished",
                 "parameter optimization study finished",
+                {"job_id": job_id, "status": job.status, "progress": job.progress},
+            )
+
+    def run_comparison(self, job_id: str) -> None:
+        self.jobs.run(
+            job_id,
+            lambda value, event: run_comparison(
+                value,
+                self.guard,
+                event,
+                lambda progress, detail: self.jobs.progress(job_id, progress, detail),
+            ),
+        )
+        job = self.jobs.get(job_id)
+        if job is not None:
+            logger.info(
+                "comparison.finished",
+                "strategy comparison finished",
                 {"job_id": job_id, "status": job.status, "progress": job.progress},
             )
 
@@ -187,6 +206,12 @@ class InternalHandler(BaseHTTPRequestHandler):
                     args=(job_id,),
                     daemon=True,
                 ).start()
+            elif kind == "comparison":
+                threading.Thread(
+                    target=self.server.run_comparison,
+                    args=(job_id,),
+                    daemon=True,
+                ).start()
             logger.info(
                 "python.job.submitted",
                 "job accepted",
@@ -265,9 +290,7 @@ class InternalHandler(BaseHTTPRequestHandler):
             },
         )
 
-    def _log_request_started(
-        self, method: str, path: str, request_id: str, trace_id: str
-    ) -> None:
+    def _log_request_started(self, method: str, path: str, request_id: str, trace_id: str) -> None:
         logger.info(
             "python.request.started",
             "Python internal request started",

@@ -5,7 +5,7 @@ import json
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 import pyarrow.parquet as pq
 
@@ -48,6 +48,40 @@ from tvbt.chan.algorithm import definition as chan_definition
 from tvbt.chan.algorithm import run_chan
 from tvbt.risk import unified_risk_overlay_definition
 from tvbt.storage.path_guard import PathGuard
+
+
+def _run_strategy_chan(
+    payload: dict[str, Any],
+    chan_payload: dict[str, Any],
+    guard: PathGuard,
+    cancelled: threading.Event,
+    *,
+    last_bar_index: int | None,
+) -> tuple[Any, Any, Any]:
+    """Reuse one completed causal Chan runtime inside a comparison job.
+
+    The cache is an in-process implementation detail inserted by the comparison
+    runner. It never crosses JSON or enters a formal run manifest.
+    """
+    cache = payload.get("_shared_chan_cache")
+    dataset = chan_payload["dataset"]
+    key = (
+        str(dataset["dataset_id"]),
+        str(dataset["data_revision"]),
+        last_bar_index,
+    )
+    if isinstance(cache, dict) and key in cache:
+        return cast(tuple[Any, Any, Any], cache[key])
+    result = run_chan(
+        chan_payload,
+        guard,
+        cancelled,
+        last_bar_index=last_bar_index,
+        write_checkpoints=False,
+    )
+    if isinstance(cache, dict):
+        cache[key] = result
+    return result
 
 
 def _source_hash() -> str:
@@ -404,6 +438,7 @@ def same_level_decomposition_program_definition() -> dict[str, Any]:
         "same_level_decomposition_program",
         "同级别分解机械程序",
         "同级分解",
+        algorithm_version="1.1.0",
     )
     result["parameter_schema"] = {
         "type": "object",
@@ -596,7 +631,7 @@ def bottom_top_construction_definition() -> dict[str, Any]:
 
 
 def definitions() -> list[dict[str, Any]]:
-    return [
+    values = [
         definition(),
         fixed_level_centre_definition(),
         downtrend_reversal_definition(),
@@ -618,6 +653,53 @@ def definitions() -> list[dict[str, Any]]:
         ma_sector_rotation_definition(),
         unified_risk_overlay_definition(),
     ]
+    formal: dict[str, tuple[str, list[str]]] = {
+        "fixed_level_centre_decision_tree": ("centre_decision", ["ALG-STR-001"]),
+        "downtrend_reversal_only": ("trend_reversal", ["ALG-SIG-001"]),
+        "trend_divergence_reversal": ("trend_reversal", ["ALG-SIG-001"]),
+        "consolidation_divergence_centre_reversion": ("centre_reversion", ["ALG-SIG-002"]),
+        "third_buy_centre_migration_hold": ("third_point", ["ALG-STR-003"]),
+        "first_centre_B3_rotation": ("third_point", ["ALG-STR-003"]),
+        "second_buy_only": ("second_point", ["ALG-STR-002"]),
+        "third_buy_only": ("third_point", ["ALG-STR-003"]),
+        "centre_oscillation_spread": ("centre_oscillation", ["ALG-STR-004"]),
+        "same_level_decomposition_program": ("same_level_decomposition", ["ALG-STR-005"]),
+        "three_level_complete_classification": ("structure_classification", ["ALG-STR-007"]),
+        "target_level_rebound_segmented_operation": ("segmented_operation", ["ALG-STR-008"]),
+        "bottom_top_construction": ("bottom_top_construction", ["ALG-STR-009"]),
+    }
+    for value in values:
+        algorithm_id = str(value["algorithm_id"])
+        if algorithm_id in formal:
+            family, catalog_ids = formal[algorithm_id]
+            value.update(
+                comparison_eligible=True,
+                research_role="formal_strategy",
+                strategy_family=family,
+                catalog_algorithm_ids=catalog_ids,
+            )
+        elif value.get("kind") == "risk_filter":
+            value.update(
+                comparison_eligible=False,
+                research_role="risk_filter",
+                strategy_family="risk",
+                catalog_algorithm_ids=["ALG-RISK-001"],
+            )
+        elif algorithm_id.startswith("aux_"):
+            value.update(
+                comparison_eligible=False,
+                research_role="auxiliary_non_trading",
+                strategy_family="auxiliary",
+                catalog_algorithm_ids=[],
+            )
+        else:
+            value.update(
+                comparison_eligible=False,
+                research_role="example_strategy",
+                strategy_family="example",
+                catalog_algorithm_ids=[],
+            )
+    return values
 
 
 @dataclass(frozen=True)
@@ -996,8 +1078,8 @@ def _run_fixed_level_centre(
         },
         "parameters": {"checkpoint_interval": int(parameters["checkpoint_interval"])},
     }
-    runtime, _, _ = run_chan(
-        chan_payload, guard, cancelled, last_bar_index=last_bar_index, write_checkpoints=False
+    runtime, _, _ = _run_strategy_chan(
+        payload, chan_payload, guard, cancelled, last_bar_index=last_bar_index
     )
     table = pq.read_table(
         guard.resolve(str(dataset["bars_path"])),
@@ -1222,8 +1304,8 @@ def _run_trend_reversal(
         },
         "parameters": {"checkpoint_interval": int(parameters["checkpoint_interval"])},
     }
-    runtime, _, _ = run_chan(
-        chan_payload, guard, cancelled, last_bar_index=last_bar_index, write_checkpoints=False
+    runtime, _, _ = _run_strategy_chan(
+        payload, chan_payload, guard, cancelled, last_bar_index=last_bar_index
     )
     table = pq.read_table(
         guard.resolve(str(dataset["bars_path"])),
@@ -1336,7 +1418,11 @@ def _run_trend_reversal(
         for event in events_by_bar.get(bar.bar_index, []):
             point = json.loads(event.payload_json)
             signal_type = str(point.get("signal_type"))
-            if point.get("signal_class") != "standard" or signal_type not in {"buy_1", "sell_1"}:
+            if (
+                point.get("confirmed", True) is not True
+                or point.get("signal_class") != "standard"
+                or signal_type not in {"buy_1", "sell_1"}
+            ):
                 continue
             if long_only and signal_type == "sell_1" and position_side == "flat":
                 continue
@@ -1410,8 +1496,8 @@ def _run_consolidation_reversion(
         },
         "parameters": {"checkpoint_interval": int(parameters["checkpoint_interval"])},
     }
-    runtime, _, _ = run_chan(
-        chan_payload, guard, cancelled, last_bar_index=last_bar_index, write_checkpoints=False
+    runtime, _, _ = _run_strategy_chan(
+        payload, chan_payload, guard, cancelled, last_bar_index=last_bar_index
     )
     table = pq.read_table(
         guard.resolve(str(dataset["bars_path"])),
@@ -1648,8 +1734,8 @@ def _run_third_point_migration_hold(
         },
         "parameters": {"checkpoint_interval": int(parameters["checkpoint_interval"])},
     }
-    runtime, _, _ = run_chan(
-        chan_payload, guard, cancelled, last_bar_index=last_bar_index, write_checkpoints=False
+    runtime, _, _ = _run_strategy_chan(
+        payload, chan_payload, guard, cancelled, last_bar_index=last_bar_index
     )
     table = pq.read_table(
         guard.resolve(str(dataset["bars_path"])),
@@ -1792,7 +1878,7 @@ def _run_third_point_migration_hold(
             value = json.loads(event.payload_json)
             if event.object_type == "segment_zhongshu" and value.get("confirmed"):
                 new_centers.append(event)
-            elif event.object_type == "trade_point":
+            elif event.object_type == "trade_point" and value.get("confirmed", True) is True:
                 points.append((event, value))
 
         if position_side != "flat":
@@ -1911,8 +1997,8 @@ def _run_second_buy_only(
         },
         "parameters": {"checkpoint_interval": int(parameters["checkpoint_interval"])},
     }
-    runtime, _, _ = run_chan(
-        chan_payload, guard, cancelled, last_bar_index=last_bar_index, write_checkpoints=False
+    runtime, _, _ = _run_strategy_chan(
+        payload, chan_payload, guard, cancelled, last_bar_index=last_bar_index
     )
     table = pq.read_table(
         guard.resolve(str(dataset["bars_path"])),
@@ -2510,19 +2596,15 @@ def _load_chan_strategy_feed(
     dataset = payload["dataset"]
     parameters = payload["parameters"]
     chan = chan_definition()
-    runtime, _, _ = run_chan(
-        {
-            "dataset": dataset,
-            "algorithm": {
-                key: chan[key]
-                for key in ("kind", "algorithm_id", "algorithm_version", "source_hash")
-            },
-            "parameters": {"checkpoint_interval": int(parameters["checkpoint_interval"])},
+    chan_payload = {
+        "dataset": dataset,
+        "algorithm": {
+            key: chan[key] for key in ("kind", "algorithm_id", "algorithm_version", "source_hash")
         },
-        guard,
-        cancelled,
-        last_bar_index=last_bar_index,
-        write_checkpoints=False,
+        "parameters": {"checkpoint_interval": int(parameters["checkpoint_interval"])},
+    }
+    runtime, _, _ = _run_strategy_chan(
+        payload, chan_payload, guard, cancelled, last_bar_index=last_bar_index
     )
     path = guard.resolve(str(dataset["bars_path"]))
     columns = ["bar_index", "timestamp_utc", "open_i64", "high_i64", "low_i64", "close_i64"]
@@ -3754,19 +3836,20 @@ def _run_auxiliary_ma_sector_rotation(
         if last_member_bar_index is None:
             continue
         chan = chan_definition()
-        runtime, _, _ = run_chan(
-            {
-                "dataset": ref,
-                "algorithm": {
-                    key: chan[key]
-                    for key in ("kind", "algorithm_id", "algorithm_version", "source_hash")
-                },
-                "parameters": {"checkpoint_interval": config.checkpoint_interval},
+        chan_payload = {
+            "dataset": ref,
+            "algorithm": {
+                key: chan[key]
+                for key in ("kind", "algorithm_id", "algorithm_version", "source_hash")
             },
+            "parameters": {"checkpoint_interval": config.checkpoint_interval},
+        }
+        runtime, _, _ = _run_strategy_chan(
+            payload,
+            chan_payload,
             guard,
             cancelled,
             last_bar_index=last_member_bar_index,
-            write_checkpoints=False,
         )
         indexed_bars = bars_by_dataset_and_index[instrument.dataset_id]
         for event in runtime.emitter.events:
@@ -4434,20 +4517,22 @@ def _run_same_level_decomposition_program(
         guard,
         cancelled,
         last_bar_index=last_bar_index,
-        object_types={"segment", "segment_zhongshu", "divergence"},
+        object_types={"segment", "segment_zhongshu", "level_center", "divergence"},
     )
     output = _CausalStrategyOutput("SLD", "waiting_same_level_sequence")
     active_segments: dict[str, dict[str, Any]] = {}
     active_centers: dict[str, dict[str, Any]] = {}
+    active_level_centers: dict[str, dict[str, Any]] = {}
     active_divergences: dict[str, dict[str, Any]] = {}
     sequence: list[dict[str, Any]] = []
     reversed_comparisons: set[tuple[str, str]] = set()
-    promoted_center_ids: set[str] = set()
+    promotion_candidate_ids: set[str] = set()
     pending_branch: dict[str, Any] | None = None
     position_side = "flat"
     position_quantity = 0
     position_source_id: str | None = None
-    small_level_disabled = False
+    active_level_id = "L0"
+    active_promotion_id: str | None = None
 
     def segment_signature(value: dict[str, Any]) -> tuple[Any, ...]:
         return tuple(
@@ -4768,7 +4853,7 @@ def _run_same_level_decomposition_program(
         pending_branch = None
 
     def append_segment(bar: StrategyBar, object_id: str, value: dict[str, Any]) -> None:
-        if small_level_disabled or value.get("confirmed") is not True:
+        if active_level_id != "L0" or value.get("confirmed") is not True:
             return
         direction = value.get("direction")
         if direction not in {"up", "down"}:
@@ -4813,7 +4898,9 @@ def _run_same_level_decomposition_program(
         new_segments: list[tuple[str, dict[str, Any]]] = []
         new_divergence_ids: set[str] = set()
         new_centers: list[tuple[str, dict[str, Any]]] = []
+        new_level_centers: list[tuple[str, dict[str, Any]]] = []
         reset_source_ids: set[str] = set()
+        promotion_reset_ids: set[str] = set()
         for event in feed.events_by_bar.get(bar.bar_index, []):
             if event.object_type == "segment":
                 previous = active_segments.get(event.object_id)
@@ -4852,6 +4939,19 @@ def _run_same_level_decomposition_program(
                 value = json.loads(event.payload_json)
                 active_centers[event.object_id] = value
                 new_centers.append((event.object_id, value))
+            elif event.object_type == "level_center":
+                previous = active_level_centers.get(event.object_id)
+                if event.operation == "delete":
+                    active_level_centers.pop(event.object_id, None)
+                    if active_promotion_id == event.object_id:
+                        promotion_reset_ids.add(event.object_id)
+                    continue
+                value = json.loads(event.payload_json)
+                active_level_centers[event.object_id] = value
+                if active_promotion_id == event.object_id and value.get("confirmed") is not True:
+                    promotion_reset_ids.add(event.object_id)
+                elif previous is None:
+                    new_level_centers.append((event.object_id, value))
 
         if reset_source_ids:
             source_id = sorted(reset_source_ids)[0]
@@ -4863,6 +4963,18 @@ def _run_same_level_decomposition_program(
                 price_i64=bar.close_i64,
             )
 
+        if promotion_reset_ids:
+            source_id = sorted(promotion_reset_ids)[0]
+            reset_decomposition(
+                bar,
+                "CONFIRMED_HIGHER_LEVEL_CENTER_REVISED",
+                source_id,
+                anchor_bar_index=bar.bar_index,
+                price_i64=bar.close_i64,
+            )
+            active_level_id = "L0"
+            active_promotion_id = None
+
         promotion = next(
             (
                 (object_id, value)
@@ -4873,7 +4985,7 @@ def _run_same_level_decomposition_program(
                         item[0],
                     ),
                 )
-                if object_id not in promoted_center_ids
+                if object_id not in promotion_candidate_ids
                 and value.get("confirmed") is True
                 and value.get("analysis_level", "segment") == "segment"
                 and value.get("component_kind", "segment") == "segment"
@@ -4881,9 +4993,9 @@ def _run_same_level_decomposition_program(
             ),
             None,
         )
-        if promotion is not None and not small_level_disabled:
+        if promotion is not None and active_level_id == "L0":
             object_id, center = promotion
-            promoted_center_ids.add(object_id)
+            promotion_candidate_ids.add(object_id)
             anchor = int(center.get("end_bar_index", bar.bar_index))
             price = int(
                 center.get(
@@ -4895,7 +5007,7 @@ def _run_same_level_decomposition_program(
                     // 2,
                 )
             )
-            stage_id = output.transition(
+            output.transition(
                 bar,
                 "same_level_promotion_candidate",
                 "NINE_COMPONENT_HIGHER_LEVEL_CENTER_CANDIDATE",
@@ -4905,16 +5017,8 @@ def _run_same_level_decomposition_program(
                 details={
                     "component_count": int(center["component_count"]),
                     "promotion_status": "candidate",
-                    "small_level_action": "disable",
+                    "small_level_action": "wait_for_confirmed_level_center",
                 },
-            )
-            close_position(
-                bar,
-                "NINE_COMPONENT_HIGHER_LEVEL_CENTER_CANDIDATE",
-                object_id,
-                stage_id,
-                anchor_bar_index=anchor,
-                price_i64=price,
             )
             output.chart_event(
                 bar,
@@ -4923,9 +5027,84 @@ def _run_same_level_decomposition_program(
                 object_id,
                 anchor_bar_index=anchor,
                 price_i64=price,
-                details={"component_count": int(center["component_count"])},
+                details={
+                    "component_count": int(center["component_count"]),
+                    "promotion_status": "candidate",
+                    "from_level_id": "L0",
+                    "to_level_id": "L1",
+                },
             )
-            small_level_disabled = True
+
+        confirmed_promotion = next(
+            (
+                (object_id, value)
+                for object_id, value in sorted(
+                    new_level_centers,
+                    key=lambda item: (
+                        int(item[1].get("confirmed_at_bar_index") or -1),
+                        item[0],
+                    ),
+                )
+                if value.get("confirmed") is True
+                and value.get("parent_level_id") == active_level_id
+                and isinstance(value.get("promoted_from_center_id"), str)
+                and value.get("promoted_from_center_id") in active_centers
+                and int(
+                    active_centers[str(value["promoted_from_center_id"])].get("component_count", 0)
+                )
+                >= 9
+            ),
+            None,
+        )
+        if confirmed_promotion is not None:
+            object_id, center = confirmed_promotion
+            source_center_id = str(center["promoted_from_center_id"])
+            source_center = active_centers[source_center_id]
+            target_level_id = str(center.get("level_id", ""))
+            if not target_level_id.startswith("L") or target_level_id == active_level_id:
+                raise ValueError(
+                    "confirmed level promotion must advance to another structural level"
+                )
+            anchor = int(center.get("end_bar_index", bar.bar_index))
+            price = (
+                int(center.get("zd_i64", bar.close_i64)) + int(center.get("zg_i64", bar.close_i64))
+            ) // 2
+            details = {
+                "component_count": int(source_center["component_count"]),
+                "promotion_status": "confirmed",
+                "migration_status": "waiting_higher_level_sequence",
+                "from_level_id": active_level_id,
+                "to_level_id": target_level_id,
+                "promoted_from_center_id": source_center_id,
+            }
+            stage_id = output.transition(
+                bar,
+                "same_level_promoted_waiting_sequence",
+                "CONFIRMED_HIGHER_LEVEL_CENTER_PROMOTION",
+                object_id,
+                anchor_bar_index=anchor,
+                price_i64=price,
+                details=details,
+            )
+            close_position(
+                bar,
+                "CONFIRMED_HIGHER_LEVEL_CENTER_PROMOTION",
+                object_id,
+                stage_id,
+                anchor_bar_index=anchor,
+                price_i64=price,
+            )
+            output.chart_event(
+                bar,
+                "promote_level",
+                "CONFIRMED_HIGHER_LEVEL_CENTER_PROMOTION",
+                object_id,
+                anchor_bar_index=anchor,
+                price_i64=price,
+                details=details,
+            )
+            active_level_id = target_level_id
+            active_promotion_id = object_id
             sequence.clear()
             pending_branch = None
             continue
@@ -4940,7 +5119,7 @@ def _run_same_level_decomposition_program(
         ):
             append_segment(bar, object_id, value)
 
-        if small_level_disabled:
+        if active_level_id != "L0":
             continue
         for divergence_id in sorted(new_divergence_ids):
             divergence = active_divergences.get(divergence_id)

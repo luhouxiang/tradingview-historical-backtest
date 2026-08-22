@@ -87,7 +87,7 @@ function objectSide(value: ChanTreeObject): 'buy' | 'sell' | 'semantic' {
       <div v-if="!collapsedStrategies.has(source.source_id)" class="strategy-children">
         <details class="strategy-categories">
           <summary>图层分类</summary>
-          <label v-for="category in (['fractals', 'bi', 'segments', 'zhongshu', 'segment_zhongshu', 'movement_states', 'center_monitors', 'divergences', 'trade_points'] as const)" :key="category">
+          <label v-for="category in (['processed_bars', 'fractals', 'bi', 'bi_states', 'segments', 'zhongshu', 'segment_zhongshu', 'level_centers', 'level_movements', 'movement_states', 'center_monitors', 'divergences', 'trade_points'] as const)" :key="category">
             <input
               type="checkbox" :checked="source.category_visibility[category]"
               @change="emit('patchStrategy', source.source_id, { category_visibility: { ...source.category_visibility, [category]: !source.category_visibility[category] } })"

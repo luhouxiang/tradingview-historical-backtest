@@ -234,7 +234,7 @@ func (s *Service) validCache(resultRef, cacheKey string) bool {
 	}
 	files := []string{"values.parquet"}
 	if manifest.Algorithm.Kind == "chan" {
-		files = []string{"fractals.parquet", "bi.parquet", "segments.parquet", "zhongshu.parquet", "segment_zhongshu.parquet", "movement_states.parquet", "center_monitors.parquet", "divergences.parquet", "trade_points.parquet", "events.parquet"}
+		files = []string{"processed_bars.parquet", "fractals.parquet", "bi.parquet", "bi_states.parquet", "segments.parquet", "zhongshu.parquet", "segment_zhongshu.parquet", "level_centers.parquet", "level_movements.parquet", "movement_states.parquet", "center_monitors.parquet", "divergences.parquet", "trade_points.parquet", "events.parquet"}
 	} else if manifest.Algorithm.Kind != "indicator" {
 		return false
 	}

@@ -8,11 +8,15 @@ from typing import Any
 # Vue 图层和对象树；否则事件流可能写出 Go/Vue 无法消费的数据。
 OBJECT_TYPES = frozenset(
     {
+        "processed_bar",
         "fractal",
         "bi",
+        "bi_state",
         "segment",
         "zhongshu",
         "segment_zhongshu",
+        "level_center",
+        "level_movement",
         "movement_state",
         "center_monitor",
         "divergence",

@@ -412,6 +412,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/strategy-comparisons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List completed strategy comparisons */
+        get: operations["listStrategyComparisons"];
+        put?: never;
+        /** Create a deterministic batch comparison of formal strategies */
+        post: operations["createStrategyComparison"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/strategy-comparisons/{comparison_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get strategy comparison status and manifest */
+        get: operations["getStrategyComparison"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/strategy-comparisons/{comparison_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a running strategy comparison */
+        post: operations["cancelStrategyComparison"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/strategy-comparisons/{comparison_id}/results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get per-strategy batch results */
+        get: operations["getStrategyComparisonResults"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/studies": {
         parameters: {
             query?: never;
@@ -737,7 +806,7 @@ export interface components {
                 /** @enum {unknown} */
                 series_type: "line" | "histogram" | "semantic_objects";
                 /** @enum {unknown} */
-                object_type?: "fractal" | "bi" | "segment" | "zhongshu" | "segment_zhongshu" | "movement_state" | "center_monitor" | "divergence" | "trade_point" | "strategy_state" | "stage_signal" | "trade_signal" | "chart_event" | "risk_decision";
+                object_type?: "processed_bar" | "fractal" | "bi" | "bi_state" | "segment" | "zhongshu" | "segment_zhongshu" | "level_center" | "level_movement" | "movement_state" | "center_monitor" | "divergence" | "trade_point" | "strategy_state" | "stage_signal" | "trade_signal" | "chart_event" | "risk_decision";
             }[];
             warmup: {
                 /** @constant */
@@ -746,6 +815,11 @@ export interface components {
             };
             /** @constant */
             causal: true;
+            comparison_eligible?: boolean;
+            /** @enum {unknown} */
+            research_role?: "formal_strategy" | "example_strategy" | "auxiliary_non_trading" | "risk_filter";
+            strategy_family?: string;
+            catalog_algorithm_ids?: string[];
         };
         DatasetRef: {
             dataset_id: string;
@@ -786,15 +860,43 @@ export interface components {
             objects?: components["schemas"]["ChanObjects"];
         } & (unknown & unknown);
         ChanObjects: {
+            processed_bars: components["schemas"]["ChanProcessedBar"][];
             fractals: components["schemas"]["ChanFractal"][];
             bi: components["schemas"]["ChanLineObject"][];
+            bi_states: components["schemas"]["ChanBiState"][];
             segments: components["schemas"]["ChanLineObject"][];
             zhongshu: components["schemas"]["ChanZhongshu"][];
             segment_zhongshu: components["schemas"]["ChanZhongshu"][];
+            level_centers: components["schemas"]["ChanLevelCenter"][];
+            level_movements: components["schemas"]["ChanLevelMovement"][];
             movement_states: components["schemas"]["ChanMovementState"][];
             center_monitors: components["schemas"]["ChanCenterMonitor"][];
             divergences: components["schemas"]["ChanSignalPoint"][];
             trade_points: components["schemas"]["ChanSignalPoint"][];
+        };
+        ChanProcessedBar: {
+            object_id: string;
+            normalized_index: number;
+            start_bar_index: number;
+            start_time: number;
+            end_bar_index: number;
+            end_time: number;
+            open_i64: number;
+            high_i64: number;
+            low_i64: number;
+            close_i64: number;
+            high_source_bar_index: number;
+            low_source_bar_index: number;
+            /** @enum {unknown} */
+            direction: "up" | "down" | "unknown";
+            source_bar_indices: number[];
+            /** @enum {unknown} */
+            status: "forming" | "sealed";
+            sealed_at_bar_index: number | null;
+            /** @enum {unknown} */
+            catalog_event: "processed_bar" | "processed_bar_revision";
+            known_at_bar_index: number;
+            object_revision: number;
         };
         ChanFractal: {
             object_id: string;
@@ -806,6 +908,20 @@ export interface components {
             extreme_source_bar_index: number;
             /** @enum {unknown} */
             fractal_type: "top" | "bottom";
+            /** @enum {unknown} */
+            status: "candidate" | "confirmed" | "invalidated";
+            invalidation_reason: string | null;
+            /** @enum {unknown} */
+            aux_strength: "strong_reversal" | "unclassified";
+            strength_reason: string;
+            /** @constant */
+            catalog_algorithm_id: "ALG-GEO-002";
+            /** @constant */
+            strength_semantic_namespace: "auxiliary";
+            /** @constant */
+            standard_signal: false;
+            /** @constant */
+            execution_allowed: false;
             confirmed: boolean;
             confirmed_at_bar_index: number | null;
             known_at_bar_index: number;
@@ -823,8 +939,31 @@ export interface components {
             end_extreme_source_bar_index: number;
             /** @enum {unknown} */
             direction: "up" | "down";
+            /** @enum {unknown} */
+            status: "candidate" | "confirmed" | "invalidated";
+            invalidation_reason: string | null;
+            /** @enum {unknown} */
+            catalog_algorithm_id: "ALG-GEO-003" | "ALG-GEO-004";
             confirmed: boolean;
             confirmed_at_bar_index: number | null;
+            known_at_bar_index: number;
+            object_revision: number;
+        };
+        ChanBiState: {
+            object_id: string;
+            bar_index: number;
+            time: number;
+            price_i64: number;
+            /** @enum {unknown} */
+            state: "SEEK_FIRST_FRACTAL" | "UP_EXTENDING" | "TOP_FORMING" | "DOWN_EXTENDING" | "BOTTOM_FORMING";
+            /** @enum {string|null} */
+            direction: "up" | "down" | null;
+            anchor_fractal_id: string | null;
+            candidate_object_id: string | null;
+            /** @enum {unknown} */
+            trigger: "initial" | "processed_bar_update" | "first_fractal_confirmed" | "fractal_confirmed" | "candidate_started" | "candidate_revised" | "candidate_invalidated" | "bi_confirmed";
+            /** @constant */
+            catalog_algorithm_id: "ALG-GEO-003";
             known_at_bar_index: number;
             object_revision: number;
         };
@@ -865,6 +1004,65 @@ export interface components {
             direction: "up" | "down" | null;
             analysis_level: string;
             reference_object_id: string;
+            confirmed: boolean;
+            confirmed_at_bar_index: number | null;
+            known_at_bar_index: number;
+            object_revision: number;
+        };
+        ChanLevelCenter: {
+            object_id: string;
+            level_id: string;
+            parent_level_id: string;
+            start_bar_index: number;
+            start_time: number;
+            end_bar_index: number;
+            end_time: number;
+            zd_i64: number;
+            zg_i64: number;
+            dd_i64: number;
+            gg_i64: number;
+            /** @enum {unknown} */
+            component_kind: "segment" | "sublevel_movement";
+            component_object_ids: string[];
+            source_center_ids: string[];
+            /** @enum {unknown} */
+            status: "candidate" | "confirmed" | "extended" | "terminated" | "promoted" | "superseded";
+            /** @enum {unknown} */
+            promotion_reason: "nine_component_extension" | "overlapping_fluctuation_ranges";
+            promoted_from_center_id: string | null;
+            /** @enum {unknown} */
+            catalog_event: "center_candidate" | "center_confirmed" | "center_extended" | "center_promoted" | "center_terminated";
+            /** @constant */
+            catalog_algorithm_id: "ALG-GEO-005";
+            confirmed: boolean;
+            confirmed_at_bar_index: number | null;
+            known_at_bar_index: number;
+            object_revision: number;
+        };
+        ChanLevelMovement: {
+            object_id: string;
+            level_id: string;
+            start_bar_index: number;
+            start_time: number;
+            end_bar_index: number;
+            end_time: number;
+            low_i64: number;
+            high_i64: number;
+            component_center_ids: string[];
+            /** @enum {unknown} */
+            classification: "consolidation" | "uptrend" | "downtrend" | "higher_level_center_candidate";
+            /** @enum {string|null} */
+            direction: "up" | "down" | null;
+            /** @enum {unknown} */
+            status: "candidate" | "confirmed" | "reclassified" | "invalidated";
+            /** @enum {string|null} */
+            previous_classification: "consolidation" | "uptrend" | "downtrend" | "higher_level_center_candidate" | null;
+            reclassification_reason: string | null;
+            parent_center_candidate_id: string | null;
+            /** @enum {unknown} */
+            catalog_event: "movement_candidate" | "movement_confirmed" | "movement_reclassified";
+            /** @constant */
+            catalog_algorithm_id: "ALG-GEO-006";
             confirmed: boolean;
             confirmed_at_bar_index: number | null;
             known_at_bar_index: number;
@@ -928,6 +1126,15 @@ export interface components {
             reference_object_id: string | null;
             macd_area_reference: number | null;
             macd_area_current: number | null;
+            /** @enum {unknown} */
+            status: "candidate" | "confirmed" | "invalidated";
+            invalidation_reason: string | null;
+            level_id: string | null;
+            lower_level_turn_object_id: string | null;
+            /** @enum {string|null} */
+            catalog_event: "B1_candidate" | "B1_confirmed" | "B1_invalidated" | "S1_candidate" | "S1_confirmed" | "S1_invalidated" | null;
+            /** @enum {string|null} */
+            catalog_algorithm_id: "ALG-SIG-001" | null;
             confirmed: boolean;
             confirmed_at_bar_index: number | null;
             known_at_bar_index: number;
@@ -1048,6 +1255,75 @@ export interface components {
             stale_bars: number;
             data_gap_bars: number;
             event_risk_active: boolean;
+        };
+        StrategyComparisonItem: {
+            strategy: components["schemas"]["AlgorithmRef"];
+            parameters: {
+                [key: string]: unknown;
+            };
+        };
+        StrategyComparisonRequest: {
+            dataset_id: string;
+            data_revision: string;
+            strategies: components["schemas"]["StrategyComparisonItem"][];
+            risk_overlay?: components["schemas"]["RiskOverlay"];
+            range: {
+                from_bar_index: number;
+                to_bar_index: number;
+                warmup_from_bar_index: number;
+            };
+            execution: {
+                [key: string]: unknown;
+            };
+            capital: {
+                [key: string]: unknown;
+            };
+            random_seed: number;
+            /** @default 20 */
+            minimum_trade_count: number;
+            trace_id?: string;
+        };
+        StrategyComparisonAccepted: {
+            request_id: string;
+            comparison_id: string;
+            /** @constant */
+            status: "queued";
+        };
+        StrategyComparisonStatus: {
+            request_id: string;
+            comparison_id: string;
+            /** @enum {unknown} */
+            status: "queued" | "running" | "cancelling" | "completed" | "failed" | "cancelled" | "interrupted";
+            progress: number;
+            total_count: number;
+            completed_count: number;
+            failed_count: number;
+            current_algorithm_id?: string | null;
+            result_ref?: string;
+            manifest?: components["schemas"]["strategy-comparison-manifest.schema"];
+            error?: components["schemas"]["Error"];
+        };
+        StrategyComparisonResult: {
+            algorithm_id: string;
+            name: string;
+            strategy_family: string;
+            parameters: {
+                [key: string]: unknown;
+            };
+            /** @enum {unknown} */
+            status: "completed" | "failed" | "skipped";
+            run_id?: string;
+            run_signature?: string;
+            summary?: components["schemas"]["BacktestSummary"];
+            error?: {
+                code: string;
+                message: string;
+            };
+        };
+        StrategyComparisonResults: {
+            request_id: string;
+            comparison_id: string;
+            items: components["schemas"]["StrategyComparisonResult"][];
         };
         StudyRequest: {
             dataset_id: string;
@@ -1415,6 +1691,47 @@ export interface components {
                 };
             };
         };
+        range: {
+            warmup_from_bar_index: number;
+            from_bar_index: number;
+            to_bar_index: number;
+        };
+        /** StrategyComparisonManifest */
+        "strategy-comparison-manifest.schema": {
+            /** @constant */
+            schema_version: 1;
+            comparison_id: string;
+            trace_id: string;
+            dataset: {
+                dataset_id: string;
+                data_revision: components["schemas"]["sha256"];
+            };
+            range: components["schemas"]["range"];
+            execution: {
+                [key: string]: unknown;
+            };
+            capital: {
+                [key: string]: unknown;
+            };
+            risk_overlay?: {
+                [key: string]: unknown;
+            };
+            random_seed: number;
+            minimum_trade_count: number;
+            strategy_count: number;
+            completed_count: number;
+            failed_count: number;
+            /** Format: date-time */
+            created_at: string;
+            $defs: {
+                sha256: string;
+                range: {
+                    warmup_from_bar_index: number;
+                    from_bar_index: number;
+                    to_bar_index: number;
+                };
+            };
+        };
         /** @enum {unknown} */
         metric: "total_return" | "sharpe" | "max_drawdown" | "win_rate" | "trade_count" | "profit_factor" | "expectancy_i64";
         search_parameter: {
@@ -1436,11 +1753,6 @@ export interface components {
             /** @enum {unknown} */
             operator: ">=" | "<=";
             value: number;
-        };
-        range: {
-            warmup_from_bar_index: number;
-            from_bar_index: number;
-            to_bar_index: number;
         };
         /** OptimizationStudyManifest */
         "study-manifest.schema": {
@@ -1609,7 +1921,7 @@ export interface components {
                 height: number;
                 collapsed: boolean;
                 /** @enum {unknown} */
-                active_tab: "replay" | "backtest" | "trades" | "equity" | "optimization" | "tasks" | "logs";
+                active_tab: "replay" | "backtest" | "trades" | "equity" | "optimization" | "research" | "tasks" | "logs";
             };
             object_order: {
                 id: string;
@@ -1662,8 +1974,12 @@ export interface components {
                 parameters: Record<string, never>;
                 style?: components["schemas"]["indicator_style"];
                 category_visibility: {
+                    processed_bars?: boolean;
                     fractals: boolean;
                     bi: boolean;
+                    bi_states?: boolean;
+                    level_centers?: boolean;
+                    level_movements?: boolean;
                     segments?: boolean;
                     zhongshu: boolean;
                     segment_zhongshu?: boolean;
@@ -1709,8 +2025,12 @@ export interface components {
                 source_id: string;
                 visible: boolean;
                 category_visibility: {
+                    processed_bars?: boolean;
                     fractals: boolean;
                     bi: boolean;
+                    bi_states?: boolean;
+                    level_centers?: boolean;
+                    level_movements?: boolean;
                     segments: boolean;
                     zhongshu: boolean;
                     segment_zhongshu: boolean;
@@ -1879,6 +2199,7 @@ export interface components {
         JobId: string;
         ReplayId: string;
         RunId: string;
+        ComparisonId: string;
         StudyId: string;
         ProfileId: string;
         LayoutId: string;
@@ -2485,6 +2806,119 @@ export interface operations {
                         run_id: string;
                         events: components["schemas"]["CausalEvent"][];
                     };
+                };
+            };
+        };
+    };
+    listStrategyComparisons: {
+        parameters: {
+            query?: {
+                dataset_id?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Completed comparison manifests */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        request_id: string;
+                        items: components["schemas"]["strategy-comparison-manifest.schema"][];
+                    };
+                };
+            };
+        };
+    };
+    createStrategyComparison: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StrategyComparisonRequest"];
+            };
+        };
+        responses: {
+            /** @description Strategy comparison accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StrategyComparisonAccepted"];
+                };
+            };
+        };
+    };
+    getStrategyComparison: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                comparison_id: components["parameters"]["ComparisonId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Comparison status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StrategyComparisonStatus"];
+                };
+            };
+        };
+    };
+    cancelStrategyComparison: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                comparison_id: components["parameters"]["ComparisonId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cancellation requested */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getStrategyComparisonResults: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                comparison_id: components["parameters"]["ComparisonId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Per-strategy results */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StrategyComparisonResults"];
                 };
             };
         };

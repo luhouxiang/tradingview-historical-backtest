@@ -58,7 +58,7 @@ const oscillationStrategy = {
   },
 }
 const sameLevelStrategy = {
-  kind: 'strategy', algorithm_id: 'same_level_decomposition_program', algorithm_version: '1.0.0', source_hash: `sha256:${'7'.repeat(64)}`,
+  kind: 'strategy', algorithm_id: 'same_level_decomposition_program', algorithm_version: '1.1.0', source_hash: `sha256:${'7'.repeat(64)}`,
   name: '同级别分解机械程序', parameter_schema: {
     properties: {
       checkpoint_interval: { type: 'integer', minimum: 64, maximum: 100_000, default: 1024 },
@@ -623,6 +623,10 @@ describe('BacktestPanel', () => {
       event_seq: 1, known_at_bar_index: 96, object_type: 'chart_event', object_id: 'same-level-wait-96',
       operation: 'upsert', object_revision: 1,
       payload: { event_type: 'wait_new_same_level_structure', bar_index: 93, timestamp_utc: 1_700_000_900_000, price_i64: 2670, reason_code: 'AI_PLUS_3_DESTROYED_AI_DIRECTIONAL_EXTREME' },
+    }, {
+      event_seq: 2, known_at_bar_index: 99, object_type: 'chart_event', object_id: 'same-level-promote-99',
+      operation: 'upsert', object_revision: 1,
+      payload: { event_type: 'promote_level', bar_index: 97, timestamp_utc: 1_700_001_200_000, price_i64: 2680, reason_code: 'CONFIRMED_HIGHER_LEVEL_CENTER_PROMOTION', from_level_id: 'L0', to_level_id: 'L1' },
     }])
     const wrapper = mount(BacktestPanel, { props: { dataset, view: 'backtest' } })
     await flushPromises()
@@ -639,7 +643,10 @@ describe('BacktestPanel', () => {
       parameters: expect.objectContaining({ odd_direction_is_down: true, operation_quantity: 1 }),
     }))
     expect(wrapper.emitted('completed')?.[0]?.[0]).toMatchObject({
-      objects: [expect.objectContaining({ object_id: 'same-level-wait-96', label: '等待新同级结构', bar_index: 93 })],
+      objects: [
+        expect.objectContaining({ object_id: 'same-level-wait-96', label: '等待新同级结构', bar_index: 93 }),
+        expect.objectContaining({ object_id: 'same-level-promote-99', label: '确认提升操作级别', bar_index: 97 }),
+      ],
     })
   })
 

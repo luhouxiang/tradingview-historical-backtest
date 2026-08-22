@@ -20,21 +20,26 @@ type AlgorithmRef struct {
 
 type AlgorithmDefinition struct {
 	AlgorithmRef
-	Name            string           `json:"name"`
-	InputSchema     string           `json:"input_schema"`
-	ParameterSchema map[string]any   `json:"parameter_schema"`
-	Outputs         []map[string]any `json:"outputs"`
-	Warmup          map[string]any   `json:"warmup"`
-	Causal          bool             `json:"causal"`
+	Name                string           `json:"name"`
+	InputSchema         string           `json:"input_schema"`
+	ParameterSchema     map[string]any   `json:"parameter_schema"`
+	Outputs             []map[string]any `json:"outputs"`
+	Warmup              map[string]any   `json:"warmup"`
+	Causal              bool             `json:"causal"`
+	ComparisonEligible  bool             `json:"comparison_eligible,omitempty"`
+	ResearchRole        string           `json:"research_role,omitempty"`
+	StrategyFamily      string           `json:"strategy_family,omitempty"`
+	CatalogAlgorithmIDs []string         `json:"catalog_algorithm_ids,omitempty"`
 }
 
 type JobStatus struct {
-	RequestID string         `json:"request_id"`
-	JobID     string         `json:"job_id"`
-	Status    string         `json:"status"`
-	Progress  float64        `json:"progress"`
-	ResultRef string         `json:"result_ref,omitempty"`
-	Error     map[string]any `json:"error,omitempty"`
+	RequestID      string         `json:"request_id"`
+	JobID          string         `json:"job_id"`
+	Status         string         `json:"status"`
+	Progress       float64        `json:"progress"`
+	ResultRef      string         `json:"result_ref,omitempty"`
+	Error          map[string]any `json:"error,omitempty"`
+	ProgressDetail map[string]any `json:"progress_detail,omitempty"`
 }
 
 type RemoteError struct {

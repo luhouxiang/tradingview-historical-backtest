@@ -525,6 +525,87 @@ paths:
                     type: array
                     items: {$ref: "#/components/schemas/CausalEvent"}
 
+  /api/v1/strategy-comparisons:
+    post:
+      tags: [StrategyResearch]
+      operationId: createStrategyComparison
+      summary: Create a deterministic batch comparison of formal strategies
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StrategyComparisonRequest"
+      responses:
+        "202":
+          description: Strategy comparison accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StrategyComparisonAccepted"
+    get:
+      tags: [StrategyResearch]
+      operationId: listStrategyComparisons
+      summary: List completed strategy comparisons
+      parameters:
+        - in: query
+          name: dataset_id
+          schema: {type: string}
+      responses:
+        "200":
+          description: Completed comparison manifests
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [request_id, items]
+                properties:
+                  request_id: {type: string}
+                  items:
+                    type: array
+                    items: {$ref: "./schemas/strategy-comparison-manifest.schema.json"}
+
+  /api/v1/strategy-comparisons/{comparison_id}:
+    get:
+      tags: [StrategyResearch]
+      operationId: getStrategyComparison
+      summary: Get strategy comparison status and manifest
+      parameters:
+        - $ref: "#/components/parameters/ComparisonId"
+      responses:
+        "200":
+          description: Comparison status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StrategyComparisonStatus"
+
+  /api/v1/strategy-comparisons/{comparison_id}/cancel:
+    post:
+      tags: [StrategyResearch]
+      operationId: cancelStrategyComparison
+      summary: Cancel a running strategy comparison
+      parameters:
+        - $ref: "#/components/parameters/ComparisonId"
+      responses:
+        "202":
+          description: Cancellation requested
+
+  /api/v1/strategy-comparisons/{comparison_id}/results:
+    get:
+      tags: [StrategyResearch]
+      operationId: getStrategyComparisonResults
+      summary: Get per-strategy batch results
+      parameters:
+        - $ref: "#/components/parameters/ComparisonId"
+      responses:
+        "200":
+          description: Per-strategy results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StrategyComparisonResults"
+
   /api/v1/studies:
     post:
       tags: [Optimization]
@@ -858,6 +939,12 @@ components:
       required: true
       schema:
         type: string
+    ComparisonId:
+      name: comparison_id
+      in: path
+      required: true
+      schema:
+        type: string
     StudyId:
       name: study_id
       in: path
@@ -1126,7 +1213,7 @@ components:
                   display_name: {type: string, minLength: 1}
                   pane: {enum: [main, indicator]}
                   series_type: {enum: [line, histogram, semantic_objects]}
-                  object_type: {enum: [fractal, bi, segment, zhongshu, segment_zhongshu, movement_state, center_monitor, divergence, trade_point, strategy_state, stage_signal, trade_signal, chart_event, risk_decision]}
+                  object_type: {enum: [processed_bar, fractal, bi, bi_state, segment, zhongshu, segment_zhongshu, level_center, level_movement, movement_state, center_monitor, divergence, trade_point, strategy_state, stage_signal, trade_signal, chart_event, risk_decision]}
             warmup:
               type: object
               additionalProperties: false
@@ -1136,6 +1223,16 @@ components:
                 expression: {type: string, minLength: 1}
             causal:
               const: true
+            comparison_eligible:
+              type: boolean
+            research_role:
+              enum: [formal_strategy, example_strategy, auxiliary_non_trading, risk_filter]
+            strategy_family:
+              type: string
+            catalog_algorithm_ids:
+              type: array
+              uniqueItems: true
+              items: {type: string, pattern: "^ALG-[A-Z]+-[0-9]{3}$"}
 
     DatasetRef:
       type: object
@@ -1236,14 +1333,20 @@ components:
     ChanObjects:
       type: object
       additionalProperties: false
-      required: [fractals, bi, segments, zhongshu, segment_zhongshu, movement_states, center_monitors, divergences, trade_points]
+      required: [processed_bars, fractals, bi, bi_states, segments, zhongshu, segment_zhongshu, level_centers, level_movements, movement_states, center_monitors, divergences, trade_points]
       properties:
+        processed_bars:
+          type: array
+          items: {$ref: "#/components/schemas/ChanProcessedBar"}
         fractals:
           type: array
           items: {$ref: "#/components/schemas/ChanFractal"}
         bi:
           type: array
           items: {$ref: "#/components/schemas/ChanLineObject"}
+        bi_states:
+          type: array
+          items: {$ref: "#/components/schemas/ChanBiState"}
         segments:
           type: array
           items: {$ref: "#/components/schemas/ChanLineObject"}
@@ -1253,6 +1356,12 @@ components:
         segment_zhongshu:
           type: array
           items: {$ref: "#/components/schemas/ChanZhongshu"}
+        level_centers:
+          type: array
+          items: {$ref: "#/components/schemas/ChanLevelCenter"}
+        level_movements:
+          type: array
+          items: {$ref: "#/components/schemas/ChanLevelMovement"}
         movement_states:
           type: array
           items: {$ref: "#/components/schemas/ChanMovementState"}
@@ -1266,6 +1375,34 @@ components:
           type: array
           items: {$ref: "#/components/schemas/ChanSignalPoint"}
 
+    ChanProcessedBar:
+      type: object
+      additionalProperties: false
+      required: [object_id, normalized_index, start_bar_index, start_time, end_bar_index, end_time, open_i64, high_i64, low_i64, close_i64, high_source_bar_index, low_source_bar_index, direction, source_bar_indices, status, sealed_at_bar_index, catalog_event, known_at_bar_index, object_revision]
+      properties:
+        object_id: {type: string, minLength: 1}
+        normalized_index: {type: integer, minimum: 0}
+        start_bar_index: {type: integer, minimum: 0}
+        start_time: {type: integer}
+        end_bar_index: {type: integer, minimum: 0}
+        end_time: {type: integer}
+        open_i64: {type: integer}
+        high_i64: {type: integer}
+        low_i64: {type: integer}
+        close_i64: {type: integer}
+        high_source_bar_index: {type: integer, minimum: 0}
+        low_source_bar_index: {type: integer, minimum: 0}
+        direction: {enum: [up, down, unknown]}
+        source_bar_indices:
+          type: array
+          minItems: 1
+          items: {type: integer, minimum: 0}
+        status: {enum: [forming, sealed]}
+        sealed_at_bar_index: {type: [integer, "null"], minimum: 0}
+        catalog_event: {enum: [processed_bar, processed_bar_revision]}
+        known_at_bar_index: {type: integer, minimum: 0}
+        object_revision: {type: integer, minimum: 1}
+
     ChanFractal:
       type: object
       additionalProperties: false
@@ -1278,6 +1415,14 @@ components:
         - zone_high_i64
         - extreme_source_bar_index
         - fractal_type
+        - status
+        - invalidation_reason
+        - aux_strength
+        - strength_reason
+        - catalog_algorithm_id
+        - strength_semantic_namespace
+        - standard_signal
+        - execution_allowed
         - confirmed
         - confirmed_at_bar_index
         - known_at_bar_index
@@ -1291,6 +1436,14 @@ components:
         zone_high_i64: {type: integer}
         extreme_source_bar_index: {type: integer, minimum: 0}
         fractal_type: {enum: [top, bottom]}
+        status: {enum: [candidate, confirmed, invalidated]}
+        invalidation_reason: {type: [string, "null"]}
+        aux_strength: {enum: [strong_reversal, unclassified]}
+        strength_reason: {type: string, minLength: 1}
+        catalog_algorithm_id: {const: ALG-GEO-002}
+        strength_semantic_namespace: {const: auxiliary}
+        standard_signal: {const: false}
+        execution_allowed: {const: false}
         confirmed: {type: boolean}
         confirmed_at_bar_index: {type: [integer, "null"], minimum: 0}
         known_at_bar_index: {type: integer, minimum: 0}
@@ -1310,6 +1463,9 @@ components:
         - end_price_i64
         - end_extreme_source_bar_index
         - direction
+        - status
+        - invalidation_reason
+        - catalog_algorithm_id
         - confirmed
         - confirmed_at_bar_index
         - known_at_bar_index
@@ -1325,8 +1481,29 @@ components:
         end_price_i64: {type: integer}
         end_extreme_source_bar_index: {type: integer, minimum: 0}
         direction: {enum: [up, down]}
+        status: {enum: [candidate, confirmed, invalidated]}
+        invalidation_reason: {type: [string, "null"]}
+        catalog_algorithm_id: {enum: [ALG-GEO-003, ALG-GEO-004]}
         confirmed: {type: boolean}
         confirmed_at_bar_index: {type: [integer, "null"], minimum: 0}
+        known_at_bar_index: {type: integer, minimum: 0}
+        object_revision: {type: integer, minimum: 1}
+
+    ChanBiState:
+      type: object
+      additionalProperties: false
+      required: [object_id, bar_index, time, price_i64, state, direction, anchor_fractal_id, candidate_object_id, trigger, catalog_algorithm_id, known_at_bar_index, object_revision]
+      properties:
+        object_id: {type: string, minLength: 1}
+        bar_index: {type: integer, minimum: 0}
+        time: {type: integer}
+        price_i64: {type: integer}
+        state: {enum: [SEEK_FIRST_FRACTAL, UP_EXTENDING, TOP_FORMING, DOWN_EXTENDING, BOTTOM_FORMING]}
+        direction: {type: [string, "null"], enum: [up, down, null]}
+        anchor_fractal_id: {type: [string, "null"]}
+        candidate_object_id: {type: [string, "null"]}
+        trigger: {enum: [initial, processed_bar_update, first_fractal_confirmed, fractal_confirmed, candidate_started, candidate_revised, candidate_invalidated, bi_confirmed]}
+        catalog_algorithm_id: {const: ALG-GEO-003}
         known_at_bar_index: {type: integer, minimum: 0}
         object_revision: {type: integer, minimum: 1}
 
@@ -1375,6 +1552,71 @@ components:
         known_at_bar_index: {type: integer, minimum: 0}
         object_revision: {type: integer, minimum: 1}
 
+    ChanLevelCenter:
+      type: object
+      additionalProperties: false
+      required: [object_id, level_id, parent_level_id, start_bar_index, start_time, end_bar_index, end_time, zd_i64, zg_i64, dd_i64, gg_i64, component_kind, component_object_ids, source_center_ids, status, promotion_reason, promoted_from_center_id, catalog_event, catalog_algorithm_id, confirmed, confirmed_at_bar_index, known_at_bar_index, object_revision]
+      properties:
+        object_id: {type: string, minLength: 1}
+        level_id: {type: string, pattern: "^L[1-9][0-9]*$"}
+        parent_level_id: {type: string, pattern: "^L[0-9]+$"}
+        start_bar_index: {type: integer, minimum: 0}
+        start_time: {type: integer}
+        end_bar_index: {type: integer, minimum: 0}
+        end_time: {type: integer}
+        zd_i64: {type: integer}
+        zg_i64: {type: integer}
+        dd_i64: {type: integer}
+        gg_i64: {type: integer}
+        component_kind: {enum: [segment, sublevel_movement]}
+        component_object_ids:
+          type: array
+          minItems: 1
+          items: {type: string, minLength: 1}
+        source_center_ids:
+          type: array
+          minItems: 1
+          items: {type: string, minLength: 1}
+        status: {enum: [candidate, confirmed, extended, terminated, promoted, superseded]}
+        promotion_reason: {enum: [nine_component_extension, overlapping_fluctuation_ranges]}
+        promoted_from_center_id: {type: [string, "null"]}
+        catalog_event: {enum: [center_candidate, center_confirmed, center_extended, center_promoted, center_terminated]}
+        catalog_algorithm_id: {const: ALG-GEO-005}
+        confirmed: {type: boolean}
+        confirmed_at_bar_index: {type: [integer, "null"], minimum: 0}
+        known_at_bar_index: {type: integer, minimum: 0}
+        object_revision: {type: integer, minimum: 1}
+
+    ChanLevelMovement:
+      type: object
+      additionalProperties: false
+      required: [object_id, level_id, start_bar_index, start_time, end_bar_index, end_time, low_i64, high_i64, component_center_ids, classification, direction, status, previous_classification, reclassification_reason, parent_center_candidate_id, catalog_event, catalog_algorithm_id, confirmed, confirmed_at_bar_index, known_at_bar_index, object_revision]
+      properties:
+        object_id: {type: string, minLength: 1}
+        level_id: {type: string, pattern: "^L[0-9]+$"}
+        start_bar_index: {type: integer, minimum: 0}
+        start_time: {type: integer}
+        end_bar_index: {type: integer, minimum: 0}
+        end_time: {type: integer}
+        low_i64: {type: integer}
+        high_i64: {type: integer}
+        component_center_ids:
+          type: array
+          minItems: 1
+          items: {type: string, minLength: 1}
+        classification: {enum: [consolidation, uptrend, downtrend, higher_level_center_candidate]}
+        direction: {type: [string, "null"], enum: [up, down, null]}
+        status: {enum: [candidate, confirmed, reclassified, invalidated]}
+        previous_classification: {type: [string, "null"], enum: [consolidation, uptrend, downtrend, higher_level_center_candidate, null]}
+        reclassification_reason: {type: [string, "null"]}
+        parent_center_candidate_id: {type: [string, "null"]}
+        catalog_event: {enum: [movement_candidate, movement_confirmed, movement_reclassified]}
+        catalog_algorithm_id: {const: ALG-GEO-006}
+        confirmed: {type: boolean}
+        confirmed_at_bar_index: {type: [integer, "null"], minimum: 0}
+        known_at_bar_index: {type: integer, minimum: 0}
+        object_revision: {type: integer, minimum: 1}
+
     ChanCenterMonitor:
       type: object
       additionalProperties: false
@@ -1415,7 +1657,7 @@ components:
     ChanSignalPoint:
       type: object
       additionalProperties: false
-      required: [object_id, bar_index, time, price_i64, signal_type, divergence_kind, signal_class, strength, reference_object_id, macd_area_reference, macd_area_current, confirmed, confirmed_at_bar_index, known_at_bar_index, object_revision]
+      required: [object_id, bar_index, time, price_i64, signal_type, divergence_kind, signal_class, strength, reference_object_id, macd_area_reference, macd_area_current, status, invalidation_reason, level_id, lower_level_turn_object_id, catalog_event, catalog_algorithm_id, confirmed, confirmed_at_bar_index, known_at_bar_index, object_revision]
       properties:
         object_id: {type: string, minLength: 1}
         bar_index: {type: integer, minimum: 0}
@@ -1428,6 +1670,12 @@ components:
         reference_object_id: {type: [string, "null"]}
         macd_area_reference: {type: [number, "null"]}
         macd_area_current: {type: [number, "null"]}
+        status: {enum: [candidate, confirmed, invalidated]}
+        invalidation_reason: {type: [string, "null"]}
+        level_id: {type: [string, "null"], pattern: "^L[0-9]+$"}
+        lower_level_turn_object_id: {type: [string, "null"]}
+        catalog_event: {type: [string, "null"], enum: [B1_candidate, B1_confirmed, B1_invalidated, S1_candidate, S1_confirmed, S1_invalidated, null]}
+        catalog_algorithm_id: {type: [string, "null"], enum: [ALG-SIG-001, null]}
         confirmed: {type: boolean}
         confirmed_at_bar_index: {type: [integer, "null"], minimum: 0}
         known_at_bar_index: {type: integer, minimum: 0}
@@ -1690,6 +1938,105 @@ components:
         stale_bars: {type: integer, minimum: 0}
         data_gap_bars: {type: integer, minimum: 0}
         event_risk_active: {type: boolean}
+
+    StrategyComparisonItem:
+      type: object
+      additionalProperties: false
+      required: [strategy, parameters]
+      properties:
+        strategy: {$ref: "#/components/schemas/AlgorithmRef"}
+        parameters:
+          type: object
+          additionalProperties: true
+
+    StrategyComparisonRequest:
+      type: object
+      additionalProperties: false
+      required: [dataset_id, data_revision, strategies, range, execution, capital, random_seed, minimum_trade_count]
+      properties:
+        dataset_id: {type: string, minLength: 1}
+        data_revision: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+        strategies:
+          type: array
+          minItems: 1
+          maxItems: 32
+          items: {$ref: "#/components/schemas/StrategyComparisonItem"}
+        risk_overlay: {$ref: "#/components/schemas/RiskOverlay"}
+        range:
+          type: object
+          additionalProperties: false
+          required: [from_bar_index, to_bar_index, warmup_from_bar_index]
+          properties:
+            from_bar_index: {type: integer, minimum: 0}
+            to_bar_index: {type: integer, minimum: 0}
+            warmup_from_bar_index: {type: integer, minimum: 0}
+        execution:
+          type: object
+          additionalProperties: true
+        capital:
+          type: object
+          additionalProperties: true
+        random_seed: {type: integer}
+        minimum_trade_count: {type: integer, minimum: 1, maximum: 100000, default: 20}
+        trace_id: {type: string}
+
+    StrategyComparisonAccepted:
+      type: object
+      additionalProperties: false
+      required: [request_id, comparison_id, status]
+      properties:
+        request_id: {type: string}
+        comparison_id: {type: string}
+        status: {const: queued}
+
+    StrategyComparisonStatus:
+      type: object
+      additionalProperties: false
+      required: [request_id, comparison_id, status, progress, total_count, completed_count, failed_count]
+      properties:
+        request_id: {type: string}
+        comparison_id: {type: string}
+        status: {enum: [queued, running, cancelling, completed, failed, cancelled, interrupted]}
+        progress: {type: number, minimum: 0, maximum: 1}
+        total_count: {type: integer, minimum: 0}
+        completed_count: {type: integer, minimum: 0}
+        failed_count: {type: integer, minimum: 0}
+        current_algorithm_id: {type: [string, "null"]}
+        result_ref: {type: string}
+        manifest: {$ref: "./schemas/strategy-comparison-manifest.schema.json"}
+        error: {$ref: "#/components/schemas/Error"}
+
+    StrategyComparisonResult:
+      type: object
+      additionalProperties: false
+      required: [algorithm_id, name, strategy_family, parameters, status]
+      properties:
+        algorithm_id: {type: string}
+        name: {type: string}
+        strategy_family: {type: string}
+        parameters: {type: object, additionalProperties: true}
+        status: {enum: [completed, failed, skipped]}
+        run_id: {type: string}
+        run_signature: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+        summary: {$ref: "#/components/schemas/BacktestSummary"}
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message]
+          properties:
+            code: {type: string}
+            message: {type: string}
+
+    StrategyComparisonResults:
+      type: object
+      additionalProperties: false
+      required: [request_id, comparison_id, items]
+      properties:
+        request_id: {type: string}
+        comparison_id: {type: string}
+        items:
+          type: array
+          items: {$ref: "#/components/schemas/StrategyComparisonResult"}
 
     StudyRequest:
       type: object

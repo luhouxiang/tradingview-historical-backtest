@@ -12,6 +12,12 @@ describe('ReplayEventIndex', () => {
       { event_seq: 5, known_at_bar_index: 10, object_type: 'segment_zhongshu', object_id: 'sz-1', operation: 'upsert', object_revision: 1, payload: { object_id: 'sz-1', start_bar_index: 2 } },
       { event_seq: 6, known_at_bar_index: 11, object_type: 'divergence', object_id: 'd-1', operation: 'upsert', object_revision: 1, payload: { object_id: 'd-1', bar_index: 9 } },
       { event_seq: 7, known_at_bar_index: 12, object_type: 'trade_point', object_id: 'p-1', operation: 'upsert', object_revision: 1, payload: { object_id: 'p-1', bar_index: 10 } },
+      { event_seq: 8, known_at_bar_index: 12, object_type: 'processed_bar', object_id: 'pb-1', operation: 'upsert', object_revision: 2, payload: { object_id: 'pb-1', normalized_index: 0 } },
+      { event_seq: 9, known_at_bar_index: 12, object_type: 'bi_state', object_id: 'bi-state-current', operation: 'upsert', object_revision: 3, payload: { object_id: 'bi-state-current', bar_index: 12, state: 'TOP_FORMING' } },
+      { event_seq: 10, known_at_bar_index: 12, object_type: 'level_center', object_id: 'lc-1', operation: 'upsert', object_revision: 1, payload: { object_id: 'lc-1', level_id: 'L1', start_bar_index: 2 } },
+      { event_seq: 11, known_at_bar_index: 12, object_type: 'level_movement', object_id: 'lm-1', operation: 'upsert', object_revision: 1, payload: { object_id: 'lm-1', level_id: 'L0', start_bar_index: 2 } },
+      { event_seq: 12, known_at_bar_index: 13, object_type: 'trade_point', object_id: 'first-1', operation: 'upsert', object_revision: 1, payload: { object_id: 'first-1', bar_index: 11, status: 'candidate', signal_type: 'buy_1' } },
+      { event_seq: 13, known_at_bar_index: 15, object_type: 'trade_point', object_id: 'first-1', operation: 'upsert', object_revision: 2, payload: { object_id: 'first-1', bar_index: 11, status: 'confirmed', signal_type: 'buy_1' } },
     ]
     const index = new ReplayEventIndex(events)
     expect(index.seek(3).fractals).toHaveLength(0)
@@ -21,6 +27,18 @@ describe('ReplayEventIndex', () => {
     expect(index.seek(12).segment_zhongshu).toHaveLength(1)
     expect(index.seek(12).divergences).toHaveLength(1)
     expect(index.seek(12).trade_points).toHaveLength(1)
+    expect(index.seek(12).processed_bars).toEqual([expect.objectContaining({ object_id: 'pb-1' })])
+    expect(index.seek(12).bi_states).toEqual([expect.objectContaining({ state: 'TOP_FORMING' })])
+    expect(index.seek(12).level_centers).toEqual([expect.objectContaining({ level_id: 'L1' })])
+    expect(index.seek(12).level_movements).toEqual([expect.objectContaining({ level_id: 'L0' })])
+    expect(index.seek(13).trade_points).toEqual([
+      expect.objectContaining({ object_id: 'p-1' }),
+      expect.objectContaining({ object_id: 'first-1', status: 'candidate' }),
+    ])
+    expect(index.seek(15).trade_points).toEqual([
+      expect.objectContaining({ object_id: 'p-1' }),
+      expect.objectContaining({ object_id: 'first-1', status: 'confirmed' }),
+    ])
     expect(index.seek(5).fractals).toHaveLength(1)
     expect(index.seek(5).bi).toHaveLength(0)
   })

@@ -506,6 +506,12 @@ func validCapital(value map[string]any) bool {
 	return value["initial_cash_i64"] != nil && value["money_scale"] != nil && value["currency"] != nil
 }
 
+// ValidExecution and ValidCapital expose the canonical backtest validation to
+// higher-level task orchestrators without duplicating execution semantics.
+func ValidExecution(value map[string]any) bool { return validExecution(value) }
+
+func ValidCapital(value map[string]any) bool { return validCapital(value) }
+
 func findDefinition(values []pythonclient.AlgorithmDefinition, ref pythonclient.AlgorithmRef) (pythonclient.AlgorithmDefinition, bool) {
 	for _, value := range values {
 		if value.AlgorithmRef == ref {

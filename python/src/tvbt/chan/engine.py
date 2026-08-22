@@ -6,13 +6,19 @@ from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
 from tvbt.chan.events import EventEmitter
+from tvbt.chan.level_graph import GraphCenter, build_level_graph
 from tvbt.chan.reference import (
     ReferenceCenter,
     ReferenceSegment,
     ReferenceSegmentAccumulator,
     update_reference_centers,
 )
-from tvbt.chan.signals import ChanSignal, chan_divergences, chan_trade_points
+from tvbt.chan.signals import (
+    ChanSignal,
+    chan_divergences,
+    chan_first_point_candidates,
+    chan_trade_points,
+)
 from tvbt.chan.zn import classify_zn_components
 from tvbt.logging_proxy import logger
 
@@ -33,6 +39,14 @@ from tvbt.logging_proxy import logger
 
 Direction = Literal["up", "down", "unknown"]
 FractalKind = Literal["top", "bottom"]
+FractalStatus = Literal["candidate", "confirmed", "invalidated"]
+BiLiveState = Literal[
+    "SEEK_FIRST_FRACTAL",
+    "UP_EXTENDING",
+    "TOP_FORMING",
+    "DOWN_EXTENDING",
+    "BOTTOM_FORMING",
+]
 # 一笔至少跨越 5 根包含处理后的独立 K 线。
 REFERENCE_MIN_INDEPENDENT_BARS = 5
 
@@ -68,6 +82,10 @@ class IncludedBar:
     # 该独立 K 线覆盖的原始 K 线闭区间。
     start_raw_index: int
     end_raw_index: int
+    start_time: int
+    end_time: int
+    open_i64: int
+    close_i64: int
     # 包含处理后的高低点价格。
     high_i64: int
     low_i64: int
@@ -83,6 +101,36 @@ class IncludedBar:
     direction: Direction
     # 当前独立 K 线吸收的全部原始 K 线索引，便于审计包含关系。
     source_raw_indices: list[int]
+
+    @property
+    def object_id(self) -> str:
+        return _stable_id("processed-bar", self.start_raw_index)
+
+    def payload(
+        self,
+        *,
+        status: Literal["forming", "sealed"],
+        sealed_at_bar_index: int | None,
+        catalog_event: Literal["processed_bar", "processed_bar_revision"],
+    ) -> dict[str, Any]:
+        return {
+            "normalized_index": self.normalized_index,
+            "start_bar_index": self.start_raw_index,
+            "start_time": self.start_time,
+            "end_bar_index": self.end_raw_index,
+            "end_time": self.end_time,
+            "open_i64": self.open_i64,
+            "high_i64": self.high_i64,
+            "low_i64": self.low_i64,
+            "close_i64": self.close_i64,
+            "high_source_bar_index": self.high_raw_index,
+            "low_source_bar_index": self.low_raw_index,
+            "direction": self.direction,
+            "source_bar_indices": list(self.source_raw_indices),
+            "status": status,
+            "sealed_at_bar_index": sealed_at_bar_index,
+            "catalog_event": catalog_event,
+        }
 
 
 @dataclass(frozen=True)
@@ -100,7 +148,7 @@ class Fractal:
     time: int
     price_i64: int
     # 分型被确认的原始 K 线位置；known_at 与其一致，禁止提前显示。
-    confirmed_at_bar_index: int
+    confirmed_at_bar_index: int | None
     known_at_bar_index: int
     # 分型极值实际来源的原始 K 线位置；当前与 bar_index 相同，单独保存以防字段误读。
     extreme_source_bar_index: int = -1
@@ -108,6 +156,10 @@ class Fractal:
     # 旧检查点缺少该字段时退化为极值点；10.0.0 新输出始终显式填写真实区间。
     zone_low_i64: int | None = None
     zone_high_i64: int | None = None
+    status: FractalStatus = "confirmed"
+    invalidation_reason: str | None = None
+    aux_strength: Literal["strong_reversal", "unclassified"] = "unclassified"
+    strength_reason: str = "lesson82_strong_reversal_condition_not_met"
 
     def __post_init__(self) -> None:
         if self.extreme_source_bar_index < 0:
@@ -130,7 +182,15 @@ class Fractal:
             "zone_high_i64": self.zone_high_i64,
             "extreme_source_bar_index": self.extreme_source_bar_index,
             "fractal_type": self.fractal_type,
-            "confirmed": True,
+            "status": self.status,
+            "invalidation_reason": self.invalidation_reason,
+            "aux_strength": self.aux_strength,
+            "strength_reason": self.strength_reason,
+            "catalog_algorithm_id": "ALG-GEO-002",
+            "strength_semantic_namespace": "auxiliary",
+            "standard_signal": False,
+            "execution_allowed": False,
+            "confirmed": self.status == "confirmed",
             "confirmed_at_bar_index": self.confirmed_at_bar_index,
         }
 
@@ -150,7 +210,14 @@ class LineObject:
     confirmed_at_bar_index: int
     known_at_bar_index: int
 
-    def payload(self, *, confirmed: bool = True) -> dict[str, Any]:
+    def payload(
+        self,
+        *,
+        confirmed: bool = True,
+        status: Literal["candidate", "confirmed", "invalidated"] | None = None,
+        invalidation_reason: str | None = None,
+        catalog_algorithm_id: Literal["ALG-GEO-003", "ALG-GEO-004"] = "ALG-GEO-003",
+    ) -> dict[str, Any]:
         """转换为图层绘制和对象树使用的事件载荷。"""
         return {
             "start_bar_index": self.start.bar_index,
@@ -162,6 +229,9 @@ class LineObject:
             "end_price_i64": self.end.price_i64,
             "end_extreme_source_bar_index": self.end.extreme_source_bar_index,
             "direction": self.direction,
+            "status": status or ("confirmed" if confirmed else "candidate"),
+            "invalidation_reason": invalidation_reason,
+            "catalog_algorithm_id": catalog_algorithm_id,
             "confirmed": confirmed,
             "confirmed_at_bar_index": self.confirmed_at_bar_index if confirmed else None,
         }
@@ -183,7 +253,7 @@ class ChanEngine:
     """逐 K 线因果缠论引擎，负责分型、笔、线段、中枢和信号事件生成。"""
 
     # 算法版本参与缓存键；任何语义变化都必须升级版本，禁止复用旧缓存。
-    algorithm_version = "11.0.0"
+    algorithm_version = "14.0.0"
 
     def __init__(self, parameters: ChanParameters | None = None) -> None:
         # 运行参数。
@@ -194,6 +264,8 @@ class ChanEngine:
         self.included: list[IncludedBar] = []
         # 已确认并发布过的分型。
         self.fractals: list[Fractal] = []
+        # 最新一根处理后 K 线形成的分型候选；确认或失效后仍通过事件保留审计历史。
+        self._fractal_candidate: Fractal | None = None
         # 已确认的笔序列，方向必须严格交替。
         self.bi: list[LineObject] = []
         # 每个分型作为笔终点时可形成的最长笔链长度及其前驱分型位置。
@@ -203,6 +275,8 @@ class ChanEngine:
         self._best_bi_endpoint: int | None = None
         # 当前已发布笔链对应的分型位置，用于只修订发生变化的尾部。
         self._bi_path_positions: list[int] = []
+        self._active_bi_candidate_id: str | None = None
+        self._bi_live_state: BiLiveState = "SEEK_FIRST_FRACTAL"
         # 线段扫描器保存每个笔前缀的小状态，笔尾修订时只回滚并重放变化部分。
         self._segment_accumulator = ReferenceSegmentAccumulator()
         # 已离开的中枢和已确认线段构成稳定前缀，后续只替换各级未确定尾部。
@@ -241,21 +315,39 @@ class ChanEngine:
         self._append_macd(bar)
         # 包含关系只有在追加出新的独立 K 线时，才可能封存上一根独立 K 线的分型。
         appended = self._update_inclusion(bar)
+        self._publish_processed_bar(bar, appended)
         changed_bi_index: int | None = None
-        if appended:
-            fractal = self._seal_fractal()
-            if fractal is not None:
-                self.fractals.append(fractal)
-                self.emitter.upsert(
-                    fractal.known_at_bar_index,
-                    "fractal",
-                    fractal.object_id,
-                    fractal.payload(),
-                )
-                changed_bi_index = self._consume_fractal(fractal)
+        resolved_candidate = self._fractal_candidate if appended else None
+        resolved: Fractal | None = None
+        if appended and resolved_candidate is not None:
+            resolved = self._resolve_fractal_candidate(resolved_candidate)
+            if resolved.status == "confirmed":
+                self.fractals.append(resolved)
+                changed_bi_index = self._consume_fractal(resolved)
+            self._finalize_bi_candidate(resolved)
         if changed_bi_index is not None:
             # 只从首次变化的笔位置更新中枢、线段、背驰和买卖点尾部。
             self._update_structures(bar.bar_index, changed_bi_index)
+        candidate_changed = self._refresh_fractal_candidate(bar.bar_index)
+        bi_candidate_changed = self._refresh_bi_candidate(bar.bar_index)
+        if not self.fractals and self._fractal_candidate is None:
+            trigger = "initial"
+        elif resolved is not None:
+            if changed_bi_index is not None:
+                trigger = "bi_confirmed"
+            elif resolved.status == "confirmed" and len(self.fractals) == 1:
+                trigger = "first_fractal_confirmed"
+            elif resolved.status == "confirmed":
+                trigger = "fractal_confirmed"
+            else:
+                trigger = "candidate_invalidated"
+        elif bi_candidate_changed:
+            trigger = "candidate_started"
+        elif candidate_changed:
+            trigger = "candidate_revised"
+        else:
+            trigger = "processed_bar_update"
+        self._publish_bi_state(bar, trigger)
 
     def _update_inclusion(self, bar: RawBar) -> bool:
         """按前一根独立 K 线方向处理包含关系，返回是否产生新独立 K 线。"""
@@ -264,6 +356,10 @@ class ChanEngine:
             normalized_index=len(self.included),
             start_raw_index=bar.bar_index,
             end_raw_index=bar.bar_index,
+            start_time=bar.time,
+            end_time=bar.time,
+            open_i64=bar.open_i64,
+            close_i64=bar.close_i64,
             high_i64=bar.high_i64,
             low_i64=bar.low_i64,
             high_time=bar.time,
@@ -271,7 +367,7 @@ class ChanEngine:
             high_raw_index=bar.bar_index,
             low_raw_index=bar.bar_index,
             confirm_time=bar.time,
-            direction="down",
+            direction="unknown",
             source_raw_indices=[bar.bar_index],
         )
         if not self.included:
@@ -289,7 +385,7 @@ class ChanEngine:
         # 剩余情况存在包含关系，需要按既有方向合并到上一根独立 K 线。
         direction = previous.direction
         # 首对 K 线方向尚不稳定时，参考右侧是否外包左侧单独处理。
-        first_pair = len(self.included) == 1 and previous.start_raw_index == previous.end_raw_index
+        first_pair = len(self.included) == 1 and direction == "unknown"
         if first_pair:
             right_contains = (
                 current.high_i64 > previous.high_i64 or current.low_i64 < previous.low_i64
@@ -318,6 +414,10 @@ class ChanEngine:
             normalized_index=previous.normalized_index,
             start_raw_index=previous.start_raw_index,
             end_raw_index=bar.bar_index,
+            start_time=previous.start_time,
+            end_time=bar.time,
+            open_i64=previous.open_i64,
+            close_i64=bar.close_i64,
             high_i64=high,
             low_i64=low,
             high_time=current.high_time if high_from_current else previous.high_time,
@@ -330,41 +430,297 @@ class ChanEngine:
         )
         return False
 
-    def _seal_fractal(self) -> Fractal | None:
-        # 参考 kline-chart/c_bi.py：严格分型只使用三根独立 K 线判断。
-        # 新独立 K 线追加后，中间那根独立 K 线立即变为可确认候选。
-        index = len(self.included) - 2
-        if index < 1:
-            return None
-        center = self.included[index]
-        window = self.included[index - 1 : index + 2]
-        others = [window[0], window[2]]
-        top = all(
-            center.high_i64 > item.high_i64 and center.low_i64 > item.low_i64 for item in others
+    def _publish_processed_bar(self, bar: RawBar, appended: bool) -> None:
+        """发布形成、包含修订与封存；同一处理后 K 线始终复用稳定 ID。"""
+        if appended and len(self.included) > 1:
+            previous = self.included[-2]
+            self.emitter.upsert(
+                bar.bar_index,
+                "processed_bar",
+                previous.object_id,
+                previous.payload(
+                    status="sealed",
+                    sealed_at_bar_index=bar.bar_index,
+                    catalog_event="processed_bar_revision",
+                ),
+            )
+        current = self.included[-1]
+        self.emitter.upsert(
+            bar.bar_index,
+            "processed_bar",
+            current.object_id,
+            current.payload(
+                status="forming",
+                sealed_at_bar_index=None,
+                catalog_event="processed_bar" if appended else "processed_bar_revision",
+            ),
         )
-        bottom = all(
-            center.high_i64 < item.high_i64 and center.low_i64 < item.low_i64 for item in others
-        )
-        if not top and not bottom:
-            return None
-        # 顶分型取中间独立 K 线的最高点，底分型取最低点，锚定回原始 K 线。
-        kind: FractalKind = "top" if top else "bottom"
-        pivot_index = center.high_raw_index if top else center.low_raw_index
-        pivot_time = center.high_time if top else center.low_time
-        price = center.high_i64 if top else center.low_i64
-        confirmed_at = self.included[index + 1].end_raw_index
+
+    def _fractal_from_processed_bar(
+        self,
+        center: IncludedBar,
+        kind: FractalKind,
+        *,
+        status: FractalStatus,
+        known_at_bar_index: int,
+        confirmed_at_bar_index: int | None,
+        invalidation_reason: str | None = None,
+        aux_strength: Literal["strong_reversal", "unclassified"] = "unclassified",
+        strength_reason: str = "awaiting_right_processed_bar",
+    ) -> Fractal:
+        pivot_index = center.high_raw_index if kind == "top" else center.low_raw_index
+        pivot_time = center.high_time if kind == "top" else center.low_time
+        price = center.high_i64 if kind == "top" else center.low_i64
         return Fractal(
-            object_id=_stable_id("fractal", kind, pivot_time, confirmed_at, price),
+            object_id=_stable_id("fractal", kind, center.start_raw_index),
             fractal_type=kind,
-            normalized_index=index,
+            normalized_index=center.normalized_index,
             bar_index=pivot_index,
             time=pivot_time,
             price_i64=price,
-            confirmed_at_bar_index=confirmed_at,
-            known_at_bar_index=confirmed_at,
+            confirmed_at_bar_index=confirmed_at_bar_index,
+            known_at_bar_index=known_at_bar_index,
             extreme_source_bar_index=pivot_index,
             zone_low_i64=center.low_i64,
             zone_high_i64=center.high_i64,
+            status=status,
+            invalidation_reason=invalidation_reason,
+            aux_strength=aux_strength,
+            strength_reason=strength_reason,
+        )
+
+    def _refresh_fractal_candidate(self, known_at_bar_index: int) -> bool:
+        """用最后两根处理后 K 线发布或修订等待右侧 K 线的候选分型。"""
+        previous = self._fractal_candidate
+        if len(self.included) < 2:
+            self._fractal_candidate = None
+            return False
+        left, center = self.included[-2:]
+        if center.high_i64 > left.high_i64 and center.low_i64 > left.low_i64:
+            kind: FractalKind = "top"
+        elif center.high_i64 < left.high_i64 and center.low_i64 < left.low_i64:
+            kind = "bottom"
+        else:
+            raise AssertionError("adjacent processed bars must not contain each other")
+        candidate = self._fractal_from_processed_bar(
+            center,
+            kind,
+            status="candidate",
+            known_at_bar_index=known_at_bar_index,
+            confirmed_at_bar_index=None,
+        )
+        if previous is not None and previous.object_id != candidate.object_id:
+            invalidated = Fractal(
+                **{
+                    **asdict(previous),
+                    "status": "invalidated",
+                    "known_at_bar_index": known_at_bar_index,
+                    "invalidation_reason": "inclusion_revision_changed_candidate",
+                    "strength_reason": "candidate_invalidated_before_right_bar",
+                }
+            )
+            self.emitter.upsert(
+                known_at_bar_index, "fractal", invalidated.object_id, invalidated.payload()
+            )
+        self._fractal_candidate = candidate
+        event = self.emitter.upsert(
+            known_at_bar_index,
+            "fractal",
+            candidate.object_id,
+            candidate.payload(),
+        )
+        return event is not None
+
+    def _resolve_fractal_candidate(self, candidate: Fractal) -> Fractal:
+        """右侧处理后 K 线到来后确认或保留失效候选，并计算第 82 课辅助标签。"""
+        index = candidate.normalized_index
+        if index < 1 or index + 1 >= len(self.included):
+            raise AssertionError("fractal candidate requires left and right processed bars")
+        left, center, right = self.included[index - 1 : index + 2]
+        confirmed = (
+            candidate.fractal_type == "top"
+            and center.high_i64 > right.high_i64
+            and center.low_i64 > right.low_i64
+        ) or (
+            candidate.fractal_type == "bottom"
+            and center.high_i64 < right.high_i64
+            and center.low_i64 < right.low_i64
+        )
+        known_at = right.end_raw_index
+        if confirmed:
+            strong = (
+                candidate.fractal_type == "top"
+                and right.low_i64 < left.low_i64
+                and 2 * right.close_i64 <= left.high_i64 + left.low_i64
+            ) or (
+                candidate.fractal_type == "bottom"
+                and right.high_i64 > left.high_i64
+                and 2 * right.close_i64 >= left.high_i64 + left.low_i64
+            )
+            resolved = self._fractal_from_processed_bar(
+                center,
+                candidate.fractal_type,
+                status="confirmed",
+                known_at_bar_index=known_at,
+                confirmed_at_bar_index=known_at,
+                aux_strength="strong_reversal" if strong else "unclassified",
+                strength_reason=(
+                    "lesson82_third_bar_break_and_close_beyond_first_midpoint"
+                    if strong
+                    else "lesson82_strong_reversal_condition_not_met"
+                ),
+            )
+        else:
+            resolved = Fractal(
+                **{
+                    **asdict(candidate),
+                    "status": "invalidated",
+                    "known_at_bar_index": known_at,
+                    "invalidation_reason": "right_bar_failed_strict_fractal_relation",
+                    "strength_reason": "candidate_invalidated_before_strength_classification",
+                }
+            )
+        self.emitter.upsert(known_at, "fractal", resolved.object_id, resolved.payload())
+        self._fractal_candidate = None
+        return resolved
+
+    def _invalidate_bi_object(
+        self,
+        object_id: str,
+        known_at_bar_index: int,
+        reason: str,
+    ) -> None:
+        current = {str(item["object_id"]): item for item in self.emitter.current("bi")}.get(
+            object_id
+        )
+        if current is None or current.get("status") == "invalidated":
+            return
+        payload = {
+            name: value
+            for name, value in current.items()
+            if name not in {"object_id", "known_at_bar_index", "object_revision"}
+        }
+        payload.update(
+            {
+                "status": "invalidated",
+                "invalidation_reason": reason,
+                "confirmed": False,
+            }
+        )
+        self.emitter.upsert(known_at_bar_index, "bi", object_id, payload)
+
+    def _candidate_bi_predecessor(self, endpoint: Fractal) -> int | None:
+        candidates = self._incoming_bi_candidates(endpoint)
+        if not candidates:
+            return None
+        score = max(self._bi_scores[position] + 1 for position in candidates)
+        eligible = [position for position in candidates if self._bi_scores[position] + 1 == score]
+        if self._best_bi_endpoint in eligible:
+            return self._best_bi_endpoint
+        if self._best_bi_endpoint is not None:
+            current_predecessor = self._bi_predecessors[self._best_bi_endpoint]
+            if current_predecessor in eligible:
+                return current_predecessor
+        return max(eligible, key=lambda position: self.fractals[position].normalized_index)
+
+    def _refresh_bi_candidate(self, known_at_bar_index: int) -> bool:
+        """把合法但尚待右侧分型确认的线发布为候选笔。"""
+        endpoint = self._fractal_candidate
+        predecessor = self._candidate_bi_predecessor(endpoint) if endpoint is not None else None
+        if endpoint is None or predecessor is None:
+            if self._active_bi_candidate_id is not None:
+                self._invalidate_bi_object(
+                    self._active_bi_candidate_id,
+                    known_at_bar_index,
+                    "candidate_geometry_no_longer_valid",
+                )
+                self._active_bi_candidate_id = None
+                return True
+            return False
+        start = self.fractals[predecessor]
+        direction: Literal["up", "down"] = "up" if start.fractal_type == "bottom" else "down"
+        line = LineObject(
+            object_id=_stable_id("bi", start.object_id, endpoint.object_id),
+            start=start,
+            end=endpoint,
+            direction=direction,
+            confirmed_at_bar_index=known_at_bar_index,
+            known_at_bar_index=known_at_bar_index,
+        )
+        if (
+            self._active_bi_candidate_id is not None
+            and self._active_bi_candidate_id != line.object_id
+        ):
+            self._invalidate_bi_object(
+                self._active_bi_candidate_id,
+                known_at_bar_index,
+                "more_extreme_or_revised_candidate_replaced_endpoint",
+            )
+        previous_id = self._active_bi_candidate_id
+        self._active_bi_candidate_id = line.object_id
+        event = self.emitter.upsert(
+            known_at_bar_index,
+            "bi",
+            line.object_id,
+            line.payload(confirmed=False, status="candidate"),
+        )
+        return event is not None or previous_id != line.object_id
+
+    def _finalize_bi_candidate(self, resolved_fractal: Fractal) -> None:
+        object_id = self._active_bi_candidate_id
+        if object_id is None:
+            return
+        current = {str(item["object_id"]): item for item in self.emitter.current("bi")}.get(
+            object_id
+        )
+        if current is None or current.get("status") != "confirmed":
+            reason = (
+                "fractal_candidate_invalidated"
+                if resolved_fractal.status == "invalidated"
+                else "confirmed_fractal_not_selected_by_unique_bi_partition"
+            )
+            self._invalidate_bi_object(object_id, resolved_fractal.known_at_bar_index, reason)
+        self._active_bi_candidate_id = None
+
+    def _publish_bi_state(self, bar: RawBar, trigger: str) -> None:
+        """从已确认笔端点与当前候选派生第 91/93 课在线状态，不读取未来 K 线。"""
+        anchor_position = self._best_bi_endpoint
+        anchor = self.fractals[anchor_position] if anchor_position is not None else None
+        if anchor is None and self.fractals:
+            anchor = self.fractals[-1]
+        candidate = self._fractal_candidate
+        if anchor is None:
+            state: BiLiveState = "SEEK_FIRST_FRACTAL"
+            direction: Literal["up", "down"] | None = None
+        elif anchor.fractal_type == "bottom":
+            direction = "up"
+            state = (
+                "TOP_FORMING" if candidate and candidate.fractal_type == "top" else "UP_EXTENDING"
+            )
+        else:
+            direction = "down"
+            state = (
+                "BOTTOM_FORMING"
+                if candidate and candidate.fractal_type == "bottom"
+                else "DOWN_EXTENDING"
+            )
+        self._bi_live_state = state
+        point = candidate or anchor
+        self.emitter.upsert(
+            bar.bar_index,
+            "bi_state",
+            "bi-state-current",
+            {
+                "bar_index": point.bar_index if point is not None else bar.bar_index,
+                "time": point.time if point is not None else bar.time,
+                "price_i64": point.price_i64 if point is not None else bar.close_i64,
+                "state": state,
+                "direction": direction,
+                "anchor_fractal_id": anchor.object_id if anchor is not None else None,
+                "candidate_object_id": self._active_bi_candidate_id,
+                "trigger": trigger,
+                "catalog_algorithm_id": "ALG-GEO-003",
+            },
         )
 
     def _consume_fractal(self, endpoint: Fractal) -> int | None:
@@ -494,13 +850,22 @@ class ChanEngine:
         if not changed:
             return None
         for line in sorted(removed, key=lambda value: value.object_id):
-            self.emitter.delete(known_at_bar_index, "bi", line.object_id)
+            self.emitter.upsert(
+                known_at_bar_index,
+                "bi",
+                line.object_id,
+                line.payload(
+                    confirmed=False,
+                    status="invalidated",
+                    invalidation_reason="more_extreme_confirmed_endpoint_repartitioned_bi",
+                ),
+            )
         for line in desired[preserved_line_count:]:
             self.emitter.upsert(
                 known_at_bar_index,
                 "bi",
                 line.object_id,
-                line.payload(),
+                line.payload(status="confirmed"),
             )
         self.bi = desired
         return preserved_line_count
@@ -601,6 +966,9 @@ class ChanEngine:
                     "end_price_i64": segment.end_price_i64,
                     "end_extreme_source_bar_index": segment.end_bar_index,
                     "direction": "up" if segment.up else "down",
+                    "status": "confirmed" if segment.confirmed else "candidate",
+                    "invalidation_reason": None,
+                    "catalog_algorithm_id": "ALG-GEO-004",
                     "confirmed": segment.confirmed,
                     "confirmed_at_bar_index": (
                         segment.known_at_bar_index if segment.confirmed else None
@@ -679,6 +1047,7 @@ class ChanEngine:
         ]
         segment_center_ids: list[str] = []
         segment_center_values: list[tuple[str, dict[str, Any], int]] = []
+        graph_centers: list[GraphCenter] = []
         # 走势状态事件：记录中枢震荡、盘整和中枢迁移。
         movement_state_values: list[tuple[str, dict[str, Any], int]] = []
         # Z/Zn 监控事件：跟踪各线段相对中枢中轴的位置、强弱和越界/楔形预警。
@@ -717,6 +1086,26 @@ class ChanEngine:
                         "leave_direction": center.leave_direction,
                     },
                     center.known_at_bar_index,
+                )
+            )
+            graph_centers.append(
+                GraphCenter(
+                    object_id=object_id,
+                    level_id="L0",
+                    start_bar_index=center.start_bar_index,
+                    start_time=center.start_time,
+                    end_bar_index=center.end_bar_index,
+                    end_time=center.end_time,
+                    zd_i64=center.zd_i64,
+                    zg_i64=center.zg_i64,
+                    dd_i64=dd_i64,
+                    gg_i64=gg_i64,
+                    component_kind="segment",
+                    component_object_ids=tuple(line.object_id for line in components),
+                    component_known_at=tuple(line.known_at_bar_index for line in components),
+                    status=center.status,
+                    confirmed_at_bar_index=center.known_at_bar_index,
+                    known_at_bar_index=center.known_at_bar_index,
                 )
             )
             phase = "centre_oscillation" if len(components) > 3 else "consolidation"
@@ -805,6 +1194,7 @@ class ChanEngine:
                     )
                 )
 
+        level_graph = build_level_graph(graph_centers)
         divergence_specs = chan_divergences(
             segment_lines,
             segment_centers,
@@ -827,7 +1217,43 @@ class ChanEngine:
                 (object_id, _signal_payload(signal), signal.known_at_bar_index)
             )
 
-        trade_point_values: list[tuple[str, dict[str, Any], int]] = []
+        trade_point_by_id: dict[str, tuple[str, dict[str, Any], int]] = {}
+        level_sources: list[tuple[str, list[ReferenceCenter], list[str]]] = [
+            ("L0", segment_centers, segment_center_ids)
+        ]
+        promoted_indices = [
+            index
+            for index, center in enumerate(graph_centers)
+            if len(center.component_object_ids) >= 9
+        ]
+        if promoted_indices:
+            level_sources.append(
+                (
+                    "L1",
+                    [segment_centers[index] for index in promoted_indices],
+                    [segment_center_ids[index] for index in promoted_indices],
+                )
+            )
+        for level_id, source_centers, source_ids in level_sources:
+            for signal in chan_first_point_candidates(
+                segment_lines,
+                source_centers,
+                source_ids,
+                self._macd_histogram,
+                self._macd_area_cache,
+                level_id=level_id,
+            ):
+                object_id = _stable_id(
+                    "trade-point",
+                    signal.signal_type,
+                    signal.level_id,
+                    segment_lines[signal.segment_index].object_id,
+                )
+                trade_point_by_id[object_id] = (
+                    object_id,
+                    _signal_payload(signal),
+                    signal.known_at_bar_index,
+                )
         # 买卖点：消费标准线段中枢和背驰对象，生成一二三类买卖点事件。
         for signal in chan_trade_points(
             segment_lines, segment_centers, segment_center_ids, divergence_objects
@@ -835,13 +1261,20 @@ class ChanEngine:
             object_id = _stable_id(
                 "trade-point",
                 signal.signal_type,
+                signal.level_id,
                 segment_lines[signal.segment_index].object_id,
-                signal.reference_object_id,
             )
-            trade_point_values.append(
-                (object_id, _signal_payload(signal), signal.known_at_bar_index)
+            trade_point_by_id[object_id] = (
+                object_id,
+                _signal_payload(signal),
+                signal.known_at_bar_index,
             )
+        trade_point_values = self._retain_invalidated_first_points(
+            list(trade_point_by_id.values()), known_at_bar_index
+        )
         self._sync_objects("segment_zhongshu", segment_center_values, known_at_bar_index)
+        self._sync_objects("level_center", list(level_graph.centers), known_at_bar_index)
+        self._sync_objects("level_movement", list(level_graph.movements), known_at_bar_index)
         self._sync_objects("movement_state", movement_state_values, known_at_bar_index)
         self._sync_objects("center_monitor", center_monitor_values, known_at_bar_index)
         self._sync_objects("divergence", divergence_values, known_at_bar_index)
@@ -857,6 +1290,8 @@ class ChanEngine:
                 "zhongshu_count": len(centers),
                 "segment_count": len(segments),
                 "segment_zhongshu_count": len(segment_center_values),
+                "level_center_count": len(level_graph.centers),
+                "level_movement_count": len(level_graph.movements),
                 "movement_state_count": len(movement_state_values),
                 "center_monitor_count": len(center_monitor_values),
                 "divergence_count": len(divergence_values),
@@ -899,11 +1334,58 @@ class ChanEngine:
             event_known_at = max(known_at, known_at_bar_index)
             self.emitter.upsert(event_known_at, object_type, object_id, payload)
 
+    def _retain_invalidated_first_points(
+        self,
+        values: list[tuple[str, dict[str, Any], int]],
+        known_at_bar_index: int,
+    ) -> list[tuple[str, dict[str, Any], int]]:
+        """Keep rejected B1/S1 candidates as auditable lifecycle revisions."""
+        desired = {object_id for object_id, _, _ in values}
+        for previous in self.emitter.current("trade_point"):
+            object_id = str(previous["object_id"])
+            if object_id in desired or previous.get("catalog_algorithm_id") != "ALG-SIG-001":
+                continue
+            if previous.get("status") == "invalidated":
+                payload = {
+                    key: value
+                    for key, value in previous.items()
+                    if key not in {"object_id", "object_revision", "known_at_bar_index"}
+                }
+            elif previous.get("status") == "candidate":
+                payload = {
+                    key: value
+                    for key, value in previous.items()
+                    if key not in {"object_id", "object_revision", "known_at_bar_index"}
+                }
+                payload.update(
+                    {
+                        "status": "invalidated",
+                        "invalidation_reason": "trend_structure_revised",
+                        "catalog_event": (
+                            "B1_invalidated"
+                            if previous.get("signal_type") == "buy_1"
+                            else "S1_invalidated"
+                        ),
+                        "confirmed": False,
+                        "confirmed_at_bar_index": None,
+                    }
+                )
+            else:
+                continue
+            values.append((object_id, payload, known_at_bar_index))
+        return values
+
     def result_rows(self) -> dict[str, list[dict[str, Any]]]:
         """导出当前对象快照，按各对象的图形起点排序，供 Parquet 写入或 API 返回。"""
         return {
+            "processed_bars": sorted(
+                self.emitter.current("processed_bar"), key=lambda item: item["normalized_index"]
+            ),
             "fractals": sorted(self.emitter.current("fractal"), key=lambda item: item["bar_index"]),
             "bi": sorted(self.emitter.current("bi"), key=lambda item: item["start_bar_index"]),
+            "bi_states": sorted(
+                self.emitter.current("bi_state"), key=lambda item: item["bar_index"]
+            ),
             "segments": sorted(
                 self.emitter.current("segment"), key=lambda item: item["start_bar_index"]
             ),
@@ -913,6 +1395,14 @@ class ChanEngine:
             "segment_zhongshu": sorted(
                 self.emitter.current("segment_zhongshu"),
                 key=lambda item: item["start_bar_index"],
+            ),
+            "level_centers": sorted(
+                self.emitter.current("level_center"),
+                key=lambda item: (item["start_bar_index"], item["level_id"]),
+            ),
+            "level_movements": sorted(
+                self.emitter.current("level_movement"),
+                key=lambda item: (item["start_bar_index"], item["level_id"]),
             ),
             "movement_states": sorted(
                 self.emitter.current("movement_state"), key=lambda item: item["start_bar_index"]
@@ -935,11 +1425,16 @@ class ChanEngine:
             "raw_bars": [asdict(item) for item in self.raw_bars],
             "included": [asdict(item) for item in self.included],
             "fractals": [asdict(item) for item in self.fractals],
+            "fractal_candidate": (
+                asdict(self._fractal_candidate) if self._fractal_candidate is not None else None
+            ),
             "bi": [_line_state(item) for item in self.bi],
             "bi_scores": self._bi_scores,
             "bi_predecessors": self._bi_predecessors,
             "best_bi_endpoint": self._best_bi_endpoint,
             "bi_path_positions": self._bi_path_positions,
+            "active_bi_candidate_id": self._active_bi_candidate_id,
+            "bi_live_state": self._bi_live_state,
             "emitter": self.emitter.state(),
         }
 
@@ -952,6 +1447,8 @@ class ChanEngine:
             engine._append_macd(bar)
         engine.included = [IncludedBar(**item) for item in state["included"]]
         engine.fractals = [Fractal(**item) for item in state["fractals"]]
+        candidate = state.get("fractal_candidate")
+        engine._fractal_candidate = Fractal(**candidate) if candidate is not None else None
         fractals = {item.object_id: item for item in engine.fractals}
         engine.bi = [_line_from_state(item, fractals) for item in state["bi"]]
         engine._bi_scores = [int(value) for value in state["bi_scores"]]
@@ -961,6 +1458,11 @@ class ChanEngine:
         best_endpoint = state["best_bi_endpoint"]
         engine._best_bi_endpoint = None if best_endpoint is None else int(best_endpoint)
         engine._bi_path_positions = [int(value) for value in state["bi_path_positions"]]
+        active_candidate = state.get("active_bi_candidate_id")
+        engine._active_bi_candidate_id = (
+            str(active_candidate) if active_candidate is not None else None
+        )
+        engine._bi_live_state = state.get("bi_live_state", "SEEK_FIRST_FRACTAL")
         engine._fractal_by_normalized_index = {
             fractal.normalized_index: position for position, fractal in enumerate(engine.fractals)
         }
@@ -996,8 +1498,16 @@ def _signal_payload(signal: ChanSignal) -> dict[str, Any]:
         "reference_object_id": signal.reference_object_id,
         "macd_area_reference": signal.macd_area_reference,
         "macd_area_current": signal.macd_area_current,
-        "confirmed": True,
-        "confirmed_at_bar_index": signal.known_at_bar_index,
+        "status": signal.status,
+        "invalidation_reason": signal.invalidation_reason,
+        "level_id": signal.level_id,
+        "lower_level_turn_object_id": signal.lower_level_turn_object_id,
+        "catalog_event": signal.catalog_event,
+        "catalog_algorithm_id": signal.catalog_algorithm_id,
+        "confirmed": signal.status == "confirmed",
+        "confirmed_at_bar_index": (
+            signal.known_at_bar_index if signal.status == "confirmed" else None
+        ),
     }
 
 

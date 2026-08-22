@@ -70,8 +70,9 @@ func TestRecoverStaleTempsMovesKnownNames(t *testing.T) {
 	guard, _ := storage.NewPathGuard(t.TempDir())
 	temporary, _ := guard.Resolve("cache/indicators/.abc.tmp-deadbeef")
 	studyTemporary, _ := guard.Resolve("studies/.study-1.tmp-deadbeef")
+	comparisonTemporary, _ := guard.Resolve("comparisons/.comparison-1.tmp-deadbeef")
 	keep, _ := guard.Resolve("cache/indicators/not-a-temp")
-	for _, path := range []string{temporary, studyTemporary, keep} {
+	for _, path := range []string{temporary, studyTemporary, comparisonTemporary, keep} {
 		if err := os.MkdirAll(path, 0o750); err != nil {
 			t.Fatal(err)
 		}
@@ -80,8 +81,9 @@ func TestRecoverStaleTempsMovesKnownNames(t *testing.T) {
 	old := now.Add(-25 * time.Hour)
 	_ = os.Chtimes(temporary, old, old)
 	_ = os.Chtimes(studyTemporary, old, old)
+	_ = os.Chtimes(comparisonTemporary, old, old)
 	moves, err := RecoverStaleTemps(guard, 24*time.Hour, now)
-	if err != nil || len(moves) != 2 {
+	if err != nil || len(moves) != 3 {
 		t.Fatalf("moves=%#v err=%v", moves, err)
 	}
 	if _, err := os.Stat(keep); err != nil {

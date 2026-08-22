@@ -26,6 +26,11 @@ import type {
   StudyAccepted,
   StudyStatus,
   StudyEvaluations,
+  StrategyComparisonRequest,
+  StrategyComparisonAccepted,
+  StrategyComparisonStatus,
+  StrategyComparisonManifest,
+  StrategyComparisonResult,
 } from '../types/api'
 
 export class ApiError extends Error {
@@ -183,6 +188,30 @@ export async function getBacktestEquity(runId: string): Promise<EquityRow[]> {
 export async function getBacktestChartEvents(runId: string): Promise<CausalEvent[]> {
   const response = await apiRequest<{ request_id: string; run_id: string; events: CausalEvent[] }>(`/api/v1/backtests/${encodeURIComponent(runId)}/chart-events`)
   return response.events
+}
+
+export function createStrategyComparison(request: StrategyComparisonRequest): Promise<StrategyComparisonAccepted> {
+  return apiRequest('/api/v1/strategy-comparisons', { method: 'POST', body: JSON.stringify(request) })
+}
+
+export function getStrategyComparison(comparisonId: string): Promise<StrategyComparisonStatus> {
+  return apiRequest(`/api/v1/strategy-comparisons/${encodeURIComponent(comparisonId)}`)
+}
+
+export function cancelStrategyComparison(comparisonId: string): Promise<StrategyComparisonStatus> {
+  return apiRequest(`/api/v1/strategy-comparisons/${encodeURIComponent(comparisonId)}/cancel`, { method: 'POST' })
+}
+
+export async function listStrategyComparisons(datasetId?: string): Promise<StrategyComparisonManifest[]> {
+  const query = new URLSearchParams()
+  if (datasetId) query.set('dataset_id', datasetId)
+  const response = await apiRequest<{ request_id: string; items: StrategyComparisonManifest[] }>(`/api/v1/strategy-comparisons?${query}`)
+  return response.items
+}
+
+export async function getStrategyComparisonResults(comparisonId: string): Promise<StrategyComparisonResult[]> {
+  const response = await apiRequest<{ request_id: string; comparison_id: string; items: StrategyComparisonResult[] }>(`/api/v1/strategy-comparisons/${encodeURIComponent(comparisonId)}/results`)
+  return response.items
 }
 
 export function createStudy(request: StudyRequest): Promise<StudyAccepted> {

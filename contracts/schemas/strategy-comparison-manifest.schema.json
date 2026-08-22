@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/strategy-comparison-manifest.schema.json",
+  "title": "StrategyComparisonManifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "comparison_id", "trace_id", "dataset", "range",
+    "execution", "capital", "random_seed", "minimum_trade_count",
+    "strategy_count", "completed_count", "failed_count", "created_at"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "comparison_id": {"type": "string", "minLength": 1},
+    "trace_id": {"type": "string", "minLength": 1},
+    "dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dataset_id", "data_revision"],
+      "properties": {
+        "dataset_id": {"type": "string", "minLength": 1},
+        "data_revision": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "range": {"$ref": "#/$defs/range"},
+    "execution": {"type": "object", "additionalProperties": true},
+    "capital": {"type": "object", "additionalProperties": true},
+    "risk_overlay": {"type": "object", "additionalProperties": true},
+    "random_seed": {"type": "integer"},
+    "minimum_trade_count": {"type": "integer", "minimum": 1},
+    "strategy_count": {"type": "integer", "minimum": 1},
+    "completed_count": {"type": "integer", "minimum": 0},
+    "failed_count": {"type": "integer", "minimum": 0},
+    "created_at": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["warmup_from_bar_index", "from_bar_index", "to_bar_index"],
+      "properties": {
+        "warmup_from_bar_index": {"type": "integer", "minimum": 0},
+        "from_bar_index": {"type": "integer", "minimum": 0},
+        "to_bar_index": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

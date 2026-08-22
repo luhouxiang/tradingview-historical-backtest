@@ -29,7 +29,7 @@ describe('ChanPanel', () => {
     const emitted = wrapper.emitted('update:sources')?.at(-1)?.[0] as Array<{ source_type: string }>
     expect(emitted).toHaveLength(1)
     expect(emitted[0]?.source_type).toBe('StrategySource')
-    expect((emitted[0] as unknown as { category_visibility: object }).category_visibility).toEqual({ fractals: false, bi: true, segments: true, zhongshu: true, segment_zhongshu: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true })
+    expect((emitted[0] as unknown as { category_visibility: object }).category_visibility).toEqual({ processed_bars: false, fractals: false, bi: true, bi_states: true, segments: true, zhongshu: true, segment_zhongshu: true, level_centers: true, level_movements: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true })
     expect(wrapper.get('[aria-label="缠论指标"]').text()).toContain('添加到主图')
   })
 })

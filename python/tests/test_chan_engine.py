@@ -145,6 +145,121 @@ def test_reference_inclusion_merges_in_the_established_direction() -> None:
     assert merged.source_raw_indices == [1, 2]
 
 
+def test_processed_bar_lifecycle_preserves_members_and_revision_events() -> None:
+    """包含合并修订同一处理后 K 线，下一独立 K 线只封存而不回写方向。"""
+    runtime = engine()
+    runtime.update(RawBar(0, 1_000, 6, 10, 5, 9))
+    runtime.update(RawBar(1, 2_000, 8, 9, 6, 7))
+    runtime.update(RawBar(2, 3_000, 8, 11, 7, 10))
+
+    processed = runtime.result_rows()["processed_bars"]
+    assert len(processed) == 2
+    first, current = processed
+    assert first == {
+        **first,
+        "normalized_index": 0,
+        "start_bar_index": 0,
+        "end_bar_index": 1,
+        "start_time": 1_000,
+        "end_time": 2_000,
+        "open_i64": 6,
+        "close_i64": 7,
+        "high_i64": 10,
+        "low_i64": 6,
+        "high_source_bar_index": 0,
+        "low_source_bar_index": 1,
+        "direction": "unknown",
+        "source_bar_indices": [0, 1],
+        "status": "sealed",
+        "sealed_at_bar_index": 2,
+        "catalog_event": "processed_bar_revision",
+        "known_at_bar_index": 2,
+        "object_revision": 3,
+    }
+    assert current["status"] == "forming"
+    assert current["direction"] == "up"
+    events = [
+        event
+        for event in runtime.emitter.events
+        if event.object_type == "processed_bar" and event.object_id == first["object_id"]
+    ]
+    assert [(event.known_at_bar_index, event.object_revision) for event in events] == [
+        (0, 1),
+        (1, 2),
+        (2, 3),
+    ]
+
+
+def test_fractal_candidate_confirmation_invalidation_and_aux_strength_are_causal() -> None:
+    """候选等待右 K 线；确认/失效复用 ID，强弱只作为不可交易辅助标签。"""
+    confirmed = engine()
+    confirmed.update(RawBar(0, 1_000, 8, 10, 5, 9))
+    confirmed.update(RawBar(1, 2_000, 8, 12, 7, 10))
+    candidate = confirmed.result_rows()["fractals"][0]
+    assert candidate["status"] == "candidate"
+    assert candidate["confirmed_at_bar_index"] is None
+    confirmed.update(RawBar(2, 3_000, 8, 9, 4, 6))
+    resolved = next(
+        value
+        for value in confirmed.result_rows()["fractals"]
+        if value["object_id"] == candidate["object_id"]
+    )
+    assert resolved["status"] == "confirmed"
+    assert resolved["confirmed_at_bar_index"] == 2
+    assert resolved["aux_strength"] == "strong_reversal"
+    assert resolved["strength_semantic_namespace"] == "auxiliary"
+    assert resolved["standard_signal"] is False
+    assert resolved["execution_allowed"] is False
+
+    invalidated = engine()
+    invalidated.update(bar(0, 10, 5))
+    invalidated.update(bar(1, 12, 7))
+    invalidated_id = invalidated.result_rows()["fractals"][0]["object_id"]
+    invalidated.update(bar(2, 14, 9))
+    old = next(
+        value
+        for value in invalidated.result_rows()["fractals"]
+        if value["object_id"] == invalidated_id
+    )
+    assert old["status"] == "invalidated"
+    assert old["invalidation_reason"] == "right_bar_failed_strict_fractal_relation"
+
+
+def test_bi_candidate_confirmation_and_live_four_state_are_visible_and_prefix_invariant() -> None:
+    """合法候选笔在右分型确认前可见，确认后同 ID 升级且在线状态无未来回填。"""
+    bars = [
+        bar(0, 10, 5),
+        bar(1, 8, 3),
+        bar(2, 11, 6),
+        bar(3, 12, 7),
+        bar(4, 13, 8),
+        bar(5, 14, 9),
+        bar(6, 12, 7),
+    ]
+    prefix = engine()
+    for item in bars[:6]:
+        prefix.update(item)
+    candidate = next(value for value in prefix.result_rows()["bi"] if not value["confirmed"])
+    assert candidate["status"] == "candidate"
+    assert candidate["confirmed_at_bar_index"] is None
+    assert prefix.result_rows()["bi_states"][0]["state"] == "TOP_FORMING"
+
+    full = engine()
+    for item in bars:
+        full.update(item)
+    confirmed_line = next(
+        value for value in full.result_rows()["bi"] if value["object_id"] == candidate["object_id"]
+    )
+    assert confirmed_line["status"] == "confirmed"
+    assert confirmed_line["confirmed_at_bar_index"] == 6
+    assert full.result_rows()["bi_states"][0]["state"] == "BOTTOM_FORMING"
+    prefix_events = [event.row() for event in prefix.emitter.events]
+    full_known_prefix = [
+        event.row() for event in full.emitter.events if event.known_at_bar_index <= 5
+    ]
+    assert full_known_prefix == prefix_events
+
+
 def test_reference_fractal_is_sealed_by_the_right_independent_bar() -> None:
     """测试分型是否必须等右侧独立 K 线出现后才封存。
 
@@ -267,13 +382,18 @@ def test_later_more_extreme_fractal_revises_existing_bi() -> None:
     for index, (high, low) in enumerate(high_low):
         runtime.update(bar(index, high, low))
     rows = runtime.result_rows()["bi"]
+    confirmed_rows = [item for item in rows if item["status"] == "confirmed"]
     assert [
         (item["start_bar_index"], item["end_bar_index"], item["direction"], item["confirmed"])
-        for item in rows
+        for item in confirmed_rows
     ] == [(3, 55, "up", True)]
+    assert {item["status"] for item in rows} == {"confirmed", "invalidated"}
     assert_bi_use_processed_extremes(runtime)
-    assert all(left["end_bar_index"] == right["start_bar_index"] for left, right in pairwise(rows))
-    assert all(left["direction"] != right["direction"] for left, right in pairwise(rows))
+    assert all(
+        left["end_bar_index"] == right["start_bar_index"]
+        for left, right in pairwise(confirmed_rows)
+    )
+    assert all(left["direction"] != right["direction"] for left, right in pairwise(confirmed_rows))
 
 
 def test_yl9_higher_top_replaces_screenshot_lower_top() -> None:
@@ -391,6 +511,8 @@ def test_standard_segment_centers_and_third_points_are_causal_on_aol9() -> None:
         for value in result["segment_zhongshu"]
     )
     assert result["movement_states"]
+    assert result["level_movements"]
+    assert all(value["level_id"].startswith("L") for value in result["level_movements"])
     assert result["center_monitors"]
     assert all(
         value["known_at_bar_index"] >= value["confirmed_at_bar_index"]
@@ -425,7 +547,8 @@ def test_standard_segment_centers_and_third_points_are_causal_on_aol9() -> None:
         for value in result["trade_points"]
     )
     assert all(
-        value["known_at_bar_index"] >= value["confirmed_at_bar_index"]
+        value["confirmed_at_bar_index"] is None
+        or value["known_at_bar_index"] >= value["confirmed_at_bar_index"]
         for value in [*result["divergences"], *result["trade_points"]]
     )
 
@@ -597,3 +720,39 @@ def test_incremental_upper_structures_match_forced_full_rescan_events() -> None:
         event.row() for event in full_rescan.emitter.events
     ]
     assert incremental.result_rows() == full_rescan.result_rows()
+
+
+def test_first_point_candidate_invalidation_is_retained_as_revision() -> None:
+    engine_value = ChanEngine(ChanParameters())
+    payload = {
+        "bar_index": 10,
+        "time": 600_000,
+        "price_i64": 100,
+        "signal_type": "buy_1",
+        "divergence_kind": None,
+        "signal_class": "standard",
+        "strength": None,
+        "reference_object_id": "center-2",
+        "macd_area_reference": None,
+        "macd_area_current": None,
+        "status": "candidate",
+        "invalidation_reason": None,
+        "level_id": "L0",
+        "lower_level_turn_object_id": None,
+        "catalog_event": "B1_candidate",
+        "catalog_algorithm_id": "ALG-SIG-001",
+        "confirmed": False,
+        "confirmed_at_bar_index": None,
+    }
+    engine_value.emitter.upsert(10, "trade_point", "trade-point-candidate", payload)
+
+    retained = engine_value._retain_invalidated_first_points([], 12)
+    engine_value._sync_objects("trade_point", retained, 12)
+
+    value = engine_value.result_rows()["trade_points"][0]
+    assert value["object_id"] == "trade-point-candidate"
+    assert value["status"] == "invalidated"
+    assert value["invalidation_reason"] == "trend_structure_revised"
+    assert value["catalog_event"] == "B1_invalidated"
+    assert value["known_at_bar_index"] == 12
+    assert value["object_revision"] == 2

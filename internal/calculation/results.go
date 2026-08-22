@@ -141,35 +141,83 @@ func readResults(guard *storage.PathGuard, jobID, cacheKey, resultRef string, fr
 }
 
 type ChanFractal struct {
-	ObjectID              string `json:"object_id" parquet:"object_id"`
-	BarIndex              int64  `json:"bar_index" parquet:"bar_index"`
-	Time                  int64  `json:"time" parquet:"time"`
-	PriceI64              int64  `json:"price_i64" parquet:"price_i64"`
-	ZoneLowI64            int64  `json:"zone_low_i64" parquet:"zone_low_i64"`
-	ZoneHighI64           int64  `json:"zone_high_i64" parquet:"zone_high_i64"`
-	ExtremeSourceBarIndex int64  `json:"extreme_source_bar_index" parquet:"extreme_source_bar_index"`
-	FractalType           string `json:"fractal_type" parquet:"fractal_type"`
-	Confirmed             bool   `json:"confirmed" parquet:"confirmed"`
-	ConfirmedAtBarIndex   *int64 `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index,optional"`
-	KnownAtBarIndex       int64  `json:"known_at_bar_index" parquet:"known_at_bar_index"`
-	ObjectRevision        int64  `json:"object_revision" parquet:"object_revision"`
+	ObjectID                  string  `json:"object_id" parquet:"object_id"`
+	BarIndex                  int64   `json:"bar_index" parquet:"bar_index"`
+	Time                      int64   `json:"time" parquet:"time"`
+	PriceI64                  int64   `json:"price_i64" parquet:"price_i64"`
+	ZoneLowI64                int64   `json:"zone_low_i64" parquet:"zone_low_i64"`
+	ZoneHighI64               int64   `json:"zone_high_i64" parquet:"zone_high_i64"`
+	ExtremeSourceBarIndex     int64   `json:"extreme_source_bar_index" parquet:"extreme_source_bar_index"`
+	FractalType               string  `json:"fractal_type" parquet:"fractal_type"`
+	Status                    string  `json:"status" parquet:"status"`
+	InvalidationReason        *string `json:"invalidation_reason" parquet:"invalidation_reason,optional"`
+	AuxStrength               string  `json:"aux_strength" parquet:"aux_strength"`
+	StrengthReason            string  `json:"strength_reason" parquet:"strength_reason"`
+	CatalogAlgorithmID        string  `json:"catalog_algorithm_id" parquet:"catalog_algorithm_id"`
+	StrengthSemanticNamespace string  `json:"strength_semantic_namespace" parquet:"strength_semantic_namespace"`
+	StandardSignal            bool    `json:"standard_signal" parquet:"standard_signal"`
+	ExecutionAllowed          bool    `json:"execution_allowed" parquet:"execution_allowed"`
+	Confirmed                 bool    `json:"confirmed" parquet:"confirmed"`
+	ConfirmedAtBarIndex       *int64  `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index,optional"`
+	KnownAtBarIndex           int64   `json:"known_at_bar_index" parquet:"known_at_bar_index"`
+	ObjectRevision            int64   `json:"object_revision" parquet:"object_revision"`
 }
 
 type ChanLineObject struct {
-	ObjectID                   string `json:"object_id" parquet:"object_id"`
-	StartBarIndex              int64  `json:"start_bar_index" parquet:"start_bar_index"`
-	StartTime                  int64  `json:"start_time" parquet:"start_time"`
-	StartPriceI64              int64  `json:"start_price_i64" parquet:"start_price_i64"`
-	StartExtremeSourceBarIndex int64  `json:"start_extreme_source_bar_index" parquet:"start_extreme_source_bar_index"`
-	EndBarIndex                int64  `json:"end_bar_index" parquet:"end_bar_index"`
-	EndTime                    int64  `json:"end_time" parquet:"end_time"`
-	EndPriceI64                int64  `json:"end_price_i64" parquet:"end_price_i64"`
-	EndExtremeSourceBarIndex   int64  `json:"end_extreme_source_bar_index" parquet:"end_extreme_source_bar_index"`
-	Direction                  string `json:"direction" parquet:"direction"`
-	Confirmed                  bool   `json:"confirmed" parquet:"confirmed"`
-	ConfirmedAtBarIndex        *int64 `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index,optional"`
-	KnownAtBarIndex            int64  `json:"known_at_bar_index" parquet:"known_at_bar_index"`
-	ObjectRevision             int64  `json:"object_revision" parquet:"object_revision"`
+	ObjectID                   string  `json:"object_id" parquet:"object_id"`
+	StartBarIndex              int64   `json:"start_bar_index" parquet:"start_bar_index"`
+	StartTime                  int64   `json:"start_time" parquet:"start_time"`
+	StartPriceI64              int64   `json:"start_price_i64" parquet:"start_price_i64"`
+	StartExtremeSourceBarIndex int64   `json:"start_extreme_source_bar_index" parquet:"start_extreme_source_bar_index"`
+	EndBarIndex                int64   `json:"end_bar_index" parquet:"end_bar_index"`
+	EndTime                    int64   `json:"end_time" parquet:"end_time"`
+	EndPriceI64                int64   `json:"end_price_i64" parquet:"end_price_i64"`
+	EndExtremeSourceBarIndex   int64   `json:"end_extreme_source_bar_index" parquet:"end_extreme_source_bar_index"`
+	Direction                  string  `json:"direction" parquet:"direction"`
+	Status                     string  `json:"status" parquet:"status"`
+	InvalidationReason         *string `json:"invalidation_reason" parquet:"invalidation_reason,optional"`
+	CatalogAlgorithmID         string  `json:"catalog_algorithm_id" parquet:"catalog_algorithm_id"`
+	Confirmed                  bool    `json:"confirmed" parquet:"confirmed"`
+	ConfirmedAtBarIndex        *int64  `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index,optional"`
+	KnownAtBarIndex            int64   `json:"known_at_bar_index" parquet:"known_at_bar_index"`
+	ObjectRevision             int64   `json:"object_revision" parquet:"object_revision"`
+}
+
+type ChanProcessedBar struct {
+	ObjectID           string  `json:"object_id" parquet:"object_id"`
+	NormalizedIndex    int64   `json:"normalized_index" parquet:"normalized_index"`
+	StartBarIndex      int64   `json:"start_bar_index" parquet:"start_bar_index"`
+	StartTime          int64   `json:"start_time" parquet:"start_time"`
+	EndBarIndex        int64   `json:"end_bar_index" parquet:"end_bar_index"`
+	EndTime            int64   `json:"end_time" parquet:"end_time"`
+	OpenI64            int64   `json:"open_i64" parquet:"open_i64"`
+	HighI64            int64   `json:"high_i64" parquet:"high_i64"`
+	LowI64             int64   `json:"low_i64" parquet:"low_i64"`
+	CloseI64           int64   `json:"close_i64" parquet:"close_i64"`
+	HighSourceBarIndex int64   `json:"high_source_bar_index" parquet:"high_source_bar_index"`
+	LowSourceBarIndex  int64   `json:"low_source_bar_index" parquet:"low_source_bar_index"`
+	Direction          string  `json:"direction" parquet:"direction"`
+	SourceBarIndices   []int64 `json:"source_bar_indices" parquet:"source_bar_indices"`
+	Status             string  `json:"status" parquet:"status"`
+	SealedAtBarIndex   *int64  `json:"sealed_at_bar_index" parquet:"sealed_at_bar_index,optional"`
+	CatalogEvent       string  `json:"catalog_event" parquet:"catalog_event"`
+	KnownAtBarIndex    int64   `json:"known_at_bar_index" parquet:"known_at_bar_index"`
+	ObjectRevision     int64   `json:"object_revision" parquet:"object_revision"`
+}
+
+type ChanBiState struct {
+	ObjectID           string  `json:"object_id" parquet:"object_id"`
+	BarIndex           int64   `json:"bar_index" parquet:"bar_index"`
+	Time               int64   `json:"time" parquet:"time"`
+	PriceI64           int64   `json:"price_i64" parquet:"price_i64"`
+	State              string  `json:"state" parquet:"state"`
+	Direction          *string `json:"direction" parquet:"direction,optional"`
+	AnchorFractalID    *string `json:"anchor_fractal_id" parquet:"anchor_fractal_id,optional"`
+	CandidateObjectID  *string `json:"candidate_object_id" parquet:"candidate_object_id,optional"`
+	Trigger            string  `json:"trigger" parquet:"trigger"`
+	CatalogAlgorithmID string  `json:"catalog_algorithm_id" parquet:"catalog_algorithm_id"`
+	KnownAtBarIndex    int64   `json:"known_at_bar_index" parquet:"known_at_bar_index"`
+	ObjectRevision     int64   `json:"object_revision" parquet:"object_revision"`
 }
 
 type ChanZhongshu struct {
@@ -211,6 +259,56 @@ type ChanMovementState struct {
 	ObjectRevision      int64   `json:"object_revision" parquet:"object_revision"`
 }
 
+type ChanLevelCenter struct {
+	ObjectID             string   `json:"object_id" parquet:"object_id"`
+	LevelID              string   `json:"level_id" parquet:"level_id"`
+	ParentLevelID        string   `json:"parent_level_id" parquet:"parent_level_id"`
+	StartBarIndex        int64    `json:"start_bar_index" parquet:"start_bar_index"`
+	StartTime            int64    `json:"start_time" parquet:"start_time"`
+	EndBarIndex          int64    `json:"end_bar_index" parquet:"end_bar_index"`
+	EndTime              int64    `json:"end_time" parquet:"end_time"`
+	ZDI64                int64    `json:"zd_i64" parquet:"zd_i64"`
+	ZGI64                int64    `json:"zg_i64" parquet:"zg_i64"`
+	DDI64                int64    `json:"dd_i64" parquet:"dd_i64"`
+	GGI64                int64    `json:"gg_i64" parquet:"gg_i64"`
+	ComponentKind        string   `json:"component_kind" parquet:"component_kind"`
+	ComponentObjectIDs   []string `json:"component_object_ids" parquet:"component_object_ids"`
+	SourceCenterIDs      []string `json:"source_center_ids" parquet:"source_center_ids"`
+	Status               string   `json:"status" parquet:"status"`
+	PromotionReason      string   `json:"promotion_reason" parquet:"promotion_reason"`
+	PromotedFromCenterID *string  `json:"promoted_from_center_id" parquet:"promoted_from_center_id,optional"`
+	CatalogEvent         string   `json:"catalog_event" parquet:"catalog_event"`
+	CatalogAlgorithmID   string   `json:"catalog_algorithm_id" parquet:"catalog_algorithm_id"`
+	Confirmed            bool     `json:"confirmed" parquet:"confirmed"`
+	ConfirmedAtBarIndex  *int64   `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index,optional"`
+	KnownAtBarIndex      int64    `json:"known_at_bar_index" parquet:"known_at_bar_index"`
+	ObjectRevision       int64    `json:"object_revision" parquet:"object_revision"`
+}
+
+type ChanLevelMovement struct {
+	ObjectID                string   `json:"object_id" parquet:"object_id"`
+	LevelID                 string   `json:"level_id" parquet:"level_id"`
+	StartBarIndex           int64    `json:"start_bar_index" parquet:"start_bar_index"`
+	StartTime               int64    `json:"start_time" parquet:"start_time"`
+	EndBarIndex             int64    `json:"end_bar_index" parquet:"end_bar_index"`
+	EndTime                 int64    `json:"end_time" parquet:"end_time"`
+	LowI64                  int64    `json:"low_i64" parquet:"low_i64"`
+	HighI64                 int64    `json:"high_i64" parquet:"high_i64"`
+	ComponentCenterIDs      []string `json:"component_center_ids" parquet:"component_center_ids"`
+	Classification          string   `json:"classification" parquet:"classification"`
+	Direction               *string  `json:"direction" parquet:"direction,optional"`
+	Status                  string   `json:"status" parquet:"status"`
+	PreviousClassification  *string  `json:"previous_classification" parquet:"previous_classification,optional"`
+	ReclassificationReason  *string  `json:"reclassification_reason" parquet:"reclassification_reason,optional"`
+	ParentCenterCandidateID *string  `json:"parent_center_candidate_id" parquet:"parent_center_candidate_id,optional"`
+	CatalogEvent            string   `json:"catalog_event" parquet:"catalog_event"`
+	CatalogAlgorithmID      string   `json:"catalog_algorithm_id" parquet:"catalog_algorithm_id"`
+	Confirmed               bool     `json:"confirmed" parquet:"confirmed"`
+	ConfirmedAtBarIndex     *int64   `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index,optional"`
+	KnownAtBarIndex         int64    `json:"known_at_bar_index" parquet:"known_at_bar_index"`
+	ObjectRevision          int64    `json:"object_revision" parquet:"object_revision"`
+}
+
 type ChanCenterMonitor struct {
 	ObjectID            string  `json:"object_id" parquet:"object_id"`
 	BarIndex            int64   `json:"bar_index" parquet:"bar_index"`
@@ -244,29 +342,39 @@ type ChanCenterMonitor struct {
 }
 
 type ChanSignalPoint struct {
-	ObjectID            string   `json:"object_id" parquet:"object_id"`
-	BarIndex            int64    `json:"bar_index" parquet:"bar_index"`
-	Time                int64    `json:"time" parquet:"time"`
-	PriceI64            int64    `json:"price_i64" parquet:"price_i64"`
-	SignalType          string   `json:"signal_type" parquet:"signal_type"`
-	DivergenceKind      *string  `json:"divergence_kind" parquet:"divergence_kind,optional"`
-	SignalClass         *string  `json:"signal_class" parquet:"signal_class,optional"`
-	Strength            *string  `json:"strength" parquet:"strength,optional"`
-	ReferenceObjectID   *string  `json:"reference_object_id" parquet:"reference_object_id,optional"`
-	MACDAreaReference   *float64 `json:"macd_area_reference" parquet:"macd_area_reference,optional"`
-	MACDAreaCurrent     *float64 `json:"macd_area_current" parquet:"macd_area_current,optional"`
-	Confirmed           bool     `json:"confirmed" parquet:"confirmed"`
-	ConfirmedAtBarIndex *int64   `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index,optional"`
-	KnownAtBarIndex     int64    `json:"known_at_bar_index" parquet:"known_at_bar_index"`
-	ObjectRevision      int64    `json:"object_revision" parquet:"object_revision"`
+	ObjectID               string   `json:"object_id" parquet:"object_id"`
+	BarIndex               int64    `json:"bar_index" parquet:"bar_index"`
+	Time                   int64    `json:"time" parquet:"time"`
+	PriceI64               int64    `json:"price_i64" parquet:"price_i64"`
+	SignalType             string   `json:"signal_type" parquet:"signal_type"`
+	DivergenceKind         *string  `json:"divergence_kind" parquet:"divergence_kind,optional"`
+	SignalClass            *string  `json:"signal_class" parquet:"signal_class,optional"`
+	Strength               *string  `json:"strength" parquet:"strength,optional"`
+	ReferenceObjectID      *string  `json:"reference_object_id" parquet:"reference_object_id,optional"`
+	MACDAreaReference      *float64 `json:"macd_area_reference" parquet:"macd_area_reference,optional"`
+	MACDAreaCurrent        *float64 `json:"macd_area_current" parquet:"macd_area_current,optional"`
+	Status                 string   `json:"status" parquet:"status"`
+	InvalidationReason     *string  `json:"invalidation_reason" parquet:"invalidation_reason,optional"`
+	LevelID                *string  `json:"level_id" parquet:"level_id,optional"`
+	LowerLevelTurnObjectID *string  `json:"lower_level_turn_object_id" parquet:"lower_level_turn_object_id,optional"`
+	CatalogEvent           *string  `json:"catalog_event" parquet:"catalog_event,optional"`
+	CatalogAlgorithmID     *string  `json:"catalog_algorithm_id" parquet:"catalog_algorithm_id,optional"`
+	Confirmed              bool     `json:"confirmed" parquet:"confirmed"`
+	ConfirmedAtBarIndex    *int64   `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index,optional"`
+	KnownAtBarIndex        int64    `json:"known_at_bar_index" parquet:"known_at_bar_index"`
+	ObjectRevision         int64    `json:"object_revision" parquet:"object_revision"`
 }
 
 type ChanObjects struct {
+	ProcessedBars   []ChanProcessedBar  `json:"processed_bars"`
 	Fractals        []ChanFractal       `json:"fractals"`
 	Bi              []ChanLineObject    `json:"bi"`
+	BiStates        []ChanBiState       `json:"bi_states"`
 	Segments        []ChanLineObject    `json:"segments"`
 	Zhongshu        []ChanZhongshu      `json:"zhongshu"`
 	SegmentZhongshu []ChanZhongshu      `json:"segment_zhongshu"`
+	LevelCenters    []ChanLevelCenter   `json:"level_centers"`
+	LevelMovements  []ChanLevelMovement `json:"level_movements"`
 	MovementStates  []ChanMovementState `json:"movement_states"`
 	CenterMonitors  []ChanCenterMonitor `json:"center_monitors"`
 	Divergences     []ChanSignalPoint   `json:"divergences"`
@@ -274,11 +382,19 @@ type ChanObjects struct {
 }
 
 func readChanResults(directory, jobID, cacheKey string, meta manifest, from, to int64) (Results, error) {
+	processedBars, err := parquet.ReadFile[ChanProcessedBar](filepath.Join(directory, "processed_bars.parquet"))
+	if err != nil {
+		return Results{}, err
+	}
 	fractals, err := parquet.ReadFile[ChanFractal](filepath.Join(directory, "fractals.parquet"))
 	if err != nil {
 		return Results{}, err
 	}
 	bi, err := parquet.ReadFile[ChanLineObject](filepath.Join(directory, "bi.parquet"))
+	if err != nil {
+		return Results{}, err
+	}
+	biStates, err := parquet.ReadFile[ChanBiState](filepath.Join(directory, "bi_states.parquet"))
 	if err != nil {
 		return Results{}, err
 	}
@@ -291,6 +407,14 @@ func readChanResults(directory, jobID, cacheKey string, meta manifest, from, to 
 		return Results{}, err
 	}
 	segmentZhongshu, err := parquet.ReadFile[ChanZhongshu](filepath.Join(directory, "segment_zhongshu.parquet"))
+	if err != nil {
+		return Results{}, err
+	}
+	levelCenters, err := parquet.ReadFile[ChanLevelCenter](filepath.Join(directory, "level_centers.parquet"))
+	if err != nil {
+		return Results{}, err
+	}
+	levelMovements, err := parquet.ReadFile[ChanLevelMovement](filepath.Join(directory, "level_movements.parquet"))
 	if err != nil {
 		return Results{}, err
 	}
@@ -311,17 +435,21 @@ func readChanResults(directory, jobID, cacheKey string, meta manifest, from, to 
 		return Results{}, err
 	}
 	objects := ChanObjects{
+		ProcessedBars:   filterProcessedBars(processedBars, from, to),
 		Fractals:        filterFractals(fractals, from, to),
 		Bi:              filterLines(bi, from, to),
+		BiStates:        filterBiStates(biStates, from, to),
 		Segments:        filterLines(segments, from, to),
 		Zhongshu:        filterZhongshu(zhongshu, from, to),
 		SegmentZhongshu: filterZhongshu(segmentZhongshu, from, to),
+		LevelCenters:    filterLevelCenters(levelCenters, from, to),
+		LevelMovements:  filterLevelMovements(levelMovements, from, to),
 		MovementStates:  filterMovementStates(movementStates, from, to),
 		CenterMonitors:  filterCenterMonitors(centerMonitors, from, to),
 		Divergences:     filterSignalPoints(divergences, from, to),
 		TradePoints:     filterSignalPoints(tradePoints, from, to),
 	}
-	returned := len(objects.Fractals) + len(objects.Bi) + len(objects.Segments) + len(objects.Zhongshu) + len(objects.SegmentZhongshu) + len(objects.MovementStates) + len(objects.CenterMonitors) + len(objects.Divergences) + len(objects.TradePoints)
+	returned := len(objects.ProcessedBars) + len(objects.Fractals) + len(objects.Bi) + len(objects.BiStates) + len(objects.Segments) + len(objects.Zhongshu) + len(objects.SegmentZhongshu) + len(objects.LevelCenters) + len(objects.LevelMovements) + len(objects.MovementStates) + len(objects.CenterMonitors) + len(objects.Divergences) + len(objects.TradePoints)
 	checksumPayload, _ := json.Marshal(objects)
 	digest := sha256.Sum256(checksumPayload)
 	return Results{
@@ -331,8 +459,48 @@ func readChanResults(directory, jobID, cacheKey string, meta manifest, from, to 
 	}, nil
 }
 
+func filterProcessedBars(values []ChanProcessedBar, from, to int64) []ChanProcessedBar {
+	result := make([]ChanProcessedBar, 0)
+	for _, value := range values {
+		if value.EndBarIndex >= from && value.StartBarIndex <= to {
+			result = append(result, value)
+		}
+	}
+	return result
+}
+
+func filterBiStates(values []ChanBiState, from, to int64) []ChanBiState {
+	result := make([]ChanBiState, 0)
+	for _, value := range values {
+		if value.BarIndex >= from && value.BarIndex <= to {
+			result = append(result, value)
+		}
+	}
+	return result
+}
+
 func filterMovementStates(values []ChanMovementState, from, to int64) []ChanMovementState {
 	result := make([]ChanMovementState, 0)
+	for _, value := range values {
+		if value.EndBarIndex >= from && value.StartBarIndex <= to {
+			result = append(result, value)
+		}
+	}
+	return result
+}
+
+func filterLevelCenters(values []ChanLevelCenter, from, to int64) []ChanLevelCenter {
+	result := make([]ChanLevelCenter, 0)
+	for _, value := range values {
+		if value.EndBarIndex >= from && value.StartBarIndex <= to {
+			result = append(result, value)
+		}
+	}
+	return result
+}
+
+func filterLevelMovements(values []ChanLevelMovement, from, to int64) []ChanLevelMovement {
+	result := make([]ChanLevelMovement, 0)
 	for _, value := range values {
 		if value.EndBarIndex >= from && value.StartBarIndex <= to {
 			result = append(result, value)

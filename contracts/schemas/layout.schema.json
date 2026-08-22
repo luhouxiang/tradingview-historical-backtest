@@ -61,7 +61,7 @@
         "height": {"type": "integer", "minimum": 160},
         "collapsed": {"type": "boolean"},
         "active_tab": {
-          "enum": ["replay", "backtest", "trades", "equity", "optimization", "tasks", "logs"]
+          "enum": ["replay", "backtest", "trades", "equity", "optimization", "research", "tasks", "logs"]
         }
       }
     },
@@ -149,8 +149,12 @@
             "additionalProperties": false,
             "required": ["fractals", "bi", "zhongshu"],
             "properties": {
+              "processed_bars": {"type": "boolean"},
               "fractals": {"type": "boolean"},
               "bi": {"type": "boolean"},
+                "bi_states": {"type": "boolean"},
+                "level_centers": {"type": "boolean"},
+                "level_movements": {"type": "boolean"},
               "segments": {"type": "boolean"},
               "zhongshu": {"type": "boolean"},
               "segment_zhongshu": {"type": "boolean"},

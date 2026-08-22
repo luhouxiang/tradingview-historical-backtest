@@ -1,0 +1,319 @@
+{
+  "audit_version": "1.0.0",
+  "milestone": "10AA",
+  "catalog_path": "docs/chanlun_108_algorithm_set_20260819/specs/algorithm_catalog.json",
+  "catalog_sha256": "05a43accd26f520cfaaa51912785c7ddfe45292fcdf054eb84ae28a89ce80d4b",
+  "status_definitions": {
+    "implemented": "All catalog emissions are implemented with automated tests and chart evidence.",
+    "fixed_level_projection": "All catalog emissions have a tested and visible single-level projection, but the recorded limitation forbids claiming a recursive level implementation.",
+    "partial": "Only the listed emissions or lifecycle branches are implemented.",
+    "deferred": "Implementation is intentionally deferred until the named prerequisite milestone."
+  },
+  "summary": {
+    "catalog_items": 27,
+    "implemented": 14,
+    "fixed_level_projection": 11,
+    "partial": 0,
+    "deferred": 2,
+    "catalog_complete": false
+  },
+  "algorithms": [
+    {
+      "catalog_id": "ALG-GEO-001",
+      "status": "implemented",
+      "implemented_emits": ["processed_bar", "processed_bar_revision"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/chan/engine.py#IncludedBar", "python/src/tvbt/chan/storage.py#PROCESSED_BAR_SCHEMA", "internal/calculation/results.go#ChanProcessedBar"],
+      "test_refs": ["python/tests/test_chan_engine.py", "python/tests/test_chan_storage.py", "internal/calculation/service_test.go"],
+      "chart_refs": ["web/src/chart/chanPrimitive.ts", "web/src/chart/chanPrimitive.test.ts", "web/src/components/ObjectTreePanel.vue"],
+      "limitations": [],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-GEO-002",
+      "status": "implemented",
+      "implemented_emits": ["fractal_candidate", "fractal_confirmed", "aux_fractal_strength"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/chan/engine.py#Fractal", "python/src/tvbt/chan/storage.py#FRACTAL_SCHEMA"],
+      "test_refs": ["python/tests/test_chan_bi_108_fixtures.py", "python/tests/test_chan_engine.py", "web/src/chart/chanPrimitive.test.ts"],
+      "chart_refs": ["web/src/chart/chanPrimitive.ts", "web/src/components/ObjectTreePanel.vue"],
+      "limitations": [],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-GEO-003",
+      "status": "implemented",
+      "implemented_emits": ["bi_candidate", "bi_confirmed", "bi_invalidated", "bi_state"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/chan/engine.py#ChanEngine", "python/src/tvbt/chan/storage.py#BI_STATE_SCHEMA"],
+      "test_refs": ["python/tests/test_chan_bi_108_fixtures.py", "python/tests/test_chan_engine.py", "web/src/replay/eventIndex.test.ts"],
+      "chart_refs": ["web/src/chart/chanPrimitive.ts", "web/src/chart/chanPrimitive.test.ts", "web/src/components/ObjectTreePanel.vue"],
+      "limitations": [],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-GEO-004",
+      "status": "implemented",
+      "implemented_emits": ["segment_candidate", "segment_confirmed", "segment_invalidated"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/chan/reference.py#ReferenceSegment", "python/src/tvbt/chan/engine.py#ChanEngine"],
+      "test_refs": ["python/tests/test_chan_structures.py", "python/tests/test_chan_engine.py"],
+      "chart_refs": ["web/src/chart/chanPrimitive.ts", "web/src/chart/chanPrimitive.test.ts"],
+      "limitations": [],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-GEO-005",
+      "status": "implemented",
+      "implemented_emits": ["center_confirmed", "center_extended", "center_promoted", "center_terminated"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/chan/reference.py#ReferenceCenter", "python/src/tvbt/chan/level_graph.py#build_level_graph", "python/src/tvbt/chan/engine.py#ChanEngine", "internal/calculation/results.go#ChanLevelCenter"],
+      "test_refs": ["python/tests/test_chan_level_graph.py", "python/tests/test_chan_engine.py", "internal/calculation/service_test.go"],
+      "chart_refs": ["web/src/chart/chanPrimitive.ts", "web/src/chart/chanPrimitive.test.ts", "web/src/components/ObjectTreePanel.vue"],
+      "limitations": [],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-GEO-006",
+      "status": "implemented",
+      "implemented_emits": ["movement_candidate", "movement_confirmed", "movement_reclassified"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/chan/level_graph.py#build_level_graph", "python/src/tvbt/chan/engine.py#ChanEngine", "internal/calculation/results.go#ChanLevelMovement"],
+      "test_refs": ["python/tests/test_chan_level_graph.py", "python/tests/test_chan_engine.py", "web/src/replay/eventIndex.test.ts"],
+      "chart_refs": ["web/src/chart/chanPrimitive.ts", "web/src/chart/chanPrimitive.test.ts", "web/src/components/ObjectTreePanel.vue"],
+      "limitations": [],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-SIG-001",
+      "status": "implemented",
+      "implemented_emits": ["B1_candidate", "B1_confirmed", "S1_candidate", "S1_confirmed"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/chan/signals.py#chan_first_point_candidates", "python/src/tvbt/chan/engine.py#ChanEngine", "python/src/tvbt/chan/storage.py#SIGNAL_SCHEMA", "internal/calculation/results.go#ChanSignalPoint"],
+      "test_refs": ["python/tests/test_chan_signals.py", "python/tests/test_chan_engine.py", "python/tests/test_strategy_backtest.py", "internal/calculation/service_test.go", "web/src/replay/eventIndex.test.ts"],
+      "chart_refs": ["web/src/chart/chanPrimitive.ts", "web/src/chart/chanPrimitive.test.ts", "web/src/components/AppShell.vue"],
+      "limitations": [],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-SIG-002",
+      "status": "fixed_level_projection",
+      "implemented_emits": ["consolidation_divergence_bottom", "consolidation_divergence_top"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/chan/signals.py"],
+      "test_refs": ["python/tests/test_chan_signals.py"],
+      "chart_refs": ["web/src/chart/chanPrimitive.ts", "web/src/chart/chanPrimitive.test.ts"],
+      "limitations": ["Comparable lower-level oscillation legs are fixed to confirmed components of a segment-level center."],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-SIG-003",
+      "status": "fixed_level_projection",
+      "implemented_emits": ["B2_confirmed", "S2_confirmed", "B2_B3_merged", "S2_S3_merged"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/chan/signals.py"],
+      "test_refs": ["python/tests/test_chan_signals.py", "python/tests/test_strategy_backtest.py"],
+      "chart_refs": ["web/src/chart/chanPrimitive.ts", "web/src/components/BacktestPanel.test.ts"],
+      "limitations": ["The three branches use the fixed confirmed-segment object graph; merged second/third points are represented by strongest strength and shared source geometry."],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-SIG-004",
+      "status": "fixed_level_projection",
+      "implemented_emits": ["B3_confirmed", "S3_confirmed", "center_returned"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/chan/signals.py"],
+      "test_refs": ["python/tests/test_chan_signals.py"],
+      "chart_refs": ["web/src/chart/chanPrimitive.ts", "web/src/chart/chanPrimitive.test.ts"],
+      "limitations": ["Departure and first return are confirmed segment objects at the fixed segment analysis level."],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-STR-001",
+      "status": "implemented",
+      "implemented_emits": ["enter", "reduce", "hold", "exit", "wait"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/strategy.py#_run_fixed_level_centre"],
+      "test_refs": ["python/tests/test_strategy_backtest.py"],
+      "chart_refs": ["web/src/components/BacktestPanel.vue", "web/src/components/ChartGroup.vue", "web/src/components/BacktestPanel.test.ts"],
+      "limitations": [],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-STR-002",
+      "status": "fixed_level_projection",
+      "implemented_emits": ["enter_long", "exit_long", "handoff_to_B3_trend"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/strategy.py#_run_second_buy_only"],
+      "test_refs": ["python/tests/test_strategy_backtest.py"],
+      "chart_refs": ["web/src/components/BacktestPanel.vue", "web/src/components/BacktestPanel.test.ts"],
+      "limitations": ["Lower-level follow-through is the first confirmed segment attached to the B2 endpoint."],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-STR-003",
+      "status": "fixed_level_projection",
+      "implemented_emits": ["enter_long", "hold", "exit_long"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/strategy.py#_run_third_buy_only"],
+      "test_refs": ["python/tests/test_strategy_backtest.py"],
+      "chart_refs": ["web/src/components/BacktestPanel.vue", "web/src/components/BacktestPanel.test.ts"],
+      "limitations": ["Follow-through is expressed by the fixed confirmed-segment and center-migration graph."],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-STR-004",
+      "status": "fixed_level_projection",
+      "implemented_emits": ["swing_buy", "swing_sell", "stop_oscillation"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/strategy.py#_run_centre_oscillation_spread"],
+      "test_refs": ["python/tests/test_strategy_backtest.py", "python/tests/test_chan_zn.py"],
+      "chart_refs": ["web/src/components/BacktestPanel.vue", "web/src/chart/chanPrimitive.ts", "web/src/components/BacktestPanel.test.ts"],
+      "limitations": ["Sublevel divergence and Zn ranges are projections of confirmed components inside one segment-level center."],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-STR-005",
+      "status": "implemented",
+      "implemented_emits": ["buy", "sell", "hold", "promote_level"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/strategy.py#_run_same_level_decomposition_program"],
+      "test_refs": ["python/tests/test_strategy_backtest.py"],
+      "chart_refs": ["web/src/components/BacktestPanel.vue", "web/src/components/BacktestPanel.test.ts", "web/src/components/ChartGroup.test.ts"],
+      "limitations": [],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-STR-006",
+      "status": "deferred",
+      "implemented_emits": [],
+      "missing_emits": ["nested_turn_location", "entry_after_confirmation"],
+      "implementation_refs": [],
+      "test_refs": [],
+      "chart_refs": [],
+      "limitations": ["Explicitly deferred by the single-dataset/fixed-level scope: recursive interval nesting requires nested higher/lower-level movements and is not replaced by multiple K-line timeframes."],
+      "next_milestone": "deferred-multilevel-scope"
+    },
+    {
+      "catalog_id": "ALG-STR-007",
+      "status": "fixed_level_projection",
+      "implemented_emits": ["wait_low_turn", "mid_third_point", "mid_center_continue", "high_change_candidate", "participation_cap"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/strategy.py#_run_three_level_complete_classification"],
+      "test_refs": ["python/tests/test_strategy_backtest.py"],
+      "chart_refs": ["web/src/components/BacktestPanel.vue", "web/src/components/BacktestPanel.test.ts"],
+      "limitations": ["The explicit segment_center_chain_v1 graph is a tested three-layer projection; high-level change remains a candidate rather than a promoted center."],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-STR-008",
+      "status": "fixed_level_projection",
+      "implemented_emits": ["partial_take_profit", "reenter", "trend_handoff", "exit"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/strategy.py#_run_target_level_rebound_segmented_operation"],
+      "test_refs": ["python/tests/test_strategy_backtest.py"],
+      "chart_refs": ["web/src/components/BacktestPanel.vue", "web/src/components/BacktestPanel.test.ts"],
+      "limitations": ["The target/sublevel relationship is fixed to segment_rebound_rhythm_v1 rather than a recursive level graph."],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-STR-009",
+      "status": "fixed_level_projection",
+      "implemented_emits": ["bottom_building", "bottom_success", "bottom_failure", "top_building", "top_success", "top_failure"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/strategy.py#_run_bottom_top_construction"],
+      "test_refs": ["python/tests/test_strategy_backtest.py"],
+      "chart_refs": ["web/src/components/BacktestPanel.vue", "web/src/components/BacktestPanel.test.ts"],
+      "limitations": ["The precise branch uses standard fixed-segment B1/S1, centers, and B3/S3; the fractal interval branch remains explicitly coarse and non-trading."],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-STR-010",
+      "status": "deferred",
+      "implemented_emits": [],
+      "missing_emits": ["core_hold", "swing_reduce", "swing_add_back", "core_exit"],
+      "implementation_refs": [],
+      "test_refs": [],
+      "chart_refs": [],
+      "limitations": ["Explicitly deferred by the single-dataset/fixed-level scope: distinct structural-level signals and independently attributed core/swing position books are required."],
+      "next_milestone": "deferred-multilevel-scope"
+    },
+    {
+      "catalog_id": "ALG-AUX-001",
+      "status": "implemented",
+      "implemented_emits": ["flying_kiss", "lip_kiss", "wet_kiss", "legacy_B1_candidate", "legacy_B2_candidate"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/auxiliary/ma_kiss.py"],
+      "test_refs": ["python/tests/test_auxiliary_ma_kiss.py"],
+      "chart_refs": ["web/src/components/BacktestPanel.vue", "web/src/components/BacktestPanel.test.ts", "web/src/components/ObjectTreePanel.test.ts"],
+      "limitations": [],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-AUX-002",
+      "status": "implemented",
+      "implemented_emits": ["risk_off", "risk_on_candidate"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/auxiliary/macd_zero_axis.py"],
+      "test_refs": ["python/tests/test_auxiliary_macd_zero_axis.py"],
+      "chart_refs": ["web/src/components/BacktestPanel.vue", "web/src/components/BacktestPanel.test.ts"],
+      "limitations": [],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-AUX-003",
+      "status": "fixed_level_projection",
+      "implemented_emits": ["superstrong_exit", "second_point_zone", "bardo_end_or_promotion_warning"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/auxiliary/boll_bardo.py"],
+      "test_refs": ["python/tests/test_auxiliary_boll_bardo.py", "python/tests/test_indicators.py"],
+      "chart_refs": ["web/src/components/BacktestPanel.vue", "web/src/components/BacktestPanel.test.ts"],
+      "limitations": ["BARDO context is a named projection from confirmed trend-divergence events until structural resolution; it is not a recursive public BARDO object."],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-AUX-004",
+      "status": "fixed_level_projection",
+      "implemented_emits": ["Zn_series", "oscillation_bias", "breakout_warning"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/chan/zn.py", "python/src/tvbt/chan/engine.py#ChanEngine"],
+      "test_refs": ["python/tests/test_chan_zn.py", "python/tests/test_chan_engine.py"],
+      "chart_refs": ["web/src/chart/chanPrimitive.ts", "web/src/chart/chanPrimitive.test.ts", "web/src/components/ObjectTreePanel.vue"],
+      "limitations": ["Each sublevel oscillation interval is mapped to a confirmed component segment; no private K-line reconstruction or recursive last-center branch is claimed."],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-AUX-005",
+      "status": "implemented",
+      "implemented_emits": ["daily_one_center", "daily_two_center", "daily_no_center", "daily_strength_subclass"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/auxiliary/daily_30m.py"],
+      "test_refs": ["python/tests/test_auxiliary_daily_30m.py"],
+      "chart_refs": ["web/src/components/ChartGroup.vue", "web/src/components/ChartGroup.test.ts", "web/src/components/BacktestPanel.test.ts"],
+      "limitations": [],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-AUX-006",
+      "status": "implemented",
+      "implemented_emits": ["instrument_strength_class", "sector_strength_mean", "rotation_candidate"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/auxiliary/ma_sector_rotation.py"],
+      "test_refs": ["python/tests/test_auxiliary_ma_sector_rotation.py"],
+      "chart_refs": ["web/src/components/BacktestPanel.vue", "web/src/components/BacktestPanel.test.ts"],
+      "limitations": [],
+      "next_milestone": null
+    },
+    {
+      "catalog_id": "ALG-RISK-001",
+      "status": "implemented",
+      "implemented_emits": ["approved_order_intent", "reduced_order_intent", "blocked_decision", "kill_switch"],
+      "missing_emits": [],
+      "implementation_refs": ["python/src/tvbt/risk/unified_overlay.py", "python/src/tvbt/backtest.py"],
+      "test_refs": ["python/tests/test_unified_risk_overlay.py"],
+      "chart_refs": ["web/src/components/BacktestPanel.vue", "web/src/components/BacktestPanel.test.ts", "web/src/components/OptimizationPanel.test.ts"],
+      "limitations": [],
+      "next_milestone": null
+    }
+  ]
+}

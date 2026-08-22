@@ -9,6 +9,27 @@ import (
 	"time"
 )
 
+// Defines values for CalculationResultsObjectsBiStatesDirection.
+const (
+	CalculationResultsObjectsBiStatesDirectionDown        CalculationResultsObjectsBiStatesDirection = "down"
+	CalculationResultsObjectsBiStatesDirectionLessThannil CalculationResultsObjectsBiStatesDirection = "<nil>"
+	CalculationResultsObjectsBiStatesDirectionUp          CalculationResultsObjectsBiStatesDirection = "up"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsBiStatesDirection enum.
+func (e CalculationResultsObjectsBiStatesDirection) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsBiStatesDirectionDown:
+		return true
+	case CalculationResultsObjectsBiStatesDirectionLessThannil:
+		return true
+	case CalculationResultsObjectsBiStatesDirectionUp:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CalculationResultsObjectsCenterMonitorsBreakoutWarning.
 const (
 	CalculationResultsObjectsCenterMonitorsBreakoutWarningCrossAboveB        CalculationResultsObjectsCenterMonitorsBreakoutWarning = "cross_above_b"
@@ -90,6 +111,57 @@ func (e CalculationResultsObjectsCenterMonitorsRelativePosition) Valid() bool {
 	case CalculationResultsObjectsCenterMonitorsRelativePositionBelow:
 		return true
 	case CalculationResultsObjectsCenterMonitorsRelativePositionEqual:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsDivergencesCatalogAlgorithmId.
+const (
+	CalculationResultsObjectsDivergencesCatalogAlgorithmIdALGSIG001   CalculationResultsObjectsDivergencesCatalogAlgorithmId = "ALG-SIG-001"
+	CalculationResultsObjectsDivergencesCatalogAlgorithmIdLessThannil CalculationResultsObjectsDivergencesCatalogAlgorithmId = "<nil>"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsDivergencesCatalogAlgorithmId enum.
+func (e CalculationResultsObjectsDivergencesCatalogAlgorithmId) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsDivergencesCatalogAlgorithmIdALGSIG001:
+		return true
+	case CalculationResultsObjectsDivergencesCatalogAlgorithmIdLessThannil:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsDivergencesCatalogEvent.
+const (
+	CalculationResultsObjectsDivergencesCatalogEventB1Candidate   CalculationResultsObjectsDivergencesCatalogEvent = "B1_candidate"
+	CalculationResultsObjectsDivergencesCatalogEventB1Confirmed   CalculationResultsObjectsDivergencesCatalogEvent = "B1_confirmed"
+	CalculationResultsObjectsDivergencesCatalogEventB1Invalidated CalculationResultsObjectsDivergencesCatalogEvent = "B1_invalidated"
+	CalculationResultsObjectsDivergencesCatalogEventLessThannil   CalculationResultsObjectsDivergencesCatalogEvent = "<nil>"
+	CalculationResultsObjectsDivergencesCatalogEventS1Candidate   CalculationResultsObjectsDivergencesCatalogEvent = "S1_candidate"
+	CalculationResultsObjectsDivergencesCatalogEventS1Confirmed   CalculationResultsObjectsDivergencesCatalogEvent = "S1_confirmed"
+	CalculationResultsObjectsDivergencesCatalogEventS1Invalidated CalculationResultsObjectsDivergencesCatalogEvent = "S1_invalidated"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsDivergencesCatalogEvent enum.
+func (e CalculationResultsObjectsDivergencesCatalogEvent) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsDivergencesCatalogEventB1Candidate:
+		return true
+	case CalculationResultsObjectsDivergencesCatalogEventB1Confirmed:
+		return true
+	case CalculationResultsObjectsDivergencesCatalogEventB1Invalidated:
+		return true
+	case CalculationResultsObjectsDivergencesCatalogEventLessThannil:
+		return true
+	case CalculationResultsObjectsDivergencesCatalogEventS1Candidate:
+		return true
+	case CalculationResultsObjectsDivergencesCatalogEventS1Confirmed:
+		return true
+	case CalculationResultsObjectsDivergencesCatalogEventS1Invalidated:
 		return true
 	default:
 		return false
@@ -216,6 +288,54 @@ func (e CalculationResultsObjectsDivergencesStrength) Valid() bool {
 	}
 }
 
+// Defines values for CalculationResultsObjectsLevelMovementsDirection.
+const (
+	CalculationResultsObjectsLevelMovementsDirectionDown        CalculationResultsObjectsLevelMovementsDirection = "down"
+	CalculationResultsObjectsLevelMovementsDirectionLessThannil CalculationResultsObjectsLevelMovementsDirection = "<nil>"
+	CalculationResultsObjectsLevelMovementsDirectionUp          CalculationResultsObjectsLevelMovementsDirection = "up"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsLevelMovementsDirection enum.
+func (e CalculationResultsObjectsLevelMovementsDirection) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsLevelMovementsDirectionDown:
+		return true
+	case CalculationResultsObjectsLevelMovementsDirectionLessThannil:
+		return true
+	case CalculationResultsObjectsLevelMovementsDirectionUp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsLevelMovementsPreviousClassification.
+const (
+	CalculationResultsObjectsLevelMovementsPreviousClassificationConsolidation              CalculationResultsObjectsLevelMovementsPreviousClassification = "consolidation"
+	CalculationResultsObjectsLevelMovementsPreviousClassificationDowntrend                  CalculationResultsObjectsLevelMovementsPreviousClassification = "downtrend"
+	CalculationResultsObjectsLevelMovementsPreviousClassificationHigherLevelCenterCandidate CalculationResultsObjectsLevelMovementsPreviousClassification = "higher_level_center_candidate"
+	CalculationResultsObjectsLevelMovementsPreviousClassificationLessThannil                CalculationResultsObjectsLevelMovementsPreviousClassification = "<nil>"
+	CalculationResultsObjectsLevelMovementsPreviousClassificationUptrend                    CalculationResultsObjectsLevelMovementsPreviousClassification = "uptrend"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsLevelMovementsPreviousClassification enum.
+func (e CalculationResultsObjectsLevelMovementsPreviousClassification) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsLevelMovementsPreviousClassificationConsolidation:
+		return true
+	case CalculationResultsObjectsLevelMovementsPreviousClassificationDowntrend:
+		return true
+	case CalculationResultsObjectsLevelMovementsPreviousClassificationHigherLevelCenterCandidate:
+		return true
+	case CalculationResultsObjectsLevelMovementsPreviousClassificationLessThannil:
+		return true
+	case CalculationResultsObjectsLevelMovementsPreviousClassificationUptrend:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CalculationResultsObjectsMovementStatesDirection.
 const (
 	CalculationResultsObjectsMovementStatesDirectionDown        CalculationResultsObjectsMovementStatesDirection = "down"
@@ -315,6 +435,57 @@ func (e CalculationResultsObjectsSegmentZhongshuStatus) Valid() bool {
 	case CalculationResultsObjectsSegmentZhongshuStatusExtended:
 		return true
 	case CalculationResultsObjectsSegmentZhongshuStatusLeft:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsTradePointsCatalogAlgorithmId.
+const (
+	CalculationResultsObjectsTradePointsCatalogAlgorithmIdALGSIG001   CalculationResultsObjectsTradePointsCatalogAlgorithmId = "ALG-SIG-001"
+	CalculationResultsObjectsTradePointsCatalogAlgorithmIdLessThannil CalculationResultsObjectsTradePointsCatalogAlgorithmId = "<nil>"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsTradePointsCatalogAlgorithmId enum.
+func (e CalculationResultsObjectsTradePointsCatalogAlgorithmId) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsTradePointsCatalogAlgorithmIdALGSIG001:
+		return true
+	case CalculationResultsObjectsTradePointsCatalogAlgorithmIdLessThannil:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsTradePointsCatalogEvent.
+const (
+	CalculationResultsObjectsTradePointsCatalogEventB1Candidate   CalculationResultsObjectsTradePointsCatalogEvent = "B1_candidate"
+	CalculationResultsObjectsTradePointsCatalogEventB1Confirmed   CalculationResultsObjectsTradePointsCatalogEvent = "B1_confirmed"
+	CalculationResultsObjectsTradePointsCatalogEventB1Invalidated CalculationResultsObjectsTradePointsCatalogEvent = "B1_invalidated"
+	CalculationResultsObjectsTradePointsCatalogEventLessThannil   CalculationResultsObjectsTradePointsCatalogEvent = "<nil>"
+	CalculationResultsObjectsTradePointsCatalogEventS1Candidate   CalculationResultsObjectsTradePointsCatalogEvent = "S1_candidate"
+	CalculationResultsObjectsTradePointsCatalogEventS1Confirmed   CalculationResultsObjectsTradePointsCatalogEvent = "S1_confirmed"
+	CalculationResultsObjectsTradePointsCatalogEventS1Invalidated CalculationResultsObjectsTradePointsCatalogEvent = "S1_invalidated"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsTradePointsCatalogEvent enum.
+func (e CalculationResultsObjectsTradePointsCatalogEvent) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsTradePointsCatalogEventB1Candidate:
+		return true
+	case CalculationResultsObjectsTradePointsCatalogEventB1Confirmed:
+		return true
+	case CalculationResultsObjectsTradePointsCatalogEventB1Invalidated:
+		return true
+	case CalculationResultsObjectsTradePointsCatalogEventLessThannil:
+		return true
+	case CalculationResultsObjectsTradePointsCatalogEventS1Candidate:
+		return true
+	case CalculationResultsObjectsTradePointsCatalogEventS1Confirmed:
+		return true
+	case CalculationResultsObjectsTradePointsCatalogEventS1Invalidated:
 		return true
 	default:
 		return false
@@ -501,6 +672,27 @@ func (e CalculationResultsObjectsZhongshuStatus) Valid() bool {
 	}
 }
 
+// Defines values for ChanBiStateDirection.
+const (
+	ChanBiStateDirectionDown        ChanBiStateDirection = "down"
+	ChanBiStateDirectionLessThannil ChanBiStateDirection = "<nil>"
+	ChanBiStateDirectionUp          ChanBiStateDirection = "up"
+)
+
+// Valid indicates whether the value is a known member of the ChanBiStateDirection enum.
+func (e ChanBiStateDirection) Valid() bool {
+	switch e {
+	case ChanBiStateDirectionDown:
+		return true
+	case ChanBiStateDirectionLessThannil:
+		return true
+	case ChanBiStateDirectionUp:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ChanCenterMonitorBreakoutWarning.
 const (
 	ChanCenterMonitorBreakoutWarningCrossAboveB        ChanCenterMonitorBreakoutWarning = "cross_above_b"
@@ -588,6 +780,54 @@ func (e ChanCenterMonitorRelativePosition) Valid() bool {
 	}
 }
 
+// Defines values for ChanLevelMovementDirection.
+const (
+	ChanLevelMovementDirectionDown        ChanLevelMovementDirection = "down"
+	ChanLevelMovementDirectionLessThannil ChanLevelMovementDirection = "<nil>"
+	ChanLevelMovementDirectionUp          ChanLevelMovementDirection = "up"
+)
+
+// Valid indicates whether the value is a known member of the ChanLevelMovementDirection enum.
+func (e ChanLevelMovementDirection) Valid() bool {
+	switch e {
+	case ChanLevelMovementDirectionDown:
+		return true
+	case ChanLevelMovementDirectionLessThannil:
+		return true
+	case ChanLevelMovementDirectionUp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanLevelMovementPreviousClassification.
+const (
+	ChanLevelMovementPreviousClassificationConsolidation              ChanLevelMovementPreviousClassification = "consolidation"
+	ChanLevelMovementPreviousClassificationDowntrend                  ChanLevelMovementPreviousClassification = "downtrend"
+	ChanLevelMovementPreviousClassificationHigherLevelCenterCandidate ChanLevelMovementPreviousClassification = "higher_level_center_candidate"
+	ChanLevelMovementPreviousClassificationLessThannil                ChanLevelMovementPreviousClassification = "<nil>"
+	ChanLevelMovementPreviousClassificationUptrend                    ChanLevelMovementPreviousClassification = "uptrend"
+)
+
+// Valid indicates whether the value is a known member of the ChanLevelMovementPreviousClassification enum.
+func (e ChanLevelMovementPreviousClassification) Valid() bool {
+	switch e {
+	case ChanLevelMovementPreviousClassificationConsolidation:
+		return true
+	case ChanLevelMovementPreviousClassificationDowntrend:
+		return true
+	case ChanLevelMovementPreviousClassificationHigherLevelCenterCandidate:
+		return true
+	case ChanLevelMovementPreviousClassificationLessThannil:
+		return true
+	case ChanLevelMovementPreviousClassificationUptrend:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ChanMovementStateDirection.
 const (
 	ChanMovementStateDirectionDown        ChanMovementStateDirection = "down"
@@ -627,6 +867,27 @@ func (e ChanMovementStateStateType) Valid() bool {
 	case ChanMovementStateStateTypeCentreOscillation:
 		return true
 	case ChanMovementStateStateTypeConsolidation:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsBiStatesDirection.
+const (
+	ChanObjectsBiStatesDirectionDown        ChanObjectsBiStatesDirection = "down"
+	ChanObjectsBiStatesDirectionLessThannil ChanObjectsBiStatesDirection = "<nil>"
+	ChanObjectsBiStatesDirectionUp          ChanObjectsBiStatesDirection = "up"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsBiStatesDirection enum.
+func (e ChanObjectsBiStatesDirection) Valid() bool {
+	switch e {
+	case ChanObjectsBiStatesDirectionDown:
+		return true
+	case ChanObjectsBiStatesDirectionLessThannil:
+		return true
+	case ChanObjectsBiStatesDirectionUp:
 		return true
 	default:
 		return false
@@ -714,6 +975,57 @@ func (e ChanObjectsCenterMonitorsRelativePosition) Valid() bool {
 	case ChanObjectsCenterMonitorsRelativePositionBelow:
 		return true
 	case ChanObjectsCenterMonitorsRelativePositionEqual:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsDivergencesCatalogAlgorithmId.
+const (
+	ChanObjectsDivergencesCatalogAlgorithmIdALGSIG001   ChanObjectsDivergencesCatalogAlgorithmId = "ALG-SIG-001"
+	ChanObjectsDivergencesCatalogAlgorithmIdLessThannil ChanObjectsDivergencesCatalogAlgorithmId = "<nil>"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsDivergencesCatalogAlgorithmId enum.
+func (e ChanObjectsDivergencesCatalogAlgorithmId) Valid() bool {
+	switch e {
+	case ChanObjectsDivergencesCatalogAlgorithmIdALGSIG001:
+		return true
+	case ChanObjectsDivergencesCatalogAlgorithmIdLessThannil:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsDivergencesCatalogEvent.
+const (
+	ChanObjectsDivergencesCatalogEventB1Candidate   ChanObjectsDivergencesCatalogEvent = "B1_candidate"
+	ChanObjectsDivergencesCatalogEventB1Confirmed   ChanObjectsDivergencesCatalogEvent = "B1_confirmed"
+	ChanObjectsDivergencesCatalogEventB1Invalidated ChanObjectsDivergencesCatalogEvent = "B1_invalidated"
+	ChanObjectsDivergencesCatalogEventLessThannil   ChanObjectsDivergencesCatalogEvent = "<nil>"
+	ChanObjectsDivergencesCatalogEventS1Candidate   ChanObjectsDivergencesCatalogEvent = "S1_candidate"
+	ChanObjectsDivergencesCatalogEventS1Confirmed   ChanObjectsDivergencesCatalogEvent = "S1_confirmed"
+	ChanObjectsDivergencesCatalogEventS1Invalidated ChanObjectsDivergencesCatalogEvent = "S1_invalidated"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsDivergencesCatalogEvent enum.
+func (e ChanObjectsDivergencesCatalogEvent) Valid() bool {
+	switch e {
+	case ChanObjectsDivergencesCatalogEventB1Candidate:
+		return true
+	case ChanObjectsDivergencesCatalogEventB1Confirmed:
+		return true
+	case ChanObjectsDivergencesCatalogEventB1Invalidated:
+		return true
+	case ChanObjectsDivergencesCatalogEventLessThannil:
+		return true
+	case ChanObjectsDivergencesCatalogEventS1Candidate:
+		return true
+	case ChanObjectsDivergencesCatalogEventS1Confirmed:
+		return true
+	case ChanObjectsDivergencesCatalogEventS1Invalidated:
 		return true
 	default:
 		return false
@@ -840,6 +1152,54 @@ func (e ChanObjectsDivergencesStrength) Valid() bool {
 	}
 }
 
+// Defines values for ChanObjectsLevelMovementsDirection.
+const (
+	ChanObjectsLevelMovementsDirectionDown        ChanObjectsLevelMovementsDirection = "down"
+	ChanObjectsLevelMovementsDirectionLessThannil ChanObjectsLevelMovementsDirection = "<nil>"
+	ChanObjectsLevelMovementsDirectionUp          ChanObjectsLevelMovementsDirection = "up"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsLevelMovementsDirection enum.
+func (e ChanObjectsLevelMovementsDirection) Valid() bool {
+	switch e {
+	case ChanObjectsLevelMovementsDirectionDown:
+		return true
+	case ChanObjectsLevelMovementsDirectionLessThannil:
+		return true
+	case ChanObjectsLevelMovementsDirectionUp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsLevelMovementsPreviousClassification.
+const (
+	ChanObjectsLevelMovementsPreviousClassificationConsolidation              ChanObjectsLevelMovementsPreviousClassification = "consolidation"
+	ChanObjectsLevelMovementsPreviousClassificationDowntrend                  ChanObjectsLevelMovementsPreviousClassification = "downtrend"
+	ChanObjectsLevelMovementsPreviousClassificationHigherLevelCenterCandidate ChanObjectsLevelMovementsPreviousClassification = "higher_level_center_candidate"
+	ChanObjectsLevelMovementsPreviousClassificationLessThannil                ChanObjectsLevelMovementsPreviousClassification = "<nil>"
+	ChanObjectsLevelMovementsPreviousClassificationUptrend                    ChanObjectsLevelMovementsPreviousClassification = "uptrend"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsLevelMovementsPreviousClassification enum.
+func (e ChanObjectsLevelMovementsPreviousClassification) Valid() bool {
+	switch e {
+	case ChanObjectsLevelMovementsPreviousClassificationConsolidation:
+		return true
+	case ChanObjectsLevelMovementsPreviousClassificationDowntrend:
+		return true
+	case ChanObjectsLevelMovementsPreviousClassificationHigherLevelCenterCandidate:
+		return true
+	case ChanObjectsLevelMovementsPreviousClassificationLessThannil:
+		return true
+	case ChanObjectsLevelMovementsPreviousClassificationUptrend:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ChanObjectsMovementStatesDirection.
 const (
 	ChanObjectsMovementStatesDirectionDown        ChanObjectsMovementStatesDirection = "down"
@@ -939,6 +1299,57 @@ func (e ChanObjectsSegmentZhongshuStatus) Valid() bool {
 	case ChanObjectsSegmentZhongshuStatusExtended:
 		return true
 	case ChanObjectsSegmentZhongshuStatusLeft:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsTradePointsCatalogAlgorithmId.
+const (
+	ChanObjectsTradePointsCatalogAlgorithmIdALGSIG001   ChanObjectsTradePointsCatalogAlgorithmId = "ALG-SIG-001"
+	ChanObjectsTradePointsCatalogAlgorithmIdLessThannil ChanObjectsTradePointsCatalogAlgorithmId = "<nil>"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsTradePointsCatalogAlgorithmId enum.
+func (e ChanObjectsTradePointsCatalogAlgorithmId) Valid() bool {
+	switch e {
+	case ChanObjectsTradePointsCatalogAlgorithmIdALGSIG001:
+		return true
+	case ChanObjectsTradePointsCatalogAlgorithmIdLessThannil:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsTradePointsCatalogEvent.
+const (
+	ChanObjectsTradePointsCatalogEventB1Candidate   ChanObjectsTradePointsCatalogEvent = "B1_candidate"
+	ChanObjectsTradePointsCatalogEventB1Confirmed   ChanObjectsTradePointsCatalogEvent = "B1_confirmed"
+	ChanObjectsTradePointsCatalogEventB1Invalidated ChanObjectsTradePointsCatalogEvent = "B1_invalidated"
+	ChanObjectsTradePointsCatalogEventLessThannil   ChanObjectsTradePointsCatalogEvent = "<nil>"
+	ChanObjectsTradePointsCatalogEventS1Candidate   ChanObjectsTradePointsCatalogEvent = "S1_candidate"
+	ChanObjectsTradePointsCatalogEventS1Confirmed   ChanObjectsTradePointsCatalogEvent = "S1_confirmed"
+	ChanObjectsTradePointsCatalogEventS1Invalidated ChanObjectsTradePointsCatalogEvent = "S1_invalidated"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsTradePointsCatalogEvent enum.
+func (e ChanObjectsTradePointsCatalogEvent) Valid() bool {
+	switch e {
+	case ChanObjectsTradePointsCatalogEventB1Candidate:
+		return true
+	case ChanObjectsTradePointsCatalogEventB1Confirmed:
+		return true
+	case ChanObjectsTradePointsCatalogEventB1Invalidated:
+		return true
+	case ChanObjectsTradePointsCatalogEventLessThannil:
+		return true
+	case ChanObjectsTradePointsCatalogEventS1Candidate:
+		return true
+	case ChanObjectsTradePointsCatalogEventS1Confirmed:
+		return true
+	case ChanObjectsTradePointsCatalogEventS1Invalidated:
 		return true
 	default:
 		return false
@@ -1125,6 +1536,57 @@ func (e ChanObjectsZhongshuStatus) Valid() bool {
 	}
 }
 
+// Defines values for ChanSignalPointCatalogAlgorithmId.
+const (
+	ChanSignalPointCatalogAlgorithmIdALGSIG001   ChanSignalPointCatalogAlgorithmId = "ALG-SIG-001"
+	ChanSignalPointCatalogAlgorithmIdLessThannil ChanSignalPointCatalogAlgorithmId = "<nil>"
+)
+
+// Valid indicates whether the value is a known member of the ChanSignalPointCatalogAlgorithmId enum.
+func (e ChanSignalPointCatalogAlgorithmId) Valid() bool {
+	switch e {
+	case ChanSignalPointCatalogAlgorithmIdALGSIG001:
+		return true
+	case ChanSignalPointCatalogAlgorithmIdLessThannil:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanSignalPointCatalogEvent.
+const (
+	ChanSignalPointCatalogEventB1Candidate   ChanSignalPointCatalogEvent = "B1_candidate"
+	ChanSignalPointCatalogEventB1Confirmed   ChanSignalPointCatalogEvent = "B1_confirmed"
+	ChanSignalPointCatalogEventB1Invalidated ChanSignalPointCatalogEvent = "B1_invalidated"
+	ChanSignalPointCatalogEventLessThannil   ChanSignalPointCatalogEvent = "<nil>"
+	ChanSignalPointCatalogEventS1Candidate   ChanSignalPointCatalogEvent = "S1_candidate"
+	ChanSignalPointCatalogEventS1Confirmed   ChanSignalPointCatalogEvent = "S1_confirmed"
+	ChanSignalPointCatalogEventS1Invalidated ChanSignalPointCatalogEvent = "S1_invalidated"
+)
+
+// Valid indicates whether the value is a known member of the ChanSignalPointCatalogEvent enum.
+func (e ChanSignalPointCatalogEvent) Valid() bool {
+	switch e {
+	case ChanSignalPointCatalogEventB1Candidate:
+		return true
+	case ChanSignalPointCatalogEventB1Confirmed:
+		return true
+	case ChanSignalPointCatalogEventB1Invalidated:
+		return true
+	case ChanSignalPointCatalogEventLessThannil:
+		return true
+	case ChanSignalPointCatalogEventS1Candidate:
+		return true
+	case ChanSignalPointCatalogEventS1Confirmed:
+		return true
+	case ChanSignalPointCatalogEventS1Invalidated:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ChanSignalPointDivergenceKind.
 const (
 	ChanSignalPointDivergenceKindConsolidation ChanSignalPointDivergenceKind = "consolidation"
@@ -1305,6 +1767,27 @@ func (e ChanZhongshuStatus) Valid() bool {
 	}
 }
 
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsBiStatesDirection.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsBiStatesDirectionDown        GetCalculationResults200JSONResponseBodyObjectsBiStatesDirection = "down"
+	GetCalculationResults200JSONResponseBodyObjectsBiStatesDirectionLessThannil GetCalculationResults200JSONResponseBodyObjectsBiStatesDirection = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsBiStatesDirectionUp          GetCalculationResults200JSONResponseBodyObjectsBiStatesDirection = "up"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsBiStatesDirection enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsBiStatesDirection) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsBiStatesDirectionDown:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsBiStatesDirectionLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsBiStatesDirectionUp:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarning.
 const (
 	GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarningCrossAboveB        GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarning = "cross_above_b"
@@ -1386,6 +1869,57 @@ func (e GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePos
 	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePositionBelow:
 		return true
 	case GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePositionEqual:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogAlgorithmId.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogAlgorithmIdALGSIG001   GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogAlgorithmId = "ALG-SIG-001"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogAlgorithmIdLessThannil GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogAlgorithmId = "<nil>"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogAlgorithmId enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogAlgorithmId) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogAlgorithmIdALGSIG001:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogAlgorithmIdLessThannil:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEvent.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEventB1Candidate   GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEvent = "B1_candidate"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEventB1Confirmed   GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEvent = "B1_confirmed"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEventB1Invalidated GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEvent = "B1_invalidated"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEventLessThannil   GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEvent = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEventS1Candidate   GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEvent = "S1_candidate"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEventS1Confirmed   GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEvent = "S1_confirmed"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEventS1Invalidated GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEvent = "S1_invalidated"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEvent enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEvent) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEventB1Candidate:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEventB1Confirmed:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEventB1Invalidated:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEventLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEventS1Candidate:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEventS1Confirmed:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEventS1Invalidated:
 		return true
 	default:
 		return false
@@ -1512,6 +2046,54 @@ func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesStrength) Vali
 	}
 }
 
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsLevelMovementsDirection.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsLevelMovementsDirectionDown        GetCalculationResults200JSONResponseBodyObjectsLevelMovementsDirection = "down"
+	GetCalculationResults200JSONResponseBodyObjectsLevelMovementsDirectionLessThannil GetCalculationResults200JSONResponseBodyObjectsLevelMovementsDirection = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsLevelMovementsDirectionUp          GetCalculationResults200JSONResponseBodyObjectsLevelMovementsDirection = "up"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsLevelMovementsDirection enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsLevelMovementsDirection) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsLevelMovementsDirectionDown:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsLevelMovementsDirectionLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsLevelMovementsDirectionUp:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsLevelMovementsPreviousClassification.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsLevelMovementsPreviousClassificationConsolidation              GetCalculationResults200JSONResponseBodyObjectsLevelMovementsPreviousClassification = "consolidation"
+	GetCalculationResults200JSONResponseBodyObjectsLevelMovementsPreviousClassificationDowntrend                  GetCalculationResults200JSONResponseBodyObjectsLevelMovementsPreviousClassification = "downtrend"
+	GetCalculationResults200JSONResponseBodyObjectsLevelMovementsPreviousClassificationHigherLevelCenterCandidate GetCalculationResults200JSONResponseBodyObjectsLevelMovementsPreviousClassification = "higher_level_center_candidate"
+	GetCalculationResults200JSONResponseBodyObjectsLevelMovementsPreviousClassificationLessThannil                GetCalculationResults200JSONResponseBodyObjectsLevelMovementsPreviousClassification = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsLevelMovementsPreviousClassificationUptrend                    GetCalculationResults200JSONResponseBodyObjectsLevelMovementsPreviousClassification = "uptrend"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsLevelMovementsPreviousClassification enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsLevelMovementsPreviousClassification) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsLevelMovementsPreviousClassificationConsolidation:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsLevelMovementsPreviousClassificationDowntrend:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsLevelMovementsPreviousClassificationHigherLevelCenterCandidate:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsLevelMovementsPreviousClassificationLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsLevelMovementsPreviousClassificationUptrend:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetCalculationResults200JSONResponseBodyObjectsMovementStatesDirection.
 const (
 	GetCalculationResults200JSONResponseBodyObjectsMovementStatesDirectionDown        GetCalculationResults200JSONResponseBodyObjectsMovementStatesDirection = "down"
@@ -1611,6 +2193,57 @@ func (e GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatus) Va
 	case GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatusExtended:
 		return true
 	case GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatusLeft:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogAlgorithmId.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogAlgorithmIdALGSIG001   GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogAlgorithmId = "ALG-SIG-001"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogAlgorithmIdLessThannil GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogAlgorithmId = "<nil>"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogAlgorithmId enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogAlgorithmId) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogAlgorithmIdALGSIG001:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogAlgorithmIdLessThannil:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEvent.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEventB1Candidate   GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEvent = "B1_candidate"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEventB1Confirmed   GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEvent = "B1_confirmed"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEventB1Invalidated GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEvent = "B1_invalidated"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEventLessThannil   GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEvent = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEventS1Candidate   GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEvent = "S1_candidate"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEventS1Confirmed   GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEvent = "S1_confirmed"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEventS1Invalidated GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEvent = "S1_invalidated"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEvent enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEvent) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEventB1Candidate:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEventB1Confirmed:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEventB1Invalidated:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEventLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEventS1Candidate:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEventS1Confirmed:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEventS1Invalidated:
 		return true
 	default:
 		return false
@@ -1799,13 +2432,15 @@ func (e GetCalculationResults200JSONResponseBodyObjectsZhongshuStatus) Valid() b
 
 // AlgorithmDefinition defines model for AlgorithmDefinition.
 type AlgorithmDefinition struct {
-	AlgorithmId      string      `json:"algorithm_id"`
-	AlgorithmVersion string      `json:"algorithm_version"`
-	Causal           interface{} `json:"causal"`
-	InputSchema      interface{} `json:"input_schema"`
-	Kind             interface{} `json:"kind"`
-	Name             string      `json:"name"`
-	Outputs          []struct {
+	AlgorithmId         string      `json:"algorithm_id"`
+	AlgorithmVersion    string      `json:"algorithm_version"`
+	CatalogAlgorithmIds *[]string   `json:"catalog_algorithm_ids,omitempty"`
+	Causal              interface{} `json:"causal"`
+	ComparisonEligible  *bool       `json:"comparison_eligible,omitempty"`
+	InputSchema         interface{} `json:"input_schema"`
+	Kind                interface{} `json:"kind"`
+	Name                string      `json:"name"`
+	Outputs             []struct {
 		DisplayName string      `json:"display_name"`
 		Name        string      `json:"name"`
 		ObjectType  interface{} `json:"object_type,omitempty"`
@@ -1813,7 +2448,9 @@ type AlgorithmDefinition struct {
 		SeriesType  interface{} `json:"series_type"`
 	} `json:"outputs"`
 	ParameterSchema map[string]interface{} `json:"parameter_schema"`
+	ResearchRole    interface{}            `json:"research_role,omitempty"`
 	SourceHash      string                 `json:"source_hash"`
+	StrategyFamily  *string                `json:"strategy_family,omitempty"`
 	Warmup          struct {
 		Expression string      `json:"expression"`
 		Kind       interface{} `json:"kind"`
@@ -2014,6 +2651,7 @@ type CalculationResults struct {
 	JobId        string `json:"job_id"`
 	Objects      *struct {
 		Bi []struct {
+			CatalogAlgorithmId         interface{} `json:"catalog_algorithm_id"`
 			Confirmed                  bool        `json:"confirmed"`
 			ConfirmedAtBarIndex        *int        `json:"confirmed_at_bar_index"`
 			Direction                  interface{} `json:"direction"`
@@ -2021,6 +2659,7 @@ type CalculationResults struct {
 			EndExtremeSourceBarIndex   int         `json:"end_extreme_source_bar_index"`
 			EndPriceI64                int         `json:"end_price_i64"`
 			EndTime                    int         `json:"end_time"`
+			InvalidationReason         *string     `json:"invalidation_reason"`
 			KnownAtBarIndex            int         `json:"known_at_bar_index"`
 			ObjectId                   string      `json:"object_id"`
 			ObjectRevision             int         `json:"object_revision"`
@@ -2028,7 +2667,22 @@ type CalculationResults struct {
 			StartExtremeSourceBarIndex int         `json:"start_extreme_source_bar_index"`
 			StartPriceI64              int         `json:"start_price_i64"`
 			StartTime                  int         `json:"start_time"`
+			Status                     interface{} `json:"status"`
 		} `json:"bi"`
+		BiStates []struct {
+			AnchorFractalId    *string                                     `json:"anchor_fractal_id"`
+			BarIndex           int                                         `json:"bar_index"`
+			CandidateObjectId  *string                                     `json:"candidate_object_id"`
+			CatalogAlgorithmId interface{}                                 `json:"catalog_algorithm_id"`
+			Direction          *CalculationResultsObjectsBiStatesDirection `json:"direction"`
+			KnownAtBarIndex    int                                         `json:"known_at_bar_index"`
+			ObjectId           string                                      `json:"object_id"`
+			ObjectRevision     int                                         `json:"object_revision"`
+			PriceI64           int                                         `json:"price_i64"`
+			State              interface{}                                 `json:"state"`
+			Time               int                                         `json:"time"`
+			Trigger            interface{}                                 `json:"trigger"`
+		} `json:"bi_states"`
 		CenterMonitors []struct {
 			AnalysisLevel       string                                                    `json:"analysis_level"`
 			BarIndex            int                                                       `json:"bar_index"`
@@ -2061,36 +2715,98 @@ type CalculationResults struct {
 			ZnTwiceI64          int                                                       `json:"zn_twice_i64"`
 		} `json:"center_monitors"`
 		Divergences []struct {
-			BarIndex            int                                                 `json:"bar_index"`
-			Confirmed           bool                                                `json:"confirmed"`
-			ConfirmedAtBarIndex *int                                                `json:"confirmed_at_bar_index"`
-			DivergenceKind      *CalculationResultsObjectsDivergencesDivergenceKind `json:"divergence_kind"`
-			KnownAtBarIndex     int                                                 `json:"known_at_bar_index"`
-			MacdAreaCurrent     *float32                                            `json:"macd_area_current"`
-			MacdAreaReference   *float32                                            `json:"macd_area_reference"`
-			ObjectId            string                                              `json:"object_id"`
-			ObjectRevision      int                                                 `json:"object_revision"`
-			PriceI64            int                                                 `json:"price_i64"`
-			ReferenceObjectId   *string                                             `json:"reference_object_id"`
-			SignalClass         *CalculationResultsObjectsDivergencesSignalClass    `json:"signal_class"`
-			SignalType          CalculationResultsObjectsDivergencesSignalType      `json:"signal_type"`
-			Strength            *CalculationResultsObjectsDivergencesStrength       `json:"strength"`
-			Time                int                                                 `json:"time"`
+			BarIndex               int                                                     `json:"bar_index"`
+			CatalogAlgorithmId     *CalculationResultsObjectsDivergencesCatalogAlgorithmId `json:"catalog_algorithm_id"`
+			CatalogEvent           *CalculationResultsObjectsDivergencesCatalogEvent       `json:"catalog_event"`
+			Confirmed              bool                                                    `json:"confirmed"`
+			ConfirmedAtBarIndex    *int                                                    `json:"confirmed_at_bar_index"`
+			DivergenceKind         *CalculationResultsObjectsDivergencesDivergenceKind     `json:"divergence_kind"`
+			InvalidationReason     *string                                                 `json:"invalidation_reason"`
+			KnownAtBarIndex        int                                                     `json:"known_at_bar_index"`
+			LevelId                *string                                                 `json:"level_id"`
+			LowerLevelTurnObjectId *string                                                 `json:"lower_level_turn_object_id"`
+			MacdAreaCurrent        *float32                                                `json:"macd_area_current"`
+			MacdAreaReference      *float32                                                `json:"macd_area_reference"`
+			ObjectId               string                                                  `json:"object_id"`
+			ObjectRevision         int                                                     `json:"object_revision"`
+			PriceI64               int                                                     `json:"price_i64"`
+			ReferenceObjectId      *string                                                 `json:"reference_object_id"`
+			SignalClass            *CalculationResultsObjectsDivergencesSignalClass        `json:"signal_class"`
+			SignalType             CalculationResultsObjectsDivergencesSignalType          `json:"signal_type"`
+			Status                 interface{}                                             `json:"status"`
+			Strength               *CalculationResultsObjectsDivergencesStrength           `json:"strength"`
+			Time                   int                                                     `json:"time"`
 		} `json:"divergences"`
 		Fractals []struct {
-			BarIndex              int         `json:"bar_index"`
-			Confirmed             bool        `json:"confirmed"`
-			ConfirmedAtBarIndex   *int        `json:"confirmed_at_bar_index"`
-			ExtremeSourceBarIndex int         `json:"extreme_source_bar_index"`
-			FractalType           interface{} `json:"fractal_type"`
-			KnownAtBarIndex       int         `json:"known_at_bar_index"`
-			ObjectId              string      `json:"object_id"`
-			ObjectRevision        int         `json:"object_revision"`
-			PriceI64              int         `json:"price_i64"`
-			Time                  int         `json:"time"`
-			ZoneHighI64           int         `json:"zone_high_i64"`
-			ZoneLowI64            int         `json:"zone_low_i64"`
+			AuxStrength               interface{} `json:"aux_strength"`
+			BarIndex                  int         `json:"bar_index"`
+			CatalogAlgorithmId        interface{} `json:"catalog_algorithm_id"`
+			Confirmed                 bool        `json:"confirmed"`
+			ConfirmedAtBarIndex       *int        `json:"confirmed_at_bar_index"`
+			ExecutionAllowed          interface{} `json:"execution_allowed"`
+			ExtremeSourceBarIndex     int         `json:"extreme_source_bar_index"`
+			FractalType               interface{} `json:"fractal_type"`
+			InvalidationReason        *string     `json:"invalidation_reason"`
+			KnownAtBarIndex           int         `json:"known_at_bar_index"`
+			ObjectId                  string      `json:"object_id"`
+			ObjectRevision            int         `json:"object_revision"`
+			PriceI64                  int         `json:"price_i64"`
+			StandardSignal            interface{} `json:"standard_signal"`
+			Status                    interface{} `json:"status"`
+			StrengthReason            string      `json:"strength_reason"`
+			StrengthSemanticNamespace interface{} `json:"strength_semantic_namespace"`
+			Time                      int         `json:"time"`
+			ZoneHighI64               int         `json:"zone_high_i64"`
+			ZoneLowI64                int         `json:"zone_low_i64"`
 		} `json:"fractals"`
+		LevelCenters []struct {
+			CatalogAlgorithmId   interface{} `json:"catalog_algorithm_id"`
+			CatalogEvent         interface{} `json:"catalog_event"`
+			ComponentKind        interface{} `json:"component_kind"`
+			ComponentObjectIds   []string    `json:"component_object_ids"`
+			Confirmed            bool        `json:"confirmed"`
+			ConfirmedAtBarIndex  *int        `json:"confirmed_at_bar_index"`
+			DdI64                int         `json:"dd_i64"`
+			EndBarIndex          int         `json:"end_bar_index"`
+			EndTime              int         `json:"end_time"`
+			GgI64                int         `json:"gg_i64"`
+			KnownAtBarIndex      int         `json:"known_at_bar_index"`
+			LevelId              string      `json:"level_id"`
+			ObjectId             string      `json:"object_id"`
+			ObjectRevision       int         `json:"object_revision"`
+			ParentLevelId        string      `json:"parent_level_id"`
+			PromotedFromCenterId *string     `json:"promoted_from_center_id"`
+			PromotionReason      interface{} `json:"promotion_reason"`
+			SourceCenterIds      []string    `json:"source_center_ids"`
+			StartBarIndex        int         `json:"start_bar_index"`
+			StartTime            int         `json:"start_time"`
+			Status               interface{} `json:"status"`
+			ZdI64                int         `json:"zd_i64"`
+			ZgI64                int         `json:"zg_i64"`
+		} `json:"level_centers"`
+		LevelMovements []struct {
+			CatalogAlgorithmId      interface{}                                                    `json:"catalog_algorithm_id"`
+			CatalogEvent            interface{}                                                    `json:"catalog_event"`
+			Classification          interface{}                                                    `json:"classification"`
+			ComponentCenterIds      []string                                                       `json:"component_center_ids"`
+			Confirmed               bool                                                           `json:"confirmed"`
+			ConfirmedAtBarIndex     *int                                                           `json:"confirmed_at_bar_index"`
+			Direction               *CalculationResultsObjectsLevelMovementsDirection              `json:"direction"`
+			EndBarIndex             int                                                            `json:"end_bar_index"`
+			EndTime                 int                                                            `json:"end_time"`
+			HighI64                 int                                                            `json:"high_i64"`
+			KnownAtBarIndex         int                                                            `json:"known_at_bar_index"`
+			LevelId                 string                                                         `json:"level_id"`
+			LowI64                  int                                                            `json:"low_i64"`
+			ObjectId                string                                                         `json:"object_id"`
+			ObjectRevision          int                                                            `json:"object_revision"`
+			ParentCenterCandidateId *string                                                        `json:"parent_center_candidate_id"`
+			PreviousClassification  *CalculationResultsObjectsLevelMovementsPreviousClassification `json:"previous_classification"`
+			ReclassificationReason  *string                                                        `json:"reclassification_reason"`
+			StartBarIndex           int                                                            `json:"start_bar_index"`
+			StartTime               int                                                            `json:"start_time"`
+			Status                  interface{}                                                    `json:"status"`
+		} `json:"level_movements"`
 		MovementStates []struct {
 			AnalysisLevel       string                                            `json:"analysis_level"`
 			Confirmed           bool                                              `json:"confirmed"`
@@ -2107,6 +2823,27 @@ type CalculationResults struct {
 			StartTime           int                                               `json:"start_time"`
 			StateType           CalculationResultsObjectsMovementStatesStateType  `json:"state_type"`
 		} `json:"movement_states"`
+		ProcessedBars []struct {
+			CatalogEvent       interface{} `json:"catalog_event"`
+			CloseI64           int         `json:"close_i64"`
+			Direction          interface{} `json:"direction"`
+			EndBarIndex        int         `json:"end_bar_index"`
+			EndTime            int         `json:"end_time"`
+			HighI64            int         `json:"high_i64"`
+			HighSourceBarIndex int         `json:"high_source_bar_index"`
+			KnownAtBarIndex    int         `json:"known_at_bar_index"`
+			LowI64             int         `json:"low_i64"`
+			LowSourceBarIndex  int         `json:"low_source_bar_index"`
+			NormalizedIndex    int         `json:"normalized_index"`
+			ObjectId           string      `json:"object_id"`
+			ObjectRevision     int         `json:"object_revision"`
+			OpenI64            int         `json:"open_i64"`
+			SealedAtBarIndex   *int        `json:"sealed_at_bar_index"`
+			SourceBarIndices   []int       `json:"source_bar_indices"`
+			StartBarIndex      int         `json:"start_bar_index"`
+			StartTime          int         `json:"start_time"`
+			Status             interface{} `json:"status"`
+		} `json:"processed_bars"`
 		SegmentZhongshu []struct {
 			AnalysisLevel       string                                                  `json:"analysis_level"`
 			ComponentCount      int                                                     `json:"component_count"`
@@ -2129,6 +2866,7 @@ type CalculationResults struct {
 			ZgI64               int                                                     `json:"zg_i64"`
 		} `json:"segment_zhongshu"`
 		Segments []struct {
+			CatalogAlgorithmId         interface{} `json:"catalog_algorithm_id"`
 			Confirmed                  bool        `json:"confirmed"`
 			ConfirmedAtBarIndex        *int        `json:"confirmed_at_bar_index"`
 			Direction                  interface{} `json:"direction"`
@@ -2136,6 +2874,7 @@ type CalculationResults struct {
 			EndExtremeSourceBarIndex   int         `json:"end_extreme_source_bar_index"`
 			EndPriceI64                int         `json:"end_price_i64"`
 			EndTime                    int         `json:"end_time"`
+			InvalidationReason         *string     `json:"invalidation_reason"`
 			KnownAtBarIndex            int         `json:"known_at_bar_index"`
 			ObjectId                   string      `json:"object_id"`
 			ObjectRevision             int         `json:"object_revision"`
@@ -2143,23 +2882,30 @@ type CalculationResults struct {
 			StartExtremeSourceBarIndex int         `json:"start_extreme_source_bar_index"`
 			StartPriceI64              int         `json:"start_price_i64"`
 			StartTime                  int         `json:"start_time"`
+			Status                     interface{} `json:"status"`
 		} `json:"segments"`
 		TradePoints []struct {
-			BarIndex            int                                                 `json:"bar_index"`
-			Confirmed           bool                                                `json:"confirmed"`
-			ConfirmedAtBarIndex *int                                                `json:"confirmed_at_bar_index"`
-			DivergenceKind      *CalculationResultsObjectsTradePointsDivergenceKind `json:"divergence_kind"`
-			KnownAtBarIndex     int                                                 `json:"known_at_bar_index"`
-			MacdAreaCurrent     *float32                                            `json:"macd_area_current"`
-			MacdAreaReference   *float32                                            `json:"macd_area_reference"`
-			ObjectId            string                                              `json:"object_id"`
-			ObjectRevision      int                                                 `json:"object_revision"`
-			PriceI64            int                                                 `json:"price_i64"`
-			ReferenceObjectId   *string                                             `json:"reference_object_id"`
-			SignalClass         *CalculationResultsObjectsTradePointsSignalClass    `json:"signal_class"`
-			SignalType          CalculationResultsObjectsTradePointsSignalType      `json:"signal_type"`
-			Strength            *CalculationResultsObjectsTradePointsStrength       `json:"strength"`
-			Time                int                                                 `json:"time"`
+			BarIndex               int                                                     `json:"bar_index"`
+			CatalogAlgorithmId     *CalculationResultsObjectsTradePointsCatalogAlgorithmId `json:"catalog_algorithm_id"`
+			CatalogEvent           *CalculationResultsObjectsTradePointsCatalogEvent       `json:"catalog_event"`
+			Confirmed              bool                                                    `json:"confirmed"`
+			ConfirmedAtBarIndex    *int                                                    `json:"confirmed_at_bar_index"`
+			DivergenceKind         *CalculationResultsObjectsTradePointsDivergenceKind     `json:"divergence_kind"`
+			InvalidationReason     *string                                                 `json:"invalidation_reason"`
+			KnownAtBarIndex        int                                                     `json:"known_at_bar_index"`
+			LevelId                *string                                                 `json:"level_id"`
+			LowerLevelTurnObjectId *string                                                 `json:"lower_level_turn_object_id"`
+			MacdAreaCurrent        *float32                                                `json:"macd_area_current"`
+			MacdAreaReference      *float32                                                `json:"macd_area_reference"`
+			ObjectId               string                                                  `json:"object_id"`
+			ObjectRevision         int                                                     `json:"object_revision"`
+			PriceI64               int                                                     `json:"price_i64"`
+			ReferenceObjectId      *string                                                 `json:"reference_object_id"`
+			SignalClass            *CalculationResultsObjectsTradePointsSignalClass        `json:"signal_class"`
+			SignalType             CalculationResultsObjectsTradePointsSignalType          `json:"signal_type"`
+			Status                 interface{}                                             `json:"status"`
+			Strength               *CalculationResultsObjectsTradePointsStrength           `json:"strength"`
+			Time                   int                                                     `json:"time"`
 		} `json:"trade_points"`
 		Zhongshu []struct {
 			AnalysisLevel       string                                           `json:"analysis_level"`
@@ -2188,6 +2934,9 @@ type CalculationResults struct {
 	Values     *map[string][]*float32 `json:"values,omitempty"`
 }
 
+// CalculationResultsObjectsBiStatesDirection defines model for CalculationResults.Objects.BiStates.Direction.
+type CalculationResultsObjectsBiStatesDirection string
+
 // CalculationResultsObjectsCenterMonitorsBreakoutWarning defines model for CalculationResults.Objects.CenterMonitors.BreakoutWarning.
 type CalculationResultsObjectsCenterMonitorsBreakoutWarning string
 
@@ -2200,6 +2949,12 @@ type CalculationResultsObjectsCenterMonitorsOscillationBias string
 // CalculationResultsObjectsCenterMonitorsRelativePosition defines model for CalculationResults.Objects.CenterMonitors.RelativePosition.
 type CalculationResultsObjectsCenterMonitorsRelativePosition string
 
+// CalculationResultsObjectsDivergencesCatalogAlgorithmId defines model for CalculationResults.Objects.Divergences.CatalogAlgorithmId.
+type CalculationResultsObjectsDivergencesCatalogAlgorithmId string
+
+// CalculationResultsObjectsDivergencesCatalogEvent defines model for CalculationResults.Objects.Divergences.CatalogEvent.
+type CalculationResultsObjectsDivergencesCatalogEvent string
+
 // CalculationResultsObjectsDivergencesDivergenceKind defines model for CalculationResults.Objects.Divergences.DivergenceKind.
 type CalculationResultsObjectsDivergencesDivergenceKind string
 
@@ -2211,6 +2966,12 @@ type CalculationResultsObjectsDivergencesSignalType string
 
 // CalculationResultsObjectsDivergencesStrength defines model for CalculationResults.Objects.Divergences.Strength.
 type CalculationResultsObjectsDivergencesStrength string
+
+// CalculationResultsObjectsLevelMovementsDirection defines model for CalculationResults.Objects.LevelMovements.Direction.
+type CalculationResultsObjectsLevelMovementsDirection string
+
+// CalculationResultsObjectsLevelMovementsPreviousClassification defines model for CalculationResults.Objects.LevelMovements.PreviousClassification.
+type CalculationResultsObjectsLevelMovementsPreviousClassification string
 
 // CalculationResultsObjectsMovementStatesDirection defines model for CalculationResults.Objects.MovementStates.Direction.
 type CalculationResultsObjectsMovementStatesDirection string
@@ -2226,6 +2987,12 @@ type CalculationResultsObjectsSegmentZhongshuLeaveDirection string
 
 // CalculationResultsObjectsSegmentZhongshuStatus defines model for CalculationResults.Objects.SegmentZhongshu.Status.
 type CalculationResultsObjectsSegmentZhongshuStatus string
+
+// CalculationResultsObjectsTradePointsCatalogAlgorithmId defines model for CalculationResults.Objects.TradePoints.CatalogAlgorithmId.
+type CalculationResultsObjectsTradePointsCatalogAlgorithmId string
+
+// CalculationResultsObjectsTradePointsCatalogEvent defines model for CalculationResults.Objects.TradePoints.CatalogEvent.
+type CalculationResultsObjectsTradePointsCatalogEvent string
 
 // CalculationResultsObjectsTradePointsDivergenceKind defines model for CalculationResults.Objects.TradePoints.DivergenceKind.
 type CalculationResultsObjectsTradePointsDivergenceKind string
@@ -2258,6 +3025,25 @@ type CausalEvent struct {
 	Operation       interface{}            `json:"operation"`
 	Payload         map[string]interface{} `json:"payload"`
 }
+
+// ChanBiState defines model for ChanBiState.
+type ChanBiState struct {
+	AnchorFractalId    *string               `json:"anchor_fractal_id"`
+	BarIndex           int                   `json:"bar_index"`
+	CandidateObjectId  *string               `json:"candidate_object_id"`
+	CatalogAlgorithmId interface{}           `json:"catalog_algorithm_id"`
+	Direction          *ChanBiStateDirection `json:"direction"`
+	KnownAtBarIndex    int                   `json:"known_at_bar_index"`
+	ObjectId           string                `json:"object_id"`
+	ObjectRevision     int                   `json:"object_revision"`
+	PriceI64           int                   `json:"price_i64"`
+	State              interface{}           `json:"state"`
+	Time               int                   `json:"time"`
+	Trigger            interface{}           `json:"trigger"`
+}
+
+// ChanBiStateDirection defines model for ChanBiState.Direction.
+type ChanBiStateDirection string
 
 // ChanCenterMonitor defines model for ChanCenterMonitor.
 type ChanCenterMonitor struct {
@@ -2306,22 +3092,89 @@ type ChanCenterMonitorRelativePosition string
 
 // ChanFractal defines model for ChanFractal.
 type ChanFractal struct {
-	BarIndex              int         `json:"bar_index"`
-	Confirmed             bool        `json:"confirmed"`
-	ConfirmedAtBarIndex   *int        `json:"confirmed_at_bar_index"`
-	ExtremeSourceBarIndex int         `json:"extreme_source_bar_index"`
-	FractalType           interface{} `json:"fractal_type"`
-	KnownAtBarIndex       int         `json:"known_at_bar_index"`
-	ObjectId              string      `json:"object_id"`
-	ObjectRevision        int         `json:"object_revision"`
-	PriceI64              int         `json:"price_i64"`
-	Time                  int         `json:"time"`
-	ZoneHighI64           int         `json:"zone_high_i64"`
-	ZoneLowI64            int         `json:"zone_low_i64"`
+	AuxStrength               interface{} `json:"aux_strength"`
+	BarIndex                  int         `json:"bar_index"`
+	CatalogAlgorithmId        interface{} `json:"catalog_algorithm_id"`
+	Confirmed                 bool        `json:"confirmed"`
+	ConfirmedAtBarIndex       *int        `json:"confirmed_at_bar_index"`
+	ExecutionAllowed          interface{} `json:"execution_allowed"`
+	ExtremeSourceBarIndex     int         `json:"extreme_source_bar_index"`
+	FractalType               interface{} `json:"fractal_type"`
+	InvalidationReason        *string     `json:"invalidation_reason"`
+	KnownAtBarIndex           int         `json:"known_at_bar_index"`
+	ObjectId                  string      `json:"object_id"`
+	ObjectRevision            int         `json:"object_revision"`
+	PriceI64                  int         `json:"price_i64"`
+	StandardSignal            interface{} `json:"standard_signal"`
+	Status                    interface{} `json:"status"`
+	StrengthReason            string      `json:"strength_reason"`
+	StrengthSemanticNamespace interface{} `json:"strength_semantic_namespace"`
+	Time                      int         `json:"time"`
+	ZoneHighI64               int         `json:"zone_high_i64"`
+	ZoneLowI64                int         `json:"zone_low_i64"`
 }
+
+// ChanLevelCenter defines model for ChanLevelCenter.
+type ChanLevelCenter struct {
+	CatalogAlgorithmId   interface{} `json:"catalog_algorithm_id"`
+	CatalogEvent         interface{} `json:"catalog_event"`
+	ComponentKind        interface{} `json:"component_kind"`
+	ComponentObjectIds   []string    `json:"component_object_ids"`
+	Confirmed            bool        `json:"confirmed"`
+	ConfirmedAtBarIndex  *int        `json:"confirmed_at_bar_index"`
+	DdI64                int         `json:"dd_i64"`
+	EndBarIndex          int         `json:"end_bar_index"`
+	EndTime              int         `json:"end_time"`
+	GgI64                int         `json:"gg_i64"`
+	KnownAtBarIndex      int         `json:"known_at_bar_index"`
+	LevelId              string      `json:"level_id"`
+	ObjectId             string      `json:"object_id"`
+	ObjectRevision       int         `json:"object_revision"`
+	ParentLevelId        string      `json:"parent_level_id"`
+	PromotedFromCenterId *string     `json:"promoted_from_center_id"`
+	PromotionReason      interface{} `json:"promotion_reason"`
+	SourceCenterIds      []string    `json:"source_center_ids"`
+	StartBarIndex        int         `json:"start_bar_index"`
+	StartTime            int         `json:"start_time"`
+	Status               interface{} `json:"status"`
+	ZdI64                int         `json:"zd_i64"`
+	ZgI64                int         `json:"zg_i64"`
+}
+
+// ChanLevelMovement defines model for ChanLevelMovement.
+type ChanLevelMovement struct {
+	CatalogAlgorithmId      interface{}                              `json:"catalog_algorithm_id"`
+	CatalogEvent            interface{}                              `json:"catalog_event"`
+	Classification          interface{}                              `json:"classification"`
+	ComponentCenterIds      []string                                 `json:"component_center_ids"`
+	Confirmed               bool                                     `json:"confirmed"`
+	ConfirmedAtBarIndex     *int                                     `json:"confirmed_at_bar_index"`
+	Direction               *ChanLevelMovementDirection              `json:"direction"`
+	EndBarIndex             int                                      `json:"end_bar_index"`
+	EndTime                 int                                      `json:"end_time"`
+	HighI64                 int                                      `json:"high_i64"`
+	KnownAtBarIndex         int                                      `json:"known_at_bar_index"`
+	LevelId                 string                                   `json:"level_id"`
+	LowI64                  int                                      `json:"low_i64"`
+	ObjectId                string                                   `json:"object_id"`
+	ObjectRevision          int                                      `json:"object_revision"`
+	ParentCenterCandidateId *string                                  `json:"parent_center_candidate_id"`
+	PreviousClassification  *ChanLevelMovementPreviousClassification `json:"previous_classification"`
+	ReclassificationReason  *string                                  `json:"reclassification_reason"`
+	StartBarIndex           int                                      `json:"start_bar_index"`
+	StartTime               int                                      `json:"start_time"`
+	Status                  interface{}                              `json:"status"`
+}
+
+// ChanLevelMovementDirection defines model for ChanLevelMovement.Direction.
+type ChanLevelMovementDirection string
+
+// ChanLevelMovementPreviousClassification defines model for ChanLevelMovement.PreviousClassification.
+type ChanLevelMovementPreviousClassification string
 
 // ChanLineObject defines model for ChanLineObject.
 type ChanLineObject struct {
+	CatalogAlgorithmId         interface{} `json:"catalog_algorithm_id"`
 	Confirmed                  bool        `json:"confirmed"`
 	ConfirmedAtBarIndex        *int        `json:"confirmed_at_bar_index"`
 	Direction                  interface{} `json:"direction"`
@@ -2329,6 +3182,7 @@ type ChanLineObject struct {
 	EndExtremeSourceBarIndex   int         `json:"end_extreme_source_bar_index"`
 	EndPriceI64                int         `json:"end_price_i64"`
 	EndTime                    int         `json:"end_time"`
+	InvalidationReason         *string     `json:"invalidation_reason"`
 	KnownAtBarIndex            int         `json:"known_at_bar_index"`
 	ObjectId                   string      `json:"object_id"`
 	ObjectRevision             int         `json:"object_revision"`
@@ -2336,6 +3190,7 @@ type ChanLineObject struct {
 	StartExtremeSourceBarIndex int         `json:"start_extreme_source_bar_index"`
 	StartPriceI64              int         `json:"start_price_i64"`
 	StartTime                  int         `json:"start_time"`
+	Status                     interface{} `json:"status"`
 }
 
 // ChanMovementState defines model for ChanMovementState.
@@ -2365,6 +3220,7 @@ type ChanMovementStateStateType string
 // ChanObjects defines model for ChanObjects.
 type ChanObjects struct {
 	Bi []struct {
+		CatalogAlgorithmId         interface{} `json:"catalog_algorithm_id"`
 		Confirmed                  bool        `json:"confirmed"`
 		ConfirmedAtBarIndex        *int        `json:"confirmed_at_bar_index"`
 		Direction                  interface{} `json:"direction"`
@@ -2372,6 +3228,7 @@ type ChanObjects struct {
 		EndExtremeSourceBarIndex   int         `json:"end_extreme_source_bar_index"`
 		EndPriceI64                int         `json:"end_price_i64"`
 		EndTime                    int         `json:"end_time"`
+		InvalidationReason         *string     `json:"invalidation_reason"`
 		KnownAtBarIndex            int         `json:"known_at_bar_index"`
 		ObjectId                   string      `json:"object_id"`
 		ObjectRevision             int         `json:"object_revision"`
@@ -2379,7 +3236,22 @@ type ChanObjects struct {
 		StartExtremeSourceBarIndex int         `json:"start_extreme_source_bar_index"`
 		StartPriceI64              int         `json:"start_price_i64"`
 		StartTime                  int         `json:"start_time"`
+		Status                     interface{} `json:"status"`
 	} `json:"bi"`
+	BiStates []struct {
+		AnchorFractalId    *string                       `json:"anchor_fractal_id"`
+		BarIndex           int                           `json:"bar_index"`
+		CandidateObjectId  *string                       `json:"candidate_object_id"`
+		CatalogAlgorithmId interface{}                   `json:"catalog_algorithm_id"`
+		Direction          *ChanObjectsBiStatesDirection `json:"direction"`
+		KnownAtBarIndex    int                           `json:"known_at_bar_index"`
+		ObjectId           string                        `json:"object_id"`
+		ObjectRevision     int                           `json:"object_revision"`
+		PriceI64           int                           `json:"price_i64"`
+		State              interface{}                   `json:"state"`
+		Time               int                           `json:"time"`
+		Trigger            interface{}                   `json:"trigger"`
+	} `json:"bi_states"`
 	CenterMonitors []struct {
 		AnalysisLevel       string                                      `json:"analysis_level"`
 		BarIndex            int                                         `json:"bar_index"`
@@ -2412,36 +3284,98 @@ type ChanObjects struct {
 		ZnTwiceI64          int                                         `json:"zn_twice_i64"`
 	} `json:"center_monitors"`
 	Divergences []struct {
-		BarIndex            int                                   `json:"bar_index"`
-		Confirmed           bool                                  `json:"confirmed"`
-		ConfirmedAtBarIndex *int                                  `json:"confirmed_at_bar_index"`
-		DivergenceKind      *ChanObjectsDivergencesDivergenceKind `json:"divergence_kind"`
-		KnownAtBarIndex     int                                   `json:"known_at_bar_index"`
-		MacdAreaCurrent     *float32                              `json:"macd_area_current"`
-		MacdAreaReference   *float32                              `json:"macd_area_reference"`
-		ObjectId            string                                `json:"object_id"`
-		ObjectRevision      int                                   `json:"object_revision"`
-		PriceI64            int                                   `json:"price_i64"`
-		ReferenceObjectId   *string                               `json:"reference_object_id"`
-		SignalClass         *ChanObjectsDivergencesSignalClass    `json:"signal_class"`
-		SignalType          ChanObjectsDivergencesSignalType      `json:"signal_type"`
-		Strength            *ChanObjectsDivergencesStrength       `json:"strength"`
-		Time                int                                   `json:"time"`
+		BarIndex               int                                       `json:"bar_index"`
+		CatalogAlgorithmId     *ChanObjectsDivergencesCatalogAlgorithmId `json:"catalog_algorithm_id"`
+		CatalogEvent           *ChanObjectsDivergencesCatalogEvent       `json:"catalog_event"`
+		Confirmed              bool                                      `json:"confirmed"`
+		ConfirmedAtBarIndex    *int                                      `json:"confirmed_at_bar_index"`
+		DivergenceKind         *ChanObjectsDivergencesDivergenceKind     `json:"divergence_kind"`
+		InvalidationReason     *string                                   `json:"invalidation_reason"`
+		KnownAtBarIndex        int                                       `json:"known_at_bar_index"`
+		LevelId                *string                                   `json:"level_id"`
+		LowerLevelTurnObjectId *string                                   `json:"lower_level_turn_object_id"`
+		MacdAreaCurrent        *float32                                  `json:"macd_area_current"`
+		MacdAreaReference      *float32                                  `json:"macd_area_reference"`
+		ObjectId               string                                    `json:"object_id"`
+		ObjectRevision         int                                       `json:"object_revision"`
+		PriceI64               int                                       `json:"price_i64"`
+		ReferenceObjectId      *string                                   `json:"reference_object_id"`
+		SignalClass            *ChanObjectsDivergencesSignalClass        `json:"signal_class"`
+		SignalType             ChanObjectsDivergencesSignalType          `json:"signal_type"`
+		Status                 interface{}                               `json:"status"`
+		Strength               *ChanObjectsDivergencesStrength           `json:"strength"`
+		Time                   int                                       `json:"time"`
 	} `json:"divergences"`
 	Fractals []struct {
-		BarIndex              int         `json:"bar_index"`
-		Confirmed             bool        `json:"confirmed"`
-		ConfirmedAtBarIndex   *int        `json:"confirmed_at_bar_index"`
-		ExtremeSourceBarIndex int         `json:"extreme_source_bar_index"`
-		FractalType           interface{} `json:"fractal_type"`
-		KnownAtBarIndex       int         `json:"known_at_bar_index"`
-		ObjectId              string      `json:"object_id"`
-		ObjectRevision        int         `json:"object_revision"`
-		PriceI64              int         `json:"price_i64"`
-		Time                  int         `json:"time"`
-		ZoneHighI64           int         `json:"zone_high_i64"`
-		ZoneLowI64            int         `json:"zone_low_i64"`
+		AuxStrength               interface{} `json:"aux_strength"`
+		BarIndex                  int         `json:"bar_index"`
+		CatalogAlgorithmId        interface{} `json:"catalog_algorithm_id"`
+		Confirmed                 bool        `json:"confirmed"`
+		ConfirmedAtBarIndex       *int        `json:"confirmed_at_bar_index"`
+		ExecutionAllowed          interface{} `json:"execution_allowed"`
+		ExtremeSourceBarIndex     int         `json:"extreme_source_bar_index"`
+		FractalType               interface{} `json:"fractal_type"`
+		InvalidationReason        *string     `json:"invalidation_reason"`
+		KnownAtBarIndex           int         `json:"known_at_bar_index"`
+		ObjectId                  string      `json:"object_id"`
+		ObjectRevision            int         `json:"object_revision"`
+		PriceI64                  int         `json:"price_i64"`
+		StandardSignal            interface{} `json:"standard_signal"`
+		Status                    interface{} `json:"status"`
+		StrengthReason            string      `json:"strength_reason"`
+		StrengthSemanticNamespace interface{} `json:"strength_semantic_namespace"`
+		Time                      int         `json:"time"`
+		ZoneHighI64               int         `json:"zone_high_i64"`
+		ZoneLowI64                int         `json:"zone_low_i64"`
 	} `json:"fractals"`
+	LevelCenters []struct {
+		CatalogAlgorithmId   interface{} `json:"catalog_algorithm_id"`
+		CatalogEvent         interface{} `json:"catalog_event"`
+		ComponentKind        interface{} `json:"component_kind"`
+		ComponentObjectIds   []string    `json:"component_object_ids"`
+		Confirmed            bool        `json:"confirmed"`
+		ConfirmedAtBarIndex  *int        `json:"confirmed_at_bar_index"`
+		DdI64                int         `json:"dd_i64"`
+		EndBarIndex          int         `json:"end_bar_index"`
+		EndTime              int         `json:"end_time"`
+		GgI64                int         `json:"gg_i64"`
+		KnownAtBarIndex      int         `json:"known_at_bar_index"`
+		LevelId              string      `json:"level_id"`
+		ObjectId             string      `json:"object_id"`
+		ObjectRevision       int         `json:"object_revision"`
+		ParentLevelId        string      `json:"parent_level_id"`
+		PromotedFromCenterId *string     `json:"promoted_from_center_id"`
+		PromotionReason      interface{} `json:"promotion_reason"`
+		SourceCenterIds      []string    `json:"source_center_ids"`
+		StartBarIndex        int         `json:"start_bar_index"`
+		StartTime            int         `json:"start_time"`
+		Status               interface{} `json:"status"`
+		ZdI64                int         `json:"zd_i64"`
+		ZgI64                int         `json:"zg_i64"`
+	} `json:"level_centers"`
+	LevelMovements []struct {
+		CatalogAlgorithmId      interface{}                                      `json:"catalog_algorithm_id"`
+		CatalogEvent            interface{}                                      `json:"catalog_event"`
+		Classification          interface{}                                      `json:"classification"`
+		ComponentCenterIds      []string                                         `json:"component_center_ids"`
+		Confirmed               bool                                             `json:"confirmed"`
+		ConfirmedAtBarIndex     *int                                             `json:"confirmed_at_bar_index"`
+		Direction               *ChanObjectsLevelMovementsDirection              `json:"direction"`
+		EndBarIndex             int                                              `json:"end_bar_index"`
+		EndTime                 int                                              `json:"end_time"`
+		HighI64                 int                                              `json:"high_i64"`
+		KnownAtBarIndex         int                                              `json:"known_at_bar_index"`
+		LevelId                 string                                           `json:"level_id"`
+		LowI64                  int                                              `json:"low_i64"`
+		ObjectId                string                                           `json:"object_id"`
+		ObjectRevision          int                                              `json:"object_revision"`
+		ParentCenterCandidateId *string                                          `json:"parent_center_candidate_id"`
+		PreviousClassification  *ChanObjectsLevelMovementsPreviousClassification `json:"previous_classification"`
+		ReclassificationReason  *string                                          `json:"reclassification_reason"`
+		StartBarIndex           int                                              `json:"start_bar_index"`
+		StartTime               int                                              `json:"start_time"`
+		Status                  interface{}                                      `json:"status"`
+	} `json:"level_movements"`
 	MovementStates []struct {
 		AnalysisLevel       string                              `json:"analysis_level"`
 		Confirmed           bool                                `json:"confirmed"`
@@ -2458,6 +3392,27 @@ type ChanObjects struct {
 		StartTime           int                                 `json:"start_time"`
 		StateType           ChanObjectsMovementStatesStateType  `json:"state_type"`
 	} `json:"movement_states"`
+	ProcessedBars []struct {
+		CatalogEvent       interface{} `json:"catalog_event"`
+		CloseI64           int         `json:"close_i64"`
+		Direction          interface{} `json:"direction"`
+		EndBarIndex        int         `json:"end_bar_index"`
+		EndTime            int         `json:"end_time"`
+		HighI64            int         `json:"high_i64"`
+		HighSourceBarIndex int         `json:"high_source_bar_index"`
+		KnownAtBarIndex    int         `json:"known_at_bar_index"`
+		LowI64             int         `json:"low_i64"`
+		LowSourceBarIndex  int         `json:"low_source_bar_index"`
+		NormalizedIndex    int         `json:"normalized_index"`
+		ObjectId           string      `json:"object_id"`
+		ObjectRevision     int         `json:"object_revision"`
+		OpenI64            int         `json:"open_i64"`
+		SealedAtBarIndex   *int        `json:"sealed_at_bar_index"`
+		SourceBarIndices   []int       `json:"source_bar_indices"`
+		StartBarIndex      int         `json:"start_bar_index"`
+		StartTime          int         `json:"start_time"`
+		Status             interface{} `json:"status"`
+	} `json:"processed_bars"`
 	SegmentZhongshu []struct {
 		AnalysisLevel       string                                    `json:"analysis_level"`
 		ComponentCount      int                                       `json:"component_count"`
@@ -2480,6 +3435,7 @@ type ChanObjects struct {
 		ZgI64               int                                       `json:"zg_i64"`
 	} `json:"segment_zhongshu"`
 	Segments []struct {
+		CatalogAlgorithmId         interface{} `json:"catalog_algorithm_id"`
 		Confirmed                  bool        `json:"confirmed"`
 		ConfirmedAtBarIndex        *int        `json:"confirmed_at_bar_index"`
 		Direction                  interface{} `json:"direction"`
@@ -2487,6 +3443,7 @@ type ChanObjects struct {
 		EndExtremeSourceBarIndex   int         `json:"end_extreme_source_bar_index"`
 		EndPriceI64                int         `json:"end_price_i64"`
 		EndTime                    int         `json:"end_time"`
+		InvalidationReason         *string     `json:"invalidation_reason"`
 		KnownAtBarIndex            int         `json:"known_at_bar_index"`
 		ObjectId                   string      `json:"object_id"`
 		ObjectRevision             int         `json:"object_revision"`
@@ -2494,23 +3451,30 @@ type ChanObjects struct {
 		StartExtremeSourceBarIndex int         `json:"start_extreme_source_bar_index"`
 		StartPriceI64              int         `json:"start_price_i64"`
 		StartTime                  int         `json:"start_time"`
+		Status                     interface{} `json:"status"`
 	} `json:"segments"`
 	TradePoints []struct {
-		BarIndex            int                                   `json:"bar_index"`
-		Confirmed           bool                                  `json:"confirmed"`
-		ConfirmedAtBarIndex *int                                  `json:"confirmed_at_bar_index"`
-		DivergenceKind      *ChanObjectsTradePointsDivergenceKind `json:"divergence_kind"`
-		KnownAtBarIndex     int                                   `json:"known_at_bar_index"`
-		MacdAreaCurrent     *float32                              `json:"macd_area_current"`
-		MacdAreaReference   *float32                              `json:"macd_area_reference"`
-		ObjectId            string                                `json:"object_id"`
-		ObjectRevision      int                                   `json:"object_revision"`
-		PriceI64            int                                   `json:"price_i64"`
-		ReferenceObjectId   *string                               `json:"reference_object_id"`
-		SignalClass         *ChanObjectsTradePointsSignalClass    `json:"signal_class"`
-		SignalType          ChanObjectsTradePointsSignalType      `json:"signal_type"`
-		Strength            *ChanObjectsTradePointsStrength       `json:"strength"`
-		Time                int                                   `json:"time"`
+		BarIndex               int                                       `json:"bar_index"`
+		CatalogAlgorithmId     *ChanObjectsTradePointsCatalogAlgorithmId `json:"catalog_algorithm_id"`
+		CatalogEvent           *ChanObjectsTradePointsCatalogEvent       `json:"catalog_event"`
+		Confirmed              bool                                      `json:"confirmed"`
+		ConfirmedAtBarIndex    *int                                      `json:"confirmed_at_bar_index"`
+		DivergenceKind         *ChanObjectsTradePointsDivergenceKind     `json:"divergence_kind"`
+		InvalidationReason     *string                                   `json:"invalidation_reason"`
+		KnownAtBarIndex        int                                       `json:"known_at_bar_index"`
+		LevelId                *string                                   `json:"level_id"`
+		LowerLevelTurnObjectId *string                                   `json:"lower_level_turn_object_id"`
+		MacdAreaCurrent        *float32                                  `json:"macd_area_current"`
+		MacdAreaReference      *float32                                  `json:"macd_area_reference"`
+		ObjectId               string                                    `json:"object_id"`
+		ObjectRevision         int                                       `json:"object_revision"`
+		PriceI64               int                                       `json:"price_i64"`
+		ReferenceObjectId      *string                                   `json:"reference_object_id"`
+		SignalClass            *ChanObjectsTradePointsSignalClass        `json:"signal_class"`
+		SignalType             ChanObjectsTradePointsSignalType          `json:"signal_type"`
+		Status                 interface{}                               `json:"status"`
+		Strength               *ChanObjectsTradePointsStrength           `json:"strength"`
+		Time                   int                                       `json:"time"`
 	} `json:"trade_points"`
 	Zhongshu []struct {
 		AnalysisLevel       string                             `json:"analysis_level"`
@@ -2535,6 +3499,9 @@ type ChanObjects struct {
 	} `json:"zhongshu"`
 }
 
+// ChanObjectsBiStatesDirection defines model for ChanObjects.BiStates.Direction.
+type ChanObjectsBiStatesDirection string
+
 // ChanObjectsCenterMonitorsBreakoutWarning defines model for ChanObjects.CenterMonitors.BreakoutWarning.
 type ChanObjectsCenterMonitorsBreakoutWarning string
 
@@ -2547,6 +3514,12 @@ type ChanObjectsCenterMonitorsOscillationBias string
 // ChanObjectsCenterMonitorsRelativePosition defines model for ChanObjects.CenterMonitors.RelativePosition.
 type ChanObjectsCenterMonitorsRelativePosition string
 
+// ChanObjectsDivergencesCatalogAlgorithmId defines model for ChanObjects.Divergences.CatalogAlgorithmId.
+type ChanObjectsDivergencesCatalogAlgorithmId string
+
+// ChanObjectsDivergencesCatalogEvent defines model for ChanObjects.Divergences.CatalogEvent.
+type ChanObjectsDivergencesCatalogEvent string
+
 // ChanObjectsDivergencesDivergenceKind defines model for ChanObjects.Divergences.DivergenceKind.
 type ChanObjectsDivergencesDivergenceKind string
 
@@ -2558,6 +3531,12 @@ type ChanObjectsDivergencesSignalType string
 
 // ChanObjectsDivergencesStrength defines model for ChanObjects.Divergences.Strength.
 type ChanObjectsDivergencesStrength string
+
+// ChanObjectsLevelMovementsDirection defines model for ChanObjects.LevelMovements.Direction.
+type ChanObjectsLevelMovementsDirection string
+
+// ChanObjectsLevelMovementsPreviousClassification defines model for ChanObjects.LevelMovements.PreviousClassification.
+type ChanObjectsLevelMovementsPreviousClassification string
 
 // ChanObjectsMovementStatesDirection defines model for ChanObjects.MovementStates.Direction.
 type ChanObjectsMovementStatesDirection string
@@ -2573,6 +3552,12 @@ type ChanObjectsSegmentZhongshuLeaveDirection string
 
 // ChanObjectsSegmentZhongshuStatus defines model for ChanObjects.SegmentZhongshu.Status.
 type ChanObjectsSegmentZhongshuStatus string
+
+// ChanObjectsTradePointsCatalogAlgorithmId defines model for ChanObjects.TradePoints.CatalogAlgorithmId.
+type ChanObjectsTradePointsCatalogAlgorithmId string
+
+// ChanObjectsTradePointsCatalogEvent defines model for ChanObjects.TradePoints.CatalogEvent.
+type ChanObjectsTradePointsCatalogEvent string
 
 // ChanObjectsTradePointsDivergenceKind defines model for ChanObjects.TradePoints.DivergenceKind.
 type ChanObjectsTradePointsDivergenceKind string
@@ -2595,24 +3580,59 @@ type ChanObjectsZhongshuLeaveDirection string
 // ChanObjectsZhongshuStatus defines model for ChanObjects.Zhongshu.Status.
 type ChanObjectsZhongshuStatus string
 
+// ChanProcessedBar defines model for ChanProcessedBar.
+type ChanProcessedBar struct {
+	CatalogEvent       interface{} `json:"catalog_event"`
+	CloseI64           int         `json:"close_i64"`
+	Direction          interface{} `json:"direction"`
+	EndBarIndex        int         `json:"end_bar_index"`
+	EndTime            int         `json:"end_time"`
+	HighI64            int         `json:"high_i64"`
+	HighSourceBarIndex int         `json:"high_source_bar_index"`
+	KnownAtBarIndex    int         `json:"known_at_bar_index"`
+	LowI64             int         `json:"low_i64"`
+	LowSourceBarIndex  int         `json:"low_source_bar_index"`
+	NormalizedIndex    int         `json:"normalized_index"`
+	ObjectId           string      `json:"object_id"`
+	ObjectRevision     int         `json:"object_revision"`
+	OpenI64            int         `json:"open_i64"`
+	SealedAtBarIndex   *int        `json:"sealed_at_bar_index"`
+	SourceBarIndices   []int       `json:"source_bar_indices"`
+	StartBarIndex      int         `json:"start_bar_index"`
+	StartTime          int         `json:"start_time"`
+	Status             interface{} `json:"status"`
+}
+
 // ChanSignalPoint defines model for ChanSignalPoint.
 type ChanSignalPoint struct {
-	BarIndex            int                            `json:"bar_index"`
-	Confirmed           bool                           `json:"confirmed"`
-	ConfirmedAtBarIndex *int                           `json:"confirmed_at_bar_index"`
-	DivergenceKind      *ChanSignalPointDivergenceKind `json:"divergence_kind"`
-	KnownAtBarIndex     int                            `json:"known_at_bar_index"`
-	MacdAreaCurrent     *float32                       `json:"macd_area_current"`
-	MacdAreaReference   *float32                       `json:"macd_area_reference"`
-	ObjectId            string                         `json:"object_id"`
-	ObjectRevision      int                            `json:"object_revision"`
-	PriceI64            int                            `json:"price_i64"`
-	ReferenceObjectId   *string                        `json:"reference_object_id"`
-	SignalClass         *ChanSignalPointSignalClass    `json:"signal_class"`
-	SignalType          ChanSignalPointSignalType      `json:"signal_type"`
-	Strength            *ChanSignalPointStrength       `json:"strength"`
-	Time                int                            `json:"time"`
+	BarIndex               int                                `json:"bar_index"`
+	CatalogAlgorithmId     *ChanSignalPointCatalogAlgorithmId `json:"catalog_algorithm_id"`
+	CatalogEvent           *ChanSignalPointCatalogEvent       `json:"catalog_event"`
+	Confirmed              bool                               `json:"confirmed"`
+	ConfirmedAtBarIndex    *int                               `json:"confirmed_at_bar_index"`
+	DivergenceKind         *ChanSignalPointDivergenceKind     `json:"divergence_kind"`
+	InvalidationReason     *string                            `json:"invalidation_reason"`
+	KnownAtBarIndex        int                                `json:"known_at_bar_index"`
+	LevelId                *string                            `json:"level_id"`
+	LowerLevelTurnObjectId *string                            `json:"lower_level_turn_object_id"`
+	MacdAreaCurrent        *float32                           `json:"macd_area_current"`
+	MacdAreaReference      *float32                           `json:"macd_area_reference"`
+	ObjectId               string                             `json:"object_id"`
+	ObjectRevision         int                                `json:"object_revision"`
+	PriceI64               int                                `json:"price_i64"`
+	ReferenceObjectId      *string                            `json:"reference_object_id"`
+	SignalClass            *ChanSignalPointSignalClass        `json:"signal_class"`
+	SignalType             ChanSignalPointSignalType          `json:"signal_type"`
+	Status                 interface{}                        `json:"status"`
+	Strength               *ChanSignalPointStrength           `json:"strength"`
+	Time                   int                                `json:"time"`
 }
+
+// ChanSignalPointCatalogAlgorithmId defines model for ChanSignalPoint.CatalogAlgorithmId.
+type ChanSignalPointCatalogAlgorithmId string
+
+// ChanSignalPointCatalogEvent defines model for ChanSignalPoint.CatalogEvent.
+type ChanSignalPointCatalogEvent string
 
 // ChanSignalPointDivergenceKind defines model for ChanSignalPoint.DivergenceKind.
 type ChanSignalPointDivergenceKind string
@@ -3036,6 +4056,198 @@ type SourceFile struct {
 	Status       interface{}               `json:"status"`
 }
 
+// StrategyComparisonAccepted defines model for StrategyComparisonAccepted.
+type StrategyComparisonAccepted struct {
+	ComparisonId string      `json:"comparison_id"`
+	RequestId    string      `json:"request_id"`
+	Status       interface{} `json:"status"`
+}
+
+// StrategyComparisonItem defines model for StrategyComparisonItem.
+type StrategyComparisonItem struct {
+	Parameters map[string]interface{} `json:"parameters"`
+	Strategy   struct {
+		AlgorithmId      string      `json:"algorithm_id"`
+		AlgorithmVersion string      `json:"algorithm_version"`
+		Kind             interface{} `json:"kind"`
+		SourceHash       string      `json:"source_hash"`
+	} `json:"strategy"`
+}
+
+// StrategyComparisonRequest defines model for StrategyComparisonRequest.
+type StrategyComparisonRequest struct {
+	Capital           map[string]interface{} `json:"capital"`
+	DataRevision      string                 `json:"data_revision"`
+	DatasetId         string                 `json:"dataset_id"`
+	Execution         map[string]interface{} `json:"execution"`
+	MinimumTradeCount int                    `json:"minimum_trade_count"`
+	RandomSeed        int                    `json:"random_seed"`
+	Range             struct {
+		FromBarIndex       int `json:"from_bar_index"`
+		ToBarIndex         int `json:"to_bar_index"`
+		WarmupFromBarIndex int `json:"warmup_from_bar_index"`
+	} `json:"range"`
+	RiskOverlay *struct {
+		Algorithm struct {
+			AlgorithmId      string      `json:"algorithm_id"`
+			AlgorithmVersion string      `json:"algorithm_version"`
+			Kind             interface{} `json:"kind"`
+			SourceHash       string      `json:"source_hash"`
+		} `json:"algorithm"`
+		Context struct {
+			HandledFutureBranches []string `json:"handled_future_branches"`
+			LegalFutureBranches   []string `json:"legal_future_branches"`
+			MarketStateRevision   string   `json:"market_state_revision"`
+			Observations          []struct {
+				AvailableAtBarIndex   int         `json:"available_at_bar_index"`
+				DataGapBars           int         `json:"data_gap_bars"`
+				DataRevision          string      `json:"data_revision"`
+				EffectiveFromBarIndex int         `json:"effective_from_bar_index"`
+				EventRiskActive       bool        `json:"event_risk_active"`
+				StaleBars             int         `json:"stale_bars"`
+				TradingStatus         interface{} `json:"trading_status"`
+			} `json:"observations"`
+			SectorId string `json:"sector_id"`
+		} `json:"context"`
+		Parameters map[string]interface{} `json:"parameters"`
+	} `json:"risk_overlay,omitempty"`
+	Strategies []struct {
+		Parameters map[string]interface{} `json:"parameters"`
+		Strategy   struct {
+			AlgorithmId      string      `json:"algorithm_id"`
+			AlgorithmVersion string      `json:"algorithm_version"`
+			Kind             interface{} `json:"kind"`
+			SourceHash       string      `json:"source_hash"`
+		} `json:"strategy"`
+	} `json:"strategies"`
+	TraceId *string `json:"trace_id,omitempty"`
+}
+
+// StrategyComparisonResult defines model for StrategyComparisonResult.
+type StrategyComparisonResult struct {
+	AlgorithmId string `json:"algorithm_id"`
+	Error       *struct {
+		Code    string `json:"code"`
+		Message string `json:"message"`
+	} `json:"error,omitempty"`
+	Name           string                            `json:"name"`
+	Parameters     map[string]interface{}            `json:"parameters"`
+	RunId          *string                           `json:"run_id,omitempty"`
+	RunSignature   *string                           `json:"run_signature,omitempty"`
+	Status         interface{}                       `json:"status"`
+	StrategyFamily string                            `json:"strategy_family"`
+	Summary        *StrategyComparisonResult_Summary `json:"summary,omitempty"`
+}
+
+// StrategyComparisonResult_Summary defines model for StrategyComparisonResult.Summary.
+type StrategyComparisonResult_Summary struct {
+	AnnualizedReturn     *float32               `json:"annualized_return,omitempty"`
+	AverageLossI64       *int                   `json:"average_loss_i64,omitempty"`
+	AverageWinI64        *int                   `json:"average_win_i64,omitempty"`
+	ExpectancyI64        *float32               `json:"expectancy_i64,omitempty"`
+	MaxDrawdown          float32                `json:"max_drawdown"`
+	ProfitFactor         *float32               `json:"profit_factor,omitempty"`
+	ProfitLossRatio      *float32               `json:"profit_loss_ratio,omitempty"`
+	RequestId            string                 `json:"request_id"`
+	RiskApprovedCount    int                    `json:"risk_approved_count"`
+	RiskBlockedCount     int                    `json:"risk_blocked_count"`
+	RiskKillSwitchCount  int                    `json:"risk_kill_switch_count"`
+	RiskReducedCount     int                    `json:"risk_reduced_count"`
+	RunId                string                 `json:"run_id"`
+	Sharpe               *float32               `json:"sharpe,omitempty"`
+	TotalCommissionI64   int                    `json:"total_commission_i64"`
+	TotalReturn          float32                `json:"total_return"`
+	TotalSlippageI64     int                    `json:"total_slippage_i64"`
+	TradeCount           int                    `json:"trade_count"`
+	WinRate              *float32               `json:"win_rate"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// StrategyComparisonResults defines model for StrategyComparisonResults.
+type StrategyComparisonResults struct {
+	ComparisonId string `json:"comparison_id"`
+	Items        []struct {
+		AlgorithmId string `json:"algorithm_id"`
+		Error       *struct {
+			Code    string `json:"code"`
+			Message string `json:"message"`
+		} `json:"error,omitempty"`
+		Name           string                                   `json:"name"`
+		Parameters     map[string]interface{}                   `json:"parameters"`
+		RunId          *string                                  `json:"run_id,omitempty"`
+		RunSignature   *string                                  `json:"run_signature,omitempty"`
+		Status         interface{}                              `json:"status"`
+		StrategyFamily string                                   `json:"strategy_family"`
+		Summary        *StrategyComparisonResults_Items_Summary `json:"summary,omitempty"`
+	} `json:"items"`
+	RequestId string `json:"request_id"`
+}
+
+// StrategyComparisonResults_Items_Summary defines model for StrategyComparisonResults.Items.Summary.
+type StrategyComparisonResults_Items_Summary struct {
+	AnnualizedReturn     *float32               `json:"annualized_return,omitempty"`
+	AverageLossI64       *int                   `json:"average_loss_i64,omitempty"`
+	AverageWinI64        *int                   `json:"average_win_i64,omitempty"`
+	ExpectancyI64        *float32               `json:"expectancy_i64,omitempty"`
+	MaxDrawdown          float32                `json:"max_drawdown"`
+	ProfitFactor         *float32               `json:"profit_factor,omitempty"`
+	ProfitLossRatio      *float32               `json:"profit_loss_ratio,omitempty"`
+	RequestId            string                 `json:"request_id"`
+	RiskApprovedCount    int                    `json:"risk_approved_count"`
+	RiskBlockedCount     int                    `json:"risk_blocked_count"`
+	RiskKillSwitchCount  int                    `json:"risk_kill_switch_count"`
+	RiskReducedCount     int                    `json:"risk_reduced_count"`
+	RunId                string                 `json:"run_id"`
+	Sharpe               *float32               `json:"sharpe,omitempty"`
+	TotalCommissionI64   int                    `json:"total_commission_i64"`
+	TotalReturn          float32                `json:"total_return"`
+	TotalSlippageI64     int                    `json:"total_slippage_i64"`
+	TradeCount           int                    `json:"trade_count"`
+	WinRate              *float32               `json:"win_rate"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// StrategyComparisonStatus defines model for StrategyComparisonStatus.
+type StrategyComparisonStatus struct {
+	ComparisonId       string  `json:"comparison_id"`
+	CompletedCount     int     `json:"completed_count"`
+	CurrentAlgorithmId *string `json:"current_algorithm_id,omitempty"`
+	Error              *struct {
+		Code    string                  `json:"code"`
+		Details *map[string]interface{} `json:"details,omitempty"`
+		Message string                  `json:"message"`
+	} `json:"error,omitempty"`
+	FailedCount int `json:"failed_count"`
+	Manifest    *struct {
+		Capital        map[string]interface{} `json:"capital"`
+		ComparisonId   string                 `json:"comparison_id"`
+		CompletedCount int                    `json:"completed_count"`
+		CreatedAt      time.Time              `json:"created_at"`
+		Dataset        struct {
+			DataRevision string `json:"data_revision"`
+			DatasetId    string `json:"dataset_id"`
+		} `json:"dataset"`
+		Execution         map[string]interface{} `json:"execution"`
+		FailedCount       int                    `json:"failed_count"`
+		MinimumTradeCount int                    `json:"minimum_trade_count"`
+		RandomSeed        int                    `json:"random_seed"`
+		Range             struct {
+			FromBarIndex       int `json:"from_bar_index"`
+			ToBarIndex         int `json:"to_bar_index"`
+			WarmupFromBarIndex int `json:"warmup_from_bar_index"`
+		} `json:"range"`
+		RiskOverlay   *map[string]interface{} `json:"risk_overlay,omitempty"`
+		SchemaVersion interface{}             `json:"schema_version"`
+		StrategyCount int                     `json:"strategy_count"`
+		TraceId       string                  `json:"trace_id"`
+	} `json:"manifest,omitempty"`
+	Progress   float32     `json:"progress"`
+	RequestId  string      `json:"request_id"`
+	ResultRef  *string     `json:"result_ref,omitempty"`
+	Status     interface{} `json:"status"`
+	TotalCount int         `json:"total_count"`
+}
+
 // StudyAccepted defines model for StudyAccepted.
 type StudyAccepted struct {
 	RequestId string      `json:"request_id"`
@@ -3283,6 +4495,9 @@ type StudyStatus struct {
 	StudyId   string      `json:"study_id"`
 }
 
+// ComparisonId defines model for ComparisonId.
+type ComparisonId = string
+
 // Cursor defines model for Cursor.
 type Cursor = string
 
@@ -3497,6 +4712,9 @@ type GetCalculationResultsParams struct {
 	ToBarIndex   int `form:"to_bar_index" json:"to_bar_index"`
 }
 
+// GetCalculationResults200JSONResponseBodyObjectsBiStatesDirection defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsBiStatesDirection string
+
 // GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarning defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsBreakoutWarning string
 
@@ -3509,6 +4727,12 @@ type GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsOscillationBia
 // GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePosition defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePosition string
 
+// GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogAlgorithmId defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogAlgorithmId string
+
+// GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEvent defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEvent string
+
 // GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKind defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKind string
 
@@ -3520,6 +4744,12 @@ type GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType string
 
 // GetCalculationResults200JSONResponseBodyObjectsDivergencesStrength defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsDivergencesStrength string
+
+// GetCalculationResults200JSONResponseBodyObjectsLevelMovementsDirection defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsLevelMovementsDirection string
+
+// GetCalculationResults200JSONResponseBodyObjectsLevelMovementsPreviousClassification defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsLevelMovementsPreviousClassification string
 
 // GetCalculationResults200JSONResponseBodyObjectsMovementStatesDirection defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsMovementStatesDirection string
@@ -3535,6 +4765,12 @@ type GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuLeaveDirectio
 
 // GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatus defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatus string
+
+// GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogAlgorithmId defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogAlgorithmId string
+
+// GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEvent defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEvent string
 
 // GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKind defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKind string
@@ -3653,6 +4889,84 @@ type CreateReplayJSONBody struct {
 type GetReplayEventsParams struct {
 	KnownFromBarIndex int `form:"known_from_bar_index" json:"known_from_bar_index"`
 	KnownToBarIndex   int `form:"known_to_bar_index" json:"known_to_bar_index"`
+}
+
+// ListStrategyComparisonsParams defines parameters for ListStrategyComparisons.
+type ListStrategyComparisonsParams struct {
+	DatasetId *string `form:"dataset_id,omitempty" json:"dataset_id,omitempty"`
+}
+
+// CreateStrategyComparisonJSONBody defines parameters for CreateStrategyComparison.
+type CreateStrategyComparisonJSONBody struct {
+	Capital           map[string]interface{} `json:"capital"`
+	DataRevision      string                 `json:"data_revision"`
+	DatasetId         string                 `json:"dataset_id"`
+	Execution         map[string]interface{} `json:"execution"`
+	MinimumTradeCount int                    `json:"minimum_trade_count"`
+	RandomSeed        int                    `json:"random_seed"`
+	Range             struct {
+		FromBarIndex       int `json:"from_bar_index"`
+		ToBarIndex         int `json:"to_bar_index"`
+		WarmupFromBarIndex int `json:"warmup_from_bar_index"`
+	} `json:"range"`
+	RiskOverlay *struct {
+		Algorithm struct {
+			AlgorithmId      string      `json:"algorithm_id"`
+			AlgorithmVersion string      `json:"algorithm_version"`
+			Kind             interface{} `json:"kind"`
+			SourceHash       string      `json:"source_hash"`
+		} `json:"algorithm"`
+		Context struct {
+			HandledFutureBranches []string `json:"handled_future_branches"`
+			LegalFutureBranches   []string `json:"legal_future_branches"`
+			MarketStateRevision   string   `json:"market_state_revision"`
+			Observations          []struct {
+				AvailableAtBarIndex   int         `json:"available_at_bar_index"`
+				DataGapBars           int         `json:"data_gap_bars"`
+				DataRevision          string      `json:"data_revision"`
+				EffectiveFromBarIndex int         `json:"effective_from_bar_index"`
+				EventRiskActive       bool        `json:"event_risk_active"`
+				StaleBars             int         `json:"stale_bars"`
+				TradingStatus         interface{} `json:"trading_status"`
+			} `json:"observations"`
+			SectorId string `json:"sector_id"`
+		} `json:"context"`
+		Parameters map[string]interface{} `json:"parameters"`
+	} `json:"risk_overlay,omitempty"`
+	Strategies []struct {
+		Parameters map[string]interface{} `json:"parameters"`
+		Strategy   struct {
+			AlgorithmId      string      `json:"algorithm_id"`
+			AlgorithmVersion string      `json:"algorithm_version"`
+			Kind             interface{} `json:"kind"`
+			SourceHash       string      `json:"source_hash"`
+		} `json:"strategy"`
+	} `json:"strategies"`
+	TraceId *string `json:"trace_id,omitempty"`
+}
+
+// GetStrategyComparisonResults200JSONResponseBody_Items_Summary defines parameters for GetStrategyComparisonResults.
+type GetStrategyComparisonResults200JSONResponseBody_Items_Summary struct {
+	AnnualizedReturn     *float32               `json:"annualized_return,omitempty"`
+	AverageLossI64       *int                   `json:"average_loss_i64,omitempty"`
+	AverageWinI64        *int                   `json:"average_win_i64,omitempty"`
+	ExpectancyI64        *float32               `json:"expectancy_i64,omitempty"`
+	MaxDrawdown          float32                `json:"max_drawdown"`
+	ProfitFactor         *float32               `json:"profit_factor,omitempty"`
+	ProfitLossRatio      *float32               `json:"profit_loss_ratio,omitempty"`
+	RequestId            string                 `json:"request_id"`
+	RiskApprovedCount    int                    `json:"risk_approved_count"`
+	RiskBlockedCount     int                    `json:"risk_blocked_count"`
+	RiskKillSwitchCount  int                    `json:"risk_kill_switch_count"`
+	RiskReducedCount     int                    `json:"risk_reduced_count"`
+	RunId                string                 `json:"run_id"`
+	Sharpe               *float32               `json:"sharpe,omitempty"`
+	TotalCommissionI64   int                    `json:"total_commission_i64"`
+	TotalReturn          float32                `json:"total_return"`
+	TotalSlippageI64     int                    `json:"total_slippage_i64"`
+	TradeCount           int                    `json:"trade_count"`
+	WinRate              *float32               `json:"win_rate"`
+	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
 // CreateStudyJSONBody defines parameters for CreateStudy.
@@ -3841,10 +5155,14 @@ type PutLayoutJSONBody struct {
 		} `json:"algorithm"`
 		CategoryVisibility struct {
 			Bi              bool  `json:"bi"`
+			BiStates        *bool `json:"bi_states,omitempty"`
 			CenterMonitors  *bool `json:"center_monitors,omitempty"`
 			Divergences     *bool `json:"divergences,omitempty"`
 			Fractals        bool  `json:"fractals"`
+			LevelCenters    *bool `json:"level_centers,omitempty"`
+			LevelMovements  *bool `json:"level_movements,omitempty"`
 			MovementStates  *bool `json:"movement_states,omitempty"`
+			ProcessedBars   *bool `json:"processed_bars,omitempty"`
 			SegmentZhongshu *bool `json:"segment_zhongshu,omitempty"`
 			Segments        *bool `json:"segments,omitempty"`
 			TradePoints     *bool `json:"trade_points,omitempty"`
@@ -3886,15 +5204,19 @@ type PutStrategySourceConfigJSONBody struct {
 	SchemaVersion   interface{} `json:"schema_version"`
 	StrategySources []struct {
 		CategoryVisibility struct {
-			Bi              bool `json:"bi"`
-			CenterMonitors  bool `json:"center_monitors"`
-			Divergences     bool `json:"divergences"`
-			Fractals        bool `json:"fractals"`
-			MovementStates  bool `json:"movement_states"`
-			SegmentZhongshu bool `json:"segment_zhongshu"`
-			Segments        bool `json:"segments"`
-			TradePoints     bool `json:"trade_points"`
-			Zhongshu        bool `json:"zhongshu"`
+			Bi              bool  `json:"bi"`
+			BiStates        *bool `json:"bi_states,omitempty"`
+			CenterMonitors  bool  `json:"center_monitors"`
+			Divergences     bool  `json:"divergences"`
+			Fractals        bool  `json:"fractals"`
+			LevelCenters    *bool `json:"level_centers,omitempty"`
+			LevelMovements  *bool `json:"level_movements,omitempty"`
+			MovementStates  bool  `json:"movement_states"`
+			ProcessedBars   *bool `json:"processed_bars,omitempty"`
+			SegmentZhongshu bool  `json:"segment_zhongshu"`
+			Segments        bool  `json:"segments"`
+			TradePoints     bool  `json:"trade_points"`
+			Zhongshu        bool  `json:"zhongshu"`
 		} `json:"category_visibility"`
 		DataRevision string `json:"data_revision"`
 		DatasetId    string `json:"dataset_id"`
@@ -3950,6 +5272,9 @@ type ImportDatasetJSONRequestBody ImportDatasetJSONBody
 
 // CreateReplayJSONRequestBody defines body for CreateReplay for application/json ContentType.
 type CreateReplayJSONRequestBody CreateReplayJSONBody
+
+// CreateStrategyComparisonJSONRequestBody defines body for CreateStrategyComparison for application/json ContentType.
+type CreateStrategyComparisonJSONRequestBody CreateStrategyComparisonJSONBody
 
 // CreateStudyJSONRequestBody defines body for CreateStudy for application/json ContentType.
 type CreateStudyJSONRequestBody CreateStudyJSONBody
@@ -4304,6 +5629,634 @@ func (a *BacktestSummary) UnmarshalJSON(b []byte) error {
 
 // Override default JSON handling for BacktestSummary to handle AdditionalProperties
 func (a BacktestSummary) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AnnualizedReturn != nil {
+		object["annualized_return"], err = json.Marshal(a.AnnualizedReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return': %w", err)
+		}
+	}
+
+	if a.AverageLossI64 != nil {
+		object["average_loss_i64"], err = json.Marshal(a.AverageLossI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_loss_i64': %w", err)
+		}
+	}
+
+	if a.AverageWinI64 != nil {
+		object["average_win_i64"], err = json.Marshal(a.AverageWinI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_win_i64': %w", err)
+		}
+	}
+
+	if a.ExpectancyI64 != nil {
+		object["expectancy_i64"], err = json.Marshal(a.ExpectancyI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'expectancy_i64': %w", err)
+		}
+	}
+
+	object["max_drawdown"], err = json.Marshal(a.MaxDrawdown)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'max_drawdown': %w", err)
+	}
+
+	if a.ProfitFactor != nil {
+		object["profit_factor"], err = json.Marshal(a.ProfitFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_factor': %w", err)
+		}
+	}
+
+	if a.ProfitLossRatio != nil {
+		object["profit_loss_ratio"], err = json.Marshal(a.ProfitLossRatio)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_loss_ratio': %w", err)
+		}
+	}
+
+	object["request_id"], err = json.Marshal(a.RequestId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'request_id': %w", err)
+	}
+
+	object["risk_approved_count"], err = json.Marshal(a.RiskApprovedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_approved_count': %w", err)
+	}
+
+	object["risk_blocked_count"], err = json.Marshal(a.RiskBlockedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_blocked_count': %w", err)
+	}
+
+	object["risk_kill_switch_count"], err = json.Marshal(a.RiskKillSwitchCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_kill_switch_count': %w", err)
+	}
+
+	object["risk_reduced_count"], err = json.Marshal(a.RiskReducedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_reduced_count': %w", err)
+	}
+
+	object["run_id"], err = json.Marshal(a.RunId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'run_id': %w", err)
+	}
+
+	if a.Sharpe != nil {
+		object["sharpe"], err = json.Marshal(a.Sharpe)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe': %w", err)
+		}
+	}
+
+	object["total_commission_i64"], err = json.Marshal(a.TotalCommissionI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_commission_i64': %w", err)
+	}
+
+	object["total_return"], err = json.Marshal(a.TotalReturn)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_return': %w", err)
+	}
+
+	object["total_slippage_i64"], err = json.Marshal(a.TotalSlippageI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_slippage_i64': %w", err)
+	}
+
+	object["trade_count"], err = json.Marshal(a.TradeCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'trade_count': %w", err)
+	}
+
+	object["win_rate"], err = json.Marshal(a.WinRate)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'win_rate': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for StrategyComparisonResult_Summary. Returns the specified
+// element and whether it was found
+func (a StrategyComparisonResult_Summary) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for StrategyComparisonResult_Summary
+func (a *StrategyComparisonResult_Summary) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for StrategyComparisonResult_Summary to handle AdditionalProperties
+func (a *StrategyComparisonResult_Summary) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["annualized_return"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return': %w", err)
+		}
+		delete(object, "annualized_return")
+	}
+
+	if raw, found := object["average_loss_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageLossI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_loss_i64': %w", err)
+		}
+		delete(object, "average_loss_i64")
+	}
+
+	if raw, found := object["average_win_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageWinI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_win_i64': %w", err)
+		}
+		delete(object, "average_win_i64")
+	}
+
+	if raw, found := object["expectancy_i64"]; found {
+		err = json.Unmarshal(raw, &a.ExpectancyI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'expectancy_i64': %w", err)
+		}
+		delete(object, "expectancy_i64")
+	}
+
+	if raw, found := object["max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.MaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'max_drawdown': %w", err)
+		}
+		delete(object, "max_drawdown")
+	}
+
+	if raw, found := object["profit_factor"]; found {
+		err = json.Unmarshal(raw, &a.ProfitFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_factor': %w", err)
+		}
+		delete(object, "profit_factor")
+	}
+
+	if raw, found := object["profit_loss_ratio"]; found {
+		err = json.Unmarshal(raw, &a.ProfitLossRatio)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_loss_ratio': %w", err)
+		}
+		delete(object, "profit_loss_ratio")
+	}
+
+	if raw, found := object["request_id"]; found {
+		err = json.Unmarshal(raw, &a.RequestId)
+		if err != nil {
+			return fmt.Errorf("error reading 'request_id': %w", err)
+		}
+		delete(object, "request_id")
+	}
+
+	if raw, found := object["risk_approved_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskApprovedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_approved_count': %w", err)
+		}
+		delete(object, "risk_approved_count")
+	}
+
+	if raw, found := object["risk_blocked_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskBlockedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_blocked_count': %w", err)
+		}
+		delete(object, "risk_blocked_count")
+	}
+
+	if raw, found := object["risk_kill_switch_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskKillSwitchCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_kill_switch_count': %w", err)
+		}
+		delete(object, "risk_kill_switch_count")
+	}
+
+	if raw, found := object["risk_reduced_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskReducedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_reduced_count': %w", err)
+		}
+		delete(object, "risk_reduced_count")
+	}
+
+	if raw, found := object["run_id"]; found {
+		err = json.Unmarshal(raw, &a.RunId)
+		if err != nil {
+			return fmt.Errorf("error reading 'run_id': %w", err)
+		}
+		delete(object, "run_id")
+	}
+
+	if raw, found := object["sharpe"]; found {
+		err = json.Unmarshal(raw, &a.Sharpe)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe': %w", err)
+		}
+		delete(object, "sharpe")
+	}
+
+	if raw, found := object["total_commission_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalCommissionI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_commission_i64': %w", err)
+		}
+		delete(object, "total_commission_i64")
+	}
+
+	if raw, found := object["total_return"]; found {
+		err = json.Unmarshal(raw, &a.TotalReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_return': %w", err)
+		}
+		delete(object, "total_return")
+	}
+
+	if raw, found := object["total_slippage_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalSlippageI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_slippage_i64': %w", err)
+		}
+		delete(object, "total_slippage_i64")
+	}
+
+	if raw, found := object["trade_count"]; found {
+		err = json.Unmarshal(raw, &a.TradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trade_count': %w", err)
+		}
+		delete(object, "trade_count")
+	}
+
+	if raw, found := object["win_rate"]; found {
+		err = json.Unmarshal(raw, &a.WinRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'win_rate': %w", err)
+		}
+		delete(object, "win_rate")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for StrategyComparisonResult_Summary to handle AdditionalProperties
+func (a StrategyComparisonResult_Summary) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AnnualizedReturn != nil {
+		object["annualized_return"], err = json.Marshal(a.AnnualizedReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return': %w", err)
+		}
+	}
+
+	if a.AverageLossI64 != nil {
+		object["average_loss_i64"], err = json.Marshal(a.AverageLossI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_loss_i64': %w", err)
+		}
+	}
+
+	if a.AverageWinI64 != nil {
+		object["average_win_i64"], err = json.Marshal(a.AverageWinI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_win_i64': %w", err)
+		}
+	}
+
+	if a.ExpectancyI64 != nil {
+		object["expectancy_i64"], err = json.Marshal(a.ExpectancyI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'expectancy_i64': %w", err)
+		}
+	}
+
+	object["max_drawdown"], err = json.Marshal(a.MaxDrawdown)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'max_drawdown': %w", err)
+	}
+
+	if a.ProfitFactor != nil {
+		object["profit_factor"], err = json.Marshal(a.ProfitFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_factor': %w", err)
+		}
+	}
+
+	if a.ProfitLossRatio != nil {
+		object["profit_loss_ratio"], err = json.Marshal(a.ProfitLossRatio)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_loss_ratio': %w", err)
+		}
+	}
+
+	object["request_id"], err = json.Marshal(a.RequestId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'request_id': %w", err)
+	}
+
+	object["risk_approved_count"], err = json.Marshal(a.RiskApprovedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_approved_count': %w", err)
+	}
+
+	object["risk_blocked_count"], err = json.Marshal(a.RiskBlockedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_blocked_count': %w", err)
+	}
+
+	object["risk_kill_switch_count"], err = json.Marshal(a.RiskKillSwitchCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_kill_switch_count': %w", err)
+	}
+
+	object["risk_reduced_count"], err = json.Marshal(a.RiskReducedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_reduced_count': %w", err)
+	}
+
+	object["run_id"], err = json.Marshal(a.RunId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'run_id': %w", err)
+	}
+
+	if a.Sharpe != nil {
+		object["sharpe"], err = json.Marshal(a.Sharpe)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe': %w", err)
+		}
+	}
+
+	object["total_commission_i64"], err = json.Marshal(a.TotalCommissionI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_commission_i64': %w", err)
+	}
+
+	object["total_return"], err = json.Marshal(a.TotalReturn)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_return': %w", err)
+	}
+
+	object["total_slippage_i64"], err = json.Marshal(a.TotalSlippageI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_slippage_i64': %w", err)
+	}
+
+	object["trade_count"], err = json.Marshal(a.TradeCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'trade_count': %w", err)
+	}
+
+	object["win_rate"], err = json.Marshal(a.WinRate)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'win_rate': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for StrategyComparisonResults_Items_Summary. Returns the specified
+// element and whether it was found
+func (a StrategyComparisonResults_Items_Summary) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for StrategyComparisonResults_Items_Summary
+func (a *StrategyComparisonResults_Items_Summary) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for StrategyComparisonResults_Items_Summary to handle AdditionalProperties
+func (a *StrategyComparisonResults_Items_Summary) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["annualized_return"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return': %w", err)
+		}
+		delete(object, "annualized_return")
+	}
+
+	if raw, found := object["average_loss_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageLossI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_loss_i64': %w", err)
+		}
+		delete(object, "average_loss_i64")
+	}
+
+	if raw, found := object["average_win_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageWinI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_win_i64': %w", err)
+		}
+		delete(object, "average_win_i64")
+	}
+
+	if raw, found := object["expectancy_i64"]; found {
+		err = json.Unmarshal(raw, &a.ExpectancyI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'expectancy_i64': %w", err)
+		}
+		delete(object, "expectancy_i64")
+	}
+
+	if raw, found := object["max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.MaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'max_drawdown': %w", err)
+		}
+		delete(object, "max_drawdown")
+	}
+
+	if raw, found := object["profit_factor"]; found {
+		err = json.Unmarshal(raw, &a.ProfitFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_factor': %w", err)
+		}
+		delete(object, "profit_factor")
+	}
+
+	if raw, found := object["profit_loss_ratio"]; found {
+		err = json.Unmarshal(raw, &a.ProfitLossRatio)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_loss_ratio': %w", err)
+		}
+		delete(object, "profit_loss_ratio")
+	}
+
+	if raw, found := object["request_id"]; found {
+		err = json.Unmarshal(raw, &a.RequestId)
+		if err != nil {
+			return fmt.Errorf("error reading 'request_id': %w", err)
+		}
+		delete(object, "request_id")
+	}
+
+	if raw, found := object["risk_approved_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskApprovedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_approved_count': %w", err)
+		}
+		delete(object, "risk_approved_count")
+	}
+
+	if raw, found := object["risk_blocked_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskBlockedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_blocked_count': %w", err)
+		}
+		delete(object, "risk_blocked_count")
+	}
+
+	if raw, found := object["risk_kill_switch_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskKillSwitchCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_kill_switch_count': %w", err)
+		}
+		delete(object, "risk_kill_switch_count")
+	}
+
+	if raw, found := object["risk_reduced_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskReducedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_reduced_count': %w", err)
+		}
+		delete(object, "risk_reduced_count")
+	}
+
+	if raw, found := object["run_id"]; found {
+		err = json.Unmarshal(raw, &a.RunId)
+		if err != nil {
+			return fmt.Errorf("error reading 'run_id': %w", err)
+		}
+		delete(object, "run_id")
+	}
+
+	if raw, found := object["sharpe"]; found {
+		err = json.Unmarshal(raw, &a.Sharpe)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe': %w", err)
+		}
+		delete(object, "sharpe")
+	}
+
+	if raw, found := object["total_commission_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalCommissionI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_commission_i64': %w", err)
+		}
+		delete(object, "total_commission_i64")
+	}
+
+	if raw, found := object["total_return"]; found {
+		err = json.Unmarshal(raw, &a.TotalReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_return': %w", err)
+		}
+		delete(object, "total_return")
+	}
+
+	if raw, found := object["total_slippage_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalSlippageI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_slippage_i64': %w", err)
+		}
+		delete(object, "total_slippage_i64")
+	}
+
+	if raw, found := object["trade_count"]; found {
+		err = json.Unmarshal(raw, &a.TradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trade_count': %w", err)
+		}
+		delete(object, "trade_count")
+	}
+
+	if raw, found := object["win_rate"]; found {
+		err = json.Unmarshal(raw, &a.WinRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'win_rate': %w", err)
+		}
+		delete(object, "win_rate")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for StrategyComparisonResults_Items_Summary to handle AdditionalProperties
+func (a StrategyComparisonResults_Items_Summary) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
@@ -5330,6 +7283,320 @@ func (a IngestClientLogsJSONBody_Events_Item) MarshalJSON() ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'trace_id': %w", err)
 		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for GetStrategyComparisonResults200JSONResponseBody_Items_Summary. Returns the specified
+// element and whether it was found
+func (a GetStrategyComparisonResults200JSONResponseBody_Items_Summary) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for GetStrategyComparisonResults200JSONResponseBody_Items_Summary
+func (a *GetStrategyComparisonResults200JSONResponseBody_Items_Summary) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for GetStrategyComparisonResults200JSONResponseBody_Items_Summary to handle AdditionalProperties
+func (a *GetStrategyComparisonResults200JSONResponseBody_Items_Summary) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["annualized_return"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return': %w", err)
+		}
+		delete(object, "annualized_return")
+	}
+
+	if raw, found := object["average_loss_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageLossI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_loss_i64': %w", err)
+		}
+		delete(object, "average_loss_i64")
+	}
+
+	if raw, found := object["average_win_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageWinI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_win_i64': %w", err)
+		}
+		delete(object, "average_win_i64")
+	}
+
+	if raw, found := object["expectancy_i64"]; found {
+		err = json.Unmarshal(raw, &a.ExpectancyI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'expectancy_i64': %w", err)
+		}
+		delete(object, "expectancy_i64")
+	}
+
+	if raw, found := object["max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.MaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'max_drawdown': %w", err)
+		}
+		delete(object, "max_drawdown")
+	}
+
+	if raw, found := object["profit_factor"]; found {
+		err = json.Unmarshal(raw, &a.ProfitFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_factor': %w", err)
+		}
+		delete(object, "profit_factor")
+	}
+
+	if raw, found := object["profit_loss_ratio"]; found {
+		err = json.Unmarshal(raw, &a.ProfitLossRatio)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_loss_ratio': %w", err)
+		}
+		delete(object, "profit_loss_ratio")
+	}
+
+	if raw, found := object["request_id"]; found {
+		err = json.Unmarshal(raw, &a.RequestId)
+		if err != nil {
+			return fmt.Errorf("error reading 'request_id': %w", err)
+		}
+		delete(object, "request_id")
+	}
+
+	if raw, found := object["risk_approved_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskApprovedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_approved_count': %w", err)
+		}
+		delete(object, "risk_approved_count")
+	}
+
+	if raw, found := object["risk_blocked_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskBlockedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_blocked_count': %w", err)
+		}
+		delete(object, "risk_blocked_count")
+	}
+
+	if raw, found := object["risk_kill_switch_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskKillSwitchCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_kill_switch_count': %w", err)
+		}
+		delete(object, "risk_kill_switch_count")
+	}
+
+	if raw, found := object["risk_reduced_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskReducedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_reduced_count': %w", err)
+		}
+		delete(object, "risk_reduced_count")
+	}
+
+	if raw, found := object["run_id"]; found {
+		err = json.Unmarshal(raw, &a.RunId)
+		if err != nil {
+			return fmt.Errorf("error reading 'run_id': %w", err)
+		}
+		delete(object, "run_id")
+	}
+
+	if raw, found := object["sharpe"]; found {
+		err = json.Unmarshal(raw, &a.Sharpe)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe': %w", err)
+		}
+		delete(object, "sharpe")
+	}
+
+	if raw, found := object["total_commission_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalCommissionI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_commission_i64': %w", err)
+		}
+		delete(object, "total_commission_i64")
+	}
+
+	if raw, found := object["total_return"]; found {
+		err = json.Unmarshal(raw, &a.TotalReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_return': %w", err)
+		}
+		delete(object, "total_return")
+	}
+
+	if raw, found := object["total_slippage_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalSlippageI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_slippage_i64': %w", err)
+		}
+		delete(object, "total_slippage_i64")
+	}
+
+	if raw, found := object["trade_count"]; found {
+		err = json.Unmarshal(raw, &a.TradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trade_count': %w", err)
+		}
+		delete(object, "trade_count")
+	}
+
+	if raw, found := object["win_rate"]; found {
+		err = json.Unmarshal(raw, &a.WinRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'win_rate': %w", err)
+		}
+		delete(object, "win_rate")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for GetStrategyComparisonResults200JSONResponseBody_Items_Summary to handle AdditionalProperties
+func (a GetStrategyComparisonResults200JSONResponseBody_Items_Summary) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AnnualizedReturn != nil {
+		object["annualized_return"], err = json.Marshal(a.AnnualizedReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return': %w", err)
+		}
+	}
+
+	if a.AverageLossI64 != nil {
+		object["average_loss_i64"], err = json.Marshal(a.AverageLossI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_loss_i64': %w", err)
+		}
+	}
+
+	if a.AverageWinI64 != nil {
+		object["average_win_i64"], err = json.Marshal(a.AverageWinI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_win_i64': %w", err)
+		}
+	}
+
+	if a.ExpectancyI64 != nil {
+		object["expectancy_i64"], err = json.Marshal(a.ExpectancyI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'expectancy_i64': %w", err)
+		}
+	}
+
+	object["max_drawdown"], err = json.Marshal(a.MaxDrawdown)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'max_drawdown': %w", err)
+	}
+
+	if a.ProfitFactor != nil {
+		object["profit_factor"], err = json.Marshal(a.ProfitFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_factor': %w", err)
+		}
+	}
+
+	if a.ProfitLossRatio != nil {
+		object["profit_loss_ratio"], err = json.Marshal(a.ProfitLossRatio)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_loss_ratio': %w", err)
+		}
+	}
+
+	object["request_id"], err = json.Marshal(a.RequestId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'request_id': %w", err)
+	}
+
+	object["risk_approved_count"], err = json.Marshal(a.RiskApprovedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_approved_count': %w", err)
+	}
+
+	object["risk_blocked_count"], err = json.Marshal(a.RiskBlockedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_blocked_count': %w", err)
+	}
+
+	object["risk_kill_switch_count"], err = json.Marshal(a.RiskKillSwitchCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_kill_switch_count': %w", err)
+	}
+
+	object["risk_reduced_count"], err = json.Marshal(a.RiskReducedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_reduced_count': %w", err)
+	}
+
+	object["run_id"], err = json.Marshal(a.RunId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'run_id': %w", err)
+	}
+
+	if a.Sharpe != nil {
+		object["sharpe"], err = json.Marshal(a.Sharpe)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe': %w", err)
+		}
+	}
+
+	object["total_commission_i64"], err = json.Marshal(a.TotalCommissionI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_commission_i64': %w", err)
+	}
+
+	object["total_return"], err = json.Marshal(a.TotalReturn)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_return': %w", err)
+	}
+
+	object["total_slippage_i64"], err = json.Marshal(a.TotalSlippageI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_slippage_i64': %w", err)
+	}
+
+	object["trade_count"], err = json.Marshal(a.TradeCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'trade_count': %w", err)
+	}
+
+	object["win_rate"], err = json.Marshal(a.WinRate)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'win_rate': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {

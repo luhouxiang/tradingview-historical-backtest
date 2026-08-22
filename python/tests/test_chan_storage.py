@@ -52,6 +52,14 @@ def test_chan_cache_writes_typed_tables_checkpoints_and_success_last(tmp_path: P
                 "zone_high_i64": 110,
                 "extreme_source_bar_index": 2,
                 "fractal_type": "top",
+                "status": "confirmed",
+                "invalidation_reason": None,
+                "aux_strength": "unclassified",
+                "strength_reason": "lesson82_strong_reversal_condition_not_met",
+                "catalog_algorithm_id": "ALG-GEO-002",
+                "strength_semantic_namespace": "auxiliary",
+                "standard_signal": False,
+                "execution_allowed": False,
                 "confirmed": True,
                 "confirmed_at_bar_index": 4,
                 "known_at_bar_index": 4,
@@ -89,6 +97,9 @@ def test_chan_cache_writes_typed_tables_checkpoints_and_success_last(tmp_path: P
         "end_price_i64",
         "end_extreme_source_bar_index",
         "direction",
+        "status",
+        "invalidation_reason",
+        "catalog_algorithm_id",
         "confirmed",
         "confirmed_at_bar_index",
         "known_at_bar_index",
@@ -99,14 +110,24 @@ def test_chan_cache_writes_typed_tables_checkpoints_and_success_last(tmp_path: P
         == pq.read_table(directory / "bi.parquet").schema.names
     )
     manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["schema_version"] == 3
     assert manifest["counts"]["events"] == 1
+    assert manifest["files"]["processed_bars"]["path"] == "processed_bars.parquet"
+    assert manifest["files"]["bi_states"]["path"] == "bi_states.parquet"
     assert manifest["counts"]["segments"] == 0
     assert manifest["files"]["segments"]["path"] == "segments.parquet"
     assert manifest["counts"]["segment_zhongshu"] == 0
     assert manifest["files"]["movement_states"]["path"] == "movement_states.parquet"
+    assert manifest["files"]["level_centers"]["path"] == "level_centers.parquet"
+    assert manifest["files"]["level_movements"]["path"] == "level_movements.parquet"
     assert manifest["files"]["center_monitors"]["path"] == "center_monitors.parquet"
     assert manifest["files"]["divergences"]["path"] == "divergences.parquet"
     assert manifest["files"]["trade_points"]["path"] == "trade_points.parquet"
+    assert "status" in pq.read_table(directory / "trade_points.parquet").schema.names
+    assert (
+        "lower_level_turn_object_id"
+        in pq.read_table(directory / "trade_points.parquet").schema.names
+    )
     assert manifest["checkpoint"]["last_bar_index"] == 4
     assert all(value["sha256"].startswith("sha256:") for value in manifest["files"].values())
 

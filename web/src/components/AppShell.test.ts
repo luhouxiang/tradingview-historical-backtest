@@ -72,7 +72,7 @@ describe('AppShell', () => {
     api.getStrategySourceConfig.mockRejectedValue(new ApiError('WORKSPACE_NOT_FOUND', 'missing', 'req-strategy-config'))
     api.putStrategySourceConfig.mockImplementation(async (_profile: string, _revision: number, value: object) => ({ ...value, revision: 1 }))
     api.getCalculationResults.mockResolvedValue({
-      result_kind: 'chan', objects: { fractals: [], bi: [], segments: [], zhongshu: [], segment_zhongshu: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] },
+      result_kind: 'chan', objects: { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], zhongshu: [], segment_zhongshu: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] },
       coverage: { first_bar_index: 0, last_bar_index: 100, returned_count: 101 },
     })
   })
@@ -145,7 +145,7 @@ describe('AppShell', () => {
     expect(chart.props('strategySources')).toEqual([
       expect.objectContaining({
         source_type: 'StrategySource', visible: true,
-        category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true, segment_zhongshu: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
+        category_visibility: { processed_bars: false, fractals: false, bi: true, bi_states: true, segments: true, zhongshu: true, segment_zhongshu: true, level_centers: true, level_movements: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
       }),
     ])
   })
@@ -174,7 +174,7 @@ describe('AppShell', () => {
       confirmed_at_bar_index: 71, known_at_bar_index: 71, object_revision: 1,
     }
     api.getCalculationResults.mockResolvedValue({
-      result_kind: 'chan', objects: { fractals: [], bi: [], segments: [], zhongshu: [], segment_zhongshu: [], movement_states: [], center_monitors: [monitor], divergences: [], trade_points: [signal] },
+      result_kind: 'chan', objects: { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], zhongshu: [], segment_zhongshu: [], movement_states: [], center_monitors: [monitor], divergences: [], trade_points: [signal] },
       coverage: { first_bar_index: 0, last_bar_index: 100, returned_count: 2 },
     })
     const wrapper = mount(AppShell, {
@@ -292,9 +292,9 @@ describe('AppShell', () => {
       wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset)
       await flushPromises()
       const categoryToggles = wrapper.findAll('.strategy-categories input[type="checkbox"]')
-      expect(categoryToggles).toHaveLength(9)
-      expect((categoryToggles[1]?.element as HTMLInputElement).checked).toBe(false)
-      await categoryToggles[0]?.trigger('change')
+      expect(categoryToggles).toHaveLength(13)
+      expect((categoryToggles[2]?.element as HTMLInputElement).checked).toBe(false)
+      await categoryToggles[1]?.trigger('change')
       expect(api.putStrategySourceConfig).not.toHaveBeenCalled()
 
       await vi.advanceTimersByTimeAsync(300)

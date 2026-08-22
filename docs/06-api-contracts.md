@@ -219,7 +219,17 @@ Python 不返回完整结果表，只返回：
 - backtest：默认不幂等，每次新 run；相同 idempotency_key 的网络重试不得创建两个 run。
 - workspace PUT：按 expected_revision 乐观并发。
 
-## 10. 兼容性
+## 10. 策略比较接口
+
+- `POST /api/v1/strategy-comparisons`：创建单数据集、一个或多个策略的 comparison，立即返回 `comparison_id`。
+- `GET /api/v1/strategy-comparisons`：读取已经原子提交的历史 comparison 摘要。
+- `GET /api/v1/strategy-comparisons/{comparison_id}`：读取状态、进度、当前策略和失败数。
+- `POST /api/v1/strategy-comparisons/{comparison_id}/cancel`：请求取消尚未完成的批次。
+- `GET /api/v1/strategy-comparisons/{comparison_id}/results`：读取逐策略成功或失败结果及成功子 run 引用。
+
+请求必须固定 dataset/revision、策略版本与完整参数、回测/预热区间、执行和资金成本口径、统一风险覆盖、随机种子和最少交易数。comparison 本身不携带大批 K 线；Python 通过 `data_root` 内已验证引用读取数据，结果写入 `comparisons/{comparison_id}`，子策略事实继续写入标准 `runs/{run_id}`。
+
+## 11. 兼容性
 
 - API 破坏性变更提升 /api/vN。
 - 文件 Schema 使用 schema_version 并提供迁移器。

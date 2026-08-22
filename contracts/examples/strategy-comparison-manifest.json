@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "comparison_id": "comparison-20260822-example",
+  "trace_id": "trace-comparison-example",
+  "dataset": {
+    "dataset_id": "SHFE.AO2609.5m",
+    "data_revision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "range": {
+    "warmup_from_bar_index": 0,
+    "from_bar_index": 0,
+    "to_bar_index": 1000
+  },
+  "execution": {
+    "signal_timing": "bar_close",
+    "fill_timing": "next_bar_open"
+  },
+  "capital": {
+    "initial_cash_i64": 100000000,
+    "currency": "CNY",
+    "money_scale": 100
+  },
+  "random_seed": 7,
+  "minimum_trade_count": 20,
+  "strategy_count": 2,
+  "completed_count": 2,
+  "failed_count": 0,
+  "created_at": "2026-08-22T10:00:00Z"
+}

@@ -9,8 +9,12 @@
       "source_id": "strategy-default-chan",
       "visible": true,
       "category_visibility": {
+        "processed_bars": false,
         "fractals": false,
         "bi": true,
+        "bi_states": true,
+        "level_centers": true,
+        "level_movements": true,
         "segments": true,
         "zhongshu": true,
         "segment_zhongshu": true,

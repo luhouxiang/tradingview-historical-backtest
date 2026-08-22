@@ -16,6 +16,7 @@ class Job:
     payload: dict[str, Any] = field(default_factory=dict)
     result_ref: str | None = None
     error: dict[str, Any] | None = None
+    progress_detail: dict[str, Any] = field(default_factory=dict)
     cancelled: threading.Event = field(default_factory=threading.Event)
 
     def response(self) -> dict[str, Any]:
@@ -29,6 +30,8 @@ class Job:
             response["result_ref"] = self.result_ref
         if self.error is not None:
             response["error"] = self.error
+        if self.progress_detail:
+            response["progress_detail"] = self.progress_detail
         return response
 
 
@@ -56,11 +59,13 @@ class JobStore:
                 job.cancelled.set()
             return job
 
-    def progress(self, job_id: str, value: float) -> None:
+    def progress(self, job_id: str, value: float, detail: dict[str, Any] | None = None) -> None:
         with self._lock:
             job = self._jobs.get(job_id)
             if job is not None and job.status == "running":
                 job.progress = max(job.progress, min(0.99, max(0.0, value)))
+                if detail is not None:
+                    job.progress_detail = dict(detail)
 
     def run(self, job_id: str, work: Any) -> None:
         with self._lock:

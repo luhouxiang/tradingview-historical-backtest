@@ -99,11 +99,15 @@ def test_definition_documents_how_go_and_vue_should_call_chan() -> None:
     assert spec["parameter_schema"]["additionalProperties"] is False
     assert spec["parameter_schema"]["properties"]["checkpoint_interval"]["default"] == 1024
     assert {output["object_type"] for output in spec["outputs"]} == {
+        "processed_bar",
         "fractal",
         "bi",
+        "bi_state",
         "segment",
         "zhongshu",
         "segment_zhongshu",
+        "level_center",
+        "level_movement",
         "movement_state",
         "center_monitor",
         "divergence",
@@ -181,6 +185,8 @@ def test_calculate_chan_writes_the_causal_cache_contract(tmp_path: Path) -> None
         "segments",
         "zhongshu",
         "segment_zhongshu",
+        "level_centers",
+        "level_movements",
         "movement_states",
         "center_monitors",
         "divergences",

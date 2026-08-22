@@ -117,6 +117,7 @@ func RecoverStaleTemps(guard *storage.PathGuard, retention time.Duration, now ti
 		{"cache/replay", temporaryCacheName},
 		{"runs", temporaryCacheName},
 		{"studies", temporaryCacheName},
+		{"comparisons", temporaryCacheName},
 	}
 	var moves []Move
 	stamp := now.UTC().Format("20060102T150405.000000000Z")

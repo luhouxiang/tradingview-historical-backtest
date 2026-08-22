@@ -127,18 +127,20 @@ def test_bi_cases_cover_confirmed_up_and_down_directions() -> None:
     """
     runtime = run_levels(([0, 1, 2, 3, 4, 3, 2, 1] * 4) + [0])
     rows = runtime.result_rows()["bi"]
+    confirmed = [row for row in rows if row["status"] == "confirmed"]
 
-    assert [(row["direction"], row["confirmed"]) for row in rows[:5]] == [
+    assert [(row["direction"], row["confirmed"]) for row in confirmed[:5]] == [
         ("down", True),
         ("up", True),
         ("down", True),
         ("up", True),
         ("down", True),
     ]
-    assert all(row["confirmed"] is True for row in rows)
-    assert all(row["confirmed_at_bar_index"] is not None for row in rows)
-    assert {row["direction"] for row in rows} == {"up", "down"}
-    assert_connected_and_alternating(rows)
+    assert all(row["confirmed"] is True for row in confirmed)
+    assert all(row["confirmed_at_bar_index"] is not None for row in confirmed)
+    assert {row["direction"] for row in confirmed} == {"up", "down"}
+    assert any(row["status"] in {"candidate", "invalidated"} for row in rows)
+    assert_connected_and_alternating(confirmed)
 
 
 def test_bi_minimum_independent_bar_rule_blocks_too_short_confirmations() -> None:

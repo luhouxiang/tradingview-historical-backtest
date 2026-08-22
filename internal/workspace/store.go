@@ -77,11 +77,15 @@ type SeriesSource struct {
 }
 
 type CategoryVisibility struct {
+	ProcessedBars   *bool `json:"processed_bars,omitempty"`
 	Fractals        bool  `json:"fractals"`
 	Bi              bool  `json:"bi"`
+	BiStates        *bool `json:"bi_states,omitempty"`
 	Segments        *bool `json:"segments,omitempty"`
 	Zhongshu        bool  `json:"zhongshu"`
 	SegmentZhongshu *bool `json:"segment_zhongshu,omitempty"`
+	LevelCenters    *bool `json:"level_centers,omitempty"`
+	LevelMovements  *bool `json:"level_movements,omitempty"`
 	MovementStates  *bool `json:"movement_states,omitempty"`
 	CenterMonitors  *bool `json:"center_monitors,omitempty"`
 	Divergences     *bool `json:"divergences,omitempty"`
@@ -105,11 +109,15 @@ type StrategySource struct {
 }
 
 type DynamicCategoryVisibility struct {
+	ProcessedBars   bool `json:"processed_bars"`
 	Fractals        bool `json:"fractals"`
 	Bi              bool `json:"bi"`
+	BiStates        bool `json:"bi_states"`
 	Segments        bool `json:"segments"`
 	Zhongshu        bool `json:"zhongshu"`
 	SegmentZhongshu bool `json:"segment_zhongshu"`
+	LevelCenters    bool `json:"level_centers"`
+	LevelMovements  bool `json:"level_movements"`
 	MovementStates  bool `json:"movement_states"`
 	CenterMonitors  bool `json:"center_monitors"`
 	Divergences     bool `json:"divergences"`

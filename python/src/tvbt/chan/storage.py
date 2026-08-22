@@ -19,6 +19,31 @@ from tvbt.storage.path_guard import PathGuard
 # 以下 schema 是 Go 范围查询和 Vue 批量绘图的持久化契约。字段保持 snake_case，
 # 价格使用定点整数，时间使用 UTC 毫秒；新增/删除字段必须先改 contracts 和测试。
 
+# 顺序、方向感知的包含处理结果。`source_bar_indices` 保存完整原始成员，最新对象
+# 在包含合并或封存时通过相同 object_id 增加 revision。
+PROCESSED_BAR_SCHEMA = pa.schema(
+    [
+        ("object_id", pa.string()),
+        ("normalized_index", pa.int64()),
+        ("start_bar_index", pa.int64()),
+        ("start_time", pa.int64()),
+        ("end_bar_index", pa.int64()),
+        ("end_time", pa.int64()),
+        ("open_i64", pa.int64()),
+        ("high_i64", pa.int64()),
+        ("low_i64", pa.int64()),
+        ("close_i64", pa.int64()),
+        ("high_source_bar_index", pa.int64()),
+        ("low_source_bar_index", pa.int64()),
+        ("direction", pa.string()),
+        ("source_bar_indices", pa.list_(pa.int64())),
+        ("status", pa.string()),
+        ("sealed_at_bar_index", pa.int64()),
+        ("catalog_event", pa.string()),
+        ("known_at_bar_index", pa.int64()),
+        ("object_revision", pa.int64()),
+    ]
+)
 # 三独立 K 线确认的顶/底分型。
 FRACTAL_SCHEMA = pa.schema(
     [
@@ -30,6 +55,14 @@ FRACTAL_SCHEMA = pa.schema(
         ("zone_high_i64", pa.int64()),
         ("extreme_source_bar_index", pa.int64()),
         ("fractal_type", pa.string()),
+        ("status", pa.string()),
+        ("invalidation_reason", pa.string()),
+        ("aux_strength", pa.string()),
+        ("strength_reason", pa.string()),
+        ("catalog_algorithm_id", pa.string()),
+        ("strength_semantic_namespace", pa.string()),
+        ("standard_signal", pa.bool_()),
+        ("execution_allowed", pa.bool_()),
         ("confirmed", pa.bool_()),
         ("confirmed_at_bar_index", pa.int64()),
         ("known_at_bar_index", pa.int64()),
@@ -50,8 +83,28 @@ LINE_SCHEMA = pa.schema(
         ("end_price_i64", pa.int64()),
         ("end_extreme_source_bar_index", pa.int64()),
         ("direction", pa.string()),
+        ("status", pa.string()),
+        ("invalidation_reason", pa.string()),
+        ("catalog_algorithm_id", pa.string()),
         ("confirmed", pa.bool_()),
         ("confirmed_at_bar_index", pa.int64()),
+        ("known_at_bar_index", pa.int64()),
+        ("object_revision", pa.int64()),
+    ]
+)
+# 笔在线四状态（加初始等待态）的当前快照；完整转换历史保存在 events.parquet。
+BI_STATE_SCHEMA = pa.schema(
+    [
+        ("object_id", pa.string()),
+        ("bar_index", pa.int64()),
+        ("time", pa.int64()),
+        ("price_i64", pa.int64()),
+        ("state", pa.string()),
+        ("direction", pa.string()),
+        ("anchor_fractal_id", pa.string()),
+        ("candidate_object_id", pa.string()),
+        ("trigger", pa.string()),
+        ("catalog_algorithm_id", pa.string()),
         ("known_at_bar_index", pa.int64()),
         ("object_revision", pa.int64()),
     ]
@@ -94,6 +147,58 @@ MOVEMENT_STATE_SCHEMA = pa.schema(
         ("direction", pa.string()),
         ("analysis_level", pa.string()),
         ("reference_object_id", pa.string()),
+        ("confirmed", pa.bool_()),
+        ("confirmed_at_bar_index", pa.int64()),
+        ("known_at_bar_index", pa.int64()),
+        ("object_revision", pa.int64()),
+    ]
+)
+LEVEL_CENTER_SCHEMA = pa.schema(
+    [
+        ("object_id", pa.string()),
+        ("level_id", pa.string()),
+        ("parent_level_id", pa.string()),
+        ("start_bar_index", pa.int64()),
+        ("start_time", pa.int64()),
+        ("end_bar_index", pa.int64()),
+        ("end_time", pa.int64()),
+        ("zd_i64", pa.int64()),
+        ("zg_i64", pa.int64()),
+        ("dd_i64", pa.int64()),
+        ("gg_i64", pa.int64()),
+        ("component_kind", pa.string()),
+        ("component_object_ids", pa.list_(pa.string())),
+        ("source_center_ids", pa.list_(pa.string())),
+        ("status", pa.string()),
+        ("promotion_reason", pa.string()),
+        ("promoted_from_center_id", pa.string()),
+        ("catalog_event", pa.string()),
+        ("catalog_algorithm_id", pa.string()),
+        ("confirmed", pa.bool_()),
+        ("confirmed_at_bar_index", pa.int64()),
+        ("known_at_bar_index", pa.int64()),
+        ("object_revision", pa.int64()),
+    ]
+)
+LEVEL_MOVEMENT_SCHEMA = pa.schema(
+    [
+        ("object_id", pa.string()),
+        ("level_id", pa.string()),
+        ("start_bar_index", pa.int64()),
+        ("start_time", pa.int64()),
+        ("end_bar_index", pa.int64()),
+        ("end_time", pa.int64()),
+        ("low_i64", pa.int64()),
+        ("high_i64", pa.int64()),
+        ("component_center_ids", pa.list_(pa.string())),
+        ("classification", pa.string()),
+        ("direction", pa.string()),
+        ("status", pa.string()),
+        ("previous_classification", pa.string()),
+        ("reclassification_reason", pa.string()),
+        ("parent_center_candidate_id", pa.string()),
+        ("catalog_event", pa.string()),
+        ("catalog_algorithm_id", pa.string()),
         ("confirmed", pa.bool_()),
         ("confirmed_at_bar_index", pa.int64()),
         ("known_at_bar_index", pa.int64()),
@@ -148,6 +253,12 @@ SIGNAL_SCHEMA = pa.schema(
         ("reference_object_id", pa.string()),
         ("macd_area_reference", pa.float64()),
         ("macd_area_current", pa.float64()),
+        ("status", pa.string()),
+        ("invalidation_reason", pa.string()),
+        ("level_id", pa.string()),
+        ("lower_level_turn_object_id", pa.string()),
+        ("catalog_event", pa.string()),
+        ("catalog_algorithm_id", pa.string()),
         ("confirmed", pa.bool_()),
         ("confirmed_at_bar_index", pa.int64()),
         ("known_at_bar_index", pa.int64()),
@@ -183,11 +294,15 @@ class ChanResult:
     # 包含关系处理后的独立 K 线数量。
     merged_bar_count: int
     # 语义对象终态快照。
+    processed_bars: list[dict[str, Any]] = field(default_factory=list)
     fractals: list[dict[str, Any]] = field(default_factory=list)
     bi: list[dict[str, Any]] = field(default_factory=list)
+    bi_states: list[dict[str, Any]] = field(default_factory=list)
     segments: list[dict[str, Any]] = field(default_factory=list)
     zhongshu: list[dict[str, Any]] = field(default_factory=list)
     segment_zhongshu: list[dict[str, Any]] = field(default_factory=list)
+    level_centers: list[dict[str, Any]] = field(default_factory=list)
+    level_movements: list[dict[str, Any]] = field(default_factory=list)
     movement_states: list[dict[str, Any]] = field(default_factory=list)
     center_monitors: list[dict[str, Any]] = field(default_factory=list)
     divergences: list[dict[str, Any]] = field(default_factory=list)
@@ -225,11 +340,15 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
     temporary.mkdir()
     try:
         tables = {
+            "processed_bars": (result.processed_bars, PROCESSED_BAR_SCHEMA),
             "fractals": (result.fractals, FRACTAL_SCHEMA),
             "bi": (result.bi, LINE_SCHEMA),
+            "bi_states": (result.bi_states, BI_STATE_SCHEMA),
             "segments": (result.segments, LINE_SCHEMA),
             "zhongshu": (result.zhongshu, ZHONGSHU_SCHEMA),
             "segment_zhongshu": (result.segment_zhongshu, ZHONGSHU_SCHEMA),
+            "level_centers": (result.level_centers, LEVEL_CENTER_SCHEMA),
+            "level_movements": (result.level_movements, LEVEL_MOVEMENT_SCHEMA),
             "movement_states": (result.movement_states, MOVEMENT_STATE_SCHEMA),
             "center_monitors": (result.center_monitors, CENTER_MONITOR_SCHEMA),
             "divergences": (result.divergences, SIGNAL_SCHEMA),
@@ -248,7 +367,7 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
             (checkpoint_directory / f"{bar_index}.bin").write_bytes(data)
         checkpoint_indices = sorted(result.checkpoints)
         manifest = {
-            "schema_version": 1,
+            "schema_version": 3,
             "cache_key": payload["cache_key"],
             "dataset_id": dataset["dataset_id"],
             "data_revision": dataset["data_revision"],
@@ -263,11 +382,15 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
             },
             "counts": {
                 "merged_bars": result.merged_bar_count,
+                "processed_bars": len(result.processed_bars),
                 "fractals": len(result.fractals),
                 "bi": len(result.bi),
+                "bi_states": len(result.bi_states),
                 "segments": len(result.segments),
                 "zhongshu": len(result.zhongshu),
                 "segment_zhongshu": len(result.segment_zhongshu),
+                "level_centers": len(result.level_centers),
+                "level_movements": len(result.level_movements),
                 "movement_states": len(result.movement_states),
                 "center_monitors": len(result.center_monitors),
                 "divergences": len(result.divergences),

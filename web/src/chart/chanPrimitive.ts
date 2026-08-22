@@ -7,27 +7,35 @@ import type {
   Time,
   UTCTimestamp,
 } from 'lightweight-charts'
-import type { ChanCalculationResults, ChanCenterMonitor, ChanFractal, ChanLineObject, ChanMovementState, ChanSignalPoint, ChanZhongshu } from '../types/api'
+import type { ChanBiState, ChanCalculationResults, ChanCenterMonitor, ChanFractal, ChanLevelCenter, ChanLevelMovement, ChanLineObject, ChanMovementState, ChanSignalPoint, ChanZhongshu } from '../types/api'
 import type { IndicatorOutputStyle, IndicatorStyle } from '../types/api'
 import { canvasDash, colorWithOpacity } from '../indicators/style'
 
 type ChanObjects = ChanCalculationResults['objects']
 type Point = { x: number; y: number }
-type Line = { start: Point; end: Point; confirmed: boolean }
-type FractalPoint = Point & Pick<ChanFractal, 'fractal_type' | 'confirmed'>
+type Line = { start: Point; end: Point; confirmed: boolean; status?: string }
+type FractalPoint = Point & Pick<ChanFractal, 'fractal_type' | 'confirmed' | 'status' | 'aux_strength'>
 type Region = { left: number; right: number; top: number; bottom: number; confirmed: boolean }
-type SignalPoint = Point & Pick<ChanSignalPoint, 'signal_type' | 'divergence_kind' | 'signal_class' | 'strength'>
+type LevelRegion = Region & Pick<ChanLevelCenter, 'level_id' | 'status'>
+type ProcessedBarRegion = Region & { direction: 'up' | 'down' | 'unknown'; status: 'forming' | 'sealed' }
+type BiStatePoint = Point & Pick<ChanBiState, 'state' | 'trigger'>
+type SignalPoint = Point & Pick<ChanSignalPoint, 'signal_type' | 'divergence_kind' | 'signal_class' | 'strength' | 'status'>
 type MovementLine = Line & Pick<ChanMovementState, 'state_type'>
+type LevelMovementLine = Line & Pick<ChanLevelMovement, 'level_id' | 'classification' | 'status'>
 type MonitorPoint = Point & { zY: number; referenceObjectId: string; componentOrdinal: number }
   & Pick<ChanCenterMonitor, 'oscillation_bias' | 'breakout_warning'>
 
 export interface ChanGeometry {
+  processedBars: ProcessedBarRegion[]
   fractals: FractalPoint[]
   bi: Line[]
+  biStates: BiStatePoint[]
   segments: Line[]
   zhongshu: Region[]
   segmentZhongshu: Region[]
   segmentEnvelopes: Region[]
+  levelCenters: LevelRegion[]
+  levelMovements: LevelMovementLine[]
   movementStates: MovementLine[]
   centerMonitors: MonitorPoint[]
   centerMonitorCurves: Line[]
@@ -37,11 +45,15 @@ export interface ChanGeometry {
 }
 
 interface ChanRenderStyle {
+  processedBar: IndicatorOutputStyle
   fractal?: IndicatorOutputStyle
   bi: IndicatorOutputStyle
+  biState: IndicatorOutputStyle
   segment: IndicatorOutputStyle
   zhongshu: IndicatorOutputStyle
   segmentZhongshu: IndicatorOutputStyle
+  levelCenter: IndicatorOutputStyle
+  levelMovement: IndicatorOutputStyle
   movementState: IndicatorOutputStyle
   centerMonitor: IndicatorOutputStyle
   divergence: IndicatorOutputStyle
@@ -49,10 +61,14 @@ interface ChanRenderStyle {
 }
 
 const defaultChanRenderStyle: ChanRenderStyle = {
+  processedBar: { color: '#787b86', line_width: 1, line_style: 'dotted', opacity: 0.7, visible: true },
   bi: { color: '#2962ff', line_width: 2, line_style: 'solid', opacity: 1, visible: true },
+  biState: { color: '#26c6da', line_width: 1, line_style: 'dashed', opacity: 0.9, visible: true },
   segment: { color: '#f2d600', line_width: 2, line_style: 'solid', opacity: 1, visible: true },
   zhongshu: { color: '#64b5f6', line_width: 1, line_style: 'solid', opacity: 1, visible: true },
   segmentZhongshu: { color: '#fff176', line_width: 2, line_style: 'solid', opacity: 1, visible: true },
+  levelCenter: { color: '#ff8a65', line_width: 2, line_style: 'dashed', opacity: 0.9, visible: true },
+  levelMovement: { color: '#ce93d8', line_width: 2, line_style: 'dashed', opacity: 0.9, visible: true },
   movementState: { color: '#ab47bc', line_width: 1, line_style: 'dashed', opacity: 0.9, visible: true },
   centerMonitor: { color: '#26c6da', line_width: 1, line_style: 'dotted', opacity: 0.9, visible: true },
   divergence: { color: '#ff9800', line_width: 1, line_style: 'solid', opacity: 1, visible: true },
@@ -73,7 +89,7 @@ export function buildChanGeometry(
   const lines = (values: ChanLineObject[]): Line[] => values.flatMap((value) => {
     const start = point(value.start_time, value.start_price_i64)
     const end = point(value.end_time, value.end_price_i64)
-    return start && end ? [{ start, end, confirmed: value.confirmed }] : []
+    return start && end ? [{ start, end, confirmed: value.confirmed, status: value.status }] : []
   })
   const regions = (values: ChanZhongshu[]): Region[] => values.flatMap((value) => {
     const left = timeToX(Math.floor(value.start_time / 1000) as UTCTimestamp)
@@ -92,6 +108,13 @@ export function buildChanGeometry(
     return left === null || right === null || top === null || bottom === null
       ? [] : [{ left, right, top, bottom, confirmed: value.confirmed }]
   })
+  const levelRegions = (values: ChanLevelCenter[]): LevelRegion[] => values.flatMap((value) => {
+    const left = timeToX(Math.floor(value.start_time / 1000) as UTCTimestamp)
+    const right = timeToX(Math.floor(value.end_time / 1000) as UTCTimestamp)
+    const top = priceToY(value.zg_i64 / priceScale)
+    const bottom = priceToY(value.zd_i64 / priceScale)
+    return left === null || right === null || top === null || bottom === null ? [] : [{ left, right, top, bottom, confirmed: value.confirmed, level_id: value.level_id, status: value.status }]
+  })
   const signals = (values: ChanSignalPoint[]): SignalPoint[] => values.flatMap((value) => {
     const projected = point(value.time, value.price_i64)
     return projected ? [{
@@ -100,6 +123,7 @@ export function buildChanGeometry(
       divergence_kind: value.divergence_kind,
       signal_class: value.signal_class,
       strength: value.strength,
+      status: value.status,
     }] : []
   })
   const centerMonitors: MonitorPoint[] = objects.center_monitors.flatMap((value) => {
@@ -136,15 +160,35 @@ export function buildChanGeometry(
     }
   }
   return {
+    processedBars: objects.processed_bars.flatMap((value) => {
+      const left = timeToX(Math.floor(value.start_time / 1000) as UTCTimestamp)
+      const right = timeToX(Math.floor(value.end_time / 1000) as UTCTimestamp)
+      const top = priceToY(value.high_i64 / priceScale)
+      const bottom = priceToY(value.low_i64 / priceScale)
+      return left === null || right === null || top === null || bottom === null ? [] : [{
+        left, right, top, bottom, confirmed: value.status === 'sealed', direction: value.direction, status: value.status,
+      }]
+    }),
     fractals: objects.fractals.flatMap((value) => {
       const projected = point(value.time, value.price_i64)
-      return projected ? [{ ...projected, fractal_type: value.fractal_type, confirmed: value.confirmed }] : []
+      return projected ? [{ ...projected, fractal_type: value.fractal_type, confirmed: value.confirmed, status: value.status, aux_strength: value.aux_strength }] : []
     }),
     bi: lines(objects.bi),
+    biStates: objects.bi_states.flatMap((value) => {
+      const projected = point(value.time, value.price_i64)
+      return projected ? [{ ...projected, state: value.state, trigger: value.trigger }] : []
+    }),
     segments: lines(objects.segments),
     zhongshu: regions(objects.zhongshu),
     segmentZhongshu: regions(objects.segment_zhongshu),
     segmentEnvelopes: envelopeRegions(objects.segment_zhongshu),
+    levelCenters: levelRegions(objects.level_centers),
+    levelMovements: objects.level_movements.flatMap((value) => {
+      const middle = Math.trunc((value.low_i64 + value.high_i64) / 2)
+      const start = point(value.start_time, middle)
+      const end = point(value.end_time, middle)
+      return start && end ? [{ start, end, confirmed: value.confirmed, level_id: value.level_id, classification: value.classification, status: value.status }] : []
+    }),
     movementStates: objects.movement_states.flatMap((value) => {
       const start = point(value.start_time, value.price_i64)
       const end = point(value.end_time, value.price_i64)
@@ -167,9 +211,11 @@ class ChanRenderer implements IPrimitivePaneRenderer {
       context.save()
       context.scale(horizontalPixelRatio, verticalPixelRatio)
       if (this.layer === 'fill') {
+        drawRegions(context, geometry.processedBars, false, true, this.source.renderStyle().processedBar)
         drawRegions(context, geometry.segmentEnvelopes, true, false, this.source.renderStyle().segmentZhongshu, 0.055, false)
         drawRegions(context, geometry.zhongshu, true, false, this.source.renderStyle().zhongshu, 0.14, true)
         drawRegions(context, geometry.segmentZhongshu, true, false, this.source.renderStyle().segmentZhongshu, 0.14, true)
+        drawLevelRegions(context, geometry.levelCenters, this.source.renderStyle().levelCenter)
       }
       else drawOverlay(context, geometry, this.source.renderStyle())
       context.restore()
@@ -190,7 +236,7 @@ class ChanView implements IPrimitivePaneView {
 
 export class ChanPrimitive implements ISeriesPrimitive<Time> {
   private attachment: SeriesAttachedParameter<Time> | null = null
-  private objects: ChanObjects = { fractals: [], bi: [], segments: [], zhongshu: [], segment_zhongshu: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] }
+  private objects: ChanObjects = { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], zhongshu: [], segment_zhongshu: [], level_centers: [], level_movements: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] }
   private priceScale = 1
   private style: ChanRenderStyle = defaultChanRenderStyle
   private readonly views: readonly IPrimitivePaneView[] = [
@@ -211,11 +257,15 @@ export class ChanPrimitive implements ISeriesPrimitive<Time> {
 
   setStyle(style?: IndicatorStyle): void {
     this.style = {
+      processedBar: style?.outputs.processed_bar ?? defaultChanRenderStyle.processedBar,
       fractal: style?.outputs.fractal ?? style?.outputs.fractals,
       bi: style?.outputs.bi ?? defaultChanRenderStyle.bi,
+      biState: style?.outputs.bi_state ?? defaultChanRenderStyle.biState,
       segment: style?.outputs.segment ?? style?.outputs.segments ?? defaultChanRenderStyle.segment,
       zhongshu: style?.outputs.zhongshu ?? defaultChanRenderStyle.zhongshu,
       segmentZhongshu: style?.outputs.segment_zhongshu ?? defaultChanRenderStyle.segmentZhongshu,
+      levelCenter: style?.outputs.level_center ?? defaultChanRenderStyle.levelCenter,
+      levelMovement: style?.outputs.level_movement ?? defaultChanRenderStyle.levelMovement,
       movementState: style?.outputs.movement_state ?? defaultChanRenderStyle.movementState,
       centerMonitor: style?.outputs.center_monitor ?? defaultChanRenderStyle.centerMonitor,
       divergence: style?.outputs.divergence ?? defaultChanRenderStyle.divergence,
@@ -228,7 +278,7 @@ export class ChanPrimitive implements ISeriesPrimitive<Time> {
 
   geometry(): ChanGeometry {
     const attachment = this.attachment
-    if (!attachment) return { fractals: [], bi: [], segments: [], zhongshu: [], segmentZhongshu: [], segmentEnvelopes: [], movementStates: [], centerMonitors: [], centerMonitorCurves: [], centerMonitorAxes: [], divergences: [], tradePoints: [] }
+    if (!attachment) return { processedBars: [], fractals: [], bi: [], biStates: [], segments: [], zhongshu: [], segmentZhongshu: [], segmentEnvelopes: [], levelCenters: [], levelMovements: [], movementStates: [], centerMonitors: [], centerMonitorCurves: [], centerMonitorAxes: [], divergences: [], tradePoints: [] }
     return buildChanGeometry(
       this.objects,
       this.priceScale,
@@ -273,19 +323,29 @@ function drawRegions(
   }
 }
 
+function drawLevelRegions(context: CanvasRenderingContext2D, regions: LevelRegion[], style: IndicatorOutputStyle): void {
+  if (!style.visible) return
+  for (const region of regions) {
+    const level = Number(region.level_id.slice(1)) || 1
+    drawRegions(context, [region], true, true, {
+      ...style,
+      line_width: Math.min(4, style.line_width + Math.min(2, level - 1)) as 1 | 2 | 3 | 4,
+      line_style: region.status === 'candidate' ? 'dotted' : style.line_style,
+      opacity: Math.max(0.38, style.opacity - (level - 1) * 0.12),
+    }, 0.08 + Math.min(level, 3) * 0.035, false)
+  }
+}
+
 function drawLines(context: CanvasRenderingContext2D, lines: Line[], style: IndicatorOutputStyle): void {
   if (!style.visible) return
-  for (const confirmed of [true, false]) {
+  for (const line of lines) {
     context.beginPath()
-    for (const line of lines) {
-      if (line.confirmed !== confirmed) continue
-      context.moveTo(line.start.x, line.start.y)
-      context.lineTo(line.end.x, line.end.y)
-    }
+    context.moveTo(line.start.x, line.start.y)
+    context.lineTo(line.end.x, line.end.y)
     context.strokeStyle = colorWithOpacity(style.color, style.opacity)
     context.lineWidth = style.line_width
-    context.globalAlpha = confirmed ? 1 : 0.55
-    context.setLineDash(confirmed ? canvasDash(style.line_style, style.line_width) : [5, 4])
+    context.globalAlpha = line.confirmed ? 1 : line.status === 'invalidated' ? 0.28 : 0.62
+    context.setLineDash(line.confirmed ? canvasDash(style.line_style, style.line_width) : line.status === 'invalidated' ? [2, 5] : [6, 4])
     context.stroke()
   }
   context.globalAlpha = 1
@@ -298,7 +358,9 @@ function drawOverlay(context: CanvasRenderingContext2D, geometry: ChanGeometry, 
   drawRegions(context, geometry.segmentEnvelopes, false, true, { ...style.segmentZhongshu, line_style: 'dashed', opacity: style.segmentZhongshu.opacity * 0.45 })
   drawLines(context, geometry.bi, style.bi)
   drawLines(context, geometry.segments, style.segment)
+  drawBiStates(context, geometry.biStates, style.biState)
   drawMovementStates(context, geometry.movementStates, style.movementState)
+  drawLevelMovements(context, geometry.levelMovements, style.levelMovement)
   drawCenterMonitors(
     context,
     geometry.centerMonitors,
@@ -319,10 +381,44 @@ function drawOverlay(context: CanvasRenderingContext2D, geometry: ChanGeometry, 
     context.fillStyle = style.fractal
       ? colorWithOpacity(style.fractal.color, style.fractal.opacity)
       : fractal.fractal_type === 'top' ? '#f23645' : '#089981'
-    context.globalAlpha = fractal.confirmed ? 1 : 0.5
-    context.fill()
+    context.globalAlpha = fractal.status === 'confirmed' ? 1 : fractal.status === 'invalidated' ? 0.25 : 0.6
+    if (fractal.status === 'invalidated') context.stroke()
+    else context.fill()
+    if (fractal.aux_strength === 'strong_reversal') {
+      context.beginPath()
+      context.arc(fractal.x, fractal.y, 6, 0, Math.PI * 2)
+      context.stroke()
+    }
   }
   context.globalAlpha = 1
+}
+
+function drawLevelMovements(context: CanvasRenderingContext2D, lines: LevelMovementLine[], style: IndicatorOutputStyle): void {
+  if (!style.visible) return
+  drawLines(context, lines, style)
+  context.font = '10px sans-serif'
+  context.textAlign = 'center'
+  context.fillStyle = colorWithOpacity(style.color, style.opacity)
+  for (const line of lines) {
+    const label = line.classification === 'uptrend' ? '趋势↑'
+      : line.classification === 'downtrend' ? '趋势↓'
+        : line.classification === 'consolidation' ? '盘整' : '升层候选'
+    context.fillText(`${line.level_id} ${label}`, (line.start.x + line.end.x) / 2, line.start.y - 6)
+  }
+}
+
+function drawBiStates(context: CanvasRenderingContext2D, states: BiStatePoint[], style: IndicatorOutputStyle): void {
+  if (!style.visible) return
+  context.fillStyle = colorWithOpacity(style.color, style.opacity)
+  context.strokeStyle = colorWithOpacity(style.color, style.opacity)
+  context.font = '10px sans-serif'
+  context.textAlign = 'left'
+  for (const state of states) {
+    context.beginPath()
+    context.arc(state.x, state.y, 3, 0, Math.PI * 2)
+    context.fill()
+    context.fillText(state.state.replace('_EXTENDING', '').replace('_FORMING', '?'), state.x + 5, state.y - 5)
+  }
 }
 
 function drawMovementStates(context: CanvasRenderingContext2D, lines: MovementLine[], style: IndicatorOutputStyle): void {
@@ -376,14 +472,30 @@ function drawSignals(context: CanvasRenderingContext2D, points: SignalPoint[], s
       : point.signal_type.includes('sell_') ? '#00b8a9' : style.color
     const label = chanSignalLabel(point)
     const direction = buySide ? 1 : -1
+    if (point.status === 'invalidated') {
+      context.strokeStyle = colorWithOpacity(color, style.opacity * 0.35)
+      context.beginPath()
+      context.moveTo(point.x - 5, point.y - 5)
+      context.lineTo(point.x + 5, point.y + 5)
+      context.moveTo(point.x + 5, point.y - 5)
+      context.lineTo(point.x - 5, point.y + 5)
+      context.stroke()
+      context.fillStyle = colorWithOpacity(color, style.opacity * 0.35)
+      context.fillText(`${label}失效`, point.x, point.y + direction * 20)
+      continue
+    }
     context.beginPath()
     context.moveTo(point.x, point.y)
     context.lineTo(point.x - 5, point.y + direction * 8)
     context.lineTo(point.x + 5, point.y + direction * 8)
     context.closePath()
     context.fillStyle = colorWithOpacity(color, style.opacity)
-    context.fill()
-    context.fillText(label, point.x, point.y + direction * 20)
+    if (point.status === 'candidate') {
+      context.strokeStyle = colorWithOpacity(color, style.opacity * 0.68)
+      context.stroke()
+    }
+    else context.fill()
+    context.fillText(point.status === 'candidate' ? `${label}候选` : label, point.x, point.y + direction * 20)
   }
 }
 

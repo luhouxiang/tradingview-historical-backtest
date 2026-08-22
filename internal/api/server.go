@@ -15,6 +15,7 @@ import (
 	"github.com/tvbt/tradingview-historical-backtest/internal/backtest"
 	"github.com/tvbt/tradingview-historical-backtest/internal/calculation"
 	"github.com/tvbt/tradingview-historical-backtest/internal/catalog"
+	"github.com/tvbt/tradingview-historical-backtest/internal/comparison"
 	"github.com/tvbt/tradingview-historical-backtest/internal/config"
 	"github.com/tvbt/tradingview-historical-backtest/internal/importer"
 	"github.com/tvbt/tradingview-historical-backtest/internal/jobs"
@@ -47,6 +48,7 @@ type Server struct {
 	replays         *replay.Service
 	backtests       *backtest.Service
 	optimization    *optimization.Service
+	comparisons     *comparison.Service
 	workspace       *workspace.Store
 	handler         http.Handler
 }
@@ -87,6 +89,10 @@ func WithBacktests(service *backtest.Service) Option {
 
 func WithOptimization(service *optimization.Service) Option {
 	return func(server *Server) { server.optimization = service }
+}
+
+func WithComparisons(service *comparison.Service) Option {
+	return func(server *Server) { server.comparisons = service }
 }
 
 func WithWorkspace(store *workspace.Store) Option {
@@ -130,6 +136,11 @@ func NewServer(cfg config.Config, python *pythonclient.Client, logger, vueLogger
 	mux.HandleFunc("GET /api/v1/backtests/{run_id}/trades", s.getBacktestTrades)
 	mux.HandleFunc("GET /api/v1/backtests/{run_id}/equity", s.getBacktestEquity)
 	mux.HandleFunc("GET /api/v1/backtests/{run_id}/chart-events", s.getBacktestChartEvents)
+	mux.HandleFunc("POST /api/v1/strategy-comparisons", s.createStrategyComparison)
+	mux.HandleFunc("GET /api/v1/strategy-comparisons", s.listStrategyComparisons)
+	mux.HandleFunc("GET /api/v1/strategy-comparisons/{comparison_id}", s.getStrategyComparison)
+	mux.HandleFunc("POST /api/v1/strategy-comparisons/{comparison_id}/cancel", s.cancelStrategyComparison)
+	mux.HandleFunc("GET /api/v1/strategy-comparisons/{comparison_id}/results", s.getStrategyComparisonResults)
 	mux.HandleFunc("POST /api/v1/studies", s.createStudy)
 	mux.HandleFunc("GET /api/v1/studies/{study_id}", s.getStudy)
 	mux.HandleFunc("POST /api/v1/studies/{study_id}/cancel", s.cancelStudy)
@@ -235,6 +246,115 @@ func (s *Server) getStudyEvaluations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"request_id": requestID(r.Context()), "study_id": r.PathValue("study_id"), "evaluations": evaluations, "stability": stability})
+}
+
+func (s *Server) createStrategyComparison(w http.ResponseWriter, r *http.Request) {
+	if s.comparisons == nil {
+		s.notImplemented(w, r)
+		return
+	}
+	defer r.Body.Close()
+	var request comparison.Request
+	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1024*1024))
+	decoder.DisallowUnknownFields()
+	decoder.UseNumber()
+	if err := decoder.Decode(&request); err != nil {
+		s.writeError(w, r, http.StatusBadRequest, "INVALID_COMPARISON_REQUEST", "Strategy comparison request is invalid", nil)
+		return
+	}
+	result, err := s.comparisons.Submit(r.Context(), requestID(r.Context()), traceID(r.Context()), request)
+	switch {
+	case errors.Is(err, comparison.ErrInvalidRequest):
+		s.writeError(w, r, http.StatusUnprocessableEntity, "INVALID_COMPARISON_PARAMETERS", "Strategy comparison parameters are invalid", nil)
+		return
+	case errors.Is(err, comparison.ErrInvalidRange):
+		s.writeError(w, r, http.StatusUnprocessableEntity, "INVALID_COMPARISON_RANGE", "Strategy comparison range is invalid", nil)
+		return
+	case errors.Is(err, comparison.ErrRevisionMismatch):
+		s.writeError(w, r, http.StatusConflict, "DATA_REVISION_MISMATCH", "Dataset revision does not match the active revision", nil)
+		return
+	case errors.Is(err, catalog.ErrNotFound):
+		s.writeError(w, r, http.StatusNotFound, "DATASET_NOT_FOUND", "Dataset was not found", nil)
+		return
+	case err != nil:
+		s.writeError(w, r, http.StatusServiceUnavailable, "COMPARISON_SUBMIT_FAILED", "Strategy comparison could not be submitted", nil)
+		return
+	}
+	writeJSON(w, http.StatusAccepted, map[string]any{"request_id": requestID(r.Context()), "comparison_id": result.ComparisonID, "status": result.Job.Status})
+}
+
+func (s *Server) getStrategyComparison(w http.ResponseWriter, r *http.Request) {
+	if s.comparisons == nil {
+		s.notImplemented(w, r)
+		return
+	}
+	job, detail, manifest, ok := s.comparisons.Status(r.PathValue("comparison_id"))
+	if !ok {
+		s.writeError(w, r, http.StatusNotFound, "COMPARISON_NOT_FOUND", "Strategy comparison was not found", nil)
+		return
+	}
+	payload := map[string]any{
+		"request_id": requestID(r.Context()), "comparison_id": r.PathValue("comparison_id"),
+		"status": job.Status, "progress": job.Progress, "total_count": detail.TotalCount,
+		"completed_count": detail.CompletedCount, "failed_count": detail.FailedCount,
+		"current_algorithm_id": detail.CurrentAlgorithmID,
+	}
+	if job.ResultRef != "" {
+		payload["result_ref"] = job.ResultRef
+	}
+	if manifest != nil {
+		payload["manifest"] = manifest
+	}
+	if job.Error != nil {
+		payload["error"] = job.Error
+	}
+	writeJSON(w, http.StatusOK, payload)
+}
+
+func (s *Server) cancelStrategyComparison(w http.ResponseWriter, r *http.Request) {
+	if s.comparisons == nil {
+		s.notImplemented(w, r)
+		return
+	}
+	job, ok := s.comparisons.Cancel(r.PathValue("comparison_id"))
+	if !ok {
+		s.writeError(w, r, http.StatusNotFound, "COMPARISON_NOT_FOUND", "Strategy comparison was not found", nil)
+		return
+	}
+	writeJSON(w, http.StatusAccepted, map[string]any{"request_id": requestID(r.Context()), "comparison_id": r.PathValue("comparison_id"), "status": job.Status, "progress": job.Progress})
+}
+
+func (s *Server) listStrategyComparisons(w http.ResponseWriter, r *http.Request) {
+	if s.comparisons == nil {
+		s.notImplemented(w, r)
+		return
+	}
+	items, err := s.comparisons.List(r.URL.Query().Get("dataset_id"))
+	if err != nil {
+		s.writeError(w, r, http.StatusInternalServerError, "COMPARISON_LIST_FAILED", "Strategy comparisons could not be listed", nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"request_id": requestID(r.Context()), "items": items})
+}
+
+func (s *Server) getStrategyComparisonResults(w http.ResponseWriter, r *http.Request) {
+	if s.comparisons == nil {
+		s.notImplemented(w, r)
+		return
+	}
+	items, err := s.comparisons.Results(r.PathValue("comparison_id"))
+	switch {
+	case errors.Is(err, catalog.ErrNotFound):
+		s.writeError(w, r, http.StatusNotFound, "COMPARISON_NOT_FOUND", "Strategy comparison was not found", nil)
+		return
+	case errors.Is(err, comparison.ErrNotReady):
+		s.writeError(w, r, http.StatusConflict, "COMPARISON_NOT_READY", "Strategy comparison is not completed", nil)
+		return
+	case err != nil:
+		s.writeError(w, r, http.StatusInternalServerError, "COMPARISON_RESULTS_READ_FAILED", "Strategy comparison results could not be read", nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"request_id": requestID(r.Context()), "comparison_id": r.PathValue("comparison_id"), "items": items})
 }
 
 func (s *Server) createBacktest(w http.ResponseWriter, r *http.Request) {

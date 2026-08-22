@@ -58,6 +58,10 @@ await validateFile(
   'examples/replay-cache-manifest.json',
 )
 await validateFile('schemas/study-manifest.schema.json', 'examples/study-manifest.json')
+await validateFile(
+  'schemas/strategy-comparison-manifest.schema.json',
+  'examples/strategy-comparison-manifest.json',
+)
 
 for (const [examplePath, schemaName] of [
   ['examples/indicator-job.json', 'CalculationRequest'],
@@ -77,4 +81,4 @@ for (const [examplePath, schemaName] of [
   }
 }
 
-console.log('OpenAPI and 20 contract examples validated successfully.')
+console.log('OpenAPI and 21 contract examples validated successfully.')

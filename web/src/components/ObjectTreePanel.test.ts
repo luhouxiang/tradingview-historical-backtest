@@ -53,7 +53,7 @@ describe('ObjectTreePanel', () => {
     expect(signals.map((node) => node.attributes('data-signal-id'))).toEqual(['class-buy-new', 'buy-old'])
     expect(signals[0]?.classes()).toContain('selected')
     expect(signals[0]?.text()).toContain('类一买')
-    expect(wrapper.findAll('.strategy-node label')).toHaveLength(9)
+    expect(wrapper.findAll('.strategy-node label')).toHaveLength(13)
     await wrapper.get('.strategy-node label input').trigger('change')
     expect(wrapper.emitted('patchStrategy')?.at(-1)?.[0]).toBe('chan-1')
     await signals[0]?.trigger('click')

@@ -50,7 +50,7 @@ def test_center_consumers_publish_new_algorithm_identity() -> None:
     assert oscillation["algorithm_version"] == "1.1.0"
     assert oscillation["parameter_schema"]["properties"]["max_entries_per_center"]["default"] == 4
     same_level = same_level_decomposition_program_definition()
-    assert same_level["algorithm_version"] == "1.0.0"
+    assert same_level["algorithm_version"] == "1.1.0"
     assert same_level["parameter_schema"]["properties"]["odd_direction_is_down"]["default"]
     assert same_level["parameter_schema"]["properties"]["operation_quantity"]["default"] == 1
     three_level = three_level_complete_classification_definition()
@@ -225,7 +225,14 @@ def test_trend_reversal_strategies_use_only_confirmed_standard_first_points(
     )
     (dataset / "meta.json").write_text('{"price":{"price_scale":1}}', encoding="utf-8")
 
-    def point(bar_index: int, object_id: str, signal_type: str, signal_class: str) -> object:
+    def point(
+        bar_index: int,
+        object_id: str,
+        signal_type: str,
+        signal_class: str,
+        *,
+        confirmed: bool = True,
+    ) -> object:
         return SimpleNamespace(
             known_at_bar_index=bar_index,
             object_type="trade_point",
@@ -237,13 +244,14 @@ def test_trend_reversal_strategies_use_only_confirmed_standard_first_points(
                     "signal_type": signal_type,
                     "signal_class": signal_class,
                     "known_at_bar_index": bar_index,
-                    "confirmed": True,
+                    "confirmed": confirmed,
                 }
             ),
         )
 
     fake_events = [
         point(1, "class-buy-one", "class_buy_1", "class_like"),
+        point(1, "trend-buy-one", "buy_1", "standard", confirmed=False),
         point(2, "trend-buy-one", "buy_1", "standard"),
         point(3, "trend-sell-one", "sell_1", "standard"),
     ]
@@ -2336,6 +2344,24 @@ def test_same_level_decomposition_uses_confirmed_divergence_and_stops_on_promoti
                 "confirmed_at_bar_index": 4,
             },
         ),
+        event(
+            4,
+            "level_center",
+            "confirmed-L1-center",
+            {
+                "level_id": "L1",
+                "parent_level_id": "L0",
+                "start_bar_index": 0,
+                "end_bar_index": 4,
+                "zd_i64": 100,
+                "zg_i64": 120,
+                "component_kind": "segment",
+                "component_object_ids": [f"component-{index}" for index in range(9)],
+                "status": "promoted",
+                "promoted_from_center_id": "higher-center-candidate",
+                "confirmed_at_bar_index": 4,
+            },
+        ),
     ]
     monkeypatch.setattr(
         "tvbt.strategy.run_chan",
@@ -2374,10 +2400,36 @@ def test_same_level_decomposition_uses_confirmed_divergence_and_stops_on_promoti
         value for value in result.chart_events if value["event_type"] == "promote_level_candidate"
     )
     assert promotion["component_count"] == 9
-    assert result.strategy_states[-1]["state_to"] == "same_level_promotion_candidate"
+    confirmed_promotion = next(
+        value for value in result.chart_events if value["event_type"] == "promote_level"
+    )
+    assert confirmed_promotion["from_level_id"] == "L0"
+    assert confirmed_promotion["to_level_id"] == "L1"
+    assert confirmed_promotion["promoted_from_center_id"] == "higher-center-candidate"
+    assert confirmed_promotion["migration_status"] == "waiting_higher_level_sequence"
+    assert result.strategy_states[-1]["state_to"] == "same_level_promoted_waiting_sequence"
+    assert result.trade_signals[-1]["reason_code"] == "CONFIRMED_HIGHER_LEVEL_CENTER_PROMOTION"
+    prefix = run_strategy(payload, guard, threading.Event(), last_bar_index=3)
+    assert prefix.events == [value for value in result.events if value["known_at_bar_index"] <= 3]
+
+    # 九组件兼容中心只能形成候选；没有结构图确认时不得平仓或停用 L0。
+    confirmed_level_event = fake_events.pop()
+    candidate_only = run_strategy(payload, guard, threading.Event())
+    assert [value["action"] for value in candidate_only.trade_signals] == ["open_long"]
+    assert candidate_only.strategy_states[-1]["state_to"] == "same_level_promotion_candidate"
+    assert not any(value["event_type"] == "promote_level" for value in candidate_only.chart_events)
+
+    # 已确认提升来源删除时，在删除已知时点重置迁移状态。
+    fake_events.append(confirmed_level_event)
+    fake_events.append(event(5, "level_center", "confirmed-L1-center", {}, operation="delete"))
+    invalidated = run_strategy(payload, guard, threading.Event())
+    assert invalidated.strategy_states[-1]["state_to"] == "same_level_decomposition_reset"
+    assert invalidated.strategy_states[-1]["reason_code"] == (
+        "CONFIRMED_HIGHER_LEVEL_CENTER_REVISED"
+    )
 
     # 来源分解被修订时平仓并从修订时点重新起链，不用终态回写旧操作。
-    fake_events.pop()
+    fake_events[:] = fake_events[:-2]
     fake_events.append(segment(4, "A1-down", 0, 1, 200, 95, "down"))
     revised = run_strategy(payload, guard, threading.Event())
     assert [value["action"] for value in revised.trade_signals] == ["open_long", "close_long"]

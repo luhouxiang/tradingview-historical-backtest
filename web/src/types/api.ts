@@ -109,7 +109,7 @@ export interface AlgorithmOutput {
   display_name: string
   pane: 'main' | 'indicator'
   series_type: 'line' | 'histogram' | 'semantic_objects'
-  object_type?: 'fractal' | 'bi' | 'segment' | 'zhongshu' | 'segment_zhongshu' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event' | 'risk_decision'
+  object_type?: 'processed_bar' | 'fractal' | 'bi' | 'bi_state' | 'segment' | 'zhongshu' | 'segment_zhongshu' | 'level_center' | 'level_movement' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event' | 'risk_decision'
 }
 
 export interface AlgorithmDefinition extends AlgorithmRef {
@@ -130,6 +130,10 @@ export interface AlgorithmDefinition extends AlgorithmRef {
   outputs: AlgorithmOutput[]
   warmup: { kind: 'formula'; expression: string } | { kind: 'fixed_bars'; bars: number }
   causal: true
+  comparison_eligible?: boolean
+  research_role?: 'formal_strategy' | 'example_strategy' | 'auxiliary_non_trading' | 'risk_filter'
+  strategy_family?: string
+  catalog_algorithm_ids?: string[]
 }
 
 export interface CalculationRequest {
@@ -162,8 +166,18 @@ export interface ChanFractal {
   bar_index: number
   time: number
   price_i64: number
+  zone_low_i64: number
+  zone_high_i64: number
   extreme_source_bar_index: number
   fractal_type: 'top' | 'bottom'
+  status: 'candidate' | 'confirmed' | 'invalidated'
+  invalidation_reason: string | null
+  aux_strength: 'strong_reversal' | 'unclassified'
+  strength_reason: string
+  catalog_algorithm_id: 'ALG-GEO-002'
+  strength_semantic_namespace: 'auxiliary'
+  standard_signal: false
+  execution_allowed: false
   confirmed: boolean
   confirmed_at_bar_index: number | null
   known_at_bar_index: number
@@ -181,6 +195,9 @@ export interface ChanLineObject {
   end_price_i64: number
   end_extreme_source_bar_index: number
   direction: 'up' | 'down'
+  status: 'candidate' | 'confirmed' | 'invalidated'
+  invalidation_reason: string | null
+  catalog_algorithm_id: 'ALG-GEO-003' | 'ALG-GEO-004'
   confirmed: boolean
   confirmed_at_bar_index: number | null
   known_at_bar_index: number
@@ -221,15 +238,58 @@ export interface ChanSignalPoint {
   reference_object_id: string | null
   macd_area_reference: number | null
   macd_area_current: number | null
+  status: 'candidate' | 'confirmed' | 'invalidated'
+  invalidation_reason: string | null
+  level_id: string | null
+  lower_level_turn_object_id: string | null
+  catalog_event: 'B1_candidate' | 'B1_confirmed' | 'B1_invalidated' | 'S1_candidate' | 'S1_confirmed' | 'S1_invalidated' | null
+  catalog_algorithm_id: 'ALG-SIG-001' | null
   confirmed: boolean
   confirmed_at_bar_index: number | null
   known_at_bar_index: number
   object_revision: number
 }
 
+export interface ChanProcessedBar {
+  object_id: string
+  normalized_index: number
+  start_bar_index: number
+  start_time: number
+  end_bar_index: number
+  end_time: number
+  open_i64: number
+  high_i64: number
+  low_i64: number
+  close_i64: number
+  high_source_bar_index: number
+  low_source_bar_index: number
+  direction: 'up' | 'down' | 'unknown'
+  source_bar_indices: number[]
+  status: 'forming' | 'sealed'
+  sealed_at_bar_index: number | null
+  catalog_event: 'processed_bar' | 'processed_bar_revision'
+  known_at_bar_index: number
+  object_revision: number
+}
+
+export interface ChanBiState {
+  object_id: string
+  bar_index: number
+  time: number
+  price_i64: number
+  state: 'SEEK_FIRST_FRACTAL' | 'UP_EXTENDING' | 'TOP_FORMING' | 'DOWN_EXTENDING' | 'BOTTOM_FORMING'
+  direction: 'up' | 'down' | null
+  anchor_fractal_id: string | null
+  candidate_object_id: string | null
+  trigger: 'initial' | 'processed_bar_update' | 'first_fractal_confirmed' | 'fractal_confirmed' | 'candidate_started' | 'candidate_revised' | 'candidate_invalidated' | 'bi_confirmed'
+  catalog_algorithm_id: 'ALG-GEO-003'
+  known_at_bar_index: number
+  object_revision: number
+}
+
 export interface ChanTreeObject {
   object_id: string
-  object_type?: 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point'
+  object_type?: 'bi_state' | 'level_center' | 'level_movement' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point'
   bar_index: number
   time: number
   price_i64: number
@@ -250,6 +310,56 @@ export interface StrategyRunSource {
   visible: boolean
   objects: ChanTreeObject[]
   signals: Array<Record<string, unknown> & { object_type: string; object_id: string }>
+}
+
+export interface ChanLevelCenter {
+  object_id: string
+  level_id: string
+  parent_level_id: string
+  start_bar_index: number
+  start_time: number
+  end_bar_index: number
+  end_time: number
+  zd_i64: number
+  zg_i64: number
+  dd_i64: number
+  gg_i64: number
+  component_kind: 'segment' | 'sublevel_movement'
+  component_object_ids: string[]
+  source_center_ids: string[]
+  status: 'candidate' | 'confirmed' | 'extended' | 'terminated' | 'promoted' | 'superseded'
+  promotion_reason: 'nine_component_extension' | 'overlapping_fluctuation_ranges'
+  promoted_from_center_id: string | null
+  catalog_event: 'center_candidate' | 'center_confirmed' | 'center_extended' | 'center_promoted' | 'center_terminated'
+  catalog_algorithm_id: 'ALG-GEO-005'
+  confirmed: boolean
+  confirmed_at_bar_index: number | null
+  known_at_bar_index: number
+  object_revision: number
+}
+
+export interface ChanLevelMovement {
+  object_id: string
+  level_id: string
+  start_bar_index: number
+  start_time: number
+  end_bar_index: number
+  end_time: number
+  low_i64: number
+  high_i64: number
+  component_center_ids: string[]
+  classification: 'consolidation' | 'uptrend' | 'downtrend' | 'higher_level_center_candidate'
+  direction: 'up' | 'down' | null
+  status: 'candidate' | 'confirmed' | 'reclassified' | 'invalidated'
+  previous_classification: 'consolidation' | 'uptrend' | 'downtrend' | 'higher_level_center_candidate' | null
+  reclassification_reason: string | null
+  parent_center_candidate_id: string | null
+  catalog_event: 'movement_candidate' | 'movement_confirmed' | 'movement_reclassified'
+  catalog_algorithm_id: 'ALG-GEO-006'
+  confirmed: boolean
+  confirmed_at_bar_index: number | null
+  known_at_bar_index: number
+  object_revision: number
 }
 
 export interface ChanMovementState {
@@ -304,11 +414,15 @@ export interface ChanCenterMonitor {
 export interface ChanCalculationResults extends CalculationResultBase {
   result_kind: 'chan'
   objects: {
+    processed_bars: ChanProcessedBar[]
     fractals: ChanFractal[]
     bi: ChanLineObject[]
+    bi_states: ChanBiState[]
     segments: ChanLineObject[]
     zhongshu: ChanZhongshu[]
     segment_zhongshu: ChanZhongshu[]
+    level_centers: ChanLevelCenter[]
+    level_movements: ChanLevelMovement[]
     movement_states: ChanMovementState[]
     center_monitors: ChanCenterMonitor[]
     divergences: ChanSignalPoint[]
@@ -341,7 +455,7 @@ export interface ReplayStatus {
 export interface CausalEvent {
   event_seq: number
   known_at_bar_index: number
-  object_type: 'fractal' | 'bi' | 'segment' | 'zhongshu' | 'segment_zhongshu' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event' | 'risk_decision'
+  object_type: 'processed_bar' | 'fractal' | 'bi' | 'bi_state' | 'segment' | 'zhongshu' | 'segment_zhongshu' | 'level_center' | 'level_movement' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event' | 'risk_decision'
   object_id: string
   operation: 'upsert' | 'delete'
   object_revision: number
@@ -472,6 +586,69 @@ export interface StudyRequest {
   risk_overlay?: RiskOverlay
 }
 
+export interface StrategyComparisonRequest {
+  dataset_id: string
+  data_revision: string
+  strategies: Array<{
+    strategy: AlgorithmRef
+    parameters: Record<string, string | number | boolean>
+  }>
+  risk_overlay?: RiskOverlay
+  range: BacktestRequest['range']
+  execution: BacktestRequest['execution']
+  capital: BacktestRequest['capital']
+  random_seed: number
+  minimum_trade_count: number
+}
+
+export interface StrategyComparisonAccepted {
+  request_id: string
+  comparison_id: string
+  status: 'queued'
+}
+
+export interface StrategyComparisonStatus {
+  request_id: string
+  comparison_id: string
+  status: JobStatus['status']
+  progress: number
+  total_count: number
+  completed_count: number
+  failed_count: number
+  current_algorithm_id: string | null
+  result_ref?: string
+  manifest?: StrategyComparisonManifest
+  error?: { code: string; message: string }
+}
+
+export interface StrategyComparisonManifest {
+  schema_version: 1
+  comparison_id: string
+  trace_id: string
+  dataset: { dataset_id: string; data_revision: string }
+  range: BacktestRequest['range']
+  execution: Record<string, unknown>
+  capital: Record<string, unknown>
+  random_seed: number
+  minimum_trade_count: number
+  strategy_count: number
+  completed_count: number
+  failed_count: number
+  created_at: string
+}
+
+export interface StrategyComparisonResult {
+  algorithm_id: string
+  name: string
+  strategy_family: string
+  parameters: Record<string, string | number | boolean>
+  status: 'completed' | 'failed' | 'skipped'
+  run_id?: string
+  run_signature?: string
+  summary?: BacktestSummary
+  error?: { code: string; message: string }
+}
+
 export interface StudyAccepted {
   request_id: string
   study_id: string
@@ -588,7 +765,7 @@ export interface StrategySource {
   job_id: string
   status: JobStatus['status']
   visible: boolean
-  category_visibility: { fractals: boolean; bi: boolean; segments: boolean; zhongshu: boolean; segment_zhongshu: boolean; movement_states?: boolean; center_monitors?: boolean; divergences: boolean; trade_points: boolean }
+  category_visibility: { processed_bars?: boolean; fractals: boolean; bi: boolean; bi_states?: boolean; segments: boolean; zhongshu: boolean; segment_zhongshu: boolean; level_centers?: boolean; level_movements?: boolean; movement_states?: boolean; center_monitors?: boolean; divergences: boolean; trade_points: boolean }
   style?: IndicatorStyle
   error?: string
 }
@@ -645,7 +822,7 @@ export interface PersistedStrategySource {
   data_revision: string
   algorithm: AlgorithmRef & { kind: 'chan' }
   parameters: Record<string, string | number | boolean>
-  category_visibility: { fractals: boolean; bi: boolean; segments?: boolean; zhongshu: boolean; segment_zhongshu?: boolean; movement_states?: boolean; center_monitors?: boolean; divergences?: boolean; trade_points?: boolean }
+  category_visibility: { processed_bars?: boolean; fractals: boolean; bi: boolean; bi_states?: boolean; segments?: boolean; zhongshu: boolean; segment_zhongshu?: boolean; level_centers?: boolean; level_movements?: boolean; movement_states?: boolean; center_monitors?: boolean; divergences?: boolean; trade_points?: boolean }
   style?: IndicatorStyle
 }
 
@@ -657,7 +834,7 @@ export interface WorkspaceLayout {
   revision: number
   panes: WorkspacePane[]
   right_panel: { width: number; collapsed: boolean; active_tab: 'watchlist' | 'object_tree' | 'data_window' | 'strategy_params' }
-  bottom_panel: { height: number; collapsed: boolean; active_tab: 'replay' | 'backtest' | 'trades' | 'equity' | 'optimization' | 'tasks' | 'logs' }
+  bottom_panel: { height: number; collapsed: boolean; active_tab: 'replay' | 'backtest' | 'trades' | 'equity' | 'optimization' | 'research' | 'tasks' | 'logs' }
   object_order: Array<{ id: string; pane_id: string; z_band: number; order_in_band: number; visible: boolean; locked: boolean }>
   series_sources: PersistedSeriesSource[]
   strategy_sources: PersistedStrategySource[]

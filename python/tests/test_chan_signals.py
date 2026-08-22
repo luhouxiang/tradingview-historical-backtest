@@ -3,7 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from tvbt.chan.reference import ReferenceCenter
-from tvbt.chan.signals import chan_divergences, chan_trade_points
+from tvbt.chan.signals import (
+    chan_divergences,
+    chan_first_point_candidates,
+    chan_trade_points,
+)
 
 
 @dataclass(frozen=True)
@@ -133,6 +137,88 @@ def test_trend_divergence_compares_b_and_c_and_creates_standard_points() -> None
         ("sell_1", 11, None),
         ("sell_2", 13, "normal"),
     ]
+    first = next(value for value in points if value.signal_type == "sell_1")
+    assert first.status == "confirmed"
+    assert first.catalog_event == "S1_confirmed"
+    assert first.catalog_algorithm_id == "ALG-SIG-001"
+    assert first.lower_level_turn_object_id == "segment-12"
+
+
+def test_first_point_candidate_precedes_lower_level_turn_confirmation() -> None:
+    segments = [
+        line(0, 10, 4),
+        line(1, 4, 8),
+        line(2, 8, 5),
+        line(3, 5, 9),
+        line(4, 9, 6),
+        line(5, 6, 12),
+        line(6, 12, 10),
+        line(7, 10, 14),
+        line(8, 14, 12),
+        line(9, 12, 15),
+        line(10, 15, 13),
+        line(11, 13, 16),
+    ]
+    centers = [center(1, 3, 5, 5, 8), center(7, 9, 11, 12, 14)]
+    histogram = {5: 6.0, 6: 6.0, 11: 2.0}
+
+    candidates = chan_first_point_candidates(segments, centers, ["center-1", "center-2"], histogram)
+
+    assert len(candidates) == 1
+    assert candidates[0].signal_type == "sell_1"
+    assert candidates[0].status == "candidate"
+    assert candidates[0].known_at_bar_index == segments[11].known_at_bar_index
+    assert candidates[0].catalog_event == "S1_candidate"
+    assert candidates[0].lower_level_turn_object_id is None
+
+    confirmed = chan_first_point_candidates(
+        [*segments, line(12, 16, 14)],
+        centers,
+        ["center-1", "center-2"],
+        {**histogram, 12: 2.0},
+        level_id="L1",
+    )
+    assert len(confirmed) == 1
+    assert confirmed[0].status == "confirmed"
+    assert confirmed[0].level_id == "L1"
+    assert confirmed[0].known_at_bar_index == 13
+    assert confirmed[0].lower_level_turn_object_id == "segment-12"
+    assert confirmed[0].catalog_event == "S1_confirmed"
+
+
+def test_first_point_candidate_rejects_one_center_overlap_and_nonweaker_force() -> None:
+    segments = [
+        line(0, 10, 4),
+        line(1, 4, 8),
+        line(2, 8, 5),
+        line(3, 5, 9),
+        line(4, 9, 6),
+        line(5, 6, 12),
+        line(6, 12, 9),
+        line(7, 9, 14),
+        line(8, 14, 11),
+        line(9, 11, 15),
+        line(10, 15, 13),
+        line(11, 13, 16),
+    ]
+    first = center(1, 3, 5, 5, 8)
+    touching = center(7, 9, 11, 11, 14)
+    weak_histogram = {5: 6.0, 6: 6.0, 11: 2.0}
+    strong_histogram = {5: 2.0, 6: 2.0, 11: 6.0}
+
+    assert not chan_first_point_candidates(segments, [first], ["c1"], weak_histogram)
+    assert not chan_first_point_candidates(
+        segments, [first, touching], ["c1", "c2"], weak_histogram
+    )
+    separated = center(7, 9, 11, 12, 14)
+    assert not chan_first_point_candidates(
+        segments, [first, separated], ["c1", "c2"], strong_histogram
+    )
+    no_new_extreme = [*segments]
+    no_new_extreme[5] = line(5, 6, 20)
+    assert not chan_first_point_candidates(
+        no_new_extreme, [first, separated], ["c1", "c2"], weak_histogram
+    )
 
 
 def test_touching_outer_ranges_are_not_a_strict_trend() -> None:
