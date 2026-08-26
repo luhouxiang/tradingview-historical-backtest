@@ -16,6 +16,8 @@ tags:
   - name: Calculations
   - name: Replays
   - name: Backtests
+  - name: StrategyResearch
+  - name: Optimization
   - name: Workspaces
   - name: Logs
   - name: Python Internal
@@ -90,6 +92,27 @@ paths:
         "422":
           $ref: "#/components/responses/Unprocessable"
 
+  /api/v1/datasets/import-batch:
+    post:
+      tags: [Datasets]
+      operationId: importDatasetsBatch
+      summary: 顺序导入一批已扫描的本地历史文件
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImportBatchRequest"
+      responses:
+        "202":
+          description: Batch import accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobAccepted"
+        "422":
+          $ref: "#/components/responses/Unprocessable"
+
   /api/v1/datasets:
     get:
       tags: [Datasets]
@@ -131,6 +154,19 @@ paths:
                 additionalProperties: true
         "404":
           $ref: "#/components/responses/NotFound"
+
+  /api/v1/datasets/research-readiness:
+    get:
+      tags: [Datasets]
+      operationId: getDatasetResearchReadiness
+      summary: 获取单周期研究的数据覆盖、独立性和重叠区间门禁
+      responses:
+        "200":
+          description: Dataset research readiness
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DatasetResearchReadiness"
 
   /api/v1/datasets/{dataset_id}/bars:
     get:
@@ -479,7 +515,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PagedRows"
+                $ref: "#/components/schemas/PagedBacktestTrades"
 
   /api/v1/backtests/{run_id}/equity:
     get:
@@ -605,6 +641,90 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StrategyComparisonResults"
+
+  /api/v1/research-studies:
+    post:
+      tags: [StrategyResearch]
+      operationId: createResearchStudy
+      summary: Create an immutable same-timeframe multi-dataset research study
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ResearchStudyRequest"}
+      responses:
+        "202":
+          description: Research study accepted
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ResearchStudyAccepted"}
+    get:
+      tags: [StrategyResearch]
+      operationId: listResearchStudies
+      summary: List completed research studies
+      responses:
+        "200":
+          description: Completed research study manifests
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [request_id, items]
+                properties:
+                  request_id: {type: string}
+                  items: {type: array, items: {$ref: "./schemas/research-study-manifest.schema.json"}}
+
+  /api/v1/research-studies/{research_study_id}:
+    get:
+      tags: [StrategyResearch]
+      operationId: getResearchStudy
+      summary: Get research study status and manifest
+      parameters:
+        - $ref: "#/components/parameters/ResearchStudyId"
+      responses:
+        "200":
+          description: Research study status
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ResearchStudyStatus"}
+
+  /api/v1/research-studies/{research_study_id}/cancel:
+    post:
+      tags: [StrategyResearch]
+      operationId: cancelResearchStudy
+      summary: Cancel a running research study
+      parameters:
+        - $ref: "#/components/parameters/ResearchStudyId"
+      responses:
+        "202": {description: Cancellation requested}
+
+  /api/v1/research-studies/{research_study_id}/resume:
+    post:
+      tags: [StrategyResearch]
+      operationId: resumeResearchStudy
+      summary: Resume an interrupted, cancelled, or failed research study from its journal
+      parameters:
+        - $ref: "#/components/parameters/ResearchStudyId"
+      responses:
+        "202":
+          description: Research study resumed
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ResearchStudyAccepted"}
+
+  /api/v1/research-studies/{research_study_id}/results:
+    get:
+      tags: [StrategyResearch]
+      operationId: getResearchStudyResults
+      summary: Get per-dataset and independence-group-weighted research results
+      parameters:
+        - $ref: "#/components/parameters/ResearchStudyId"
+      responses:
+        "200":
+          description: Research study results
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ResearchStudyResults"}
 
   /api/v1/studies:
     post:
@@ -861,7 +981,7 @@ paths:
           in: path
           required: true
           schema:
-            enum: [calculation, replay, backtest, optimization]
+            enum: [calculation, replay, backtest, optimization, comparison, research]
       requestBody:
         required: true
         content:
@@ -941,6 +1061,12 @@ components:
         type: string
     ComparisonId:
       name: comparison_id
+      in: path
+      required: true
+      schema:
+        type: string
+    ResearchStudyId:
+      name: research_study_id
       in: path
       required: true
       schema:
@@ -1064,11 +1190,26 @@ components:
           enum: [trading_day, calendar_date]
         timezone:
           type: string
+        independence_group:
+          type: string
+          pattern: "^[A-Z0-9_]+\\.[A-Z0-9_]+$"
         timestamp_semantics:
           enum: [bar_start, bar_end]
         options:
           type: object
           additionalProperties: true
+
+    ImportBatchRequest:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/ImportRequest"
 
     DatasetSummary:
       type: object
@@ -1096,8 +1237,42 @@ components:
           type: integer
         last_timestamp_utc:
           type: integer
+        first_trading_day:
+          type: string
+        last_trading_day:
+          type: string
+        trading_day_count:
+          type: integer
+          minimum: 1
+        independence_group:
+          type: string
         status:
           enum: [ready, importing, invalid]
+
+    DatasetResearchReadiness:
+      type: object
+      additionalProperties: false
+      required: [request_id, status, required_trading_days, required_independence_groups, eligible_independence_group_count, datasets, reasons]
+      properties:
+        request_id: {type: string}
+        status: {enum: [exploratory, certification_ready]}
+        required_trading_days: {type: integer, const: 504}
+        required_independence_groups: {type: integer, const: 3}
+        eligible_independence_group_count: {type: integer, minimum: 0}
+        datasets:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [dataset_id, data_revision, independence_group, trading_day_count, eligible, overlapping_dataset_ids]
+            properties:
+              dataset_id: {type: string}
+              data_revision: {type: string}
+              independence_group: {type: string}
+              trading_day_count: {type: integer, minimum: 0}
+              eligible: {type: boolean}
+              overlapping_dataset_ids: {type: array, items: {type: string}}
+        reasons: {type: array, items: {type: string}}
 
     BarColumns:
       type: object
@@ -1784,6 +1959,12 @@ components:
             contract_multiplier: {type: number, exclusiveMinimum: 0}
             margin_ratio: {type: number, exclusiveMinimum: 0, maximum: 1}
             intrabar_conflict_rule: {enum: [stop_first, target_first, worst_case]}
+            stress_scenario_id: {type: string, minLength: 1}
+            cost_multiplier: {type: number, minimum: 0}
+            additional_slippage_ticks: {type: number, minimum: 0}
+            additional_delay_bars: {type: integer, minimum: 0}
+            max_volume_participation_rate: {type: number, exclusiveMinimum: 0, maximum: 1}
+            fill_mode: {enum: [unlimited, volume_cap_ioc]}
         capital:
           type: object
           additionalProperties: false
@@ -2018,7 +2199,12 @@ components:
         status: {enum: [completed, failed, skipped]}
         run_id: {type: string}
         run_signature: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+        tier: {enum: [failed, no_trades, loss_making, profitable_low_sample, profitable_candidate, pareto_candidate]}
+        pareto: {type: boolean}
         summary: {$ref: "#/components/schemas/BacktestSummary"}
+        attribution:
+          type: [object, "null"]
+          additionalProperties: true
         error:
           type: object
           additionalProperties: false
@@ -2037,6 +2223,289 @@ components:
         items:
           type: array
           items: {$ref: "#/components/schemas/StrategyComparisonResult"}
+
+    ResearchDatasetRequest:
+      type: object
+      additionalProperties: false
+      required: [dataset_id, data_revision, range]
+      properties:
+        dataset_id: {type: string, minLength: 1}
+        data_revision: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+        range:
+          type: object
+          additionalProperties: false
+          required: [warmup_from_bar_index, from_bar_index, to_bar_index]
+          properties:
+            warmup_from_bar_index: {type: integer, minimum: 0}
+            from_bar_index: {type: integer, minimum: 0}
+            to_bar_index: {type: integer, minimum: 0}
+
+    ResearchStudyRequest:
+      type: object
+      additionalProperties: false
+      required: [datasets, strategy, parameters, execution, capital, random_seed]
+      properties:
+        datasets:
+          type: array
+          minItems: 2
+          maxItems: 32
+          items: {$ref: "#/components/schemas/ResearchDatasetRequest"}
+        strategy: {$ref: "#/components/schemas/AlgorithmRef"}
+        parameters: {type: object, additionalProperties: true}
+        execution: {type: object, additionalProperties: true}
+        capital: {type: object, additionalProperties: true}
+        random_seed: {type: integer}
+        walk_forward: {$ref: "#/components/schemas/WalkForwardConfig"}
+        stress_test: {$ref: "#/components/schemas/StressTestConfig"}
+        statistical_validation: {$ref: "#/components/schemas/StatisticalValidationConfig"}
+        trace_id: {type: string}
+
+    WalkForwardConfig:
+      type: object
+      additionalProperties: false
+      required: [train_trading_days, validation_trading_days, step_trading_days, search_space, objectives, constraints, search]
+      properties:
+        train_trading_days: {type: integer, minimum: 2, default: 252}
+        validation_trading_days: {type: integer, minimum: 1, default: 63}
+        step_trading_days: {type: integer, minimum: 1, default: 63}
+        search_space:
+          type: array
+          items: {$ref: "#/components/schemas/SearchParameter"}
+        objectives:
+          type: array
+          minItems: 1
+          items: {$ref: "#/components/schemas/StudyObjective"}
+        constraints:
+          type: array
+          items: {$ref: "#/components/schemas/StudyConstraint"}
+        search: {$ref: "#/components/schemas/SearchConfig"}
+
+    StressTestConfig:
+      type: object
+      additionalProperties: false
+      required: [suite_version, volume_participation_rate]
+      properties:
+        suite_version: {type: string, enum: ["1.0.0"]}
+        volume_participation_rate: {type: number, const: 0.1, default: 0.1}
+
+    StatisticalValidationConfig:
+      type: object
+      additionalProperties: false
+      required: [method_version, block_size_trading_days, iterations, confidence_level, random_seed, holm_alpha]
+      properties:
+        method_version: {type: string, enum: ["1.0.0"]}
+        block_size_trading_days: {type: integer, minimum: 1, default: 5}
+        iterations: {type: integer, minimum: 100, maximum: 10000, default: 2000}
+        confidence_level: {type: number, const: 0.95, default: 0.95}
+        random_seed: {type: integer}
+        holm_alpha: {type: number, const: 0.05, default: 0.05}
+
+    ResearchStudyAccepted:
+      type: object
+      additionalProperties: false
+      required: [request_id, research_study_id, status]
+      properties:
+        request_id: {type: string}
+        research_study_id: {type: string}
+        status: {enum: [queued, running]}
+
+    ResearchStudyStatus:
+      type: object
+      additionalProperties: false
+      required: [request_id, research_study_id, status, progress]
+      properties:
+        request_id: {type: string}
+        research_study_id: {type: string}
+        status: {enum: [queued, running, cancelling, completed, failed, cancelled, interrupted]}
+        progress: {type: number, minimum: 0, maximum: 1}
+        result_ref: {type: string}
+        manifest: {$ref: "./schemas/research-study-manifest.schema.json"}
+        error: {$ref: "#/components/schemas/Error"}
+
+    ResearchStudyDatasetResult:
+      type: object
+      additionalProperties: false
+      required: [dataset_id, data_revision, independence_group, trading_day_count, status]
+      properties:
+        dataset_id: {type: string}
+        data_revision: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+        independence_group: {type: string}
+        trading_day_count: {type: integer, minimum: 0}
+        status: {enum: [completed, failed]}
+        run_id: {type: string}
+        run_signature: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+        summary: {$ref: "#/components/schemas/BacktestSummary"}
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message]
+          properties:
+            code: {type: string}
+            message: {type: string}
+        folds:
+          type: array
+          items: {$ref: "#/components/schemas/WalkForwardFoldResult"}
+        walk_forward_summary:
+          type: object
+          additionalProperties: true
+
+    WalkForwardFoldResult:
+      type: object
+      additionalProperties: false
+      required: [dataset_id, independence_group, fold_index, status, train_trading_day_from, train_trading_day_to, validation_trading_day_from, validation_trading_day_to, train_range, validation_range]
+      properties:
+        dataset_id: {type: string}
+        independence_group: {type: string}
+        fold_index: {type: integer, minimum: 0}
+        status: {enum: [completed, failed]}
+        train_trading_day_from: {type: string}
+        train_trading_day_to: {type: string}
+        validation_trading_day_from: {type: string}
+        validation_trading_day_to: {type: string}
+        train_range:
+          type: object
+          additionalProperties: false
+          required: [warmup_from_bar_index, from_bar_index, to_bar_index]
+          properties:
+            warmup_from_bar_index: {type: integer, minimum: 0}
+            from_bar_index: {type: integer, minimum: 0}
+            to_bar_index: {type: integer, minimum: 0}
+        validation_range:
+          type: object
+          additionalProperties: false
+          required: [warmup_from_bar_index, from_bar_index, to_bar_index]
+          properties:
+            warmup_from_bar_index: {type: integer, minimum: 0}
+            from_bar_index: {type: integer, minimum: 0}
+            to_bar_index: {type: integer, minimum: 0}
+        selected_parameters: {type: object, additionalProperties: true}
+        training_ranking: {type: array, items: {type: object, additionalProperties: true}}
+        selected_train_metrics: {$ref: "#/components/schemas/BacktestSummary"}
+        validation_metrics: {$ref: "#/components/schemas/BacktestSummary"}
+        selected_train_run_id: {type: string}
+        selected_train_run_signature: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+        validation_run_id: {type: string}
+        validation_run_signature: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+        parameter_changed: {type: boolean}
+        changed_parameter_names: {type: array, items: {type: string}}
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message]
+          properties:
+            code: {type: string}
+            message: {type: string}
+
+    ResearchStudyAggregate:
+      type: object
+      additionalProperties: true
+      required: [completed_dataset_count, failed_dataset_count, independence_group_count, eligible_independence_group_count, data_status, daily_return_count, total_trade_count]
+      properties:
+        completed_dataset_count: {type: integer, minimum: 0}
+        failed_dataset_count: {type: integer, minimum: 0}
+        independence_group_count: {type: integer, minimum: 0}
+        eligible_independence_group_count: {type: integer, minimum: 0}
+        data_status: {enum: [exploratory, certification_ready]}
+        daily_return_count: {type: integer, minimum: 0}
+        total_trade_count: {type: integer, minimum: 0}
+        total_return: {type: number}
+        annualized_return: {type: [number, "null"]}
+        sharpe: {type: [number, "null"]}
+        annualized_volatility: {type: [number, "null"]}
+        max_drawdown: {type: number, minimum: 0}
+        median_dataset_return: {type: [number, "null"]}
+        worst_dataset_id: {type: [string, "null"]}
+        worst_dataset_return: {type: [number, "null"]}
+        profitable_dataset_ratio: {type: [number, "null"], minimum: 0, maximum: 1}
+        worst_dataset_max_drawdown: {type: number, minimum: 0}
+        walk_forward_fold_count: {type: integer, minimum: 0}
+        completed_walk_forward_fold_count: {type: integer, minimum: 0}
+        profitable_fold_ratio: {type: [number, "null"], minimum: 0, maximum: 1}
+        worst_fold_max_drawdown: {type: [number, "null"], minimum: 0}
+        out_of_sample_trade_count: {type: integer, minimum: 0}
+        certification_trade_count: {type: number, minimum: 0}
+        out_of_sample_expectancy_i64: {type: [number, "null"]}
+        minimum_completed_folds_per_group: {type: integer, minimum: 0}
+        minimum_studied_trading_days_per_group: {type: integer, minimum: 0}
+        parameter_stability: {type: [number, "null"], minimum: 0, maximum: 1}
+        stress_scenarios:
+          type: array
+          items: {$ref: "#/components/schemas/StressScenarioResult"}
+        first_failure_scenario: {type: [string, "null"]}
+        attempted_parameter_combinations:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [combination_id, parameters, attempt_count, completed_count]
+            properties:
+              combination_id: {type: string}
+              parameters: {type: object, additionalProperties: true}
+              attempt_count: {type: integer, minimum: 0}
+              completed_count: {type: integer, minimum: 0}
+        statistical_evidence: {type: object, additionalProperties: true}
+        certification: {$ref: "#/components/schemas/ResearchCertification"}
+
+    StressScenarioResult:
+      type: object
+      additionalProperties: false
+      required: [scenario_id, status, cost_multiplier, additional_slippage_ticks, additional_delay_bars, fill_mode, completed_run_count, failed_run_count, requested_quantity, filled_quantity, fill_rate]
+      properties:
+        scenario_id: {type: string}
+        status: {enum: [completed, failed]}
+        cost_multiplier: {type: number, minimum: 0}
+        additional_slippage_ticks: {type: number, minimum: 0}
+        additional_delay_bars: {type: integer, minimum: 0}
+        max_volume_participation_rate: {type: [number, "null"], exclusiveMinimum: 0, maximum: 1}
+        fill_mode: {enum: [unlimited, volume_cap_ioc]}
+        completed_run_count: {type: integer, minimum: 0}
+        failed_run_count: {type: integer, minimum: 0}
+        daily_return_count: {type: integer, minimum: 0}
+        total_return: {type: [number, "null"]}
+        max_drawdown: {type: [number, "null"], minimum: 0}
+        trade_count: {type: integer, minimum: 0}
+        requested_quantity: {type: integer, minimum: 0}
+        filled_quantity: {type: integer, minimum: 0}
+        fill_rate: {type: [number, "null"], minimum: 0, maximum: 1}
+        return_degradation: {type: [number, "null"]}
+        drawdown_degradation: {type: [number, "null"]}
+        fill_rate_degradation: {type: [number, "null"]}
+        failure_reason: {type: [string, "null"]}
+
+    ResearchCertification:
+      type: object
+      additionalProperties: false
+      required: [rules_version, tier, reliable_candidate_is_historical_only, research_candidate_passed, reliable_candidate_passed, reasons, evidence_matrix]
+      properties:
+        rules_version: {type: string}
+        tier: {enum: [exploratory, research_candidate, reliable_candidate]}
+        reliable_candidate_is_historical_only: {const: true}
+        research_candidate_passed: {type: boolean}
+        reliable_candidate_passed: {type: boolean}
+        reasons: {type: array, items: {type: string}}
+        evidence_matrix:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [gate_id, required_for, passed, actual, threshold, reason]
+            properties:
+              gate_id: {type: string}
+              required_for: {enum: [research_candidate, reliable_candidate]}
+              passed: {type: boolean}
+              actual: {}
+              threshold: {}
+              reason: {type: string}
+
+    ResearchStudyResults:
+      type: object
+      additionalProperties: false
+      required: [request_id, research_study_id, items, aggregate]
+      properties:
+        request_id: {type: string}
+        research_study_id: {type: string}
+        items: {type: array, items: {$ref: "#/components/schemas/ResearchStudyDatasetResult"}}
+        aggregate: {$ref: "#/components/schemas/ResearchStudyAggregate"}
 
     StudyRequest:
       type: object
@@ -2255,8 +2724,15 @@ components:
         run_id: {type: string}
         total_return: {type: number}
         annualized_return: {type: [number, "null"]}
+        annualized_return_reason: {type: [string, "null"]}
         max_drawdown: {type: number, minimum: 0}
         sharpe: {type: [number, "null"]}
+        sharpe_reason: {type: [string, "null"]}
+        annualized_volatility: {type: [number, "null"], minimum: 0}
+        annualized_volatility_reason: {type: [string, "null"]}
+        trading_day_count: {type: integer, minimum: 0}
+        daily_return_count: {type: integer, minimum: 0}
+        sharpe_annualization_factor: {type: integer, const: 252}
         trade_count: {type: integer, minimum: 0}
         win_rate: {type: [number, "null"], minimum: 0, maximum: 1}
         average_win_i64: {type: [integer, "null"]}
@@ -2266,10 +2742,53 @@ components:
         expectancy_i64: {type: [number, "null"]}
         total_commission_i64: {type: integer, minimum: 0}
         total_slippage_i64: {type: integer, minimum: 0}
+        requested_quantity: {type: integer, minimum: 0}
+        filled_quantity: {type: integer, minimum: 0}
+        fill_rate: {type: [number, "null"], minimum: 0, maximum: 1}
         risk_approved_count: {type: integer, minimum: 0}
         risk_reduced_count: {type: integer, minimum: 0}
         risk_blocked_count: {type: integer, minimum: 0}
         risk_kill_switch_count: {type: integer, minimum: 0}
+
+    BacktestTrade:
+      type: object
+      additionalProperties: false
+      required: [trade_id, side, entry_bar_index, entry_time, entry_price_i64, exit_bar_index, exit_time, exit_price_i64, quantity, gross_pnl_i64, net_pnl_i64, commission_i64, slippage_i64]
+      properties:
+        trade_id: {type: string}
+        side: {enum: [long, short]}
+        entry_bar_index: {type: integer, minimum: 0}
+        entry_time: {type: integer}
+        entry_price_i64: {type: integer}
+        entry_signal_id: {type: string}
+        entry_signal_known_at_bar_index: {type: integer, minimum: 0}
+        entry_order_id: {type: string}
+        exit_bar_index: {type: integer, minimum: 0}
+        exit_time: {type: integer}
+        exit_price_i64: {type: integer}
+        exit_signal_id: {type: string}
+        exit_order_id: {type: string}
+        quantity: {type: integer, minimum: 1}
+        gross_pnl_i64: {type: integer}
+        net_pnl_i64: {type: integer}
+        commission_i64: {type: integer, minimum: 0}
+        slippage_i64: {type: integer, minimum: 0}
+        market_l0: {enum: [uptrend, downtrend, consolidation, higher_level_center_candidate, unknown]}
+        center_phase: {enum: [consolidation, center_oscillation, migrating_up, migrating_down, unknown]}
+        price_vs_center: {enum: [above, inside, below, unknown]}
+        trigger_category: {enum: [B1, B2, B3, S1, S2, S3, class_buy_sell, other]}
+        structure_object_id: {type: string}
+        structure_object_revision: {type: integer, minimum: 0}
+        attribution_reason_code: {type: string}
+
+    PagedBacktestTrades:
+      type: object
+      additionalProperties: false
+      required: [request_id, rows, next_cursor]
+      properties:
+        request_id: {type: string}
+        rows: {type: array, items: {$ref: "#/components/schemas/BacktestTrade"}}
+        next_cursor: {type: [string, "null"]}
 
     EquityRow:
       type: object
@@ -2278,6 +2797,7 @@ components:
       properties:
         bar_index: {type: integer, minimum: 0}
         timestamp_utc: {type: integer}
+        trading_day: {type: string}
         equity_i64: {type: integer}
         cash_i64: {type: integer}
         available_i64: {type: integer}

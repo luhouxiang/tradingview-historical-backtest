@@ -154,6 +154,7 @@ def test_runner_reuses_indicator_series_and_publishes_only_aux_chart_events(tmp_
                     [1_700_000_000_000 + index * 60_000 for index in range(len(closes))],
                     type=pa.int64(),
                 ),
+                "trading_day": pa.array(["2026-01-05"] * len(closes), type=pa.string()),
                 "open_i64": pa.array(closes, type=pa.int64()),
                 "high_i64": pa.array([value + 1 for value in closes], type=pa.int64()),
                 "low_i64": pa.array([value - 1 for value in closes], type=pa.int64()),

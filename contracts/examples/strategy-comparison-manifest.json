@@ -1,6 +1,8 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "comparison_id": "comparison-20260822-example",
+  "comparison_signature": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "aggregator_version": "2.0.0",
   "trace_id": "trace-comparison-example",
   "dataset": {
     "dataset_id": "SHFE.AO2609.5m",
@@ -22,6 +24,17 @@
   },
   "random_seed": 7,
   "minimum_trade_count": 20,
+  "strategies": [
+    {
+      "strategy": {
+        "kind": "strategy",
+        "algorithm_id": "fixed_level_centre_decision_tree",
+        "algorithm_version": "1.0.0",
+        "source_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      "parameters": {"checkpoint_interval": 1024}
+    }
+  ],
   "strategy_count": 2,
   "completed_count": 2,
   "failed_count": 0,

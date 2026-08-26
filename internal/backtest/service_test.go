@@ -45,6 +45,24 @@ func TestRunSignatureIsReproducibleAndCoversExecutionFacts(t *testing.T) {
 	}
 }
 
+func TestValidExecutionAcceptsReproducibleStressFacts(t *testing.T) {
+	execution := map[string]any{
+		"signal_timing": "bar_close", "fill_timing": "next_bar_open",
+		"commission":      map[string]any{"mode": "fixed_per_contract"},
+		"slippage":        map[string]any{"mode": "ticks", "value": 1},
+		"cost_multiplier": 2.0, "additional_slippage_ticks": 1.0,
+		"additional_delay_bars": 1.0, "max_volume_participation_rate": 0.1,
+		"fill_mode": "volume_cap_ioc",
+	}
+	if !ValidExecution(execution) {
+		t.Fatal("valid stress execution was rejected")
+	}
+	delete(execution, "max_volume_participation_rate")
+	if ValidExecution(execution) {
+		t.Fatal("volume-cap fill mode without a participation rate was accepted")
+	}
+}
+
 func TestRunSignatureCoversRankingContext(t *testing.T) {
 	request := Request{
 		DatasetID: "A.1d", DataRevision: "sha256:" + repeat("1", 64),

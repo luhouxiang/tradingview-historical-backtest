@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -33,15 +34,57 @@ func testServer(t *testing.T, pythonURL string, options ...Option) (*Server, *by
 }
 
 type fakeDatasets struct {
+	mu      sync.Mutex
 	sources []importer.SourceFile
 	meta    catalog.DatasetMeta
+	imports []importer.ImportRequest
 }
 
 func (f *fakeDatasets) Scan(_ context.Context) ([]importer.SourceFile, error) { return f.sources, nil }
 func (f *fakeDatasets) SourceFiles() []importer.SourceFile                    { return f.sources }
-func (f *fakeDatasets) Import(_ context.Context, _ importer.ImportRequest, progress func(float64)) (catalog.DatasetMeta, bool, error) {
+func (f *fakeDatasets) Import(_ context.Context, request importer.ImportRequest, progress func(float64)) (catalog.DatasetMeta, bool, error) {
+	f.mu.Lock()
+	f.imports = append(f.imports, request)
+	f.mu.Unlock()
 	progress(1)
 	return f.meta, false, nil
+}
+
+func (f *fakeDatasets) importCount() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return len(f.imports)
+}
+
+func TestDatasetBatchImportAndResearchReadiness(t *testing.T) {
+	revision := "sha256:" + strings.Repeat("a", 64)
+	data := &fakeDatasets{meta: catalog.DatasetMeta{
+		DatasetID: "SHFE.AOL9.5m", DataRevision: revision, IndependenceGroup: "SHFE.AO", Timeframe: "5m",
+		Instrument: catalog.InstrumentMeta{Exchange: "SHFE", Product: "AO", Symbol: "AOL9"},
+		Coverage:   catalog.CoverageMeta{TradingDayCount: 600, FirstTimestampUTC: 1, LastTimestampUTC: 2},
+	}}
+	manager := jobs.NewManager()
+	server, _ := testServer(t, "http://127.0.0.1:1", WithDatasets(data, manager))
+	body := `{"items":[{"source_file_id":"source-1","importer_id":"tdx_txt_v1","exchange":"SHFE","instrument":"AOL9","timeframe":"5m","date_semantics":"trading_day","timezone":"Asia/Shanghai"},{"source_file_id":"source-2","importer_id":"tdx_txt_v1","exchange":"DCE","instrument":"YL9","timeframe":"5m","date_semantics":"trading_day","timezone":"Asia/Shanghai"}]}`
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/datasets/import-batch", strings.NewReader(body))
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusAccepted {
+		t.Fatalf("batch status = %d: %s", recorder.Code, recorder.Body.String())
+	}
+	deadline := time.Now().Add(time.Second)
+	for data.importCount() != 2 && time.Now().Before(deadline) {
+		time.Sleep(time.Millisecond)
+	}
+	if data.importCount() != 2 {
+		t.Fatalf("imports = %d, want 2", data.importCount())
+	}
+	request = httptest.NewRequest(http.MethodGet, "/api/v1/datasets/research-readiness", nil)
+	recorder = httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK || !strings.Contains(recorder.Body.String(), `"status":"exploratory"`) || !strings.Contains(recorder.Body.String(), `"eligible_independence_group_count":1`) {
+		t.Fatalf("readiness response = %d: %s", recorder.Code, recorder.Body.String())
+	}
 }
 func (f *fakeDatasets) ListDatasets() (catalog.Document, []catalog.DatasetMeta, error) {
 	return catalog.Document{CatalogRevision: 1}, []catalog.DatasetMeta{f.meta}, nil

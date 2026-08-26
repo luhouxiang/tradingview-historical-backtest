@@ -9,6 +9,21 @@ import (
 	"time"
 )
 
+// Defines values for BacktestSummarySharpeAnnualizationFactor.
+const (
+	BacktestSummarySharpeAnnualizationFactorN252 BacktestSummarySharpeAnnualizationFactor = 252
+)
+
+// Valid indicates whether the value is a known member of the BacktestSummarySharpeAnnualizationFactor enum.
+func (e BacktestSummarySharpeAnnualizationFactor) Valid() bool {
+	switch e {
+	case BacktestSummarySharpeAnnualizationFactorN252:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CalculationResultsObjectsBiStatesDirection.
 const (
 	CalculationResultsObjectsBiStatesDirectionDown        CalculationResultsObjectsBiStatesDirection = "down"
@@ -1767,6 +1782,396 @@ func (e ChanZhongshuStatus) Valid() bool {
 	}
 }
 
+// Defines values for DatasetResearchReadinessRequiredIndependenceGroups.
+const (
+	DatasetResearchReadinessRequiredIndependenceGroupsN3 DatasetResearchReadinessRequiredIndependenceGroups = 3
+)
+
+// Valid indicates whether the value is a known member of the DatasetResearchReadinessRequiredIndependenceGroups enum.
+func (e DatasetResearchReadinessRequiredIndependenceGroups) Valid() bool {
+	switch e {
+	case DatasetResearchReadinessRequiredIndependenceGroupsN3:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DatasetResearchReadinessRequiredTradingDays.
+const (
+	DatasetResearchReadinessRequiredTradingDaysN504 DatasetResearchReadinessRequiredTradingDays = 504
+)
+
+// Valid indicates whether the value is a known member of the DatasetResearchReadinessRequiredTradingDays enum.
+func (e DatasetResearchReadinessRequiredTradingDays) Valid() bool {
+	switch e {
+	case DatasetResearchReadinessRequiredTradingDaysN504:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ResearchStudyDatasetResultFoldsSelectedTrainMetricsSharpeAnnualizationFactor.
+const (
+	ResearchStudyDatasetResultFoldsSelectedTrainMetricsSharpeAnnualizationFactorN252 ResearchStudyDatasetResultFoldsSelectedTrainMetricsSharpeAnnualizationFactor = 252
+)
+
+// Valid indicates whether the value is a known member of the ResearchStudyDatasetResultFoldsSelectedTrainMetricsSharpeAnnualizationFactor enum.
+func (e ResearchStudyDatasetResultFoldsSelectedTrainMetricsSharpeAnnualizationFactor) Valid() bool {
+	switch e {
+	case ResearchStudyDatasetResultFoldsSelectedTrainMetricsSharpeAnnualizationFactorN252:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ResearchStudyDatasetResultFoldsValidationMetricsSharpeAnnualizationFactor.
+const (
+	ResearchStudyDatasetResultFoldsValidationMetricsSharpeAnnualizationFactorN252 ResearchStudyDatasetResultFoldsValidationMetricsSharpeAnnualizationFactor = 252
+)
+
+// Valid indicates whether the value is a known member of the ResearchStudyDatasetResultFoldsValidationMetricsSharpeAnnualizationFactor enum.
+func (e ResearchStudyDatasetResultFoldsValidationMetricsSharpeAnnualizationFactor) Valid() bool {
+	switch e {
+	case ResearchStudyDatasetResultFoldsValidationMetricsSharpeAnnualizationFactorN252:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ResearchStudyDatasetResultSummarySharpeAnnualizationFactor.
+const (
+	ResearchStudyDatasetResultSummarySharpeAnnualizationFactorN252 ResearchStudyDatasetResultSummarySharpeAnnualizationFactor = 252
+)
+
+// Valid indicates whether the value is a known member of the ResearchStudyDatasetResultSummarySharpeAnnualizationFactor enum.
+func (e ResearchStudyDatasetResultSummarySharpeAnnualizationFactor) Valid() bool {
+	switch e {
+	case ResearchStudyDatasetResultSummarySharpeAnnualizationFactorN252:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ResearchStudyRequestStatisticalValidationConfidenceLevel.
+const (
+	ResearchStudyRequestStatisticalValidationConfidenceLevelN095 ResearchStudyRequestStatisticalValidationConfidenceLevel = 0.95
+)
+
+// Valid indicates whether the value is a known member of the ResearchStudyRequestStatisticalValidationConfidenceLevel enum.
+func (e ResearchStudyRequestStatisticalValidationConfidenceLevel) Valid() bool {
+	switch e {
+	case ResearchStudyRequestStatisticalValidationConfidenceLevelN095:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ResearchStudyRequestStatisticalValidationHolmAlpha.
+const (
+	ResearchStudyRequestStatisticalValidationHolmAlphaN005 ResearchStudyRequestStatisticalValidationHolmAlpha = 0.05
+)
+
+// Valid indicates whether the value is a known member of the ResearchStudyRequestStatisticalValidationHolmAlpha enum.
+func (e ResearchStudyRequestStatisticalValidationHolmAlpha) Valid() bool {
+	switch e {
+	case ResearchStudyRequestStatisticalValidationHolmAlphaN005:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ResearchStudyRequestStatisticalValidationMethodVersion.
+const (
+	ResearchStudyRequestStatisticalValidationMethodVersionN100 ResearchStudyRequestStatisticalValidationMethodVersion = "1.0.0"
+)
+
+// Valid indicates whether the value is a known member of the ResearchStudyRequestStatisticalValidationMethodVersion enum.
+func (e ResearchStudyRequestStatisticalValidationMethodVersion) Valid() bool {
+	switch e {
+	case ResearchStudyRequestStatisticalValidationMethodVersionN100:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ResearchStudyRequestStressTestSuiteVersion.
+const (
+	ResearchStudyRequestStressTestSuiteVersionN100 ResearchStudyRequestStressTestSuiteVersion = "1.0.0"
+)
+
+// Valid indicates whether the value is a known member of the ResearchStudyRequestStressTestSuiteVersion enum.
+func (e ResearchStudyRequestStressTestSuiteVersion) Valid() bool {
+	switch e {
+	case ResearchStudyRequestStressTestSuiteVersionN100:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ResearchStudyRequestStressTestVolumeParticipationRate.
+const (
+	ResearchStudyRequestStressTestVolumeParticipationRateN01 ResearchStudyRequestStressTestVolumeParticipationRate = 0.1
+)
+
+// Valid indicates whether the value is a known member of the ResearchStudyRequestStressTestVolumeParticipationRate enum.
+func (e ResearchStudyRequestStressTestVolumeParticipationRate) Valid() bool {
+	switch e {
+	case ResearchStudyRequestStressTestVolumeParticipationRateN01:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ResearchStudyResultsItemsFoldsSelectedTrainMetricsSharpeAnnualizationFactor.
+const (
+	ResearchStudyResultsItemsFoldsSelectedTrainMetricsSharpeAnnualizationFactorN252 ResearchStudyResultsItemsFoldsSelectedTrainMetricsSharpeAnnualizationFactor = 252
+)
+
+// Valid indicates whether the value is a known member of the ResearchStudyResultsItemsFoldsSelectedTrainMetricsSharpeAnnualizationFactor enum.
+func (e ResearchStudyResultsItemsFoldsSelectedTrainMetricsSharpeAnnualizationFactor) Valid() bool {
+	switch e {
+	case ResearchStudyResultsItemsFoldsSelectedTrainMetricsSharpeAnnualizationFactorN252:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ResearchStudyResultsItemsFoldsValidationMetricsSharpeAnnualizationFactor.
+const (
+	ResearchStudyResultsItemsFoldsValidationMetricsSharpeAnnualizationFactorN252 ResearchStudyResultsItemsFoldsValidationMetricsSharpeAnnualizationFactor = 252
+)
+
+// Valid indicates whether the value is a known member of the ResearchStudyResultsItemsFoldsValidationMetricsSharpeAnnualizationFactor enum.
+func (e ResearchStudyResultsItemsFoldsValidationMetricsSharpeAnnualizationFactor) Valid() bool {
+	switch e {
+	case ResearchStudyResultsItemsFoldsValidationMetricsSharpeAnnualizationFactorN252:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ResearchStudyResultsItemsSummarySharpeAnnualizationFactor.
+const (
+	ResearchStudyResultsItemsSummarySharpeAnnualizationFactorN252 ResearchStudyResultsItemsSummarySharpeAnnualizationFactor = 252
+)
+
+// Valid indicates whether the value is a known member of the ResearchStudyResultsItemsSummarySharpeAnnualizationFactor enum.
+func (e ResearchStudyResultsItemsSummarySharpeAnnualizationFactor) Valid() bool {
+	switch e {
+	case ResearchStudyResultsItemsSummarySharpeAnnualizationFactorN252:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ResearchStudyStatusManifestStatisticalValidationConfidenceLevel.
+const (
+	ResearchStudyStatusManifestStatisticalValidationConfidenceLevelN095 ResearchStudyStatusManifestStatisticalValidationConfidenceLevel = 0.95
+)
+
+// Valid indicates whether the value is a known member of the ResearchStudyStatusManifestStatisticalValidationConfidenceLevel enum.
+func (e ResearchStudyStatusManifestStatisticalValidationConfidenceLevel) Valid() bool {
+	switch e {
+	case ResearchStudyStatusManifestStatisticalValidationConfidenceLevelN095:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ResearchStudyStatusManifestStatisticalValidationHolmAlpha.
+const (
+	ResearchStudyStatusManifestStatisticalValidationHolmAlphaN005 ResearchStudyStatusManifestStatisticalValidationHolmAlpha = 0.05
+)
+
+// Valid indicates whether the value is a known member of the ResearchStudyStatusManifestStatisticalValidationHolmAlpha enum.
+func (e ResearchStudyStatusManifestStatisticalValidationHolmAlpha) Valid() bool {
+	switch e {
+	case ResearchStudyStatusManifestStatisticalValidationHolmAlphaN005:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ResearchStudyStatusManifestStressTestVolumeParticipationRate.
+const (
+	ResearchStudyStatusManifestStressTestVolumeParticipationRateN01 ResearchStudyStatusManifestStressTestVolumeParticipationRate = 0.1
+)
+
+// Valid indicates whether the value is a known member of the ResearchStudyStatusManifestStressTestVolumeParticipationRate enum.
+func (e ResearchStudyStatusManifestStressTestVolumeParticipationRate) Valid() bool {
+	switch e {
+	case ResearchStudyStatusManifestStressTestVolumeParticipationRateN01:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for StatisticalValidationConfigConfidenceLevel.
+const (
+	StatisticalValidationConfigConfidenceLevelN095 StatisticalValidationConfigConfidenceLevel = 0.95
+)
+
+// Valid indicates whether the value is a known member of the StatisticalValidationConfigConfidenceLevel enum.
+func (e StatisticalValidationConfigConfidenceLevel) Valid() bool {
+	switch e {
+	case StatisticalValidationConfigConfidenceLevelN095:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for StatisticalValidationConfigHolmAlpha.
+const (
+	StatisticalValidationConfigHolmAlphaN005 StatisticalValidationConfigHolmAlpha = 0.05
+)
+
+// Valid indicates whether the value is a known member of the StatisticalValidationConfigHolmAlpha enum.
+func (e StatisticalValidationConfigHolmAlpha) Valid() bool {
+	switch e {
+	case StatisticalValidationConfigHolmAlphaN005:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for StatisticalValidationConfigMethodVersion.
+const (
+	StatisticalValidationConfigMethodVersionN100 StatisticalValidationConfigMethodVersion = "1.0.0"
+)
+
+// Valid indicates whether the value is a known member of the StatisticalValidationConfigMethodVersion enum.
+func (e StatisticalValidationConfigMethodVersion) Valid() bool {
+	switch e {
+	case StatisticalValidationConfigMethodVersionN100:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for StrategyComparisonResultSummarySharpeAnnualizationFactor.
+const (
+	StrategyComparisonResultSummarySharpeAnnualizationFactorN252 StrategyComparisonResultSummarySharpeAnnualizationFactor = 252
+)
+
+// Valid indicates whether the value is a known member of the StrategyComparisonResultSummarySharpeAnnualizationFactor enum.
+func (e StrategyComparisonResultSummarySharpeAnnualizationFactor) Valid() bool {
+	switch e {
+	case StrategyComparisonResultSummarySharpeAnnualizationFactorN252:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for StrategyComparisonResultsItemsSummarySharpeAnnualizationFactor.
+const (
+	StrategyComparisonResultsItemsSummarySharpeAnnualizationFactorN252 StrategyComparisonResultsItemsSummarySharpeAnnualizationFactor = 252
+)
+
+// Valid indicates whether the value is a known member of the StrategyComparisonResultsItemsSummarySharpeAnnualizationFactor enum.
+func (e StrategyComparisonResultsItemsSummarySharpeAnnualizationFactor) Valid() bool {
+	switch e {
+	case StrategyComparisonResultsItemsSummarySharpeAnnualizationFactorN252:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for StressTestConfigSuiteVersion.
+const (
+	StressTestConfigSuiteVersionN100 StressTestConfigSuiteVersion = "1.0.0"
+)
+
+// Valid indicates whether the value is a known member of the StressTestConfigSuiteVersion enum.
+func (e StressTestConfigSuiteVersion) Valid() bool {
+	switch e {
+	case StressTestConfigSuiteVersionN100:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for StressTestConfigVolumeParticipationRate.
+const (
+	StressTestConfigVolumeParticipationRateN01 StressTestConfigVolumeParticipationRate = 0.1
+)
+
+// Valid indicates whether the value is a known member of the StressTestConfigVolumeParticipationRate enum.
+func (e StressTestConfigVolumeParticipationRate) Valid() bool {
+	switch e {
+	case StressTestConfigVolumeParticipationRateN01:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WalkForwardFoldResultSelectedTrainMetricsSharpeAnnualizationFactor.
+const (
+	WalkForwardFoldResultSelectedTrainMetricsSharpeAnnualizationFactorN252 WalkForwardFoldResultSelectedTrainMetricsSharpeAnnualizationFactor = 252
+)
+
+// Valid indicates whether the value is a known member of the WalkForwardFoldResultSelectedTrainMetricsSharpeAnnualizationFactor enum.
+func (e WalkForwardFoldResultSelectedTrainMetricsSharpeAnnualizationFactor) Valid() bool {
+	switch e {
+	case WalkForwardFoldResultSelectedTrainMetricsSharpeAnnualizationFactorN252:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WalkForwardFoldResultValidationMetricsSharpeAnnualizationFactor.
+const (
+	WalkForwardFoldResultValidationMetricsSharpeAnnualizationFactorN252 WalkForwardFoldResultValidationMetricsSharpeAnnualizationFactor = 252
+)
+
+// Valid indicates whether the value is a known member of the WalkForwardFoldResultValidationMetricsSharpeAnnualizationFactor enum.
+func (e WalkForwardFoldResultValidationMetricsSharpeAnnualizationFactor) Valid() bool {
+	switch e {
+	case WalkForwardFoldResultValidationMetricsSharpeAnnualizationFactorN252:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetBacktestSummary200JSONResponseBodySharpeAnnualizationFactor.
+const (
+	GetBacktestSummary200JSONResponseBodySharpeAnnualizationFactorN252 GetBacktestSummary200JSONResponseBodySharpeAnnualizationFactor = 252
+)
+
+// Valid indicates whether the value is a known member of the GetBacktestSummary200JSONResponseBodySharpeAnnualizationFactor enum.
+func (e GetBacktestSummary200JSONResponseBodySharpeAnnualizationFactor) Valid() bool {
+	switch e {
+	case GetBacktestSummary200JSONResponseBodySharpeAnnualizationFactorN252:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetCalculationResults200JSONResponseBodyObjectsBiStatesDirection.
 const (
 	GetCalculationResults200JSONResponseBodyObjectsBiStatesDirectionDown        GetCalculationResults200JSONResponseBodyObjectsBiStatesDirection = "down"
@@ -2430,6 +2835,261 @@ func (e GetCalculationResults200JSONResponseBodyObjectsZhongshuStatus) Valid() b
 	}
 }
 
+// Defines values for GetDatasetResearchReadiness200JSONResponseBodyRequiredIndependenceGroups.
+const (
+	GetDatasetResearchReadiness200JSONResponseBodyRequiredIndependenceGroupsN3 GetDatasetResearchReadiness200JSONResponseBodyRequiredIndependenceGroups = 3
+)
+
+// Valid indicates whether the value is a known member of the GetDatasetResearchReadiness200JSONResponseBodyRequiredIndependenceGroups enum.
+func (e GetDatasetResearchReadiness200JSONResponseBodyRequiredIndependenceGroups) Valid() bool {
+	switch e {
+	case GetDatasetResearchReadiness200JSONResponseBodyRequiredIndependenceGroupsN3:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetDatasetResearchReadiness200JSONResponseBodyRequiredTradingDays.
+const (
+	GetDatasetResearchReadiness200JSONResponseBodyRequiredTradingDaysN504 GetDatasetResearchReadiness200JSONResponseBodyRequiredTradingDays = 504
+)
+
+// Valid indicates whether the value is a known member of the GetDatasetResearchReadiness200JSONResponseBodyRequiredTradingDays enum.
+func (e GetDatasetResearchReadiness200JSONResponseBodyRequiredTradingDays) Valid() bool {
+	switch e {
+	case GetDatasetResearchReadiness200JSONResponseBodyRequiredTradingDaysN504:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListResearchStudies200JSONResponseBodyItemsStatisticalValidationConfidenceLevel.
+const (
+	ListResearchStudies200JSONResponseBodyItemsStatisticalValidationConfidenceLevelN095 ListResearchStudies200JSONResponseBodyItemsStatisticalValidationConfidenceLevel = 0.95
+)
+
+// Valid indicates whether the value is a known member of the ListResearchStudies200JSONResponseBodyItemsStatisticalValidationConfidenceLevel enum.
+func (e ListResearchStudies200JSONResponseBodyItemsStatisticalValidationConfidenceLevel) Valid() bool {
+	switch e {
+	case ListResearchStudies200JSONResponseBodyItemsStatisticalValidationConfidenceLevelN095:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListResearchStudies200JSONResponseBodyItemsStatisticalValidationHolmAlpha.
+const (
+	ListResearchStudies200JSONResponseBodyItemsStatisticalValidationHolmAlphaN005 ListResearchStudies200JSONResponseBodyItemsStatisticalValidationHolmAlpha = 0.05
+)
+
+// Valid indicates whether the value is a known member of the ListResearchStudies200JSONResponseBodyItemsStatisticalValidationHolmAlpha enum.
+func (e ListResearchStudies200JSONResponseBodyItemsStatisticalValidationHolmAlpha) Valid() bool {
+	switch e {
+	case ListResearchStudies200JSONResponseBodyItemsStatisticalValidationHolmAlphaN005:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListResearchStudies200JSONResponseBodyItemsStressTestVolumeParticipationRate.
+const (
+	ListResearchStudies200JSONResponseBodyItemsStressTestVolumeParticipationRateN01 ListResearchStudies200JSONResponseBodyItemsStressTestVolumeParticipationRate = 0.1
+)
+
+// Valid indicates whether the value is a known member of the ListResearchStudies200JSONResponseBodyItemsStressTestVolumeParticipationRate enum.
+func (e ListResearchStudies200JSONResponseBodyItemsStressTestVolumeParticipationRate) Valid() bool {
+	switch e {
+	case ListResearchStudies200JSONResponseBodyItemsStressTestVolumeParticipationRateN01:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CreateResearchStudyJSONBodyStatisticalValidationConfidenceLevel.
+const (
+	CreateResearchStudyJSONBodyStatisticalValidationConfidenceLevelN095 CreateResearchStudyJSONBodyStatisticalValidationConfidenceLevel = 0.95
+)
+
+// Valid indicates whether the value is a known member of the CreateResearchStudyJSONBodyStatisticalValidationConfidenceLevel enum.
+func (e CreateResearchStudyJSONBodyStatisticalValidationConfidenceLevel) Valid() bool {
+	switch e {
+	case CreateResearchStudyJSONBodyStatisticalValidationConfidenceLevelN095:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CreateResearchStudyJSONBodyStatisticalValidationHolmAlpha.
+const (
+	CreateResearchStudyJSONBodyStatisticalValidationHolmAlphaN005 CreateResearchStudyJSONBodyStatisticalValidationHolmAlpha = 0.05
+)
+
+// Valid indicates whether the value is a known member of the CreateResearchStudyJSONBodyStatisticalValidationHolmAlpha enum.
+func (e CreateResearchStudyJSONBodyStatisticalValidationHolmAlpha) Valid() bool {
+	switch e {
+	case CreateResearchStudyJSONBodyStatisticalValidationHolmAlphaN005:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CreateResearchStudyJSONBodyStatisticalValidationMethodVersion.
+const (
+	CreateResearchStudyJSONBodyStatisticalValidationMethodVersionN100 CreateResearchStudyJSONBodyStatisticalValidationMethodVersion = "1.0.0"
+)
+
+// Valid indicates whether the value is a known member of the CreateResearchStudyJSONBodyStatisticalValidationMethodVersion enum.
+func (e CreateResearchStudyJSONBodyStatisticalValidationMethodVersion) Valid() bool {
+	switch e {
+	case CreateResearchStudyJSONBodyStatisticalValidationMethodVersionN100:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CreateResearchStudyJSONBodyStressTestSuiteVersion.
+const (
+	CreateResearchStudyJSONBodyStressTestSuiteVersionN100 CreateResearchStudyJSONBodyStressTestSuiteVersion = "1.0.0"
+)
+
+// Valid indicates whether the value is a known member of the CreateResearchStudyJSONBodyStressTestSuiteVersion enum.
+func (e CreateResearchStudyJSONBodyStressTestSuiteVersion) Valid() bool {
+	switch e {
+	case CreateResearchStudyJSONBodyStressTestSuiteVersionN100:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CreateResearchStudyJSONBodyStressTestVolumeParticipationRate.
+const (
+	CreateResearchStudyJSONBodyStressTestVolumeParticipationRateN01 CreateResearchStudyJSONBodyStressTestVolumeParticipationRate = 0.1
+)
+
+// Valid indicates whether the value is a known member of the CreateResearchStudyJSONBodyStressTestVolumeParticipationRate enum.
+func (e CreateResearchStudyJSONBodyStressTestVolumeParticipationRate) Valid() bool {
+	switch e {
+	case CreateResearchStudyJSONBodyStressTestVolumeParticipationRateN01:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetResearchStudy200JSONResponseBodyManifestStatisticalValidationConfidenceLevel.
+const (
+	GetResearchStudy200JSONResponseBodyManifestStatisticalValidationConfidenceLevelN095 GetResearchStudy200JSONResponseBodyManifestStatisticalValidationConfidenceLevel = 0.95
+)
+
+// Valid indicates whether the value is a known member of the GetResearchStudy200JSONResponseBodyManifestStatisticalValidationConfidenceLevel enum.
+func (e GetResearchStudy200JSONResponseBodyManifestStatisticalValidationConfidenceLevel) Valid() bool {
+	switch e {
+	case GetResearchStudy200JSONResponseBodyManifestStatisticalValidationConfidenceLevelN095:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetResearchStudy200JSONResponseBodyManifestStatisticalValidationHolmAlpha.
+const (
+	GetResearchStudy200JSONResponseBodyManifestStatisticalValidationHolmAlphaN005 GetResearchStudy200JSONResponseBodyManifestStatisticalValidationHolmAlpha = 0.05
+)
+
+// Valid indicates whether the value is a known member of the GetResearchStudy200JSONResponseBodyManifestStatisticalValidationHolmAlpha enum.
+func (e GetResearchStudy200JSONResponseBodyManifestStatisticalValidationHolmAlpha) Valid() bool {
+	switch e {
+	case GetResearchStudy200JSONResponseBodyManifestStatisticalValidationHolmAlphaN005:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetResearchStudy200JSONResponseBodyManifestStressTestVolumeParticipationRate.
+const (
+	GetResearchStudy200JSONResponseBodyManifestStressTestVolumeParticipationRateN01 GetResearchStudy200JSONResponseBodyManifestStressTestVolumeParticipationRate = 0.1
+)
+
+// Valid indicates whether the value is a known member of the GetResearchStudy200JSONResponseBodyManifestStressTestVolumeParticipationRate enum.
+func (e GetResearchStudy200JSONResponseBodyManifestStressTestVolumeParticipationRate) Valid() bool {
+	switch e {
+	case GetResearchStudy200JSONResponseBodyManifestStressTestVolumeParticipationRateN01:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetResearchStudyResults200JSONResponseBodyItemsFoldsSelectedTrainMetricsSharpeAnnualizationFactor.
+const (
+	GetResearchStudyResults200JSONResponseBodyItemsFoldsSelectedTrainMetricsSharpeAnnualizationFactorN252 GetResearchStudyResults200JSONResponseBodyItemsFoldsSelectedTrainMetricsSharpeAnnualizationFactor = 252
+)
+
+// Valid indicates whether the value is a known member of the GetResearchStudyResults200JSONResponseBodyItemsFoldsSelectedTrainMetricsSharpeAnnualizationFactor enum.
+func (e GetResearchStudyResults200JSONResponseBodyItemsFoldsSelectedTrainMetricsSharpeAnnualizationFactor) Valid() bool {
+	switch e {
+	case GetResearchStudyResults200JSONResponseBodyItemsFoldsSelectedTrainMetricsSharpeAnnualizationFactorN252:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetResearchStudyResults200JSONResponseBodyItemsFoldsValidationMetricsSharpeAnnualizationFactor.
+const (
+	GetResearchStudyResults200JSONResponseBodyItemsFoldsValidationMetricsSharpeAnnualizationFactorN252 GetResearchStudyResults200JSONResponseBodyItemsFoldsValidationMetricsSharpeAnnualizationFactor = 252
+)
+
+// Valid indicates whether the value is a known member of the GetResearchStudyResults200JSONResponseBodyItemsFoldsValidationMetricsSharpeAnnualizationFactor enum.
+func (e GetResearchStudyResults200JSONResponseBodyItemsFoldsValidationMetricsSharpeAnnualizationFactor) Valid() bool {
+	switch e {
+	case GetResearchStudyResults200JSONResponseBodyItemsFoldsValidationMetricsSharpeAnnualizationFactorN252:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetResearchStudyResults200JSONResponseBodyItemsSummarySharpeAnnualizationFactor.
+const (
+	GetResearchStudyResults200JSONResponseBodyItemsSummarySharpeAnnualizationFactorN252 GetResearchStudyResults200JSONResponseBodyItemsSummarySharpeAnnualizationFactor = 252
+)
+
+// Valid indicates whether the value is a known member of the GetResearchStudyResults200JSONResponseBodyItemsSummarySharpeAnnualizationFactor enum.
+func (e GetResearchStudyResults200JSONResponseBodyItemsSummarySharpeAnnualizationFactor) Valid() bool {
+	switch e {
+	case GetResearchStudyResults200JSONResponseBodyItemsSummarySharpeAnnualizationFactorN252:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetStrategyComparisonResults200JSONResponseBodyItemsSummarySharpeAnnualizationFactor.
+const (
+	GetStrategyComparisonResults200JSONResponseBodyItemsSummarySharpeAnnualizationFactorN252 GetStrategyComparisonResults200JSONResponseBodyItemsSummarySharpeAnnualizationFactor = 252
+)
+
+// Valid indicates whether the value is a known member of the GetStrategyComparisonResults200JSONResponseBodyItemsSummarySharpeAnnualizationFactor enum.
+func (e GetStrategyComparisonResults200JSONResponseBodyItemsSummarySharpeAnnualizationFactor) Valid() bool {
+	switch e {
+	case GetStrategyComparisonResults200JSONResponseBodyItemsSummarySharpeAnnualizationFactorN252:
+		return true
+	default:
+		return false
+	}
+}
+
 // AlgorithmDefinition defines model for AlgorithmDefinition.
 type AlgorithmDefinition struct {
 	AlgorithmId         string      `json:"algorithm_id"`
@@ -2475,13 +3135,19 @@ type BacktestRequest struct {
 	DataRevision string `json:"data_revision"`
 	DatasetId    string `json:"dataset_id"`
 	Execution    struct {
-		Commission           BacktestRequest_Execution_Commission `json:"commission"`
-		ContractMultiplier   float32                              `json:"contract_multiplier"`
-		FillTiming           interface{}                          `json:"fill_timing"`
-		IntrabarConflictRule interface{}                          `json:"intrabar_conflict_rule"`
-		MarginRatio          float32                              `json:"margin_ratio"`
-		SignalTiming         interface{}                          `json:"signal_timing"`
-		Slippage             BacktestRequest_Execution_Slippage   `json:"slippage"`
+		AdditionalDelayBars        *int                                 `json:"additional_delay_bars,omitempty"`
+		AdditionalSlippageTicks    *float32                             `json:"additional_slippage_ticks,omitempty"`
+		Commission                 BacktestRequest_Execution_Commission `json:"commission"`
+		ContractMultiplier         float32                              `json:"contract_multiplier"`
+		CostMultiplier             *float32                             `json:"cost_multiplier,omitempty"`
+		FillMode                   interface{}                          `json:"fill_mode,omitempty"`
+		FillTiming                 interface{}                          `json:"fill_timing"`
+		IntrabarConflictRule       interface{}                          `json:"intrabar_conflict_rule"`
+		MarginRatio                float32                              `json:"margin_ratio"`
+		MaxVolumeParticipationRate *float32                             `json:"max_volume_participation_rate,omitempty"`
+		SignalTiming               interface{}                          `json:"signal_timing"`
+		Slippage                   BacktestRequest_Execution_Slippage   `json:"slippage"`
+		StressScenarioId           *string                              `json:"stress_scenario_id,omitempty"`
 	} `json:"execution"`
 	Parameters map[string]interface{} `json:"parameters"`
 	RandomSeed int                    `json:"random_seed"`
@@ -2556,26 +3222,68 @@ type BacktestRequest_Execution_Slippage struct {
 
 // BacktestSummary defines model for BacktestSummary.
 type BacktestSummary struct {
-	AnnualizedReturn     *float32               `json:"annualized_return,omitempty"`
-	AverageLossI64       *int                   `json:"average_loss_i64,omitempty"`
-	AverageWinI64        *int                   `json:"average_win_i64,omitempty"`
-	ExpectancyI64        *float32               `json:"expectancy_i64,omitempty"`
-	MaxDrawdown          float32                `json:"max_drawdown"`
-	ProfitFactor         *float32               `json:"profit_factor,omitempty"`
-	ProfitLossRatio      *float32               `json:"profit_loss_ratio,omitempty"`
-	RequestId            string                 `json:"request_id"`
-	RiskApprovedCount    int                    `json:"risk_approved_count"`
-	RiskBlockedCount     int                    `json:"risk_blocked_count"`
-	RiskKillSwitchCount  int                    `json:"risk_kill_switch_count"`
-	RiskReducedCount     int                    `json:"risk_reduced_count"`
-	RunId                string                 `json:"run_id"`
-	Sharpe               *float32               `json:"sharpe,omitempty"`
-	TotalCommissionI64   int                    `json:"total_commission_i64"`
-	TotalReturn          float32                `json:"total_return"`
-	TotalSlippageI64     int                    `json:"total_slippage_i64"`
-	TradeCount           int                    `json:"trade_count"`
-	WinRate              *float32               `json:"win_rate"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	AnnualizedReturn           *float32                                  `json:"annualized_return,omitempty"`
+	AnnualizedReturnReason     *string                                   `json:"annualized_return_reason,omitempty"`
+	AnnualizedVolatility       *float32                                  `json:"annualized_volatility,omitempty"`
+	AnnualizedVolatilityReason *string                                   `json:"annualized_volatility_reason,omitempty"`
+	AverageLossI64             *int                                      `json:"average_loss_i64,omitempty"`
+	AverageWinI64              *int                                      `json:"average_win_i64,omitempty"`
+	DailyReturnCount           *int                                      `json:"daily_return_count,omitempty"`
+	ExpectancyI64              *float32                                  `json:"expectancy_i64,omitempty"`
+	FillRate                   *float32                                  `json:"fill_rate,omitempty"`
+	FilledQuantity             *int                                      `json:"filled_quantity,omitempty"`
+	MaxDrawdown                float32                                   `json:"max_drawdown"`
+	ProfitFactor               *float32                                  `json:"profit_factor,omitempty"`
+	ProfitLossRatio            *float32                                  `json:"profit_loss_ratio,omitempty"`
+	RequestId                  string                                    `json:"request_id"`
+	RequestedQuantity          *int                                      `json:"requested_quantity,omitempty"`
+	RiskApprovedCount          int                                       `json:"risk_approved_count"`
+	RiskBlockedCount           int                                       `json:"risk_blocked_count"`
+	RiskKillSwitchCount        int                                       `json:"risk_kill_switch_count"`
+	RiskReducedCount           int                                       `json:"risk_reduced_count"`
+	RunId                      string                                    `json:"run_id"`
+	Sharpe                     *float32                                  `json:"sharpe,omitempty"`
+	SharpeAnnualizationFactor  *BacktestSummarySharpeAnnualizationFactor `json:"sharpe_annualization_factor,omitempty"`
+	SharpeReason               *string                                   `json:"sharpe_reason,omitempty"`
+	TotalCommissionI64         int                                       `json:"total_commission_i64"`
+	TotalReturn                float32                                   `json:"total_return"`
+	TotalSlippageI64           int                                       `json:"total_slippage_i64"`
+	TradeCount                 int                                       `json:"trade_count"`
+	TradingDayCount            *int                                      `json:"trading_day_count,omitempty"`
+	WinRate                    *float32                                  `json:"win_rate"`
+	AdditionalProperties       map[string]interface{}                    `json:"-"`
+}
+
+// BacktestSummarySharpeAnnualizationFactor defines model for BacktestSummary.SharpeAnnualizationFactor.
+type BacktestSummarySharpeAnnualizationFactor int
+
+// BacktestTrade defines model for BacktestTrade.
+type BacktestTrade struct {
+	AttributionReasonCode      *string     `json:"attribution_reason_code,omitempty"`
+	CenterPhase                interface{} `json:"center_phase,omitempty"`
+	CommissionI64              int         `json:"commission_i64"`
+	EntryBarIndex              int         `json:"entry_bar_index"`
+	EntryOrderId               *string     `json:"entry_order_id,omitempty"`
+	EntryPriceI64              int         `json:"entry_price_i64"`
+	EntrySignalId              *string     `json:"entry_signal_id,omitempty"`
+	EntrySignalKnownAtBarIndex *int        `json:"entry_signal_known_at_bar_index,omitempty"`
+	EntryTime                  int         `json:"entry_time"`
+	ExitBarIndex               int         `json:"exit_bar_index"`
+	ExitOrderId                *string     `json:"exit_order_id,omitempty"`
+	ExitPriceI64               int         `json:"exit_price_i64"`
+	ExitSignalId               *string     `json:"exit_signal_id,omitempty"`
+	ExitTime                   int         `json:"exit_time"`
+	GrossPnlI64                int         `json:"gross_pnl_i64"`
+	MarketL0                   interface{} `json:"market_l0,omitempty"`
+	NetPnlI64                  int         `json:"net_pnl_i64"`
+	PriceVsCenter              interface{} `json:"price_vs_center,omitempty"`
+	Quantity                   int         `json:"quantity"`
+	Side                       interface{} `json:"side"`
+	SlippageI64                int         `json:"slippage_i64"`
+	StructureObjectId          *string     `json:"structure_object_id,omitempty"`
+	StructureObjectRevision    *int        `json:"structure_object_revision,omitempty"`
+	TradeId                    string      `json:"trade_id"`
+	TriggerCategory            interface{} `json:"trigger_category,omitempty"`
 }
 
 // BarColumns defines model for BarColumns.
@@ -3686,16 +4394,44 @@ type DatasetRef struct {
 	MetaPath     string `json:"meta_path"`
 }
 
+// DatasetResearchReadiness defines model for DatasetResearchReadiness.
+type DatasetResearchReadiness struct {
+	Datasets []struct {
+		DataRevision          string   `json:"data_revision"`
+		DatasetId             string   `json:"dataset_id"`
+		Eligible              bool     `json:"eligible"`
+		IndependenceGroup     string   `json:"independence_group"`
+		OverlappingDatasetIds []string `json:"overlapping_dataset_ids"`
+		TradingDayCount       int      `json:"trading_day_count"`
+	} `json:"datasets"`
+	EligibleIndependenceGroupCount int                                                `json:"eligible_independence_group_count"`
+	Reasons                        []string                                           `json:"reasons"`
+	RequestId                      string                                             `json:"request_id"`
+	RequiredIndependenceGroups     DatasetResearchReadinessRequiredIndependenceGroups `json:"required_independence_groups"`
+	RequiredTradingDays            DatasetResearchReadinessRequiredTradingDays        `json:"required_trading_days"`
+	Status                         interface{}                                        `json:"status"`
+}
+
+// DatasetResearchReadinessRequiredIndependenceGroups defines model for DatasetResearchReadiness.RequiredIndependenceGroups.
+type DatasetResearchReadinessRequiredIndependenceGroups int
+
+// DatasetResearchReadinessRequiredTradingDays defines model for DatasetResearchReadiness.RequiredTradingDays.
+type DatasetResearchReadinessRequiredTradingDays int
+
 // DatasetSummary defines model for DatasetSummary.
 type DatasetSummary struct {
 	ActiveRevision    string      `json:"active_revision"`
 	BarCount          int         `json:"bar_count"`
 	DatasetId         string      `json:"dataset_id"`
 	FirstTimestampUtc int         `json:"first_timestamp_utc"`
+	FirstTradingDay   *string     `json:"first_trading_day,omitempty"`
+	IndependenceGroup *string     `json:"independence_group,omitempty"`
 	Instrument        string      `json:"instrument"`
 	LastTimestampUtc  int         `json:"last_timestamp_utc"`
+	LastTradingDay    *string     `json:"last_trading_day,omitempty"`
 	Status            interface{} `json:"status"`
 	Timeframe         string      `json:"timeframe"`
+	TradingDayCount   *int        `json:"trading_day_count,omitempty"`
 }
 
 // EquityRow defines model for EquityRow.
@@ -3707,6 +4443,7 @@ type EquityRow struct {
 	EquityI64    int     `json:"equity_i64"`
 	MarginI64    int     `json:"margin_i64"`
 	TimestampUtc int     `json:"timestamp_utc"`
+	TradingDay   *string `json:"trading_day,omitempty"`
 }
 
 // Error defines model for Error.
@@ -3736,11 +4473,28 @@ type HealthResponse struct {
 	Status interface{} `json:"status"`
 }
 
+// ImportBatchRequest defines model for ImportBatchRequest.
+type ImportBatchRequest struct {
+	Items []struct {
+		DateSemantics      interface{}             `json:"date_semantics"`
+		Exchange           string                  `json:"exchange"`
+		ImporterId         interface{}             `json:"importer_id"`
+		IndependenceGroup  *string                 `json:"independence_group,omitempty"`
+		Instrument         string                  `json:"instrument"`
+		Options            *map[string]interface{} `json:"options,omitempty"`
+		SourceFileId       string                  `json:"source_file_id"`
+		Timeframe          string                  `json:"timeframe"`
+		TimestampSemantics interface{}             `json:"timestamp_semantics,omitempty"`
+		Timezone           string                  `json:"timezone"`
+	} `json:"items"`
+}
+
 // ImportRequest defines model for ImportRequest.
 type ImportRequest struct {
 	DateSemantics      interface{}             `json:"date_semantics"`
 	Exchange           string                  `json:"exchange"`
 	ImporterId         interface{}             `json:"importer_id"`
+	IndependenceGroup  *string                 `json:"independence_group,omitempty"`
 	Instrument         string                  `json:"instrument"`
 	Options            *map[string]interface{} `json:"options,omitempty"`
 	SourceFileId       string                  `json:"source_file_id"`
@@ -3768,6 +4522,39 @@ type JobStatus struct {
 	RequestId string      `json:"request_id"`
 	ResultRef *string     `json:"result_ref,omitempty"`
 	Status    interface{} `json:"status"`
+}
+
+// PagedBacktestTrades defines model for PagedBacktestTrades.
+type PagedBacktestTrades struct {
+	NextCursor *string `json:"next_cursor"`
+	RequestId  string  `json:"request_id"`
+	Rows       []struct {
+		AttributionReasonCode      *string     `json:"attribution_reason_code,omitempty"`
+		CenterPhase                interface{} `json:"center_phase,omitempty"`
+		CommissionI64              int         `json:"commission_i64"`
+		EntryBarIndex              int         `json:"entry_bar_index"`
+		EntryOrderId               *string     `json:"entry_order_id,omitempty"`
+		EntryPriceI64              int         `json:"entry_price_i64"`
+		EntrySignalId              *string     `json:"entry_signal_id,omitempty"`
+		EntrySignalKnownAtBarIndex *int        `json:"entry_signal_known_at_bar_index,omitempty"`
+		EntryTime                  int         `json:"entry_time"`
+		ExitBarIndex               int         `json:"exit_bar_index"`
+		ExitOrderId                *string     `json:"exit_order_id,omitempty"`
+		ExitPriceI64               int         `json:"exit_price_i64"`
+		ExitSignalId               *string     `json:"exit_signal_id,omitempty"`
+		ExitTime                   int         `json:"exit_time"`
+		GrossPnlI64                int         `json:"gross_pnl_i64"`
+		MarketL0                   interface{} `json:"market_l0,omitempty"`
+		NetPnlI64                  int         `json:"net_pnl_i64"`
+		PriceVsCenter              interface{} `json:"price_vs_center,omitempty"`
+		Quantity                   int         `json:"quantity"`
+		Side                       interface{} `json:"side"`
+		SlippageI64                int         `json:"slippage_i64"`
+		StructureObjectId          *string     `json:"structure_object_id,omitempty"`
+		StructureObjectRevision    *int        `json:"structure_object_revision,omitempty"`
+		TradeId                    string      `json:"trade_id"`
+		TriggerCategory            interface{} `json:"trigger_category,omitempty"`
+	} `json:"rows"`
 }
 
 // PagedRows defines model for PagedRows.
@@ -3865,6 +4652,714 @@ type ReplayStatus struct {
 	Status    interface{} `json:"status"`
 }
 
+// ResearchCertification defines model for ResearchCertification.
+type ResearchCertification struct {
+	EvidenceMatrix []struct {
+		Actual      interface{} `json:"actual"`
+		GateId      string      `json:"gate_id"`
+		Passed      bool        `json:"passed"`
+		Reason      string      `json:"reason"`
+		RequiredFor interface{} `json:"required_for"`
+		Threshold   interface{} `json:"threshold"`
+	} `json:"evidence_matrix"`
+	Reasons                           []string    `json:"reasons"`
+	ReliableCandidateIsHistoricalOnly interface{} `json:"reliable_candidate_is_historical_only"`
+	ReliableCandidatePassed           bool        `json:"reliable_candidate_passed"`
+	ResearchCandidatePassed           bool        `json:"research_candidate_passed"`
+	RulesVersion                      string      `json:"rules_version"`
+	Tier                              interface{} `json:"tier"`
+}
+
+// ResearchDatasetRequest defines model for ResearchDatasetRequest.
+type ResearchDatasetRequest struct {
+	DataRevision string `json:"data_revision"`
+	DatasetId    string `json:"dataset_id"`
+	Range        struct {
+		FromBarIndex       int `json:"from_bar_index"`
+		ToBarIndex         int `json:"to_bar_index"`
+		WarmupFromBarIndex int `json:"warmup_from_bar_index"`
+	} `json:"range"`
+}
+
+// ResearchStudyAccepted defines model for ResearchStudyAccepted.
+type ResearchStudyAccepted struct {
+	RequestId       string      `json:"request_id"`
+	ResearchStudyId string      `json:"research_study_id"`
+	Status          interface{} `json:"status"`
+}
+
+// ResearchStudyAggregate defines model for ResearchStudyAggregate.
+type ResearchStudyAggregate struct {
+	AnnualizedReturn               *float32 `json:"annualized_return,omitempty"`
+	AnnualizedVolatility           *float32 `json:"annualized_volatility,omitempty"`
+	AttemptedParameterCombinations *[]struct {
+		AttemptCount   int                    `json:"attempt_count"`
+		CombinationId  string                 `json:"combination_id"`
+		CompletedCount int                    `json:"completed_count"`
+		Parameters     map[string]interface{} `json:"parameters"`
+	} `json:"attempted_parameter_combinations,omitempty"`
+	Certification *struct {
+		EvidenceMatrix []struct {
+			Actual      interface{} `json:"actual"`
+			GateId      string      `json:"gate_id"`
+			Passed      bool        `json:"passed"`
+			Reason      string      `json:"reason"`
+			RequiredFor interface{} `json:"required_for"`
+			Threshold   interface{} `json:"threshold"`
+		} `json:"evidence_matrix"`
+		Reasons                           []string    `json:"reasons"`
+		ReliableCandidateIsHistoricalOnly interface{} `json:"reliable_candidate_is_historical_only"`
+		ReliableCandidatePassed           bool        `json:"reliable_candidate_passed"`
+		ResearchCandidatePassed           bool        `json:"research_candidate_passed"`
+		RulesVersion                      string      `json:"rules_version"`
+		Tier                              interface{} `json:"tier"`
+	} `json:"certification,omitempty"`
+	CertificationTradeCount           *float32                `json:"certification_trade_count,omitempty"`
+	CompletedDatasetCount             int                     `json:"completed_dataset_count"`
+	CompletedWalkForwardFoldCount     *int                    `json:"completed_walk_forward_fold_count,omitempty"`
+	DailyReturnCount                  int                     `json:"daily_return_count"`
+	DataStatus                        interface{}             `json:"data_status"`
+	EligibleIndependenceGroupCount    int                     `json:"eligible_independence_group_count"`
+	FailedDatasetCount                int                     `json:"failed_dataset_count"`
+	FirstFailureScenario              *string                 `json:"first_failure_scenario,omitempty"`
+	IndependenceGroupCount            int                     `json:"independence_group_count"`
+	MaxDrawdown                       *float32                `json:"max_drawdown,omitempty"`
+	MedianDatasetReturn               *float32                `json:"median_dataset_return,omitempty"`
+	MinimumCompletedFoldsPerGroup     *int                    `json:"minimum_completed_folds_per_group,omitempty"`
+	MinimumStudiedTradingDaysPerGroup *int                    `json:"minimum_studied_trading_days_per_group,omitempty"`
+	OutOfSampleExpectancyI64          *float32                `json:"out_of_sample_expectancy_i64,omitempty"`
+	OutOfSampleTradeCount             *int                    `json:"out_of_sample_trade_count,omitempty"`
+	ParameterStability                *float32                `json:"parameter_stability,omitempty"`
+	ProfitableDatasetRatio            *float32                `json:"profitable_dataset_ratio,omitempty"`
+	ProfitableFoldRatio               *float32                `json:"profitable_fold_ratio,omitempty"`
+	Sharpe                            *float32                `json:"sharpe,omitempty"`
+	StatisticalEvidence               *map[string]interface{} `json:"statistical_evidence,omitempty"`
+	StressScenarios                   *[]struct {
+		AdditionalDelayBars        int         `json:"additional_delay_bars"`
+		AdditionalSlippageTicks    float32     `json:"additional_slippage_ticks"`
+		CompletedRunCount          int         `json:"completed_run_count"`
+		CostMultiplier             float32     `json:"cost_multiplier"`
+		DailyReturnCount           *int        `json:"daily_return_count,omitempty"`
+		DrawdownDegradation        *float32    `json:"drawdown_degradation,omitempty"`
+		FailedRunCount             int         `json:"failed_run_count"`
+		FailureReason              *string     `json:"failure_reason,omitempty"`
+		FillMode                   interface{} `json:"fill_mode"`
+		FillRate                   *float32    `json:"fill_rate"`
+		FillRateDegradation        *float32    `json:"fill_rate_degradation,omitempty"`
+		FilledQuantity             int         `json:"filled_quantity"`
+		MaxDrawdown                *float32    `json:"max_drawdown,omitempty"`
+		MaxVolumeParticipationRate *float32    `json:"max_volume_participation_rate,omitempty"`
+		RequestedQuantity          int         `json:"requested_quantity"`
+		ReturnDegradation          *float32    `json:"return_degradation,omitempty"`
+		ScenarioId                 string      `json:"scenario_id"`
+		Status                     interface{} `json:"status"`
+		TotalReturn                *float32    `json:"total_return,omitempty"`
+		TradeCount                 *int        `json:"trade_count,omitempty"`
+	} `json:"stress_scenarios,omitempty"`
+	TotalReturn             *float32               `json:"total_return,omitempty"`
+	TotalTradeCount         int                    `json:"total_trade_count"`
+	WalkForwardFoldCount    *int                   `json:"walk_forward_fold_count,omitempty"`
+	WorstDatasetId          *string                `json:"worst_dataset_id,omitempty"`
+	WorstDatasetMaxDrawdown *float32               `json:"worst_dataset_max_drawdown,omitempty"`
+	WorstDatasetReturn      *float32               `json:"worst_dataset_return,omitempty"`
+	WorstFoldMaxDrawdown    *float32               `json:"worst_fold_max_drawdown,omitempty"`
+	AdditionalProperties    map[string]interface{} `json:"-"`
+}
+
+// ResearchStudyDatasetResult defines model for ResearchStudyDatasetResult.
+type ResearchStudyDatasetResult struct {
+	DataRevision string `json:"data_revision"`
+	DatasetId    string `json:"dataset_id"`
+	Error        *struct {
+		Code    string `json:"code"`
+		Message string `json:"message"`
+	} `json:"error,omitempty"`
+	Folds *[]struct {
+		ChangedParameterNames *[]string `json:"changed_parameter_names,omitempty"`
+		DatasetId             string    `json:"dataset_id"`
+		Error                 *struct {
+			Code    string `json:"code"`
+			Message string `json:"message"`
+		} `json:"error,omitempty"`
+		FoldIndex                 int                                                    `json:"fold_index"`
+		IndependenceGroup         string                                                 `json:"independence_group"`
+		ParameterChanged          *bool                                                  `json:"parameter_changed,omitempty"`
+		SelectedParameters        *map[string]interface{}                                `json:"selected_parameters,omitempty"`
+		SelectedTrainMetrics      *ResearchStudyDatasetResult_Folds_SelectedTrainMetrics `json:"selected_train_metrics,omitempty"`
+		SelectedTrainRunId        *string                                                `json:"selected_train_run_id,omitempty"`
+		SelectedTrainRunSignature *string                                                `json:"selected_train_run_signature,omitempty"`
+		Status                    interface{}                                            `json:"status"`
+		TrainRange                struct {
+			FromBarIndex       int `json:"from_bar_index"`
+			ToBarIndex         int `json:"to_bar_index"`
+			WarmupFromBarIndex int `json:"warmup_from_bar_index"`
+		} `json:"train_range"`
+		TrainTradingDayFrom string                                              `json:"train_trading_day_from"`
+		TrainTradingDayTo   string                                              `json:"train_trading_day_to"`
+		TrainingRanking     *[]map[string]interface{}                           `json:"training_ranking,omitempty"`
+		ValidationMetrics   *ResearchStudyDatasetResult_Folds_ValidationMetrics `json:"validation_metrics,omitempty"`
+		ValidationRange     struct {
+			FromBarIndex       int `json:"from_bar_index"`
+			ToBarIndex         int `json:"to_bar_index"`
+			WarmupFromBarIndex int `json:"warmup_from_bar_index"`
+		} `json:"validation_range"`
+		ValidationRunId          *string `json:"validation_run_id,omitempty"`
+		ValidationRunSignature   *string `json:"validation_run_signature,omitempty"`
+		ValidationTradingDayFrom string  `json:"validation_trading_day_from"`
+		ValidationTradingDayTo   string  `json:"validation_trading_day_to"`
+	} `json:"folds,omitempty"`
+	IndependenceGroup  string                              `json:"independence_group"`
+	RunId              *string                             `json:"run_id,omitempty"`
+	RunSignature       *string                             `json:"run_signature,omitempty"`
+	Status             interface{}                         `json:"status"`
+	Summary            *ResearchStudyDatasetResult_Summary `json:"summary,omitempty"`
+	TradingDayCount    int                                 `json:"trading_day_count"`
+	WalkForwardSummary *map[string]interface{}             `json:"walk_forward_summary,omitempty"`
+}
+
+// ResearchStudyDatasetResultFoldsSelectedTrainMetricsSharpeAnnualizationFactor defines model for ResearchStudyDatasetResult.Folds.SelectedTrainMetrics.SharpeAnnualizationFactor.
+type ResearchStudyDatasetResultFoldsSelectedTrainMetricsSharpeAnnualizationFactor int
+
+// ResearchStudyDatasetResult_Folds_SelectedTrainMetrics defines model for ResearchStudyDatasetResult.Folds.SelectedTrainMetrics.
+type ResearchStudyDatasetResult_Folds_SelectedTrainMetrics struct {
+	AnnualizedReturn           *float32                                                                      `json:"annualized_return,omitempty"`
+	AnnualizedReturnReason     *string                                                                       `json:"annualized_return_reason,omitempty"`
+	AnnualizedVolatility       *float32                                                                      `json:"annualized_volatility,omitempty"`
+	AnnualizedVolatilityReason *string                                                                       `json:"annualized_volatility_reason,omitempty"`
+	AverageLossI64             *int                                                                          `json:"average_loss_i64,omitempty"`
+	AverageWinI64              *int                                                                          `json:"average_win_i64,omitempty"`
+	DailyReturnCount           *int                                                                          `json:"daily_return_count,omitempty"`
+	ExpectancyI64              *float32                                                                      `json:"expectancy_i64,omitempty"`
+	FillRate                   *float32                                                                      `json:"fill_rate,omitempty"`
+	FilledQuantity             *int                                                                          `json:"filled_quantity,omitempty"`
+	MaxDrawdown                float32                                                                       `json:"max_drawdown"`
+	ProfitFactor               *float32                                                                      `json:"profit_factor,omitempty"`
+	ProfitLossRatio            *float32                                                                      `json:"profit_loss_ratio,omitempty"`
+	RequestId                  string                                                                        `json:"request_id"`
+	RequestedQuantity          *int                                                                          `json:"requested_quantity,omitempty"`
+	RiskApprovedCount          int                                                                           `json:"risk_approved_count"`
+	RiskBlockedCount           int                                                                           `json:"risk_blocked_count"`
+	RiskKillSwitchCount        int                                                                           `json:"risk_kill_switch_count"`
+	RiskReducedCount           int                                                                           `json:"risk_reduced_count"`
+	RunId                      string                                                                        `json:"run_id"`
+	Sharpe                     *float32                                                                      `json:"sharpe,omitempty"`
+	SharpeAnnualizationFactor  *ResearchStudyDatasetResultFoldsSelectedTrainMetricsSharpeAnnualizationFactor `json:"sharpe_annualization_factor,omitempty"`
+	SharpeReason               *string                                                                       `json:"sharpe_reason,omitempty"`
+	TotalCommissionI64         int                                                                           `json:"total_commission_i64"`
+	TotalReturn                float32                                                                       `json:"total_return"`
+	TotalSlippageI64           int                                                                           `json:"total_slippage_i64"`
+	TradeCount                 int                                                                           `json:"trade_count"`
+	TradingDayCount            *int                                                                          `json:"trading_day_count,omitempty"`
+	WinRate                    *float32                                                                      `json:"win_rate"`
+	AdditionalProperties       map[string]interface{}                                                        `json:"-"`
+}
+
+// ResearchStudyDatasetResultFoldsValidationMetricsSharpeAnnualizationFactor defines model for ResearchStudyDatasetResult.Folds.ValidationMetrics.SharpeAnnualizationFactor.
+type ResearchStudyDatasetResultFoldsValidationMetricsSharpeAnnualizationFactor int
+
+// ResearchStudyDatasetResult_Folds_ValidationMetrics defines model for ResearchStudyDatasetResult.Folds.ValidationMetrics.
+type ResearchStudyDatasetResult_Folds_ValidationMetrics struct {
+	AnnualizedReturn           *float32                                                                   `json:"annualized_return,omitempty"`
+	AnnualizedReturnReason     *string                                                                    `json:"annualized_return_reason,omitempty"`
+	AnnualizedVolatility       *float32                                                                   `json:"annualized_volatility,omitempty"`
+	AnnualizedVolatilityReason *string                                                                    `json:"annualized_volatility_reason,omitempty"`
+	AverageLossI64             *int                                                                       `json:"average_loss_i64,omitempty"`
+	AverageWinI64              *int                                                                       `json:"average_win_i64,omitempty"`
+	DailyReturnCount           *int                                                                       `json:"daily_return_count,omitempty"`
+	ExpectancyI64              *float32                                                                   `json:"expectancy_i64,omitempty"`
+	FillRate                   *float32                                                                   `json:"fill_rate,omitempty"`
+	FilledQuantity             *int                                                                       `json:"filled_quantity,omitempty"`
+	MaxDrawdown                float32                                                                    `json:"max_drawdown"`
+	ProfitFactor               *float32                                                                   `json:"profit_factor,omitempty"`
+	ProfitLossRatio            *float32                                                                   `json:"profit_loss_ratio,omitempty"`
+	RequestId                  string                                                                     `json:"request_id"`
+	RequestedQuantity          *int                                                                       `json:"requested_quantity,omitempty"`
+	RiskApprovedCount          int                                                                        `json:"risk_approved_count"`
+	RiskBlockedCount           int                                                                        `json:"risk_blocked_count"`
+	RiskKillSwitchCount        int                                                                        `json:"risk_kill_switch_count"`
+	RiskReducedCount           int                                                                        `json:"risk_reduced_count"`
+	RunId                      string                                                                     `json:"run_id"`
+	Sharpe                     *float32                                                                   `json:"sharpe,omitempty"`
+	SharpeAnnualizationFactor  *ResearchStudyDatasetResultFoldsValidationMetricsSharpeAnnualizationFactor `json:"sharpe_annualization_factor,omitempty"`
+	SharpeReason               *string                                                                    `json:"sharpe_reason,omitempty"`
+	TotalCommissionI64         int                                                                        `json:"total_commission_i64"`
+	TotalReturn                float32                                                                    `json:"total_return"`
+	TotalSlippageI64           int                                                                        `json:"total_slippage_i64"`
+	TradeCount                 int                                                                        `json:"trade_count"`
+	TradingDayCount            *int                                                                       `json:"trading_day_count,omitempty"`
+	WinRate                    *float32                                                                   `json:"win_rate"`
+	AdditionalProperties       map[string]interface{}                                                     `json:"-"`
+}
+
+// ResearchStudyDatasetResultSummarySharpeAnnualizationFactor defines model for ResearchStudyDatasetResult.Summary.SharpeAnnualizationFactor.
+type ResearchStudyDatasetResultSummarySharpeAnnualizationFactor int
+
+// ResearchStudyDatasetResult_Summary defines model for ResearchStudyDatasetResult.Summary.
+type ResearchStudyDatasetResult_Summary struct {
+	AnnualizedReturn           *float32                                                    `json:"annualized_return,omitempty"`
+	AnnualizedReturnReason     *string                                                     `json:"annualized_return_reason,omitempty"`
+	AnnualizedVolatility       *float32                                                    `json:"annualized_volatility,omitempty"`
+	AnnualizedVolatilityReason *string                                                     `json:"annualized_volatility_reason,omitempty"`
+	AverageLossI64             *int                                                        `json:"average_loss_i64,omitempty"`
+	AverageWinI64              *int                                                        `json:"average_win_i64,omitempty"`
+	DailyReturnCount           *int                                                        `json:"daily_return_count,omitempty"`
+	ExpectancyI64              *float32                                                    `json:"expectancy_i64,omitempty"`
+	FillRate                   *float32                                                    `json:"fill_rate,omitempty"`
+	FilledQuantity             *int                                                        `json:"filled_quantity,omitempty"`
+	MaxDrawdown                float32                                                     `json:"max_drawdown"`
+	ProfitFactor               *float32                                                    `json:"profit_factor,omitempty"`
+	ProfitLossRatio            *float32                                                    `json:"profit_loss_ratio,omitempty"`
+	RequestId                  string                                                      `json:"request_id"`
+	RequestedQuantity          *int                                                        `json:"requested_quantity,omitempty"`
+	RiskApprovedCount          int                                                         `json:"risk_approved_count"`
+	RiskBlockedCount           int                                                         `json:"risk_blocked_count"`
+	RiskKillSwitchCount        int                                                         `json:"risk_kill_switch_count"`
+	RiskReducedCount           int                                                         `json:"risk_reduced_count"`
+	RunId                      string                                                      `json:"run_id"`
+	Sharpe                     *float32                                                    `json:"sharpe,omitempty"`
+	SharpeAnnualizationFactor  *ResearchStudyDatasetResultSummarySharpeAnnualizationFactor `json:"sharpe_annualization_factor,omitempty"`
+	SharpeReason               *string                                                     `json:"sharpe_reason,omitempty"`
+	TotalCommissionI64         int                                                         `json:"total_commission_i64"`
+	TotalReturn                float32                                                     `json:"total_return"`
+	TotalSlippageI64           int                                                         `json:"total_slippage_i64"`
+	TradeCount                 int                                                         `json:"trade_count"`
+	TradingDayCount            *int                                                        `json:"trading_day_count,omitempty"`
+	WinRate                    *float32                                                    `json:"win_rate"`
+	AdditionalProperties       map[string]interface{}                                      `json:"-"`
+}
+
+// ResearchStudyRequest defines model for ResearchStudyRequest.
+type ResearchStudyRequest struct {
+	Capital  map[string]interface{} `json:"capital"`
+	Datasets []struct {
+		DataRevision string `json:"data_revision"`
+		DatasetId    string `json:"dataset_id"`
+		Range        struct {
+			FromBarIndex       int `json:"from_bar_index"`
+			ToBarIndex         int `json:"to_bar_index"`
+			WarmupFromBarIndex int `json:"warmup_from_bar_index"`
+		} `json:"range"`
+	} `json:"datasets"`
+	Execution             map[string]interface{} `json:"execution"`
+	Parameters            map[string]interface{} `json:"parameters"`
+	RandomSeed            int                    `json:"random_seed"`
+	StatisticalValidation *struct {
+		BlockSizeTradingDays int                                                      `json:"block_size_trading_days"`
+		ConfidenceLevel      ResearchStudyRequestStatisticalValidationConfidenceLevel `json:"confidence_level"`
+		HolmAlpha            ResearchStudyRequestStatisticalValidationHolmAlpha       `json:"holm_alpha"`
+		Iterations           int                                                      `json:"iterations"`
+		MethodVersion        ResearchStudyRequestStatisticalValidationMethodVersion   `json:"method_version"`
+		RandomSeed           int                                                      `json:"random_seed"`
+	} `json:"statistical_validation,omitempty"`
+	Strategy struct {
+		AlgorithmId      string      `json:"algorithm_id"`
+		AlgorithmVersion string      `json:"algorithm_version"`
+		Kind             interface{} `json:"kind"`
+		SourceHash       string      `json:"source_hash"`
+	} `json:"strategy"`
+	StressTest *struct {
+		SuiteVersion            ResearchStudyRequestStressTestSuiteVersion            `json:"suite_version"`
+		VolumeParticipationRate ResearchStudyRequestStressTestVolumeParticipationRate `json:"volume_participation_rate"`
+	} `json:"stress_test,omitempty"`
+	TraceId     *string `json:"trace_id,omitempty"`
+	WalkForward *struct {
+		Constraints []struct {
+			Metric   interface{} `json:"metric"`
+			Operator interface{} `json:"operator"`
+			Value    float32     `json:"value"`
+		} `json:"constraints"`
+		Objectives []struct {
+			Direction interface{} `json:"direction"`
+			Metric    interface{} `json:"metric"`
+		} `json:"objectives"`
+		Search struct {
+			Budget     int         `json:"budget"`
+			Method     interface{} `json:"method"`
+			RandomSeed int         `json:"random_seed"`
+		} `json:"search"`
+		SearchSpace []struct {
+			Candidates *[]interface{} `json:"candidates,omitempty"`
+			Maximum    *float32       `json:"maximum,omitempty"`
+			Minimum    *float32       `json:"minimum,omitempty"`
+			Name       string         `json:"name"`
+			Step       *float32       `json:"step,omitempty"`
+			Type       interface{}    `json:"type"`
+		} `json:"search_space"`
+		StepTradingDays       int `json:"step_trading_days"`
+		TrainTradingDays      int `json:"train_trading_days"`
+		ValidationTradingDays int `json:"validation_trading_days"`
+	} `json:"walk_forward,omitempty"`
+}
+
+// ResearchStudyRequestStatisticalValidationConfidenceLevel defines model for ResearchStudyRequest.StatisticalValidation.ConfidenceLevel.
+type ResearchStudyRequestStatisticalValidationConfidenceLevel float32
+
+// ResearchStudyRequestStatisticalValidationHolmAlpha defines model for ResearchStudyRequest.StatisticalValidation.HolmAlpha.
+type ResearchStudyRequestStatisticalValidationHolmAlpha float32
+
+// ResearchStudyRequestStatisticalValidationMethodVersion defines model for ResearchStudyRequest.StatisticalValidation.MethodVersion.
+type ResearchStudyRequestStatisticalValidationMethodVersion string
+
+// ResearchStudyRequestStressTestSuiteVersion defines model for ResearchStudyRequest.StressTest.SuiteVersion.
+type ResearchStudyRequestStressTestSuiteVersion string
+
+// ResearchStudyRequestStressTestVolumeParticipationRate defines model for ResearchStudyRequest.StressTest.VolumeParticipationRate.
+type ResearchStudyRequestStressTestVolumeParticipationRate float32
+
+// ResearchStudyResults defines model for ResearchStudyResults.
+type ResearchStudyResults struct {
+	Aggregate ResearchStudyResults_Aggregate `json:"aggregate"`
+	Items     []struct {
+		DataRevision string `json:"data_revision"`
+		DatasetId    string `json:"dataset_id"`
+		Error        *struct {
+			Code    string `json:"code"`
+			Message string `json:"message"`
+		} `json:"error,omitempty"`
+		Folds *[]struct {
+			ChangedParameterNames *[]string `json:"changed_parameter_names,omitempty"`
+			DatasetId             string    `json:"dataset_id"`
+			Error                 *struct {
+				Code    string `json:"code"`
+				Message string `json:"message"`
+			} `json:"error,omitempty"`
+			FoldIndex                 int                                                    `json:"fold_index"`
+			IndependenceGroup         string                                                 `json:"independence_group"`
+			ParameterChanged          *bool                                                  `json:"parameter_changed,omitempty"`
+			SelectedParameters        *map[string]interface{}                                `json:"selected_parameters,omitempty"`
+			SelectedTrainMetrics      *ResearchStudyResults_Items_Folds_SelectedTrainMetrics `json:"selected_train_metrics,omitempty"`
+			SelectedTrainRunId        *string                                                `json:"selected_train_run_id,omitempty"`
+			SelectedTrainRunSignature *string                                                `json:"selected_train_run_signature,omitempty"`
+			Status                    interface{}                                            `json:"status"`
+			TrainRange                struct {
+				FromBarIndex       int `json:"from_bar_index"`
+				ToBarIndex         int `json:"to_bar_index"`
+				WarmupFromBarIndex int `json:"warmup_from_bar_index"`
+			} `json:"train_range"`
+			TrainTradingDayFrom string                                              `json:"train_trading_day_from"`
+			TrainTradingDayTo   string                                              `json:"train_trading_day_to"`
+			TrainingRanking     *[]map[string]interface{}                           `json:"training_ranking,omitempty"`
+			ValidationMetrics   *ResearchStudyResults_Items_Folds_ValidationMetrics `json:"validation_metrics,omitempty"`
+			ValidationRange     struct {
+				FromBarIndex       int `json:"from_bar_index"`
+				ToBarIndex         int `json:"to_bar_index"`
+				WarmupFromBarIndex int `json:"warmup_from_bar_index"`
+			} `json:"validation_range"`
+			ValidationRunId          *string `json:"validation_run_id,omitempty"`
+			ValidationRunSignature   *string `json:"validation_run_signature,omitempty"`
+			ValidationTradingDayFrom string  `json:"validation_trading_day_from"`
+			ValidationTradingDayTo   string  `json:"validation_trading_day_to"`
+		} `json:"folds,omitempty"`
+		IndependenceGroup  string                              `json:"independence_group"`
+		RunId              *string                             `json:"run_id,omitempty"`
+		RunSignature       *string                             `json:"run_signature,omitempty"`
+		Status             interface{}                         `json:"status"`
+		Summary            *ResearchStudyResults_Items_Summary `json:"summary,omitempty"`
+		TradingDayCount    int                                 `json:"trading_day_count"`
+		WalkForwardSummary *map[string]interface{}             `json:"walk_forward_summary,omitempty"`
+	} `json:"items"`
+	RequestId       string `json:"request_id"`
+	ResearchStudyId string `json:"research_study_id"`
+}
+
+// ResearchStudyResults_Aggregate defines model for ResearchStudyResults.Aggregate.
+type ResearchStudyResults_Aggregate struct {
+	AnnualizedReturn               *float32 `json:"annualized_return,omitempty"`
+	AnnualizedVolatility           *float32 `json:"annualized_volatility,omitempty"`
+	AttemptedParameterCombinations *[]struct {
+		AttemptCount   int                    `json:"attempt_count"`
+		CombinationId  string                 `json:"combination_id"`
+		CompletedCount int                    `json:"completed_count"`
+		Parameters     map[string]interface{} `json:"parameters"`
+	} `json:"attempted_parameter_combinations,omitempty"`
+	Certification *struct {
+		EvidenceMatrix []struct {
+			Actual      interface{} `json:"actual"`
+			GateId      string      `json:"gate_id"`
+			Passed      bool        `json:"passed"`
+			Reason      string      `json:"reason"`
+			RequiredFor interface{} `json:"required_for"`
+			Threshold   interface{} `json:"threshold"`
+		} `json:"evidence_matrix"`
+		Reasons                           []string    `json:"reasons"`
+		ReliableCandidateIsHistoricalOnly interface{} `json:"reliable_candidate_is_historical_only"`
+		ReliableCandidatePassed           bool        `json:"reliable_candidate_passed"`
+		ResearchCandidatePassed           bool        `json:"research_candidate_passed"`
+		RulesVersion                      string      `json:"rules_version"`
+		Tier                              interface{} `json:"tier"`
+	} `json:"certification,omitempty"`
+	CertificationTradeCount           *float32                `json:"certification_trade_count,omitempty"`
+	CompletedDatasetCount             int                     `json:"completed_dataset_count"`
+	CompletedWalkForwardFoldCount     *int                    `json:"completed_walk_forward_fold_count,omitempty"`
+	DailyReturnCount                  int                     `json:"daily_return_count"`
+	DataStatus                        interface{}             `json:"data_status"`
+	EligibleIndependenceGroupCount    int                     `json:"eligible_independence_group_count"`
+	FailedDatasetCount                int                     `json:"failed_dataset_count"`
+	FirstFailureScenario              *string                 `json:"first_failure_scenario,omitempty"`
+	IndependenceGroupCount            int                     `json:"independence_group_count"`
+	MaxDrawdown                       *float32                `json:"max_drawdown,omitempty"`
+	MedianDatasetReturn               *float32                `json:"median_dataset_return,omitempty"`
+	MinimumCompletedFoldsPerGroup     *int                    `json:"minimum_completed_folds_per_group,omitempty"`
+	MinimumStudiedTradingDaysPerGroup *int                    `json:"minimum_studied_trading_days_per_group,omitempty"`
+	OutOfSampleExpectancyI64          *float32                `json:"out_of_sample_expectancy_i64,omitempty"`
+	OutOfSampleTradeCount             *int                    `json:"out_of_sample_trade_count,omitempty"`
+	ParameterStability                *float32                `json:"parameter_stability,omitempty"`
+	ProfitableDatasetRatio            *float32                `json:"profitable_dataset_ratio,omitempty"`
+	ProfitableFoldRatio               *float32                `json:"profitable_fold_ratio,omitempty"`
+	Sharpe                            *float32                `json:"sharpe,omitempty"`
+	StatisticalEvidence               *map[string]interface{} `json:"statistical_evidence,omitempty"`
+	StressScenarios                   *[]struct {
+		AdditionalDelayBars        int         `json:"additional_delay_bars"`
+		AdditionalSlippageTicks    float32     `json:"additional_slippage_ticks"`
+		CompletedRunCount          int         `json:"completed_run_count"`
+		CostMultiplier             float32     `json:"cost_multiplier"`
+		DailyReturnCount           *int        `json:"daily_return_count,omitempty"`
+		DrawdownDegradation        *float32    `json:"drawdown_degradation,omitempty"`
+		FailedRunCount             int         `json:"failed_run_count"`
+		FailureReason              *string     `json:"failure_reason,omitempty"`
+		FillMode                   interface{} `json:"fill_mode"`
+		FillRate                   *float32    `json:"fill_rate"`
+		FillRateDegradation        *float32    `json:"fill_rate_degradation,omitempty"`
+		FilledQuantity             int         `json:"filled_quantity"`
+		MaxDrawdown                *float32    `json:"max_drawdown,omitempty"`
+		MaxVolumeParticipationRate *float32    `json:"max_volume_participation_rate,omitempty"`
+		RequestedQuantity          int         `json:"requested_quantity"`
+		ReturnDegradation          *float32    `json:"return_degradation,omitempty"`
+		ScenarioId                 string      `json:"scenario_id"`
+		Status                     interface{} `json:"status"`
+		TotalReturn                *float32    `json:"total_return,omitempty"`
+		TradeCount                 *int        `json:"trade_count,omitempty"`
+	} `json:"stress_scenarios,omitempty"`
+	TotalReturn             *float32               `json:"total_return,omitempty"`
+	TotalTradeCount         int                    `json:"total_trade_count"`
+	WalkForwardFoldCount    *int                   `json:"walk_forward_fold_count,omitempty"`
+	WorstDatasetId          *string                `json:"worst_dataset_id,omitempty"`
+	WorstDatasetMaxDrawdown *float32               `json:"worst_dataset_max_drawdown,omitempty"`
+	WorstDatasetReturn      *float32               `json:"worst_dataset_return,omitempty"`
+	WorstFoldMaxDrawdown    *float32               `json:"worst_fold_max_drawdown,omitempty"`
+	AdditionalProperties    map[string]interface{} `json:"-"`
+}
+
+// ResearchStudyResultsItemsFoldsSelectedTrainMetricsSharpeAnnualizationFactor defines model for ResearchStudyResults.Items.Folds.SelectedTrainMetrics.SharpeAnnualizationFactor.
+type ResearchStudyResultsItemsFoldsSelectedTrainMetricsSharpeAnnualizationFactor int
+
+// ResearchStudyResults_Items_Folds_SelectedTrainMetrics defines model for ResearchStudyResults.Items.Folds.SelectedTrainMetrics.
+type ResearchStudyResults_Items_Folds_SelectedTrainMetrics struct {
+	AnnualizedReturn           *float32                                                                     `json:"annualized_return,omitempty"`
+	AnnualizedReturnReason     *string                                                                      `json:"annualized_return_reason,omitempty"`
+	AnnualizedVolatility       *float32                                                                     `json:"annualized_volatility,omitempty"`
+	AnnualizedVolatilityReason *string                                                                      `json:"annualized_volatility_reason,omitempty"`
+	AverageLossI64             *int                                                                         `json:"average_loss_i64,omitempty"`
+	AverageWinI64              *int                                                                         `json:"average_win_i64,omitempty"`
+	DailyReturnCount           *int                                                                         `json:"daily_return_count,omitempty"`
+	ExpectancyI64              *float32                                                                     `json:"expectancy_i64,omitempty"`
+	FillRate                   *float32                                                                     `json:"fill_rate,omitempty"`
+	FilledQuantity             *int                                                                         `json:"filled_quantity,omitempty"`
+	MaxDrawdown                float32                                                                      `json:"max_drawdown"`
+	ProfitFactor               *float32                                                                     `json:"profit_factor,omitempty"`
+	ProfitLossRatio            *float32                                                                     `json:"profit_loss_ratio,omitempty"`
+	RequestId                  string                                                                       `json:"request_id"`
+	RequestedQuantity          *int                                                                         `json:"requested_quantity,omitempty"`
+	RiskApprovedCount          int                                                                          `json:"risk_approved_count"`
+	RiskBlockedCount           int                                                                          `json:"risk_blocked_count"`
+	RiskKillSwitchCount        int                                                                          `json:"risk_kill_switch_count"`
+	RiskReducedCount           int                                                                          `json:"risk_reduced_count"`
+	RunId                      string                                                                       `json:"run_id"`
+	Sharpe                     *float32                                                                     `json:"sharpe,omitempty"`
+	SharpeAnnualizationFactor  *ResearchStudyResultsItemsFoldsSelectedTrainMetricsSharpeAnnualizationFactor `json:"sharpe_annualization_factor,omitempty"`
+	SharpeReason               *string                                                                      `json:"sharpe_reason,omitempty"`
+	TotalCommissionI64         int                                                                          `json:"total_commission_i64"`
+	TotalReturn                float32                                                                      `json:"total_return"`
+	TotalSlippageI64           int                                                                          `json:"total_slippage_i64"`
+	TradeCount                 int                                                                          `json:"trade_count"`
+	TradingDayCount            *int                                                                         `json:"trading_day_count,omitempty"`
+	WinRate                    *float32                                                                     `json:"win_rate"`
+	AdditionalProperties       map[string]interface{}                                                       `json:"-"`
+}
+
+// ResearchStudyResultsItemsFoldsValidationMetricsSharpeAnnualizationFactor defines model for ResearchStudyResults.Items.Folds.ValidationMetrics.SharpeAnnualizationFactor.
+type ResearchStudyResultsItemsFoldsValidationMetricsSharpeAnnualizationFactor int
+
+// ResearchStudyResults_Items_Folds_ValidationMetrics defines model for ResearchStudyResults.Items.Folds.ValidationMetrics.
+type ResearchStudyResults_Items_Folds_ValidationMetrics struct {
+	AnnualizedReturn           *float32                                                                  `json:"annualized_return,omitempty"`
+	AnnualizedReturnReason     *string                                                                   `json:"annualized_return_reason,omitempty"`
+	AnnualizedVolatility       *float32                                                                  `json:"annualized_volatility,omitempty"`
+	AnnualizedVolatilityReason *string                                                                   `json:"annualized_volatility_reason,omitempty"`
+	AverageLossI64             *int                                                                      `json:"average_loss_i64,omitempty"`
+	AverageWinI64              *int                                                                      `json:"average_win_i64,omitempty"`
+	DailyReturnCount           *int                                                                      `json:"daily_return_count,omitempty"`
+	ExpectancyI64              *float32                                                                  `json:"expectancy_i64,omitempty"`
+	FillRate                   *float32                                                                  `json:"fill_rate,omitempty"`
+	FilledQuantity             *int                                                                      `json:"filled_quantity,omitempty"`
+	MaxDrawdown                float32                                                                   `json:"max_drawdown"`
+	ProfitFactor               *float32                                                                  `json:"profit_factor,omitempty"`
+	ProfitLossRatio            *float32                                                                  `json:"profit_loss_ratio,omitempty"`
+	RequestId                  string                                                                    `json:"request_id"`
+	RequestedQuantity          *int                                                                      `json:"requested_quantity,omitempty"`
+	RiskApprovedCount          int                                                                       `json:"risk_approved_count"`
+	RiskBlockedCount           int                                                                       `json:"risk_blocked_count"`
+	RiskKillSwitchCount        int                                                                       `json:"risk_kill_switch_count"`
+	RiskReducedCount           int                                                                       `json:"risk_reduced_count"`
+	RunId                      string                                                                    `json:"run_id"`
+	Sharpe                     *float32                                                                  `json:"sharpe,omitempty"`
+	SharpeAnnualizationFactor  *ResearchStudyResultsItemsFoldsValidationMetricsSharpeAnnualizationFactor `json:"sharpe_annualization_factor,omitempty"`
+	SharpeReason               *string                                                                   `json:"sharpe_reason,omitempty"`
+	TotalCommissionI64         int                                                                       `json:"total_commission_i64"`
+	TotalReturn                float32                                                                   `json:"total_return"`
+	TotalSlippageI64           int                                                                       `json:"total_slippage_i64"`
+	TradeCount                 int                                                                       `json:"trade_count"`
+	TradingDayCount            *int                                                                      `json:"trading_day_count,omitempty"`
+	WinRate                    *float32                                                                  `json:"win_rate"`
+	AdditionalProperties       map[string]interface{}                                                    `json:"-"`
+}
+
+// ResearchStudyResultsItemsSummarySharpeAnnualizationFactor defines model for ResearchStudyResults.Items.Summary.SharpeAnnualizationFactor.
+type ResearchStudyResultsItemsSummarySharpeAnnualizationFactor int
+
+// ResearchStudyResults_Items_Summary defines model for ResearchStudyResults.Items.Summary.
+type ResearchStudyResults_Items_Summary struct {
+	AnnualizedReturn           *float32                                                   `json:"annualized_return,omitempty"`
+	AnnualizedReturnReason     *string                                                    `json:"annualized_return_reason,omitempty"`
+	AnnualizedVolatility       *float32                                                   `json:"annualized_volatility,omitempty"`
+	AnnualizedVolatilityReason *string                                                    `json:"annualized_volatility_reason,omitempty"`
+	AverageLossI64             *int                                                       `json:"average_loss_i64,omitempty"`
+	AverageWinI64              *int                                                       `json:"average_win_i64,omitempty"`
+	DailyReturnCount           *int                                                       `json:"daily_return_count,omitempty"`
+	ExpectancyI64              *float32                                                   `json:"expectancy_i64,omitempty"`
+	FillRate                   *float32                                                   `json:"fill_rate,omitempty"`
+	FilledQuantity             *int                                                       `json:"filled_quantity,omitempty"`
+	MaxDrawdown                float32                                                    `json:"max_drawdown"`
+	ProfitFactor               *float32                                                   `json:"profit_factor,omitempty"`
+	ProfitLossRatio            *float32                                                   `json:"profit_loss_ratio,omitempty"`
+	RequestId                  string                                                     `json:"request_id"`
+	RequestedQuantity          *int                                                       `json:"requested_quantity,omitempty"`
+	RiskApprovedCount          int                                                        `json:"risk_approved_count"`
+	RiskBlockedCount           int                                                        `json:"risk_blocked_count"`
+	RiskKillSwitchCount        int                                                        `json:"risk_kill_switch_count"`
+	RiskReducedCount           int                                                        `json:"risk_reduced_count"`
+	RunId                      string                                                     `json:"run_id"`
+	Sharpe                     *float32                                                   `json:"sharpe,omitempty"`
+	SharpeAnnualizationFactor  *ResearchStudyResultsItemsSummarySharpeAnnualizationFactor `json:"sharpe_annualization_factor,omitempty"`
+	SharpeReason               *string                                                    `json:"sharpe_reason,omitempty"`
+	TotalCommissionI64         int                                                        `json:"total_commission_i64"`
+	TotalReturn                float32                                                    `json:"total_return"`
+	TotalSlippageI64           int                                                        `json:"total_slippage_i64"`
+	TradeCount                 int                                                        `json:"trade_count"`
+	TradingDayCount            *int                                                       `json:"trading_day_count,omitempty"`
+	WinRate                    *float32                                                   `json:"win_rate"`
+	AdditionalProperties       map[string]interface{}                                     `json:"-"`
+}
+
+// ResearchStudyStatus defines model for ResearchStudyStatus.
+type ResearchStudyStatus struct {
+	Error *struct {
+		Code    string                  `json:"code"`
+		Details *map[string]interface{} `json:"details,omitempty"`
+		Message string                  `json:"message"`
+	} `json:"error,omitempty"`
+	Manifest *struct {
+		Aggregate         map[string]interface{} `json:"aggregate"`
+		AggregatorVersion string                 `json:"aggregator_version"`
+		Artifacts         *struct {
+			OutOfSampleDailyReturns *string `json:"out_of_sample_daily_returns,omitempty"`
+			StatisticalEvidence     *string `json:"statistical_evidence,omitempty"`
+			StressResults           *string `json:"stress_results,omitempty"`
+		} `json:"artifacts,omitempty"`
+		Capital   map[string]interface{} `json:"capital"`
+		ChildRuns []struct {
+			CandidateIndex    *int        `json:"candidate_index,omitempty"`
+			DatasetId         string      `json:"dataset_id"`
+			FoldIndex         *int        `json:"fold_index,omitempty"`
+			NeighborDirection interface{} `json:"neighbor_direction,omitempty"`
+			ParameterName     *string     `json:"parameter_name,omitempty"`
+			Role              interface{} `json:"role"`
+			RunId             string      `json:"run_id"`
+			RunSignature      string      `json:"run_signature"`
+			ScenarioId        *string     `json:"scenario_id,omitempty"`
+		} `json:"child_runs"`
+		CreatedAt time.Time `json:"created_at"`
+		Datasets  []struct {
+			DataRevision      string `json:"data_revision"`
+			DatasetId         string `json:"dataset_id"`
+			IndependenceGroup string `json:"independence_group"`
+			Range             struct {
+				FromBarIndex       int `json:"from_bar_index"`
+				ToBarIndex         int `json:"to_bar_index"`
+				WarmupFromBarIndex int `json:"warmup_from_bar_index"`
+			} `json:"range"`
+			RunId           *string `json:"run_id,omitempty"`
+			RunSignature    *string `json:"run_signature,omitempty"`
+			TradingDayCount int     `json:"trading_day_count"`
+		} `json:"datasets"`
+		Engine                map[string]interface{} `json:"engine"`
+		Execution             map[string]interface{} `json:"execution"`
+		Parameters            map[string]interface{} `json:"parameters"`
+		RandomSeed            int                    `json:"random_seed"`
+		ResearchStudyId       string                 `json:"research_study_id"`
+		SchemaVersion         interface{}            `json:"schema_version"`
+		StatisticalValidation *struct {
+			BlockSizeTradingDays int                                                             `json:"block_size_trading_days"`
+			ConfidenceLevel      ResearchStudyStatusManifestStatisticalValidationConfidenceLevel `json:"confidence_level"`
+			HolmAlpha            ResearchStudyStatusManifestStatisticalValidationHolmAlpha       `json:"holm_alpha"`
+			Iterations           int                                                             `json:"iterations"`
+			MethodVersion        interface{}                                                     `json:"method_version"`
+			RandomSeed           int                                                             `json:"random_seed"`
+		} `json:"statistical_validation,omitempty"`
+		Strategy struct {
+			AlgorithmId      string      `json:"algorithm_id"`
+			AlgorithmVersion string      `json:"algorithm_version"`
+			Kind             interface{} `json:"kind"`
+			SourceHash       string      `json:"source_hash"`
+		} `json:"strategy"`
+		StressTest *struct {
+			SuiteVersion            interface{}                                                  `json:"suite_version"`
+			VolumeParticipationRate ResearchStudyStatusManifestStressTestVolumeParticipationRate `json:"volume_participation_rate"`
+		} `json:"stress_test,omitempty"`
+		StudyMode      interface{} `json:"study_mode"`
+		StudySignature string      `json:"study_signature"`
+		Timeframe      string      `json:"timeframe"`
+		TraceId        string      `json:"trace_id"`
+		WalkForward    *struct {
+			Constraints []interface{} `json:"constraints"`
+			Objectives  []struct {
+				Direction interface{} `json:"direction"`
+				Metric    string      `json:"metric"`
+			} `json:"objectives"`
+			Search struct {
+				Budget     int         `json:"budget"`
+				Method     interface{} `json:"method"`
+				RandomSeed int         `json:"random_seed"`
+			} `json:"search"`
+			SearchSpace []struct {
+				Candidates *[]interface{} `json:"candidates,omitempty"`
+				Maximum    *float32       `json:"maximum,omitempty"`
+				Minimum    *float32       `json:"minimum,omitempty"`
+				Name       string         `json:"name"`
+				Step       *float32       `json:"step,omitempty"`
+				Type       interface{}    `json:"type"`
+			} `json:"search_space"`
+			StepTradingDays       int `json:"step_trading_days"`
+			TrainTradingDays      int `json:"train_trading_days"`
+			ValidationTradingDays int `json:"validation_trading_days"`
+		} `json:"walk_forward,omitempty"`
+	} `json:"manifest,omitempty"`
+	Progress        float32     `json:"progress"`
+	RequestId       string      `json:"request_id"`
+	ResearchStudyId string      `json:"research_study_id"`
+	ResultRef       *string     `json:"result_ref,omitempty"`
+	Status          interface{} `json:"status"`
+}
+
+// ResearchStudyStatusManifestStatisticalValidationConfidenceLevel defines model for ResearchStudyStatus.Manifest.StatisticalValidation.ConfidenceLevel.
+type ResearchStudyStatusManifestStatisticalValidationConfidenceLevel float32
+
+// ResearchStudyStatusManifestStatisticalValidationHolmAlpha defines model for ResearchStudyStatus.Manifest.StatisticalValidation.HolmAlpha.
+type ResearchStudyStatusManifestStatisticalValidationHolmAlpha float32
+
+// ResearchStudyStatusManifestStressTestVolumeParticipationRate defines model for ResearchStudyStatus.Manifest.StressTest.VolumeParticipationRate.
+type ResearchStudyStatusManifestStressTestVolumeParticipationRate float32
+
 // RiskContext defines model for RiskContext.
 type RiskContext struct {
 	HandledFutureBranches []string `json:"handled_future_branches"`
@@ -3951,13 +5446,19 @@ type RunStatus struct {
 			PythonVersion   interface{} `json:"python_version"`
 		} `json:"engine"`
 		Execution struct {
-			Commission           map[string]interface{} `json:"commission"`
-			ContractMultiplier   float32                `json:"contract_multiplier"`
-			FillTiming           interface{}            `json:"fill_timing"`
-			IntrabarConflictRule interface{}            `json:"intrabar_conflict_rule,omitempty"`
-			MarginRatio          float32                `json:"margin_ratio"`
-			SignalTiming         interface{}            `json:"signal_timing"`
-			Slippage             map[string]interface{} `json:"slippage"`
+			AdditionalDelayBars        *int                   `json:"additional_delay_bars,omitempty"`
+			AdditionalSlippageTicks    *float32               `json:"additional_slippage_ticks,omitempty"`
+			Commission                 map[string]interface{} `json:"commission"`
+			ContractMultiplier         float32                `json:"contract_multiplier"`
+			CostMultiplier             *float32               `json:"cost_multiplier,omitempty"`
+			FillMode                   interface{}            `json:"fill_mode,omitempty"`
+			FillTiming                 interface{}            `json:"fill_timing"`
+			IntrabarConflictRule       interface{}            `json:"intrabar_conflict_rule,omitempty"`
+			MarginRatio                float32                `json:"margin_ratio"`
+			MaxVolumeParticipationRate *float32               `json:"max_volume_participation_rate,omitempty"`
+			SignalTiming               interface{}            `json:"signal_timing"`
+			Slippage                   map[string]interface{} `json:"slippage"`
+			StressScenarioId           *string                `json:"stress_scenario_id,omitempty"`
 		} `json:"execution"`
 		RandomSeed int `json:"random_seed"`
 		Range      struct {
@@ -4007,10 +5508,11 @@ type RunStatus struct {
 			} `json:"context"`
 			Parameters map[string]interface{} `json:"parameters"`
 		} `json:"risk_overlay,omitempty"`
-		RunId         string      `json:"run_id"`
-		RunSignature  string      `json:"run_signature"`
-		SchemaVersion interface{} `json:"schema_version"`
-		Strategy      struct {
+		RunId               string      `json:"run_id"`
+		RunSignature        string      `json:"run_signature"`
+		SchemaVersion       interface{} `json:"schema_version"`
+		SharedDependencyRef *string     `json:"shared_dependency_ref,omitempty"`
+		Strategy            struct {
 			IndicatorDependencies *[]struct {
 				AlgorithmId string `json:"algorithm_id"`
 				SourceHash  string `json:"source_hash"`
@@ -4055,6 +5557,25 @@ type SourceFile struct {
 	SourceFileId string                    `json:"source_file_id"`
 	Status       interface{}               `json:"status"`
 }
+
+// StatisticalValidationConfig defines model for StatisticalValidationConfig.
+type StatisticalValidationConfig struct {
+	BlockSizeTradingDays int                                        `json:"block_size_trading_days"`
+	ConfidenceLevel      StatisticalValidationConfigConfidenceLevel `json:"confidence_level"`
+	HolmAlpha            StatisticalValidationConfigHolmAlpha       `json:"holm_alpha"`
+	Iterations           int                                        `json:"iterations"`
+	MethodVersion        StatisticalValidationConfigMethodVersion   `json:"method_version"`
+	RandomSeed           int                                        `json:"random_seed"`
+}
+
+// StatisticalValidationConfigConfidenceLevel defines model for StatisticalValidationConfig.ConfidenceLevel.
+type StatisticalValidationConfigConfidenceLevel float32
+
+// StatisticalValidationConfigHolmAlpha defines model for StatisticalValidationConfig.HolmAlpha.
+type StatisticalValidationConfigHolmAlpha float32
+
+// StatisticalValidationConfigMethodVersion defines model for StatisticalValidationConfig.MethodVersion.
+type StatisticalValidationConfigMethodVersion string
 
 // StrategyComparisonAccepted defines model for StrategyComparisonAccepted.
 type StrategyComparisonAccepted struct {
@@ -4125,86 +5646,118 @@ type StrategyComparisonRequest struct {
 
 // StrategyComparisonResult defines model for StrategyComparisonResult.
 type StrategyComparisonResult struct {
-	AlgorithmId string `json:"algorithm_id"`
+	AlgorithmId string                  `json:"algorithm_id"`
+	Attribution *map[string]interface{} `json:"attribution,omitempty"`
 	Error       *struct {
 		Code    string `json:"code"`
 		Message string `json:"message"`
 	} `json:"error,omitempty"`
 	Name           string                            `json:"name"`
 	Parameters     map[string]interface{}            `json:"parameters"`
+	Pareto         *bool                             `json:"pareto,omitempty"`
 	RunId          *string                           `json:"run_id,omitempty"`
 	RunSignature   *string                           `json:"run_signature,omitempty"`
 	Status         interface{}                       `json:"status"`
 	StrategyFamily string                            `json:"strategy_family"`
 	Summary        *StrategyComparisonResult_Summary `json:"summary,omitempty"`
+	Tier           interface{}                       `json:"tier,omitempty"`
 }
+
+// StrategyComparisonResultSummarySharpeAnnualizationFactor defines model for StrategyComparisonResult.Summary.SharpeAnnualizationFactor.
+type StrategyComparisonResultSummarySharpeAnnualizationFactor int
 
 // StrategyComparisonResult_Summary defines model for StrategyComparisonResult.Summary.
 type StrategyComparisonResult_Summary struct {
-	AnnualizedReturn     *float32               `json:"annualized_return,omitempty"`
-	AverageLossI64       *int                   `json:"average_loss_i64,omitempty"`
-	AverageWinI64        *int                   `json:"average_win_i64,omitempty"`
-	ExpectancyI64        *float32               `json:"expectancy_i64,omitempty"`
-	MaxDrawdown          float32                `json:"max_drawdown"`
-	ProfitFactor         *float32               `json:"profit_factor,omitempty"`
-	ProfitLossRatio      *float32               `json:"profit_loss_ratio,omitempty"`
-	RequestId            string                 `json:"request_id"`
-	RiskApprovedCount    int                    `json:"risk_approved_count"`
-	RiskBlockedCount     int                    `json:"risk_blocked_count"`
-	RiskKillSwitchCount  int                    `json:"risk_kill_switch_count"`
-	RiskReducedCount     int                    `json:"risk_reduced_count"`
-	RunId                string                 `json:"run_id"`
-	Sharpe               *float32               `json:"sharpe,omitempty"`
-	TotalCommissionI64   int                    `json:"total_commission_i64"`
-	TotalReturn          float32                `json:"total_return"`
-	TotalSlippageI64     int                    `json:"total_slippage_i64"`
-	TradeCount           int                    `json:"trade_count"`
-	WinRate              *float32               `json:"win_rate"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	AnnualizedReturn           *float32                                                  `json:"annualized_return,omitempty"`
+	AnnualizedReturnReason     *string                                                   `json:"annualized_return_reason,omitempty"`
+	AnnualizedVolatility       *float32                                                  `json:"annualized_volatility,omitempty"`
+	AnnualizedVolatilityReason *string                                                   `json:"annualized_volatility_reason,omitempty"`
+	AverageLossI64             *int                                                      `json:"average_loss_i64,omitempty"`
+	AverageWinI64              *int                                                      `json:"average_win_i64,omitempty"`
+	DailyReturnCount           *int                                                      `json:"daily_return_count,omitempty"`
+	ExpectancyI64              *float32                                                  `json:"expectancy_i64,omitempty"`
+	FillRate                   *float32                                                  `json:"fill_rate,omitempty"`
+	FilledQuantity             *int                                                      `json:"filled_quantity,omitempty"`
+	MaxDrawdown                float32                                                   `json:"max_drawdown"`
+	ProfitFactor               *float32                                                  `json:"profit_factor,omitempty"`
+	ProfitLossRatio            *float32                                                  `json:"profit_loss_ratio,omitempty"`
+	RequestId                  string                                                    `json:"request_id"`
+	RequestedQuantity          *int                                                      `json:"requested_quantity,omitempty"`
+	RiskApprovedCount          int                                                       `json:"risk_approved_count"`
+	RiskBlockedCount           int                                                       `json:"risk_blocked_count"`
+	RiskKillSwitchCount        int                                                       `json:"risk_kill_switch_count"`
+	RiskReducedCount           int                                                       `json:"risk_reduced_count"`
+	RunId                      string                                                    `json:"run_id"`
+	Sharpe                     *float32                                                  `json:"sharpe,omitempty"`
+	SharpeAnnualizationFactor  *StrategyComparisonResultSummarySharpeAnnualizationFactor `json:"sharpe_annualization_factor,omitempty"`
+	SharpeReason               *string                                                   `json:"sharpe_reason,omitempty"`
+	TotalCommissionI64         int                                                       `json:"total_commission_i64"`
+	TotalReturn                float32                                                   `json:"total_return"`
+	TotalSlippageI64           int                                                       `json:"total_slippage_i64"`
+	TradeCount                 int                                                       `json:"trade_count"`
+	TradingDayCount            *int                                                      `json:"trading_day_count,omitempty"`
+	WinRate                    *float32                                                  `json:"win_rate"`
+	AdditionalProperties       map[string]interface{}                                    `json:"-"`
 }
 
 // StrategyComparisonResults defines model for StrategyComparisonResults.
 type StrategyComparisonResults struct {
 	ComparisonId string `json:"comparison_id"`
 	Items        []struct {
-		AlgorithmId string `json:"algorithm_id"`
+		AlgorithmId string                  `json:"algorithm_id"`
+		Attribution *map[string]interface{} `json:"attribution,omitempty"`
 		Error       *struct {
 			Code    string `json:"code"`
 			Message string `json:"message"`
 		} `json:"error,omitempty"`
 		Name           string                                   `json:"name"`
 		Parameters     map[string]interface{}                   `json:"parameters"`
+		Pareto         *bool                                    `json:"pareto,omitempty"`
 		RunId          *string                                  `json:"run_id,omitempty"`
 		RunSignature   *string                                  `json:"run_signature,omitempty"`
 		Status         interface{}                              `json:"status"`
 		StrategyFamily string                                   `json:"strategy_family"`
 		Summary        *StrategyComparisonResults_Items_Summary `json:"summary,omitempty"`
+		Tier           interface{}                              `json:"tier,omitempty"`
 	} `json:"items"`
 	RequestId string `json:"request_id"`
 }
 
+// StrategyComparisonResultsItemsSummarySharpeAnnualizationFactor defines model for StrategyComparisonResults.Items.Summary.SharpeAnnualizationFactor.
+type StrategyComparisonResultsItemsSummarySharpeAnnualizationFactor int
+
 // StrategyComparisonResults_Items_Summary defines model for StrategyComparisonResults.Items.Summary.
 type StrategyComparisonResults_Items_Summary struct {
-	AnnualizedReturn     *float32               `json:"annualized_return,omitempty"`
-	AverageLossI64       *int                   `json:"average_loss_i64,omitempty"`
-	AverageWinI64        *int                   `json:"average_win_i64,omitempty"`
-	ExpectancyI64        *float32               `json:"expectancy_i64,omitempty"`
-	MaxDrawdown          float32                `json:"max_drawdown"`
-	ProfitFactor         *float32               `json:"profit_factor,omitempty"`
-	ProfitLossRatio      *float32               `json:"profit_loss_ratio,omitempty"`
-	RequestId            string                 `json:"request_id"`
-	RiskApprovedCount    int                    `json:"risk_approved_count"`
-	RiskBlockedCount     int                    `json:"risk_blocked_count"`
-	RiskKillSwitchCount  int                    `json:"risk_kill_switch_count"`
-	RiskReducedCount     int                    `json:"risk_reduced_count"`
-	RunId                string                 `json:"run_id"`
-	Sharpe               *float32               `json:"sharpe,omitempty"`
-	TotalCommissionI64   int                    `json:"total_commission_i64"`
-	TotalReturn          float32                `json:"total_return"`
-	TotalSlippageI64     int                    `json:"total_slippage_i64"`
-	TradeCount           int                    `json:"trade_count"`
-	WinRate              *float32               `json:"win_rate"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	AnnualizedReturn           *float32                                                        `json:"annualized_return,omitempty"`
+	AnnualizedReturnReason     *string                                                         `json:"annualized_return_reason,omitempty"`
+	AnnualizedVolatility       *float32                                                        `json:"annualized_volatility,omitempty"`
+	AnnualizedVolatilityReason *string                                                         `json:"annualized_volatility_reason,omitempty"`
+	AverageLossI64             *int                                                            `json:"average_loss_i64,omitempty"`
+	AverageWinI64              *int                                                            `json:"average_win_i64,omitempty"`
+	DailyReturnCount           *int                                                            `json:"daily_return_count,omitempty"`
+	ExpectancyI64              *float32                                                        `json:"expectancy_i64,omitempty"`
+	FillRate                   *float32                                                        `json:"fill_rate,omitempty"`
+	FilledQuantity             *int                                                            `json:"filled_quantity,omitempty"`
+	MaxDrawdown                float32                                                         `json:"max_drawdown"`
+	ProfitFactor               *float32                                                        `json:"profit_factor,omitempty"`
+	ProfitLossRatio            *float32                                                        `json:"profit_loss_ratio,omitempty"`
+	RequestId                  string                                                          `json:"request_id"`
+	RequestedQuantity          *int                                                            `json:"requested_quantity,omitempty"`
+	RiskApprovedCount          int                                                             `json:"risk_approved_count"`
+	RiskBlockedCount           int                                                             `json:"risk_blocked_count"`
+	RiskKillSwitchCount        int                                                             `json:"risk_kill_switch_count"`
+	RiskReducedCount           int                                                             `json:"risk_reduced_count"`
+	RunId                      string                                                          `json:"run_id"`
+	Sharpe                     *float32                                                        `json:"sharpe,omitempty"`
+	SharpeAnnualizationFactor  *StrategyComparisonResultsItemsSummarySharpeAnnualizationFactor `json:"sharpe_annualization_factor,omitempty"`
+	SharpeReason               *string                                                         `json:"sharpe_reason,omitempty"`
+	TotalCommissionI64         int                                                             `json:"total_commission_i64"`
+	TotalReturn                float32                                                         `json:"total_return"`
+	TotalSlippageI64           int                                                             `json:"total_slippage_i64"`
+	TradeCount                 int                                                             `json:"trade_count"`
+	TradingDayCount            *int                                                            `json:"trading_day_count,omitempty"`
+	WinRate                    *float32                                                        `json:"win_rate"`
+	AdditionalProperties       map[string]interface{}                                          `json:"-"`
 }
 
 // StrategyComparisonStatus defines model for StrategyComparisonStatus.
@@ -4219,16 +5772,20 @@ type StrategyComparisonStatus struct {
 	} `json:"error,omitempty"`
 	FailedCount int `json:"failed_count"`
 	Manifest    *struct {
-		Capital        map[string]interface{} `json:"capital"`
-		ComparisonId   string                 `json:"comparison_id"`
-		CompletedCount int                    `json:"completed_count"`
-		CreatedAt      time.Time              `json:"created_at"`
-		Dataset        struct {
+		AggregatorVersion     string                 `json:"aggregator_version"`
+		Capital               map[string]interface{} `json:"capital"`
+		ComparisonId          string                 `json:"comparison_id"`
+		ComparisonSignature   string                 `json:"comparison_signature"`
+		CompletedAlgorithmIds *[]string              `json:"completed_algorithm_ids,omitempty"`
+		CompletedCount        int                    `json:"completed_count"`
+		CreatedAt             time.Time              `json:"created_at"`
+		Dataset               struct {
 			DataRevision string `json:"data_revision"`
 			DatasetId    string `json:"dataset_id"`
 		} `json:"dataset"`
 		Execution         map[string]interface{} `json:"execution"`
 		FailedCount       int                    `json:"failed_count"`
+		JournalStatus     interface{}            `json:"journal_status,omitempty"`
 		MinimumTradeCount int                    `json:"minimum_trade_count"`
 		RandomSeed        int                    `json:"random_seed"`
 		Range             struct {
@@ -4236,10 +5793,21 @@ type StrategyComparisonStatus struct {
 			ToBarIndex         int `json:"to_bar_index"`
 			WarmupFromBarIndex int `json:"warmup_from_bar_index"`
 		} `json:"range"`
-		RiskOverlay   *map[string]interface{} `json:"risk_overlay,omitempty"`
-		SchemaVersion interface{}             `json:"schema_version"`
-		StrategyCount int                     `json:"strategy_count"`
-		TraceId       string                  `json:"trace_id"`
+		RemainingAlgorithmIds *[]string               `json:"remaining_algorithm_ids,omitempty"`
+		RiskOverlay           *map[string]interface{} `json:"risk_overlay,omitempty"`
+		SchemaVersion         interface{}             `json:"schema_version"`
+		SharedDependency      *map[string]interface{} `json:"shared_dependency,omitempty"`
+		Strategies            []struct {
+			Parameters map[string]interface{} `json:"parameters"`
+			Strategy   struct {
+				AlgorithmId      string      `json:"algorithm_id"`
+				AlgorithmVersion string      `json:"algorithm_version"`
+				Kind             interface{} `json:"kind"`
+				SourceHash       string      `json:"source_hash"`
+			} `json:"strategy"`
+		} `json:"strategies"`
+		StrategyCount int    `json:"strategy_count"`
+		TraceId       string `json:"trace_id"`
 	} `json:"manifest,omitempty"`
 	Progress   float32     `json:"progress"`
 	RequestId  string      `json:"request_id"`
@@ -4247,6 +5815,42 @@ type StrategyComparisonStatus struct {
 	Status     interface{} `json:"status"`
 	TotalCount int         `json:"total_count"`
 }
+
+// StressScenarioResult defines model for StressScenarioResult.
+type StressScenarioResult struct {
+	AdditionalDelayBars        int         `json:"additional_delay_bars"`
+	AdditionalSlippageTicks    float32     `json:"additional_slippage_ticks"`
+	CompletedRunCount          int         `json:"completed_run_count"`
+	CostMultiplier             float32     `json:"cost_multiplier"`
+	DailyReturnCount           *int        `json:"daily_return_count,omitempty"`
+	DrawdownDegradation        *float32    `json:"drawdown_degradation,omitempty"`
+	FailedRunCount             int         `json:"failed_run_count"`
+	FailureReason              *string     `json:"failure_reason,omitempty"`
+	FillMode                   interface{} `json:"fill_mode"`
+	FillRate                   *float32    `json:"fill_rate"`
+	FillRateDegradation        *float32    `json:"fill_rate_degradation,omitempty"`
+	FilledQuantity             int         `json:"filled_quantity"`
+	MaxDrawdown                *float32    `json:"max_drawdown,omitempty"`
+	MaxVolumeParticipationRate *float32    `json:"max_volume_participation_rate,omitempty"`
+	RequestedQuantity          int         `json:"requested_quantity"`
+	ReturnDegradation          *float32    `json:"return_degradation,omitempty"`
+	ScenarioId                 string      `json:"scenario_id"`
+	Status                     interface{} `json:"status"`
+	TotalReturn                *float32    `json:"total_return,omitempty"`
+	TradeCount                 *int        `json:"trade_count,omitempty"`
+}
+
+// StressTestConfig defines model for StressTestConfig.
+type StressTestConfig struct {
+	SuiteVersion            StressTestConfigSuiteVersion            `json:"suite_version"`
+	VolumeParticipationRate StressTestConfigVolumeParticipationRate `json:"volume_participation_rate"`
+}
+
+// StressTestConfigSuiteVersion defines model for StressTestConfig.SuiteVersion.
+type StressTestConfigSuiteVersion string
+
+// StressTestConfigVolumeParticipationRate defines model for StressTestConfig.VolumeParticipationRate.
+type StressTestConfigVolumeParticipationRate float32
 
 // StudyAccepted defines model for StudyAccepted.
 type StudyAccepted struct {
@@ -4495,6 +6099,145 @@ type StudyStatus struct {
 	StudyId   string      `json:"study_id"`
 }
 
+// WalkForwardConfig defines model for WalkForwardConfig.
+type WalkForwardConfig struct {
+	Constraints []struct {
+		Metric   interface{} `json:"metric"`
+		Operator interface{} `json:"operator"`
+		Value    float32     `json:"value"`
+	} `json:"constraints"`
+	Objectives []struct {
+		Direction interface{} `json:"direction"`
+		Metric    interface{} `json:"metric"`
+	} `json:"objectives"`
+	Search struct {
+		Budget     int         `json:"budget"`
+		Method     interface{} `json:"method"`
+		RandomSeed int         `json:"random_seed"`
+	} `json:"search"`
+	SearchSpace []struct {
+		Candidates *[]interface{} `json:"candidates,omitempty"`
+		Maximum    *float32       `json:"maximum,omitempty"`
+		Minimum    *float32       `json:"minimum,omitempty"`
+		Name       string         `json:"name"`
+		Step       *float32       `json:"step,omitempty"`
+		Type       interface{}    `json:"type"`
+	} `json:"search_space"`
+	StepTradingDays       int `json:"step_trading_days"`
+	TrainTradingDays      int `json:"train_trading_days"`
+	ValidationTradingDays int `json:"validation_trading_days"`
+}
+
+// WalkForwardFoldResult defines model for WalkForwardFoldResult.
+type WalkForwardFoldResult struct {
+	ChangedParameterNames *[]string `json:"changed_parameter_names,omitempty"`
+	DatasetId             string    `json:"dataset_id"`
+	Error                 *struct {
+		Code    string `json:"code"`
+		Message string `json:"message"`
+	} `json:"error,omitempty"`
+	FoldIndex                 int                                         `json:"fold_index"`
+	IndependenceGroup         string                                      `json:"independence_group"`
+	ParameterChanged          *bool                                       `json:"parameter_changed,omitempty"`
+	SelectedParameters        *map[string]interface{}                     `json:"selected_parameters,omitempty"`
+	SelectedTrainMetrics      *WalkForwardFoldResult_SelectedTrainMetrics `json:"selected_train_metrics,omitempty"`
+	SelectedTrainRunId        *string                                     `json:"selected_train_run_id,omitempty"`
+	SelectedTrainRunSignature *string                                     `json:"selected_train_run_signature,omitempty"`
+	Status                    interface{}                                 `json:"status"`
+	TrainRange                struct {
+		FromBarIndex       int `json:"from_bar_index"`
+		ToBarIndex         int `json:"to_bar_index"`
+		WarmupFromBarIndex int `json:"warmup_from_bar_index"`
+	} `json:"train_range"`
+	TrainTradingDayFrom string                                   `json:"train_trading_day_from"`
+	TrainTradingDayTo   string                                   `json:"train_trading_day_to"`
+	TrainingRanking     *[]map[string]interface{}                `json:"training_ranking,omitempty"`
+	ValidationMetrics   *WalkForwardFoldResult_ValidationMetrics `json:"validation_metrics,omitempty"`
+	ValidationRange     struct {
+		FromBarIndex       int `json:"from_bar_index"`
+		ToBarIndex         int `json:"to_bar_index"`
+		WarmupFromBarIndex int `json:"warmup_from_bar_index"`
+	} `json:"validation_range"`
+	ValidationRunId          *string `json:"validation_run_id,omitempty"`
+	ValidationRunSignature   *string `json:"validation_run_signature,omitempty"`
+	ValidationTradingDayFrom string  `json:"validation_trading_day_from"`
+	ValidationTradingDayTo   string  `json:"validation_trading_day_to"`
+}
+
+// WalkForwardFoldResultSelectedTrainMetricsSharpeAnnualizationFactor defines model for WalkForwardFoldResult.SelectedTrainMetrics.SharpeAnnualizationFactor.
+type WalkForwardFoldResultSelectedTrainMetricsSharpeAnnualizationFactor int
+
+// WalkForwardFoldResult_SelectedTrainMetrics defines model for WalkForwardFoldResult.SelectedTrainMetrics.
+type WalkForwardFoldResult_SelectedTrainMetrics struct {
+	AnnualizedReturn           *float32                                                            `json:"annualized_return,omitempty"`
+	AnnualizedReturnReason     *string                                                             `json:"annualized_return_reason,omitempty"`
+	AnnualizedVolatility       *float32                                                            `json:"annualized_volatility,omitempty"`
+	AnnualizedVolatilityReason *string                                                             `json:"annualized_volatility_reason,omitempty"`
+	AverageLossI64             *int                                                                `json:"average_loss_i64,omitempty"`
+	AverageWinI64              *int                                                                `json:"average_win_i64,omitempty"`
+	DailyReturnCount           *int                                                                `json:"daily_return_count,omitempty"`
+	ExpectancyI64              *float32                                                            `json:"expectancy_i64,omitempty"`
+	FillRate                   *float32                                                            `json:"fill_rate,omitempty"`
+	FilledQuantity             *int                                                                `json:"filled_quantity,omitempty"`
+	MaxDrawdown                float32                                                             `json:"max_drawdown"`
+	ProfitFactor               *float32                                                            `json:"profit_factor,omitempty"`
+	ProfitLossRatio            *float32                                                            `json:"profit_loss_ratio,omitempty"`
+	RequestId                  string                                                              `json:"request_id"`
+	RequestedQuantity          *int                                                                `json:"requested_quantity,omitempty"`
+	RiskApprovedCount          int                                                                 `json:"risk_approved_count"`
+	RiskBlockedCount           int                                                                 `json:"risk_blocked_count"`
+	RiskKillSwitchCount        int                                                                 `json:"risk_kill_switch_count"`
+	RiskReducedCount           int                                                                 `json:"risk_reduced_count"`
+	RunId                      string                                                              `json:"run_id"`
+	Sharpe                     *float32                                                            `json:"sharpe,omitempty"`
+	SharpeAnnualizationFactor  *WalkForwardFoldResultSelectedTrainMetricsSharpeAnnualizationFactor `json:"sharpe_annualization_factor,omitempty"`
+	SharpeReason               *string                                                             `json:"sharpe_reason,omitempty"`
+	TotalCommissionI64         int                                                                 `json:"total_commission_i64"`
+	TotalReturn                float32                                                             `json:"total_return"`
+	TotalSlippageI64           int                                                                 `json:"total_slippage_i64"`
+	TradeCount                 int                                                                 `json:"trade_count"`
+	TradingDayCount            *int                                                                `json:"trading_day_count,omitempty"`
+	WinRate                    *float32                                                            `json:"win_rate"`
+	AdditionalProperties       map[string]interface{}                                              `json:"-"`
+}
+
+// WalkForwardFoldResultValidationMetricsSharpeAnnualizationFactor defines model for WalkForwardFoldResult.ValidationMetrics.SharpeAnnualizationFactor.
+type WalkForwardFoldResultValidationMetricsSharpeAnnualizationFactor int
+
+// WalkForwardFoldResult_ValidationMetrics defines model for WalkForwardFoldResult.ValidationMetrics.
+type WalkForwardFoldResult_ValidationMetrics struct {
+	AnnualizedReturn           *float32                                                         `json:"annualized_return,omitempty"`
+	AnnualizedReturnReason     *string                                                          `json:"annualized_return_reason,omitempty"`
+	AnnualizedVolatility       *float32                                                         `json:"annualized_volatility,omitempty"`
+	AnnualizedVolatilityReason *string                                                          `json:"annualized_volatility_reason,omitempty"`
+	AverageLossI64             *int                                                             `json:"average_loss_i64,omitempty"`
+	AverageWinI64              *int                                                             `json:"average_win_i64,omitempty"`
+	DailyReturnCount           *int                                                             `json:"daily_return_count,omitempty"`
+	ExpectancyI64              *float32                                                         `json:"expectancy_i64,omitempty"`
+	FillRate                   *float32                                                         `json:"fill_rate,omitempty"`
+	FilledQuantity             *int                                                             `json:"filled_quantity,omitempty"`
+	MaxDrawdown                float32                                                          `json:"max_drawdown"`
+	ProfitFactor               *float32                                                         `json:"profit_factor,omitempty"`
+	ProfitLossRatio            *float32                                                         `json:"profit_loss_ratio,omitempty"`
+	RequestId                  string                                                           `json:"request_id"`
+	RequestedQuantity          *int                                                             `json:"requested_quantity,omitempty"`
+	RiskApprovedCount          int                                                              `json:"risk_approved_count"`
+	RiskBlockedCount           int                                                              `json:"risk_blocked_count"`
+	RiskKillSwitchCount        int                                                              `json:"risk_kill_switch_count"`
+	RiskReducedCount           int                                                              `json:"risk_reduced_count"`
+	RunId                      string                                                           `json:"run_id"`
+	Sharpe                     *float32                                                         `json:"sharpe,omitempty"`
+	SharpeAnnualizationFactor  *WalkForwardFoldResultValidationMetricsSharpeAnnualizationFactor `json:"sharpe_annualization_factor,omitempty"`
+	SharpeReason               *string                                                          `json:"sharpe_reason,omitempty"`
+	TotalCommissionI64         int                                                              `json:"total_commission_i64"`
+	TotalReturn                float32                                                          `json:"total_return"`
+	TotalSlippageI64           int                                                              `json:"total_slippage_i64"`
+	TradeCount                 int                                                              `json:"trade_count"`
+	TradingDayCount            *int                                                             `json:"trading_day_count,omitempty"`
+	WinRate                    *float32                                                         `json:"win_rate"`
+	AdditionalProperties       map[string]interface{}                                           `json:"-"`
+}
+
 // ComparisonId defines model for ComparisonId.
 type ComparisonId = string
 
@@ -4518,6 +6261,9 @@ type ProfileId = string
 
 // ReplayId defines model for ReplayId.
 type ReplayId = string
+
+// ResearchStudyId defines model for ResearchStudyId.
+type ResearchStudyId = string
 
 // Revision defines model for Revision.
 type Revision = string
@@ -4578,13 +6324,19 @@ type CreateBacktestJSONBody struct {
 	DataRevision string `json:"data_revision"`
 	DatasetId    string `json:"dataset_id"`
 	Execution    struct {
-		Commission           CreateBacktestJSONBody_Execution_Commission `json:"commission"`
-		ContractMultiplier   float32                                     `json:"contract_multiplier"`
-		FillTiming           interface{}                                 `json:"fill_timing"`
-		IntrabarConflictRule interface{}                                 `json:"intrabar_conflict_rule"`
-		MarginRatio          float32                                     `json:"margin_ratio"`
-		SignalTiming         interface{}                                 `json:"signal_timing"`
-		Slippage             CreateBacktestJSONBody_Execution_Slippage   `json:"slippage"`
+		AdditionalDelayBars        *int                                        `json:"additional_delay_bars,omitempty"`
+		AdditionalSlippageTicks    *float32                                    `json:"additional_slippage_ticks,omitempty"`
+		Commission                 CreateBacktestJSONBody_Execution_Commission `json:"commission"`
+		ContractMultiplier         float32                                     `json:"contract_multiplier"`
+		CostMultiplier             *float32                                    `json:"cost_multiplier,omitempty"`
+		FillMode                   interface{}                                 `json:"fill_mode,omitempty"`
+		FillTiming                 interface{}                                 `json:"fill_timing"`
+		IntrabarConflictRule       interface{}                                 `json:"intrabar_conflict_rule"`
+		MarginRatio                float32                                     `json:"margin_ratio"`
+		MaxVolumeParticipationRate *float32                                    `json:"max_volume_participation_rate,omitempty"`
+		SignalTiming               interface{}                                 `json:"signal_timing"`
+		Slippage                   CreateBacktestJSONBody_Execution_Slippage   `json:"slippage"`
+		StressScenarioId           *string                                     `json:"stress_scenario_id,omitempty"`
 	} `json:"execution"`
 	Parameters map[string]interface{} `json:"parameters"`
 	RandomSeed int                    `json:"random_seed"`
@@ -4662,28 +6414,41 @@ type CreateBacktestJSONBody_Execution_Slippage struct {
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
+// GetBacktestSummary200JSONResponseBodySharpeAnnualizationFactor defines parameters for GetBacktestSummary.
+type GetBacktestSummary200JSONResponseBodySharpeAnnualizationFactor int
+
 // GetBacktestSummary200JSONResponseBody defines parameters for GetBacktestSummary.
 type GetBacktestSummary200JSONResponseBody struct {
-	AnnualizedReturn     *float32               `json:"annualized_return,omitempty"`
-	AverageLossI64       *int                   `json:"average_loss_i64,omitempty"`
-	AverageWinI64        *int                   `json:"average_win_i64,omitempty"`
-	ExpectancyI64        *float32               `json:"expectancy_i64,omitempty"`
-	MaxDrawdown          float32                `json:"max_drawdown"`
-	ProfitFactor         *float32               `json:"profit_factor,omitempty"`
-	ProfitLossRatio      *float32               `json:"profit_loss_ratio,omitempty"`
-	RequestId            string                 `json:"request_id"`
-	RiskApprovedCount    int                    `json:"risk_approved_count"`
-	RiskBlockedCount     int                    `json:"risk_blocked_count"`
-	RiskKillSwitchCount  int                    `json:"risk_kill_switch_count"`
-	RiskReducedCount     int                    `json:"risk_reduced_count"`
-	RunId                string                 `json:"run_id"`
-	Sharpe               *float32               `json:"sharpe,omitempty"`
-	TotalCommissionI64   int                    `json:"total_commission_i64"`
-	TotalReturn          float32                `json:"total_return"`
-	TotalSlippageI64     int                    `json:"total_slippage_i64"`
-	TradeCount           int                    `json:"trade_count"`
-	WinRate              *float32               `json:"win_rate"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	AnnualizedReturn           *float32                                                        `json:"annualized_return,omitempty"`
+	AnnualizedReturnReason     *string                                                         `json:"annualized_return_reason,omitempty"`
+	AnnualizedVolatility       *float32                                                        `json:"annualized_volatility,omitempty"`
+	AnnualizedVolatilityReason *string                                                         `json:"annualized_volatility_reason,omitempty"`
+	AverageLossI64             *int                                                            `json:"average_loss_i64,omitempty"`
+	AverageWinI64              *int                                                            `json:"average_win_i64,omitempty"`
+	DailyReturnCount           *int                                                            `json:"daily_return_count,omitempty"`
+	ExpectancyI64              *float32                                                        `json:"expectancy_i64,omitempty"`
+	FillRate                   *float32                                                        `json:"fill_rate,omitempty"`
+	FilledQuantity             *int                                                            `json:"filled_quantity,omitempty"`
+	MaxDrawdown                float32                                                         `json:"max_drawdown"`
+	ProfitFactor               *float32                                                        `json:"profit_factor,omitempty"`
+	ProfitLossRatio            *float32                                                        `json:"profit_loss_ratio,omitempty"`
+	RequestId                  string                                                          `json:"request_id"`
+	RequestedQuantity          *int                                                            `json:"requested_quantity,omitempty"`
+	RiskApprovedCount          int                                                             `json:"risk_approved_count"`
+	RiskBlockedCount           int                                                             `json:"risk_blocked_count"`
+	RiskKillSwitchCount        int                                                             `json:"risk_kill_switch_count"`
+	RiskReducedCount           int                                                             `json:"risk_reduced_count"`
+	RunId                      string                                                          `json:"run_id"`
+	Sharpe                     *float32                                                        `json:"sharpe,omitempty"`
+	SharpeAnnualizationFactor  *GetBacktestSummary200JSONResponseBodySharpeAnnualizationFactor `json:"sharpe_annualization_factor,omitempty"`
+	SharpeReason               *string                                                         `json:"sharpe_reason,omitempty"`
+	TotalCommissionI64         int                                                             `json:"total_commission_i64"`
+	TotalReturn                float32                                                         `json:"total_return"`
+	TotalSlippageI64           int                                                             `json:"total_slippage_i64"`
+	TradeCount                 int                                                             `json:"trade_count"`
+	TradingDayCount            *int                                                            `json:"trading_day_count,omitempty"`
+	WinRate                    *float32                                                        `json:"win_rate"`
+	AdditionalProperties       map[string]interface{}                                          `json:"-"`
 }
 
 // ListBacktestTradesParams defines parameters for ListBacktestTrades.
@@ -4836,6 +6601,7 @@ type ImportDatasetJSONBody struct {
 	DateSemantics      interface{}             `json:"date_semantics"`
 	Exchange           string                  `json:"exchange"`
 	ImporterId         interface{}             `json:"importer_id"`
+	IndependenceGroup  *string                 `json:"independence_group,omitempty"`
 	Instrument         string                  `json:"instrument"`
 	Options            *map[string]interface{} `json:"options,omitempty"`
 	SourceFileId       string                  `json:"source_file_id"`
@@ -4848,6 +6614,28 @@ type ImportDatasetJSONBody struct {
 type ImportDatasetParams struct {
 	IdempotencyKey *string `json:"Idempotency-Key,omitempty"`
 }
+
+// ImportDatasetsBatchJSONBody defines parameters for ImportDatasetsBatch.
+type ImportDatasetsBatchJSONBody struct {
+	Items []struct {
+		DateSemantics      interface{}             `json:"date_semantics"`
+		Exchange           string                  `json:"exchange"`
+		ImporterId         interface{}             `json:"importer_id"`
+		IndependenceGroup  *string                 `json:"independence_group,omitempty"`
+		Instrument         string                  `json:"instrument"`
+		Options            *map[string]interface{} `json:"options,omitempty"`
+		SourceFileId       string                  `json:"source_file_id"`
+		Timeframe          string                  `json:"timeframe"`
+		TimestampSemantics interface{}             `json:"timestamp_semantics,omitempty"`
+		Timezone           string                  `json:"timezone"`
+	} `json:"items"`
+}
+
+// GetDatasetResearchReadiness200JSONResponseBodyRequiredIndependenceGroups defines parameters for GetDatasetResearchReadiness.
+type GetDatasetResearchReadiness200JSONResponseBodyRequiredIndependenceGroups int
+
+// GetDatasetResearchReadiness200JSONResponseBodyRequiredTradingDays defines parameters for GetDatasetResearchReadiness.
+type GetDatasetResearchReadiness200JSONResponseBodyRequiredTradingDays int
 
 // GetDatasetParams defines parameters for GetDataset.
 type GetDatasetParams struct {
@@ -4889,6 +6677,291 @@ type CreateReplayJSONBody struct {
 type GetReplayEventsParams struct {
 	KnownFromBarIndex int `form:"known_from_bar_index" json:"known_from_bar_index"`
 	KnownToBarIndex   int `form:"known_to_bar_index" json:"known_to_bar_index"`
+}
+
+// ListResearchStudies200JSONResponseBodyItemsStatisticalValidationConfidenceLevel defines parameters for ListResearchStudies.
+type ListResearchStudies200JSONResponseBodyItemsStatisticalValidationConfidenceLevel float32
+
+// ListResearchStudies200JSONResponseBodyItemsStatisticalValidationHolmAlpha defines parameters for ListResearchStudies.
+type ListResearchStudies200JSONResponseBodyItemsStatisticalValidationHolmAlpha float32
+
+// ListResearchStudies200JSONResponseBodyItemsStressTestVolumeParticipationRate defines parameters for ListResearchStudies.
+type ListResearchStudies200JSONResponseBodyItemsStressTestVolumeParticipationRate float32
+
+// CreateResearchStudyJSONBody defines parameters for CreateResearchStudy.
+type CreateResearchStudyJSONBody struct {
+	Capital  map[string]interface{} `json:"capital"`
+	Datasets []struct {
+		DataRevision string `json:"data_revision"`
+		DatasetId    string `json:"dataset_id"`
+		Range        struct {
+			FromBarIndex       int `json:"from_bar_index"`
+			ToBarIndex         int `json:"to_bar_index"`
+			WarmupFromBarIndex int `json:"warmup_from_bar_index"`
+		} `json:"range"`
+	} `json:"datasets"`
+	Execution             map[string]interface{} `json:"execution"`
+	Parameters            map[string]interface{} `json:"parameters"`
+	RandomSeed            int                    `json:"random_seed"`
+	StatisticalValidation *struct {
+		BlockSizeTradingDays int                                                             `json:"block_size_trading_days"`
+		ConfidenceLevel      CreateResearchStudyJSONBodyStatisticalValidationConfidenceLevel `json:"confidence_level"`
+		HolmAlpha            CreateResearchStudyJSONBodyStatisticalValidationHolmAlpha       `json:"holm_alpha"`
+		Iterations           int                                                             `json:"iterations"`
+		MethodVersion        CreateResearchStudyJSONBodyStatisticalValidationMethodVersion   `json:"method_version"`
+		RandomSeed           int                                                             `json:"random_seed"`
+	} `json:"statistical_validation,omitempty"`
+	Strategy struct {
+		AlgorithmId      string      `json:"algorithm_id"`
+		AlgorithmVersion string      `json:"algorithm_version"`
+		Kind             interface{} `json:"kind"`
+		SourceHash       string      `json:"source_hash"`
+	} `json:"strategy"`
+	StressTest *struct {
+		SuiteVersion            CreateResearchStudyJSONBodyStressTestSuiteVersion            `json:"suite_version"`
+		VolumeParticipationRate CreateResearchStudyJSONBodyStressTestVolumeParticipationRate `json:"volume_participation_rate"`
+	} `json:"stress_test,omitempty"`
+	TraceId     *string `json:"trace_id,omitempty"`
+	WalkForward *struct {
+		Constraints []struct {
+			Metric   interface{} `json:"metric"`
+			Operator interface{} `json:"operator"`
+			Value    float32     `json:"value"`
+		} `json:"constraints"`
+		Objectives []struct {
+			Direction interface{} `json:"direction"`
+			Metric    interface{} `json:"metric"`
+		} `json:"objectives"`
+		Search struct {
+			Budget     int         `json:"budget"`
+			Method     interface{} `json:"method"`
+			RandomSeed int         `json:"random_seed"`
+		} `json:"search"`
+		SearchSpace []struct {
+			Candidates *[]interface{} `json:"candidates,omitempty"`
+			Maximum    *float32       `json:"maximum,omitempty"`
+			Minimum    *float32       `json:"minimum,omitempty"`
+			Name       string         `json:"name"`
+			Step       *float32       `json:"step,omitempty"`
+			Type       interface{}    `json:"type"`
+		} `json:"search_space"`
+		StepTradingDays       int `json:"step_trading_days"`
+		TrainTradingDays      int `json:"train_trading_days"`
+		ValidationTradingDays int `json:"validation_trading_days"`
+	} `json:"walk_forward,omitempty"`
+}
+
+// CreateResearchStudyJSONBodyStatisticalValidationConfidenceLevel defines parameters for CreateResearchStudy.
+type CreateResearchStudyJSONBodyStatisticalValidationConfidenceLevel float32
+
+// CreateResearchStudyJSONBodyStatisticalValidationHolmAlpha defines parameters for CreateResearchStudy.
+type CreateResearchStudyJSONBodyStatisticalValidationHolmAlpha float32
+
+// CreateResearchStudyJSONBodyStatisticalValidationMethodVersion defines parameters for CreateResearchStudy.
+type CreateResearchStudyJSONBodyStatisticalValidationMethodVersion string
+
+// CreateResearchStudyJSONBodyStressTestSuiteVersion defines parameters for CreateResearchStudy.
+type CreateResearchStudyJSONBodyStressTestSuiteVersion string
+
+// CreateResearchStudyJSONBodyStressTestVolumeParticipationRate defines parameters for CreateResearchStudy.
+type CreateResearchStudyJSONBodyStressTestVolumeParticipationRate float32
+
+// GetResearchStudy200JSONResponseBodyManifestStatisticalValidationConfidenceLevel defines parameters for GetResearchStudy.
+type GetResearchStudy200JSONResponseBodyManifestStatisticalValidationConfidenceLevel float32
+
+// GetResearchStudy200JSONResponseBodyManifestStatisticalValidationHolmAlpha defines parameters for GetResearchStudy.
+type GetResearchStudy200JSONResponseBodyManifestStatisticalValidationHolmAlpha float32
+
+// GetResearchStudy200JSONResponseBodyManifestStressTestVolumeParticipationRate defines parameters for GetResearchStudy.
+type GetResearchStudy200JSONResponseBodyManifestStressTestVolumeParticipationRate float32
+
+// GetResearchStudyResults200JSONResponseBody_Aggregate defines parameters for GetResearchStudyResults.
+type GetResearchStudyResults200JSONResponseBody_Aggregate struct {
+	AnnualizedReturn               *float32 `json:"annualized_return,omitempty"`
+	AnnualizedVolatility           *float32 `json:"annualized_volatility,omitempty"`
+	AttemptedParameterCombinations *[]struct {
+		AttemptCount   int                    `json:"attempt_count"`
+		CombinationId  string                 `json:"combination_id"`
+		CompletedCount int                    `json:"completed_count"`
+		Parameters     map[string]interface{} `json:"parameters"`
+	} `json:"attempted_parameter_combinations,omitempty"`
+	Certification *struct {
+		EvidenceMatrix []struct {
+			Actual      interface{} `json:"actual"`
+			GateId      string      `json:"gate_id"`
+			Passed      bool        `json:"passed"`
+			Reason      string      `json:"reason"`
+			RequiredFor interface{} `json:"required_for"`
+			Threshold   interface{} `json:"threshold"`
+		} `json:"evidence_matrix"`
+		Reasons                           []string    `json:"reasons"`
+		ReliableCandidateIsHistoricalOnly interface{} `json:"reliable_candidate_is_historical_only"`
+		ReliableCandidatePassed           bool        `json:"reliable_candidate_passed"`
+		ResearchCandidatePassed           bool        `json:"research_candidate_passed"`
+		RulesVersion                      string      `json:"rules_version"`
+		Tier                              interface{} `json:"tier"`
+	} `json:"certification,omitempty"`
+	CertificationTradeCount           *float32                `json:"certification_trade_count,omitempty"`
+	CompletedDatasetCount             int                     `json:"completed_dataset_count"`
+	CompletedWalkForwardFoldCount     *int                    `json:"completed_walk_forward_fold_count,omitempty"`
+	DailyReturnCount                  int                     `json:"daily_return_count"`
+	DataStatus                        interface{}             `json:"data_status"`
+	EligibleIndependenceGroupCount    int                     `json:"eligible_independence_group_count"`
+	FailedDatasetCount                int                     `json:"failed_dataset_count"`
+	FirstFailureScenario              *string                 `json:"first_failure_scenario,omitempty"`
+	IndependenceGroupCount            int                     `json:"independence_group_count"`
+	MaxDrawdown                       *float32                `json:"max_drawdown,omitempty"`
+	MedianDatasetReturn               *float32                `json:"median_dataset_return,omitempty"`
+	MinimumCompletedFoldsPerGroup     *int                    `json:"minimum_completed_folds_per_group,omitempty"`
+	MinimumStudiedTradingDaysPerGroup *int                    `json:"minimum_studied_trading_days_per_group,omitempty"`
+	OutOfSampleExpectancyI64          *float32                `json:"out_of_sample_expectancy_i64,omitempty"`
+	OutOfSampleTradeCount             *int                    `json:"out_of_sample_trade_count,omitempty"`
+	ParameterStability                *float32                `json:"parameter_stability,omitempty"`
+	ProfitableDatasetRatio            *float32                `json:"profitable_dataset_ratio,omitempty"`
+	ProfitableFoldRatio               *float32                `json:"profitable_fold_ratio,omitempty"`
+	Sharpe                            *float32                `json:"sharpe,omitempty"`
+	StatisticalEvidence               *map[string]interface{} `json:"statistical_evidence,omitempty"`
+	StressScenarios                   *[]struct {
+		AdditionalDelayBars        int         `json:"additional_delay_bars"`
+		AdditionalSlippageTicks    float32     `json:"additional_slippage_ticks"`
+		CompletedRunCount          int         `json:"completed_run_count"`
+		CostMultiplier             float32     `json:"cost_multiplier"`
+		DailyReturnCount           *int        `json:"daily_return_count,omitempty"`
+		DrawdownDegradation        *float32    `json:"drawdown_degradation,omitempty"`
+		FailedRunCount             int         `json:"failed_run_count"`
+		FailureReason              *string     `json:"failure_reason,omitempty"`
+		FillMode                   interface{} `json:"fill_mode"`
+		FillRate                   *float32    `json:"fill_rate"`
+		FillRateDegradation        *float32    `json:"fill_rate_degradation,omitempty"`
+		FilledQuantity             int         `json:"filled_quantity"`
+		MaxDrawdown                *float32    `json:"max_drawdown,omitempty"`
+		MaxVolumeParticipationRate *float32    `json:"max_volume_participation_rate,omitempty"`
+		RequestedQuantity          int         `json:"requested_quantity"`
+		ReturnDegradation          *float32    `json:"return_degradation,omitempty"`
+		ScenarioId                 string      `json:"scenario_id"`
+		Status                     interface{} `json:"status"`
+		TotalReturn                *float32    `json:"total_return,omitempty"`
+		TradeCount                 *int        `json:"trade_count,omitempty"`
+	} `json:"stress_scenarios,omitempty"`
+	TotalReturn             *float32               `json:"total_return,omitempty"`
+	TotalTradeCount         int                    `json:"total_trade_count"`
+	WalkForwardFoldCount    *int                   `json:"walk_forward_fold_count,omitempty"`
+	WorstDatasetId          *string                `json:"worst_dataset_id,omitempty"`
+	WorstDatasetMaxDrawdown *float32               `json:"worst_dataset_max_drawdown,omitempty"`
+	WorstDatasetReturn      *float32               `json:"worst_dataset_return,omitempty"`
+	WorstFoldMaxDrawdown    *float32               `json:"worst_fold_max_drawdown,omitempty"`
+	AdditionalProperties    map[string]interface{} `json:"-"`
+}
+
+// GetResearchStudyResults200JSONResponseBodyItemsFoldsSelectedTrainMetricsSharpeAnnualizationFactor defines parameters for GetResearchStudyResults.
+type GetResearchStudyResults200JSONResponseBodyItemsFoldsSelectedTrainMetricsSharpeAnnualizationFactor int
+
+// GetResearchStudyResults200JSONResponseBody_Items_Folds_SelectedTrainMetrics defines parameters for GetResearchStudyResults.
+type GetResearchStudyResults200JSONResponseBody_Items_Folds_SelectedTrainMetrics struct {
+	AnnualizedReturn           *float32                                                                                           `json:"annualized_return,omitempty"`
+	AnnualizedReturnReason     *string                                                                                            `json:"annualized_return_reason,omitempty"`
+	AnnualizedVolatility       *float32                                                                                           `json:"annualized_volatility,omitempty"`
+	AnnualizedVolatilityReason *string                                                                                            `json:"annualized_volatility_reason,omitempty"`
+	AverageLossI64             *int                                                                                               `json:"average_loss_i64,omitempty"`
+	AverageWinI64              *int                                                                                               `json:"average_win_i64,omitempty"`
+	DailyReturnCount           *int                                                                                               `json:"daily_return_count,omitempty"`
+	ExpectancyI64              *float32                                                                                           `json:"expectancy_i64,omitempty"`
+	FillRate                   *float32                                                                                           `json:"fill_rate,omitempty"`
+	FilledQuantity             *int                                                                                               `json:"filled_quantity,omitempty"`
+	MaxDrawdown                float32                                                                                            `json:"max_drawdown"`
+	ProfitFactor               *float32                                                                                           `json:"profit_factor,omitempty"`
+	ProfitLossRatio            *float32                                                                                           `json:"profit_loss_ratio,omitempty"`
+	RequestId                  string                                                                                             `json:"request_id"`
+	RequestedQuantity          *int                                                                                               `json:"requested_quantity,omitempty"`
+	RiskApprovedCount          int                                                                                                `json:"risk_approved_count"`
+	RiskBlockedCount           int                                                                                                `json:"risk_blocked_count"`
+	RiskKillSwitchCount        int                                                                                                `json:"risk_kill_switch_count"`
+	RiskReducedCount           int                                                                                                `json:"risk_reduced_count"`
+	RunId                      string                                                                                             `json:"run_id"`
+	Sharpe                     *float32                                                                                           `json:"sharpe,omitempty"`
+	SharpeAnnualizationFactor  *GetResearchStudyResults200JSONResponseBodyItemsFoldsSelectedTrainMetricsSharpeAnnualizationFactor `json:"sharpe_annualization_factor,omitempty"`
+	SharpeReason               *string                                                                                            `json:"sharpe_reason,omitempty"`
+	TotalCommissionI64         int                                                                                                `json:"total_commission_i64"`
+	TotalReturn                float32                                                                                            `json:"total_return"`
+	TotalSlippageI64           int                                                                                                `json:"total_slippage_i64"`
+	TradeCount                 int                                                                                                `json:"trade_count"`
+	TradingDayCount            *int                                                                                               `json:"trading_day_count,omitempty"`
+	WinRate                    *float32                                                                                           `json:"win_rate"`
+	AdditionalProperties       map[string]interface{}                                                                             `json:"-"`
+}
+
+// GetResearchStudyResults200JSONResponseBodyItemsFoldsValidationMetricsSharpeAnnualizationFactor defines parameters for GetResearchStudyResults.
+type GetResearchStudyResults200JSONResponseBodyItemsFoldsValidationMetricsSharpeAnnualizationFactor int
+
+// GetResearchStudyResults200JSONResponseBody_Items_Folds_ValidationMetrics defines parameters for GetResearchStudyResults.
+type GetResearchStudyResults200JSONResponseBody_Items_Folds_ValidationMetrics struct {
+	AnnualizedReturn           *float32                                                                                        `json:"annualized_return,omitempty"`
+	AnnualizedReturnReason     *string                                                                                         `json:"annualized_return_reason,omitempty"`
+	AnnualizedVolatility       *float32                                                                                        `json:"annualized_volatility,omitempty"`
+	AnnualizedVolatilityReason *string                                                                                         `json:"annualized_volatility_reason,omitempty"`
+	AverageLossI64             *int                                                                                            `json:"average_loss_i64,omitempty"`
+	AverageWinI64              *int                                                                                            `json:"average_win_i64,omitempty"`
+	DailyReturnCount           *int                                                                                            `json:"daily_return_count,omitempty"`
+	ExpectancyI64              *float32                                                                                        `json:"expectancy_i64,omitempty"`
+	FillRate                   *float32                                                                                        `json:"fill_rate,omitempty"`
+	FilledQuantity             *int                                                                                            `json:"filled_quantity,omitempty"`
+	MaxDrawdown                float32                                                                                         `json:"max_drawdown"`
+	ProfitFactor               *float32                                                                                        `json:"profit_factor,omitempty"`
+	ProfitLossRatio            *float32                                                                                        `json:"profit_loss_ratio,omitempty"`
+	RequestId                  string                                                                                          `json:"request_id"`
+	RequestedQuantity          *int                                                                                            `json:"requested_quantity,omitempty"`
+	RiskApprovedCount          int                                                                                             `json:"risk_approved_count"`
+	RiskBlockedCount           int                                                                                             `json:"risk_blocked_count"`
+	RiskKillSwitchCount        int                                                                                             `json:"risk_kill_switch_count"`
+	RiskReducedCount           int                                                                                             `json:"risk_reduced_count"`
+	RunId                      string                                                                                          `json:"run_id"`
+	Sharpe                     *float32                                                                                        `json:"sharpe,omitempty"`
+	SharpeAnnualizationFactor  *GetResearchStudyResults200JSONResponseBodyItemsFoldsValidationMetricsSharpeAnnualizationFactor `json:"sharpe_annualization_factor,omitempty"`
+	SharpeReason               *string                                                                                         `json:"sharpe_reason,omitempty"`
+	TotalCommissionI64         int                                                                                             `json:"total_commission_i64"`
+	TotalReturn                float32                                                                                         `json:"total_return"`
+	TotalSlippageI64           int                                                                                             `json:"total_slippage_i64"`
+	TradeCount                 int                                                                                             `json:"trade_count"`
+	TradingDayCount            *int                                                                                            `json:"trading_day_count,omitempty"`
+	WinRate                    *float32                                                                                        `json:"win_rate"`
+	AdditionalProperties       map[string]interface{}                                                                          `json:"-"`
+}
+
+// GetResearchStudyResults200JSONResponseBodyItemsSummarySharpeAnnualizationFactor defines parameters for GetResearchStudyResults.
+type GetResearchStudyResults200JSONResponseBodyItemsSummarySharpeAnnualizationFactor int
+
+// GetResearchStudyResults200JSONResponseBody_Items_Summary defines parameters for GetResearchStudyResults.
+type GetResearchStudyResults200JSONResponseBody_Items_Summary struct {
+	AnnualizedReturn           *float32                                                                         `json:"annualized_return,omitempty"`
+	AnnualizedReturnReason     *string                                                                          `json:"annualized_return_reason,omitempty"`
+	AnnualizedVolatility       *float32                                                                         `json:"annualized_volatility,omitempty"`
+	AnnualizedVolatilityReason *string                                                                          `json:"annualized_volatility_reason,omitempty"`
+	AverageLossI64             *int                                                                             `json:"average_loss_i64,omitempty"`
+	AverageWinI64              *int                                                                             `json:"average_win_i64,omitempty"`
+	DailyReturnCount           *int                                                                             `json:"daily_return_count,omitempty"`
+	ExpectancyI64              *float32                                                                         `json:"expectancy_i64,omitempty"`
+	FillRate                   *float32                                                                         `json:"fill_rate,omitempty"`
+	FilledQuantity             *int                                                                             `json:"filled_quantity,omitempty"`
+	MaxDrawdown                float32                                                                          `json:"max_drawdown"`
+	ProfitFactor               *float32                                                                         `json:"profit_factor,omitempty"`
+	ProfitLossRatio            *float32                                                                         `json:"profit_loss_ratio,omitempty"`
+	RequestId                  string                                                                           `json:"request_id"`
+	RequestedQuantity          *int                                                                             `json:"requested_quantity,omitempty"`
+	RiskApprovedCount          int                                                                              `json:"risk_approved_count"`
+	RiskBlockedCount           int                                                                              `json:"risk_blocked_count"`
+	RiskKillSwitchCount        int                                                                              `json:"risk_kill_switch_count"`
+	RiskReducedCount           int                                                                              `json:"risk_reduced_count"`
+	RunId                      string                                                                           `json:"run_id"`
+	Sharpe                     *float32                                                                         `json:"sharpe,omitempty"`
+	SharpeAnnualizationFactor  *GetResearchStudyResults200JSONResponseBodyItemsSummarySharpeAnnualizationFactor `json:"sharpe_annualization_factor,omitempty"`
+	SharpeReason               *string                                                                          `json:"sharpe_reason,omitempty"`
+	TotalCommissionI64         int                                                                              `json:"total_commission_i64"`
+	TotalReturn                float32                                                                          `json:"total_return"`
+	TotalSlippageI64           int                                                                              `json:"total_slippage_i64"`
+	TradeCount                 int                                                                              `json:"trade_count"`
+	TradingDayCount            *int                                                                             `json:"trading_day_count,omitempty"`
+	WinRate                    *float32                                                                         `json:"win_rate"`
+	AdditionalProperties       map[string]interface{}                                                           `json:"-"`
 }
 
 // ListStrategyComparisonsParams defines parameters for ListStrategyComparisons.
@@ -4945,28 +7018,41 @@ type CreateStrategyComparisonJSONBody struct {
 	TraceId *string `json:"trace_id,omitempty"`
 }
 
+// GetStrategyComparisonResults200JSONResponseBodyItemsSummarySharpeAnnualizationFactor defines parameters for GetStrategyComparisonResults.
+type GetStrategyComparisonResults200JSONResponseBodyItemsSummarySharpeAnnualizationFactor int
+
 // GetStrategyComparisonResults200JSONResponseBody_Items_Summary defines parameters for GetStrategyComparisonResults.
 type GetStrategyComparisonResults200JSONResponseBody_Items_Summary struct {
-	AnnualizedReturn     *float32               `json:"annualized_return,omitempty"`
-	AverageLossI64       *int                   `json:"average_loss_i64,omitempty"`
-	AverageWinI64        *int                   `json:"average_win_i64,omitempty"`
-	ExpectancyI64        *float32               `json:"expectancy_i64,omitempty"`
-	MaxDrawdown          float32                `json:"max_drawdown"`
-	ProfitFactor         *float32               `json:"profit_factor,omitempty"`
-	ProfitLossRatio      *float32               `json:"profit_loss_ratio,omitempty"`
-	RequestId            string                 `json:"request_id"`
-	RiskApprovedCount    int                    `json:"risk_approved_count"`
-	RiskBlockedCount     int                    `json:"risk_blocked_count"`
-	RiskKillSwitchCount  int                    `json:"risk_kill_switch_count"`
-	RiskReducedCount     int                    `json:"risk_reduced_count"`
-	RunId                string                 `json:"run_id"`
-	Sharpe               *float32               `json:"sharpe,omitempty"`
-	TotalCommissionI64   int                    `json:"total_commission_i64"`
-	TotalReturn          float32                `json:"total_return"`
-	TotalSlippageI64     int                    `json:"total_slippage_i64"`
-	TradeCount           int                    `json:"trade_count"`
-	WinRate              *float32               `json:"win_rate"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	AnnualizedReturn           *float32                                                                              `json:"annualized_return,omitempty"`
+	AnnualizedReturnReason     *string                                                                               `json:"annualized_return_reason,omitempty"`
+	AnnualizedVolatility       *float32                                                                              `json:"annualized_volatility,omitempty"`
+	AnnualizedVolatilityReason *string                                                                               `json:"annualized_volatility_reason,omitempty"`
+	AverageLossI64             *int                                                                                  `json:"average_loss_i64,omitempty"`
+	AverageWinI64              *int                                                                                  `json:"average_win_i64,omitempty"`
+	DailyReturnCount           *int                                                                                  `json:"daily_return_count,omitempty"`
+	ExpectancyI64              *float32                                                                              `json:"expectancy_i64,omitempty"`
+	FillRate                   *float32                                                                              `json:"fill_rate,omitempty"`
+	FilledQuantity             *int                                                                                  `json:"filled_quantity,omitempty"`
+	MaxDrawdown                float32                                                                               `json:"max_drawdown"`
+	ProfitFactor               *float32                                                                              `json:"profit_factor,omitempty"`
+	ProfitLossRatio            *float32                                                                              `json:"profit_loss_ratio,omitempty"`
+	RequestId                  string                                                                                `json:"request_id"`
+	RequestedQuantity          *int                                                                                  `json:"requested_quantity,omitempty"`
+	RiskApprovedCount          int                                                                                   `json:"risk_approved_count"`
+	RiskBlockedCount           int                                                                                   `json:"risk_blocked_count"`
+	RiskKillSwitchCount        int                                                                                   `json:"risk_kill_switch_count"`
+	RiskReducedCount           int                                                                                   `json:"risk_reduced_count"`
+	RunId                      string                                                                                `json:"run_id"`
+	Sharpe                     *float32                                                                              `json:"sharpe,omitempty"`
+	SharpeAnnualizationFactor  *GetStrategyComparisonResults200JSONResponseBodyItemsSummarySharpeAnnualizationFactor `json:"sharpe_annualization_factor,omitempty"`
+	SharpeReason               *string                                                                               `json:"sharpe_reason,omitempty"`
+	TotalCommissionI64         int                                                                                   `json:"total_commission_i64"`
+	TotalReturn                float32                                                                               `json:"total_return"`
+	TotalSlippageI64           int                                                                                   `json:"total_slippage_i64"`
+	TradeCount                 int                                                                                   `json:"trade_count"`
+	TradingDayCount            *int                                                                                  `json:"trading_day_count,omitempty"`
+	WinRate                    *float32                                                                              `json:"win_rate"`
+	AdditionalProperties       map[string]interface{}                                                                `json:"-"`
 }
 
 // CreateStudyJSONBody defines parameters for CreateStudy.
@@ -5270,8 +7356,14 @@ type IngestClientLogsJSONRequestBody IngestClientLogsJSONBody
 // ImportDatasetJSONRequestBody defines body for ImportDataset for application/json ContentType.
 type ImportDatasetJSONRequestBody ImportDatasetJSONBody
 
+// ImportDatasetsBatchJSONRequestBody defines body for ImportDatasetsBatch for application/json ContentType.
+type ImportDatasetsBatchJSONRequestBody ImportDatasetsBatchJSONBody
+
 // CreateReplayJSONRequestBody defines body for CreateReplay for application/json ContentType.
 type CreateReplayJSONRequestBody CreateReplayJSONBody
+
+// CreateResearchStudyJSONRequestBody defines body for CreateResearchStudy for application/json ContentType.
+type CreateResearchStudyJSONRequestBody CreateResearchStudyJSONBody
 
 // CreateStrategyComparisonJSONRequestBody defines body for CreateStrategyComparison for application/json ContentType.
 type CreateStrategyComparisonJSONRequestBody CreateStrategyComparisonJSONBody
@@ -5469,6 +7561,30 @@ func (a *BacktestSummary) UnmarshalJSON(b []byte) error {
 		delete(object, "annualized_return")
 	}
 
+	if raw, found := object["annualized_return_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturnReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return_reason': %w", err)
+		}
+		delete(object, "annualized_return_reason")
+	}
+
+	if raw, found := object["annualized_volatility"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatility)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility': %w", err)
+		}
+		delete(object, "annualized_volatility")
+	}
+
+	if raw, found := object["annualized_volatility_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatilityReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility_reason': %w", err)
+		}
+		delete(object, "annualized_volatility_reason")
+	}
+
 	if raw, found := object["average_loss_i64"]; found {
 		err = json.Unmarshal(raw, &a.AverageLossI64)
 		if err != nil {
@@ -5485,12 +7601,36 @@ func (a *BacktestSummary) UnmarshalJSON(b []byte) error {
 		delete(object, "average_win_i64")
 	}
 
+	if raw, found := object["daily_return_count"]; found {
+		err = json.Unmarshal(raw, &a.DailyReturnCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'daily_return_count': %w", err)
+		}
+		delete(object, "daily_return_count")
+	}
+
 	if raw, found := object["expectancy_i64"]; found {
 		err = json.Unmarshal(raw, &a.ExpectancyI64)
 		if err != nil {
 			return fmt.Errorf("error reading 'expectancy_i64': %w", err)
 		}
 		delete(object, "expectancy_i64")
+	}
+
+	if raw, found := object["fill_rate"]; found {
+		err = json.Unmarshal(raw, &a.FillRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'fill_rate': %w", err)
+		}
+		delete(object, "fill_rate")
+	}
+
+	if raw, found := object["filled_quantity"]; found {
+		err = json.Unmarshal(raw, &a.FilledQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'filled_quantity': %w", err)
+		}
+		delete(object, "filled_quantity")
 	}
 
 	if raw, found := object["max_drawdown"]; found {
@@ -5523,6 +7663,14 @@ func (a *BacktestSummary) UnmarshalJSON(b []byte) error {
 			return fmt.Errorf("error reading 'request_id': %w", err)
 		}
 		delete(object, "request_id")
+	}
+
+	if raw, found := object["requested_quantity"]; found {
+		err = json.Unmarshal(raw, &a.RequestedQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'requested_quantity': %w", err)
+		}
+		delete(object, "requested_quantity")
 	}
 
 	if raw, found := object["risk_approved_count"]; found {
@@ -5573,6 +7721,22 @@ func (a *BacktestSummary) UnmarshalJSON(b []byte) error {
 		delete(object, "sharpe")
 	}
 
+	if raw, found := object["sharpe_annualization_factor"]; found {
+		err = json.Unmarshal(raw, &a.SharpeAnnualizationFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_annualization_factor': %w", err)
+		}
+		delete(object, "sharpe_annualization_factor")
+	}
+
+	if raw, found := object["sharpe_reason"]; found {
+		err = json.Unmarshal(raw, &a.SharpeReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_reason': %w", err)
+		}
+		delete(object, "sharpe_reason")
+	}
+
 	if raw, found := object["total_commission_i64"]; found {
 		err = json.Unmarshal(raw, &a.TotalCommissionI64)
 		if err != nil {
@@ -5603,6 +7767,14 @@ func (a *BacktestSummary) UnmarshalJSON(b []byte) error {
 			return fmt.Errorf("error reading 'trade_count': %w", err)
 		}
 		delete(object, "trade_count")
+	}
+
+	if raw, found := object["trading_day_count"]; found {
+		err = json.Unmarshal(raw, &a.TradingDayCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trading_day_count': %w", err)
+		}
+		delete(object, "trading_day_count")
 	}
 
 	if raw, found := object["win_rate"]; found {
@@ -5639,6 +7811,27 @@ func (a BacktestSummary) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	if a.AnnualizedReturnReason != nil {
+		object["annualized_return_reason"], err = json.Marshal(a.AnnualizedReturnReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return_reason': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatility != nil {
+		object["annualized_volatility"], err = json.Marshal(a.AnnualizedVolatility)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatilityReason != nil {
+		object["annualized_volatility_reason"], err = json.Marshal(a.AnnualizedVolatilityReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility_reason': %w", err)
+		}
+	}
+
 	if a.AverageLossI64 != nil {
 		object["average_loss_i64"], err = json.Marshal(a.AverageLossI64)
 		if err != nil {
@@ -5653,10 +7846,31 @@ func (a BacktestSummary) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	if a.DailyReturnCount != nil {
+		object["daily_return_count"], err = json.Marshal(a.DailyReturnCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'daily_return_count': %w", err)
+		}
+	}
+
 	if a.ExpectancyI64 != nil {
 		object["expectancy_i64"], err = json.Marshal(a.ExpectancyI64)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'expectancy_i64': %w", err)
+		}
+	}
+
+	if a.FillRate != nil {
+		object["fill_rate"], err = json.Marshal(a.FillRate)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'fill_rate': %w", err)
+		}
+	}
+
+	if a.FilledQuantity != nil {
+		object["filled_quantity"], err = json.Marshal(a.FilledQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'filled_quantity': %w", err)
 		}
 	}
 
@@ -5682,6 +7896,13 @@ func (a BacktestSummary) MarshalJSON() ([]byte, error) {
 	object["request_id"], err = json.Marshal(a.RequestId)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'request_id': %w", err)
+	}
+
+	if a.RequestedQuantity != nil {
+		object["requested_quantity"], err = json.Marshal(a.RequestedQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'requested_quantity': %w", err)
+		}
 	}
 
 	object["risk_approved_count"], err = json.Marshal(a.RiskApprovedCount)
@@ -5716,6 +7937,20 @@ func (a BacktestSummary) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	if a.SharpeAnnualizationFactor != nil {
+		object["sharpe_annualization_factor"], err = json.Marshal(a.SharpeAnnualizationFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_annualization_factor': %w", err)
+		}
+	}
+
+	if a.SharpeReason != nil {
+		object["sharpe_reason"], err = json.Marshal(a.SharpeReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_reason': %w", err)
+		}
+	}
+
 	object["total_commission_i64"], err = json.Marshal(a.TotalCommissionI64)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'total_commission_i64': %w", err)
@@ -5734,6 +7969,3835 @@ func (a BacktestSummary) MarshalJSON() ([]byte, error) {
 	object["trade_count"], err = json.Marshal(a.TradeCount)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'trade_count': %w", err)
+	}
+
+	if a.TradingDayCount != nil {
+		object["trading_day_count"], err = json.Marshal(a.TradingDayCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'trading_day_count': %w", err)
+		}
+	}
+
+	object["win_rate"], err = json.Marshal(a.WinRate)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'win_rate': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for ResearchStudyAggregate. Returns the specified
+// element and whether it was found
+func (a ResearchStudyAggregate) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for ResearchStudyAggregate
+func (a *ResearchStudyAggregate) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for ResearchStudyAggregate to handle AdditionalProperties
+func (a *ResearchStudyAggregate) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["annualized_return"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return': %w", err)
+		}
+		delete(object, "annualized_return")
+	}
+
+	if raw, found := object["annualized_volatility"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatility)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility': %w", err)
+		}
+		delete(object, "annualized_volatility")
+	}
+
+	if raw, found := object["attempted_parameter_combinations"]; found {
+		err = json.Unmarshal(raw, &a.AttemptedParameterCombinations)
+		if err != nil {
+			return fmt.Errorf("error reading 'attempted_parameter_combinations': %w", err)
+		}
+		delete(object, "attempted_parameter_combinations")
+	}
+
+	if raw, found := object["certification"]; found {
+		err = json.Unmarshal(raw, &a.Certification)
+		if err != nil {
+			return fmt.Errorf("error reading 'certification': %w", err)
+		}
+		delete(object, "certification")
+	}
+
+	if raw, found := object["certification_trade_count"]; found {
+		err = json.Unmarshal(raw, &a.CertificationTradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'certification_trade_count': %w", err)
+		}
+		delete(object, "certification_trade_count")
+	}
+
+	if raw, found := object["completed_dataset_count"]; found {
+		err = json.Unmarshal(raw, &a.CompletedDatasetCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'completed_dataset_count': %w", err)
+		}
+		delete(object, "completed_dataset_count")
+	}
+
+	if raw, found := object["completed_walk_forward_fold_count"]; found {
+		err = json.Unmarshal(raw, &a.CompletedWalkForwardFoldCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'completed_walk_forward_fold_count': %w", err)
+		}
+		delete(object, "completed_walk_forward_fold_count")
+	}
+
+	if raw, found := object["daily_return_count"]; found {
+		err = json.Unmarshal(raw, &a.DailyReturnCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'daily_return_count': %w", err)
+		}
+		delete(object, "daily_return_count")
+	}
+
+	if raw, found := object["data_status"]; found {
+		err = json.Unmarshal(raw, &a.DataStatus)
+		if err != nil {
+			return fmt.Errorf("error reading 'data_status': %w", err)
+		}
+		delete(object, "data_status")
+	}
+
+	if raw, found := object["eligible_independence_group_count"]; found {
+		err = json.Unmarshal(raw, &a.EligibleIndependenceGroupCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'eligible_independence_group_count': %w", err)
+		}
+		delete(object, "eligible_independence_group_count")
+	}
+
+	if raw, found := object["failed_dataset_count"]; found {
+		err = json.Unmarshal(raw, &a.FailedDatasetCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'failed_dataset_count': %w", err)
+		}
+		delete(object, "failed_dataset_count")
+	}
+
+	if raw, found := object["first_failure_scenario"]; found {
+		err = json.Unmarshal(raw, &a.FirstFailureScenario)
+		if err != nil {
+			return fmt.Errorf("error reading 'first_failure_scenario': %w", err)
+		}
+		delete(object, "first_failure_scenario")
+	}
+
+	if raw, found := object["independence_group_count"]; found {
+		err = json.Unmarshal(raw, &a.IndependenceGroupCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'independence_group_count': %w", err)
+		}
+		delete(object, "independence_group_count")
+	}
+
+	if raw, found := object["max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.MaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'max_drawdown': %w", err)
+		}
+		delete(object, "max_drawdown")
+	}
+
+	if raw, found := object["median_dataset_return"]; found {
+		err = json.Unmarshal(raw, &a.MedianDatasetReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'median_dataset_return': %w", err)
+		}
+		delete(object, "median_dataset_return")
+	}
+
+	if raw, found := object["minimum_completed_folds_per_group"]; found {
+		err = json.Unmarshal(raw, &a.MinimumCompletedFoldsPerGroup)
+		if err != nil {
+			return fmt.Errorf("error reading 'minimum_completed_folds_per_group': %w", err)
+		}
+		delete(object, "minimum_completed_folds_per_group")
+	}
+
+	if raw, found := object["minimum_studied_trading_days_per_group"]; found {
+		err = json.Unmarshal(raw, &a.MinimumStudiedTradingDaysPerGroup)
+		if err != nil {
+			return fmt.Errorf("error reading 'minimum_studied_trading_days_per_group': %w", err)
+		}
+		delete(object, "minimum_studied_trading_days_per_group")
+	}
+
+	if raw, found := object["out_of_sample_expectancy_i64"]; found {
+		err = json.Unmarshal(raw, &a.OutOfSampleExpectancyI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'out_of_sample_expectancy_i64': %w", err)
+		}
+		delete(object, "out_of_sample_expectancy_i64")
+	}
+
+	if raw, found := object["out_of_sample_trade_count"]; found {
+		err = json.Unmarshal(raw, &a.OutOfSampleTradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'out_of_sample_trade_count': %w", err)
+		}
+		delete(object, "out_of_sample_trade_count")
+	}
+
+	if raw, found := object["parameter_stability"]; found {
+		err = json.Unmarshal(raw, &a.ParameterStability)
+		if err != nil {
+			return fmt.Errorf("error reading 'parameter_stability': %w", err)
+		}
+		delete(object, "parameter_stability")
+	}
+
+	if raw, found := object["profitable_dataset_ratio"]; found {
+		err = json.Unmarshal(raw, &a.ProfitableDatasetRatio)
+		if err != nil {
+			return fmt.Errorf("error reading 'profitable_dataset_ratio': %w", err)
+		}
+		delete(object, "profitable_dataset_ratio")
+	}
+
+	if raw, found := object["profitable_fold_ratio"]; found {
+		err = json.Unmarshal(raw, &a.ProfitableFoldRatio)
+		if err != nil {
+			return fmt.Errorf("error reading 'profitable_fold_ratio': %w", err)
+		}
+		delete(object, "profitable_fold_ratio")
+	}
+
+	if raw, found := object["sharpe"]; found {
+		err = json.Unmarshal(raw, &a.Sharpe)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe': %w", err)
+		}
+		delete(object, "sharpe")
+	}
+
+	if raw, found := object["statistical_evidence"]; found {
+		err = json.Unmarshal(raw, &a.StatisticalEvidence)
+		if err != nil {
+			return fmt.Errorf("error reading 'statistical_evidence': %w", err)
+		}
+		delete(object, "statistical_evidence")
+	}
+
+	if raw, found := object["stress_scenarios"]; found {
+		err = json.Unmarshal(raw, &a.StressScenarios)
+		if err != nil {
+			return fmt.Errorf("error reading 'stress_scenarios': %w", err)
+		}
+		delete(object, "stress_scenarios")
+	}
+
+	if raw, found := object["total_return"]; found {
+		err = json.Unmarshal(raw, &a.TotalReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_return': %w", err)
+		}
+		delete(object, "total_return")
+	}
+
+	if raw, found := object["total_trade_count"]; found {
+		err = json.Unmarshal(raw, &a.TotalTradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_trade_count': %w", err)
+		}
+		delete(object, "total_trade_count")
+	}
+
+	if raw, found := object["walk_forward_fold_count"]; found {
+		err = json.Unmarshal(raw, &a.WalkForwardFoldCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'walk_forward_fold_count': %w", err)
+		}
+		delete(object, "walk_forward_fold_count")
+	}
+
+	if raw, found := object["worst_dataset_id"]; found {
+		err = json.Unmarshal(raw, &a.WorstDatasetId)
+		if err != nil {
+			return fmt.Errorf("error reading 'worst_dataset_id': %w", err)
+		}
+		delete(object, "worst_dataset_id")
+	}
+
+	if raw, found := object["worst_dataset_max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.WorstDatasetMaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'worst_dataset_max_drawdown': %w", err)
+		}
+		delete(object, "worst_dataset_max_drawdown")
+	}
+
+	if raw, found := object["worst_dataset_return"]; found {
+		err = json.Unmarshal(raw, &a.WorstDatasetReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'worst_dataset_return': %w", err)
+		}
+		delete(object, "worst_dataset_return")
+	}
+
+	if raw, found := object["worst_fold_max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.WorstFoldMaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'worst_fold_max_drawdown': %w", err)
+		}
+		delete(object, "worst_fold_max_drawdown")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for ResearchStudyAggregate to handle AdditionalProperties
+func (a ResearchStudyAggregate) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AnnualizedReturn != nil {
+		object["annualized_return"], err = json.Marshal(a.AnnualizedReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatility != nil {
+		object["annualized_volatility"], err = json.Marshal(a.AnnualizedVolatility)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility': %w", err)
+		}
+	}
+
+	if a.AttemptedParameterCombinations != nil {
+		object["attempted_parameter_combinations"], err = json.Marshal(a.AttemptedParameterCombinations)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'attempted_parameter_combinations': %w", err)
+		}
+	}
+
+	if a.Certification != nil {
+		object["certification"], err = json.Marshal(a.Certification)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'certification': %w", err)
+		}
+	}
+
+	if a.CertificationTradeCount != nil {
+		object["certification_trade_count"], err = json.Marshal(a.CertificationTradeCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'certification_trade_count': %w", err)
+		}
+	}
+
+	object["completed_dataset_count"], err = json.Marshal(a.CompletedDatasetCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'completed_dataset_count': %w", err)
+	}
+
+	if a.CompletedWalkForwardFoldCount != nil {
+		object["completed_walk_forward_fold_count"], err = json.Marshal(a.CompletedWalkForwardFoldCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'completed_walk_forward_fold_count': %w", err)
+		}
+	}
+
+	object["daily_return_count"], err = json.Marshal(a.DailyReturnCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'daily_return_count': %w", err)
+	}
+
+	object["data_status"], err = json.Marshal(a.DataStatus)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'data_status': %w", err)
+	}
+
+	object["eligible_independence_group_count"], err = json.Marshal(a.EligibleIndependenceGroupCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'eligible_independence_group_count': %w", err)
+	}
+
+	object["failed_dataset_count"], err = json.Marshal(a.FailedDatasetCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'failed_dataset_count': %w", err)
+	}
+
+	if a.FirstFailureScenario != nil {
+		object["first_failure_scenario"], err = json.Marshal(a.FirstFailureScenario)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'first_failure_scenario': %w", err)
+		}
+	}
+
+	object["independence_group_count"], err = json.Marshal(a.IndependenceGroupCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'independence_group_count': %w", err)
+	}
+
+	if a.MaxDrawdown != nil {
+		object["max_drawdown"], err = json.Marshal(a.MaxDrawdown)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'max_drawdown': %w", err)
+		}
+	}
+
+	if a.MedianDatasetReturn != nil {
+		object["median_dataset_return"], err = json.Marshal(a.MedianDatasetReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'median_dataset_return': %w", err)
+		}
+	}
+
+	if a.MinimumCompletedFoldsPerGroup != nil {
+		object["minimum_completed_folds_per_group"], err = json.Marshal(a.MinimumCompletedFoldsPerGroup)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'minimum_completed_folds_per_group': %w", err)
+		}
+	}
+
+	if a.MinimumStudiedTradingDaysPerGroup != nil {
+		object["minimum_studied_trading_days_per_group"], err = json.Marshal(a.MinimumStudiedTradingDaysPerGroup)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'minimum_studied_trading_days_per_group': %w", err)
+		}
+	}
+
+	if a.OutOfSampleExpectancyI64 != nil {
+		object["out_of_sample_expectancy_i64"], err = json.Marshal(a.OutOfSampleExpectancyI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'out_of_sample_expectancy_i64': %w", err)
+		}
+	}
+
+	if a.OutOfSampleTradeCount != nil {
+		object["out_of_sample_trade_count"], err = json.Marshal(a.OutOfSampleTradeCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'out_of_sample_trade_count': %w", err)
+		}
+	}
+
+	if a.ParameterStability != nil {
+		object["parameter_stability"], err = json.Marshal(a.ParameterStability)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'parameter_stability': %w", err)
+		}
+	}
+
+	if a.ProfitableDatasetRatio != nil {
+		object["profitable_dataset_ratio"], err = json.Marshal(a.ProfitableDatasetRatio)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profitable_dataset_ratio': %w", err)
+		}
+	}
+
+	if a.ProfitableFoldRatio != nil {
+		object["profitable_fold_ratio"], err = json.Marshal(a.ProfitableFoldRatio)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profitable_fold_ratio': %w", err)
+		}
+	}
+
+	if a.Sharpe != nil {
+		object["sharpe"], err = json.Marshal(a.Sharpe)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe': %w", err)
+		}
+	}
+
+	if a.StatisticalEvidence != nil {
+		object["statistical_evidence"], err = json.Marshal(a.StatisticalEvidence)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'statistical_evidence': %w", err)
+		}
+	}
+
+	if a.StressScenarios != nil {
+		object["stress_scenarios"], err = json.Marshal(a.StressScenarios)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'stress_scenarios': %w", err)
+		}
+	}
+
+	if a.TotalReturn != nil {
+		object["total_return"], err = json.Marshal(a.TotalReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'total_return': %w", err)
+		}
+	}
+
+	object["total_trade_count"], err = json.Marshal(a.TotalTradeCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_trade_count': %w", err)
+	}
+
+	if a.WalkForwardFoldCount != nil {
+		object["walk_forward_fold_count"], err = json.Marshal(a.WalkForwardFoldCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'walk_forward_fold_count': %w", err)
+		}
+	}
+
+	if a.WorstDatasetId != nil {
+		object["worst_dataset_id"], err = json.Marshal(a.WorstDatasetId)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'worst_dataset_id': %w", err)
+		}
+	}
+
+	if a.WorstDatasetMaxDrawdown != nil {
+		object["worst_dataset_max_drawdown"], err = json.Marshal(a.WorstDatasetMaxDrawdown)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'worst_dataset_max_drawdown': %w", err)
+		}
+	}
+
+	if a.WorstDatasetReturn != nil {
+		object["worst_dataset_return"], err = json.Marshal(a.WorstDatasetReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'worst_dataset_return': %w", err)
+		}
+	}
+
+	if a.WorstFoldMaxDrawdown != nil {
+		object["worst_fold_max_drawdown"], err = json.Marshal(a.WorstFoldMaxDrawdown)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'worst_fold_max_drawdown': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for ResearchStudyDatasetResult_Folds_SelectedTrainMetrics. Returns the specified
+// element and whether it was found
+func (a ResearchStudyDatasetResult_Folds_SelectedTrainMetrics) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for ResearchStudyDatasetResult_Folds_SelectedTrainMetrics
+func (a *ResearchStudyDatasetResult_Folds_SelectedTrainMetrics) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for ResearchStudyDatasetResult_Folds_SelectedTrainMetrics to handle AdditionalProperties
+func (a *ResearchStudyDatasetResult_Folds_SelectedTrainMetrics) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["annualized_return"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return': %w", err)
+		}
+		delete(object, "annualized_return")
+	}
+
+	if raw, found := object["annualized_return_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturnReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return_reason': %w", err)
+		}
+		delete(object, "annualized_return_reason")
+	}
+
+	if raw, found := object["annualized_volatility"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatility)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility': %w", err)
+		}
+		delete(object, "annualized_volatility")
+	}
+
+	if raw, found := object["annualized_volatility_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatilityReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility_reason': %w", err)
+		}
+		delete(object, "annualized_volatility_reason")
+	}
+
+	if raw, found := object["average_loss_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageLossI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_loss_i64': %w", err)
+		}
+		delete(object, "average_loss_i64")
+	}
+
+	if raw, found := object["average_win_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageWinI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_win_i64': %w", err)
+		}
+		delete(object, "average_win_i64")
+	}
+
+	if raw, found := object["daily_return_count"]; found {
+		err = json.Unmarshal(raw, &a.DailyReturnCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'daily_return_count': %w", err)
+		}
+		delete(object, "daily_return_count")
+	}
+
+	if raw, found := object["expectancy_i64"]; found {
+		err = json.Unmarshal(raw, &a.ExpectancyI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'expectancy_i64': %w", err)
+		}
+		delete(object, "expectancy_i64")
+	}
+
+	if raw, found := object["fill_rate"]; found {
+		err = json.Unmarshal(raw, &a.FillRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'fill_rate': %w", err)
+		}
+		delete(object, "fill_rate")
+	}
+
+	if raw, found := object["filled_quantity"]; found {
+		err = json.Unmarshal(raw, &a.FilledQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'filled_quantity': %w", err)
+		}
+		delete(object, "filled_quantity")
+	}
+
+	if raw, found := object["max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.MaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'max_drawdown': %w", err)
+		}
+		delete(object, "max_drawdown")
+	}
+
+	if raw, found := object["profit_factor"]; found {
+		err = json.Unmarshal(raw, &a.ProfitFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_factor': %w", err)
+		}
+		delete(object, "profit_factor")
+	}
+
+	if raw, found := object["profit_loss_ratio"]; found {
+		err = json.Unmarshal(raw, &a.ProfitLossRatio)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_loss_ratio': %w", err)
+		}
+		delete(object, "profit_loss_ratio")
+	}
+
+	if raw, found := object["request_id"]; found {
+		err = json.Unmarshal(raw, &a.RequestId)
+		if err != nil {
+			return fmt.Errorf("error reading 'request_id': %w", err)
+		}
+		delete(object, "request_id")
+	}
+
+	if raw, found := object["requested_quantity"]; found {
+		err = json.Unmarshal(raw, &a.RequestedQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'requested_quantity': %w", err)
+		}
+		delete(object, "requested_quantity")
+	}
+
+	if raw, found := object["risk_approved_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskApprovedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_approved_count': %w", err)
+		}
+		delete(object, "risk_approved_count")
+	}
+
+	if raw, found := object["risk_blocked_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskBlockedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_blocked_count': %w", err)
+		}
+		delete(object, "risk_blocked_count")
+	}
+
+	if raw, found := object["risk_kill_switch_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskKillSwitchCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_kill_switch_count': %w", err)
+		}
+		delete(object, "risk_kill_switch_count")
+	}
+
+	if raw, found := object["risk_reduced_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskReducedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_reduced_count': %w", err)
+		}
+		delete(object, "risk_reduced_count")
+	}
+
+	if raw, found := object["run_id"]; found {
+		err = json.Unmarshal(raw, &a.RunId)
+		if err != nil {
+			return fmt.Errorf("error reading 'run_id': %w", err)
+		}
+		delete(object, "run_id")
+	}
+
+	if raw, found := object["sharpe"]; found {
+		err = json.Unmarshal(raw, &a.Sharpe)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe': %w", err)
+		}
+		delete(object, "sharpe")
+	}
+
+	if raw, found := object["sharpe_annualization_factor"]; found {
+		err = json.Unmarshal(raw, &a.SharpeAnnualizationFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_annualization_factor': %w", err)
+		}
+		delete(object, "sharpe_annualization_factor")
+	}
+
+	if raw, found := object["sharpe_reason"]; found {
+		err = json.Unmarshal(raw, &a.SharpeReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_reason': %w", err)
+		}
+		delete(object, "sharpe_reason")
+	}
+
+	if raw, found := object["total_commission_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalCommissionI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_commission_i64': %w", err)
+		}
+		delete(object, "total_commission_i64")
+	}
+
+	if raw, found := object["total_return"]; found {
+		err = json.Unmarshal(raw, &a.TotalReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_return': %w", err)
+		}
+		delete(object, "total_return")
+	}
+
+	if raw, found := object["total_slippage_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalSlippageI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_slippage_i64': %w", err)
+		}
+		delete(object, "total_slippage_i64")
+	}
+
+	if raw, found := object["trade_count"]; found {
+		err = json.Unmarshal(raw, &a.TradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trade_count': %w", err)
+		}
+		delete(object, "trade_count")
+	}
+
+	if raw, found := object["trading_day_count"]; found {
+		err = json.Unmarshal(raw, &a.TradingDayCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trading_day_count': %w", err)
+		}
+		delete(object, "trading_day_count")
+	}
+
+	if raw, found := object["win_rate"]; found {
+		err = json.Unmarshal(raw, &a.WinRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'win_rate': %w", err)
+		}
+		delete(object, "win_rate")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for ResearchStudyDatasetResult_Folds_SelectedTrainMetrics to handle AdditionalProperties
+func (a ResearchStudyDatasetResult_Folds_SelectedTrainMetrics) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AnnualizedReturn != nil {
+		object["annualized_return"], err = json.Marshal(a.AnnualizedReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return': %w", err)
+		}
+	}
+
+	if a.AnnualizedReturnReason != nil {
+		object["annualized_return_reason"], err = json.Marshal(a.AnnualizedReturnReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return_reason': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatility != nil {
+		object["annualized_volatility"], err = json.Marshal(a.AnnualizedVolatility)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatilityReason != nil {
+		object["annualized_volatility_reason"], err = json.Marshal(a.AnnualizedVolatilityReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility_reason': %w", err)
+		}
+	}
+
+	if a.AverageLossI64 != nil {
+		object["average_loss_i64"], err = json.Marshal(a.AverageLossI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_loss_i64': %w", err)
+		}
+	}
+
+	if a.AverageWinI64 != nil {
+		object["average_win_i64"], err = json.Marshal(a.AverageWinI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_win_i64': %w", err)
+		}
+	}
+
+	if a.DailyReturnCount != nil {
+		object["daily_return_count"], err = json.Marshal(a.DailyReturnCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'daily_return_count': %w", err)
+		}
+	}
+
+	if a.ExpectancyI64 != nil {
+		object["expectancy_i64"], err = json.Marshal(a.ExpectancyI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'expectancy_i64': %w", err)
+		}
+	}
+
+	if a.FillRate != nil {
+		object["fill_rate"], err = json.Marshal(a.FillRate)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'fill_rate': %w", err)
+		}
+	}
+
+	if a.FilledQuantity != nil {
+		object["filled_quantity"], err = json.Marshal(a.FilledQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'filled_quantity': %w", err)
+		}
+	}
+
+	object["max_drawdown"], err = json.Marshal(a.MaxDrawdown)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'max_drawdown': %w", err)
+	}
+
+	if a.ProfitFactor != nil {
+		object["profit_factor"], err = json.Marshal(a.ProfitFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_factor': %w", err)
+		}
+	}
+
+	if a.ProfitLossRatio != nil {
+		object["profit_loss_ratio"], err = json.Marshal(a.ProfitLossRatio)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_loss_ratio': %w", err)
+		}
+	}
+
+	object["request_id"], err = json.Marshal(a.RequestId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'request_id': %w", err)
+	}
+
+	if a.RequestedQuantity != nil {
+		object["requested_quantity"], err = json.Marshal(a.RequestedQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'requested_quantity': %w", err)
+		}
+	}
+
+	object["risk_approved_count"], err = json.Marshal(a.RiskApprovedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_approved_count': %w", err)
+	}
+
+	object["risk_blocked_count"], err = json.Marshal(a.RiskBlockedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_blocked_count': %w", err)
+	}
+
+	object["risk_kill_switch_count"], err = json.Marshal(a.RiskKillSwitchCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_kill_switch_count': %w", err)
+	}
+
+	object["risk_reduced_count"], err = json.Marshal(a.RiskReducedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_reduced_count': %w", err)
+	}
+
+	object["run_id"], err = json.Marshal(a.RunId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'run_id': %w", err)
+	}
+
+	if a.Sharpe != nil {
+		object["sharpe"], err = json.Marshal(a.Sharpe)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe': %w", err)
+		}
+	}
+
+	if a.SharpeAnnualizationFactor != nil {
+		object["sharpe_annualization_factor"], err = json.Marshal(a.SharpeAnnualizationFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_annualization_factor': %w", err)
+		}
+	}
+
+	if a.SharpeReason != nil {
+		object["sharpe_reason"], err = json.Marshal(a.SharpeReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_reason': %w", err)
+		}
+	}
+
+	object["total_commission_i64"], err = json.Marshal(a.TotalCommissionI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_commission_i64': %w", err)
+	}
+
+	object["total_return"], err = json.Marshal(a.TotalReturn)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_return': %w", err)
+	}
+
+	object["total_slippage_i64"], err = json.Marshal(a.TotalSlippageI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_slippage_i64': %w", err)
+	}
+
+	object["trade_count"], err = json.Marshal(a.TradeCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'trade_count': %w", err)
+	}
+
+	if a.TradingDayCount != nil {
+		object["trading_day_count"], err = json.Marshal(a.TradingDayCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'trading_day_count': %w", err)
+		}
+	}
+
+	object["win_rate"], err = json.Marshal(a.WinRate)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'win_rate': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for ResearchStudyDatasetResult_Folds_ValidationMetrics. Returns the specified
+// element and whether it was found
+func (a ResearchStudyDatasetResult_Folds_ValidationMetrics) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for ResearchStudyDatasetResult_Folds_ValidationMetrics
+func (a *ResearchStudyDatasetResult_Folds_ValidationMetrics) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for ResearchStudyDatasetResult_Folds_ValidationMetrics to handle AdditionalProperties
+func (a *ResearchStudyDatasetResult_Folds_ValidationMetrics) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["annualized_return"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return': %w", err)
+		}
+		delete(object, "annualized_return")
+	}
+
+	if raw, found := object["annualized_return_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturnReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return_reason': %w", err)
+		}
+		delete(object, "annualized_return_reason")
+	}
+
+	if raw, found := object["annualized_volatility"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatility)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility': %w", err)
+		}
+		delete(object, "annualized_volatility")
+	}
+
+	if raw, found := object["annualized_volatility_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatilityReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility_reason': %w", err)
+		}
+		delete(object, "annualized_volatility_reason")
+	}
+
+	if raw, found := object["average_loss_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageLossI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_loss_i64': %w", err)
+		}
+		delete(object, "average_loss_i64")
+	}
+
+	if raw, found := object["average_win_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageWinI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_win_i64': %w", err)
+		}
+		delete(object, "average_win_i64")
+	}
+
+	if raw, found := object["daily_return_count"]; found {
+		err = json.Unmarshal(raw, &a.DailyReturnCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'daily_return_count': %w", err)
+		}
+		delete(object, "daily_return_count")
+	}
+
+	if raw, found := object["expectancy_i64"]; found {
+		err = json.Unmarshal(raw, &a.ExpectancyI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'expectancy_i64': %w", err)
+		}
+		delete(object, "expectancy_i64")
+	}
+
+	if raw, found := object["fill_rate"]; found {
+		err = json.Unmarshal(raw, &a.FillRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'fill_rate': %w", err)
+		}
+		delete(object, "fill_rate")
+	}
+
+	if raw, found := object["filled_quantity"]; found {
+		err = json.Unmarshal(raw, &a.FilledQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'filled_quantity': %w", err)
+		}
+		delete(object, "filled_quantity")
+	}
+
+	if raw, found := object["max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.MaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'max_drawdown': %w", err)
+		}
+		delete(object, "max_drawdown")
+	}
+
+	if raw, found := object["profit_factor"]; found {
+		err = json.Unmarshal(raw, &a.ProfitFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_factor': %w", err)
+		}
+		delete(object, "profit_factor")
+	}
+
+	if raw, found := object["profit_loss_ratio"]; found {
+		err = json.Unmarshal(raw, &a.ProfitLossRatio)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_loss_ratio': %w", err)
+		}
+		delete(object, "profit_loss_ratio")
+	}
+
+	if raw, found := object["request_id"]; found {
+		err = json.Unmarshal(raw, &a.RequestId)
+		if err != nil {
+			return fmt.Errorf("error reading 'request_id': %w", err)
+		}
+		delete(object, "request_id")
+	}
+
+	if raw, found := object["requested_quantity"]; found {
+		err = json.Unmarshal(raw, &a.RequestedQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'requested_quantity': %w", err)
+		}
+		delete(object, "requested_quantity")
+	}
+
+	if raw, found := object["risk_approved_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskApprovedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_approved_count': %w", err)
+		}
+		delete(object, "risk_approved_count")
+	}
+
+	if raw, found := object["risk_blocked_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskBlockedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_blocked_count': %w", err)
+		}
+		delete(object, "risk_blocked_count")
+	}
+
+	if raw, found := object["risk_kill_switch_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskKillSwitchCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_kill_switch_count': %w", err)
+		}
+		delete(object, "risk_kill_switch_count")
+	}
+
+	if raw, found := object["risk_reduced_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskReducedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_reduced_count': %w", err)
+		}
+		delete(object, "risk_reduced_count")
+	}
+
+	if raw, found := object["run_id"]; found {
+		err = json.Unmarshal(raw, &a.RunId)
+		if err != nil {
+			return fmt.Errorf("error reading 'run_id': %w", err)
+		}
+		delete(object, "run_id")
+	}
+
+	if raw, found := object["sharpe"]; found {
+		err = json.Unmarshal(raw, &a.Sharpe)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe': %w", err)
+		}
+		delete(object, "sharpe")
+	}
+
+	if raw, found := object["sharpe_annualization_factor"]; found {
+		err = json.Unmarshal(raw, &a.SharpeAnnualizationFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_annualization_factor': %w", err)
+		}
+		delete(object, "sharpe_annualization_factor")
+	}
+
+	if raw, found := object["sharpe_reason"]; found {
+		err = json.Unmarshal(raw, &a.SharpeReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_reason': %w", err)
+		}
+		delete(object, "sharpe_reason")
+	}
+
+	if raw, found := object["total_commission_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalCommissionI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_commission_i64': %w", err)
+		}
+		delete(object, "total_commission_i64")
+	}
+
+	if raw, found := object["total_return"]; found {
+		err = json.Unmarshal(raw, &a.TotalReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_return': %w", err)
+		}
+		delete(object, "total_return")
+	}
+
+	if raw, found := object["total_slippage_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalSlippageI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_slippage_i64': %w", err)
+		}
+		delete(object, "total_slippage_i64")
+	}
+
+	if raw, found := object["trade_count"]; found {
+		err = json.Unmarshal(raw, &a.TradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trade_count': %w", err)
+		}
+		delete(object, "trade_count")
+	}
+
+	if raw, found := object["trading_day_count"]; found {
+		err = json.Unmarshal(raw, &a.TradingDayCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trading_day_count': %w", err)
+		}
+		delete(object, "trading_day_count")
+	}
+
+	if raw, found := object["win_rate"]; found {
+		err = json.Unmarshal(raw, &a.WinRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'win_rate': %w", err)
+		}
+		delete(object, "win_rate")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for ResearchStudyDatasetResult_Folds_ValidationMetrics to handle AdditionalProperties
+func (a ResearchStudyDatasetResult_Folds_ValidationMetrics) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AnnualizedReturn != nil {
+		object["annualized_return"], err = json.Marshal(a.AnnualizedReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return': %w", err)
+		}
+	}
+
+	if a.AnnualizedReturnReason != nil {
+		object["annualized_return_reason"], err = json.Marshal(a.AnnualizedReturnReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return_reason': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatility != nil {
+		object["annualized_volatility"], err = json.Marshal(a.AnnualizedVolatility)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatilityReason != nil {
+		object["annualized_volatility_reason"], err = json.Marshal(a.AnnualizedVolatilityReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility_reason': %w", err)
+		}
+	}
+
+	if a.AverageLossI64 != nil {
+		object["average_loss_i64"], err = json.Marshal(a.AverageLossI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_loss_i64': %w", err)
+		}
+	}
+
+	if a.AverageWinI64 != nil {
+		object["average_win_i64"], err = json.Marshal(a.AverageWinI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_win_i64': %w", err)
+		}
+	}
+
+	if a.DailyReturnCount != nil {
+		object["daily_return_count"], err = json.Marshal(a.DailyReturnCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'daily_return_count': %w", err)
+		}
+	}
+
+	if a.ExpectancyI64 != nil {
+		object["expectancy_i64"], err = json.Marshal(a.ExpectancyI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'expectancy_i64': %w", err)
+		}
+	}
+
+	if a.FillRate != nil {
+		object["fill_rate"], err = json.Marshal(a.FillRate)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'fill_rate': %w", err)
+		}
+	}
+
+	if a.FilledQuantity != nil {
+		object["filled_quantity"], err = json.Marshal(a.FilledQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'filled_quantity': %w", err)
+		}
+	}
+
+	object["max_drawdown"], err = json.Marshal(a.MaxDrawdown)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'max_drawdown': %w", err)
+	}
+
+	if a.ProfitFactor != nil {
+		object["profit_factor"], err = json.Marshal(a.ProfitFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_factor': %w", err)
+		}
+	}
+
+	if a.ProfitLossRatio != nil {
+		object["profit_loss_ratio"], err = json.Marshal(a.ProfitLossRatio)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_loss_ratio': %w", err)
+		}
+	}
+
+	object["request_id"], err = json.Marshal(a.RequestId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'request_id': %w", err)
+	}
+
+	if a.RequestedQuantity != nil {
+		object["requested_quantity"], err = json.Marshal(a.RequestedQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'requested_quantity': %w", err)
+		}
+	}
+
+	object["risk_approved_count"], err = json.Marshal(a.RiskApprovedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_approved_count': %w", err)
+	}
+
+	object["risk_blocked_count"], err = json.Marshal(a.RiskBlockedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_blocked_count': %w", err)
+	}
+
+	object["risk_kill_switch_count"], err = json.Marshal(a.RiskKillSwitchCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_kill_switch_count': %w", err)
+	}
+
+	object["risk_reduced_count"], err = json.Marshal(a.RiskReducedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_reduced_count': %w", err)
+	}
+
+	object["run_id"], err = json.Marshal(a.RunId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'run_id': %w", err)
+	}
+
+	if a.Sharpe != nil {
+		object["sharpe"], err = json.Marshal(a.Sharpe)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe': %w", err)
+		}
+	}
+
+	if a.SharpeAnnualizationFactor != nil {
+		object["sharpe_annualization_factor"], err = json.Marshal(a.SharpeAnnualizationFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_annualization_factor': %w", err)
+		}
+	}
+
+	if a.SharpeReason != nil {
+		object["sharpe_reason"], err = json.Marshal(a.SharpeReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_reason': %w", err)
+		}
+	}
+
+	object["total_commission_i64"], err = json.Marshal(a.TotalCommissionI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_commission_i64': %w", err)
+	}
+
+	object["total_return"], err = json.Marshal(a.TotalReturn)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_return': %w", err)
+	}
+
+	object["total_slippage_i64"], err = json.Marshal(a.TotalSlippageI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_slippage_i64': %w", err)
+	}
+
+	object["trade_count"], err = json.Marshal(a.TradeCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'trade_count': %w", err)
+	}
+
+	if a.TradingDayCount != nil {
+		object["trading_day_count"], err = json.Marshal(a.TradingDayCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'trading_day_count': %w", err)
+		}
+	}
+
+	object["win_rate"], err = json.Marshal(a.WinRate)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'win_rate': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for ResearchStudyDatasetResult_Summary. Returns the specified
+// element and whether it was found
+func (a ResearchStudyDatasetResult_Summary) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for ResearchStudyDatasetResult_Summary
+func (a *ResearchStudyDatasetResult_Summary) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for ResearchStudyDatasetResult_Summary to handle AdditionalProperties
+func (a *ResearchStudyDatasetResult_Summary) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["annualized_return"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return': %w", err)
+		}
+		delete(object, "annualized_return")
+	}
+
+	if raw, found := object["annualized_return_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturnReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return_reason': %w", err)
+		}
+		delete(object, "annualized_return_reason")
+	}
+
+	if raw, found := object["annualized_volatility"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatility)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility': %w", err)
+		}
+		delete(object, "annualized_volatility")
+	}
+
+	if raw, found := object["annualized_volatility_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatilityReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility_reason': %w", err)
+		}
+		delete(object, "annualized_volatility_reason")
+	}
+
+	if raw, found := object["average_loss_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageLossI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_loss_i64': %w", err)
+		}
+		delete(object, "average_loss_i64")
+	}
+
+	if raw, found := object["average_win_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageWinI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_win_i64': %w", err)
+		}
+		delete(object, "average_win_i64")
+	}
+
+	if raw, found := object["daily_return_count"]; found {
+		err = json.Unmarshal(raw, &a.DailyReturnCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'daily_return_count': %w", err)
+		}
+		delete(object, "daily_return_count")
+	}
+
+	if raw, found := object["expectancy_i64"]; found {
+		err = json.Unmarshal(raw, &a.ExpectancyI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'expectancy_i64': %w", err)
+		}
+		delete(object, "expectancy_i64")
+	}
+
+	if raw, found := object["fill_rate"]; found {
+		err = json.Unmarshal(raw, &a.FillRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'fill_rate': %w", err)
+		}
+		delete(object, "fill_rate")
+	}
+
+	if raw, found := object["filled_quantity"]; found {
+		err = json.Unmarshal(raw, &a.FilledQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'filled_quantity': %w", err)
+		}
+		delete(object, "filled_quantity")
+	}
+
+	if raw, found := object["max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.MaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'max_drawdown': %w", err)
+		}
+		delete(object, "max_drawdown")
+	}
+
+	if raw, found := object["profit_factor"]; found {
+		err = json.Unmarshal(raw, &a.ProfitFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_factor': %w", err)
+		}
+		delete(object, "profit_factor")
+	}
+
+	if raw, found := object["profit_loss_ratio"]; found {
+		err = json.Unmarshal(raw, &a.ProfitLossRatio)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_loss_ratio': %w", err)
+		}
+		delete(object, "profit_loss_ratio")
+	}
+
+	if raw, found := object["request_id"]; found {
+		err = json.Unmarshal(raw, &a.RequestId)
+		if err != nil {
+			return fmt.Errorf("error reading 'request_id': %w", err)
+		}
+		delete(object, "request_id")
+	}
+
+	if raw, found := object["requested_quantity"]; found {
+		err = json.Unmarshal(raw, &a.RequestedQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'requested_quantity': %w", err)
+		}
+		delete(object, "requested_quantity")
+	}
+
+	if raw, found := object["risk_approved_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskApprovedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_approved_count': %w", err)
+		}
+		delete(object, "risk_approved_count")
+	}
+
+	if raw, found := object["risk_blocked_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskBlockedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_blocked_count': %w", err)
+		}
+		delete(object, "risk_blocked_count")
+	}
+
+	if raw, found := object["risk_kill_switch_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskKillSwitchCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_kill_switch_count': %w", err)
+		}
+		delete(object, "risk_kill_switch_count")
+	}
+
+	if raw, found := object["risk_reduced_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskReducedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_reduced_count': %w", err)
+		}
+		delete(object, "risk_reduced_count")
+	}
+
+	if raw, found := object["run_id"]; found {
+		err = json.Unmarshal(raw, &a.RunId)
+		if err != nil {
+			return fmt.Errorf("error reading 'run_id': %w", err)
+		}
+		delete(object, "run_id")
+	}
+
+	if raw, found := object["sharpe"]; found {
+		err = json.Unmarshal(raw, &a.Sharpe)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe': %w", err)
+		}
+		delete(object, "sharpe")
+	}
+
+	if raw, found := object["sharpe_annualization_factor"]; found {
+		err = json.Unmarshal(raw, &a.SharpeAnnualizationFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_annualization_factor': %w", err)
+		}
+		delete(object, "sharpe_annualization_factor")
+	}
+
+	if raw, found := object["sharpe_reason"]; found {
+		err = json.Unmarshal(raw, &a.SharpeReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_reason': %w", err)
+		}
+		delete(object, "sharpe_reason")
+	}
+
+	if raw, found := object["total_commission_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalCommissionI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_commission_i64': %w", err)
+		}
+		delete(object, "total_commission_i64")
+	}
+
+	if raw, found := object["total_return"]; found {
+		err = json.Unmarshal(raw, &a.TotalReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_return': %w", err)
+		}
+		delete(object, "total_return")
+	}
+
+	if raw, found := object["total_slippage_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalSlippageI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_slippage_i64': %w", err)
+		}
+		delete(object, "total_slippage_i64")
+	}
+
+	if raw, found := object["trade_count"]; found {
+		err = json.Unmarshal(raw, &a.TradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trade_count': %w", err)
+		}
+		delete(object, "trade_count")
+	}
+
+	if raw, found := object["trading_day_count"]; found {
+		err = json.Unmarshal(raw, &a.TradingDayCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trading_day_count': %w", err)
+		}
+		delete(object, "trading_day_count")
+	}
+
+	if raw, found := object["win_rate"]; found {
+		err = json.Unmarshal(raw, &a.WinRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'win_rate': %w", err)
+		}
+		delete(object, "win_rate")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for ResearchStudyDatasetResult_Summary to handle AdditionalProperties
+func (a ResearchStudyDatasetResult_Summary) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AnnualizedReturn != nil {
+		object["annualized_return"], err = json.Marshal(a.AnnualizedReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return': %w", err)
+		}
+	}
+
+	if a.AnnualizedReturnReason != nil {
+		object["annualized_return_reason"], err = json.Marshal(a.AnnualizedReturnReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return_reason': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatility != nil {
+		object["annualized_volatility"], err = json.Marshal(a.AnnualizedVolatility)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatilityReason != nil {
+		object["annualized_volatility_reason"], err = json.Marshal(a.AnnualizedVolatilityReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility_reason': %w", err)
+		}
+	}
+
+	if a.AverageLossI64 != nil {
+		object["average_loss_i64"], err = json.Marshal(a.AverageLossI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_loss_i64': %w", err)
+		}
+	}
+
+	if a.AverageWinI64 != nil {
+		object["average_win_i64"], err = json.Marshal(a.AverageWinI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_win_i64': %w", err)
+		}
+	}
+
+	if a.DailyReturnCount != nil {
+		object["daily_return_count"], err = json.Marshal(a.DailyReturnCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'daily_return_count': %w", err)
+		}
+	}
+
+	if a.ExpectancyI64 != nil {
+		object["expectancy_i64"], err = json.Marshal(a.ExpectancyI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'expectancy_i64': %w", err)
+		}
+	}
+
+	if a.FillRate != nil {
+		object["fill_rate"], err = json.Marshal(a.FillRate)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'fill_rate': %w", err)
+		}
+	}
+
+	if a.FilledQuantity != nil {
+		object["filled_quantity"], err = json.Marshal(a.FilledQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'filled_quantity': %w", err)
+		}
+	}
+
+	object["max_drawdown"], err = json.Marshal(a.MaxDrawdown)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'max_drawdown': %w", err)
+	}
+
+	if a.ProfitFactor != nil {
+		object["profit_factor"], err = json.Marshal(a.ProfitFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_factor': %w", err)
+		}
+	}
+
+	if a.ProfitLossRatio != nil {
+		object["profit_loss_ratio"], err = json.Marshal(a.ProfitLossRatio)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_loss_ratio': %w", err)
+		}
+	}
+
+	object["request_id"], err = json.Marshal(a.RequestId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'request_id': %w", err)
+	}
+
+	if a.RequestedQuantity != nil {
+		object["requested_quantity"], err = json.Marshal(a.RequestedQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'requested_quantity': %w", err)
+		}
+	}
+
+	object["risk_approved_count"], err = json.Marshal(a.RiskApprovedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_approved_count': %w", err)
+	}
+
+	object["risk_blocked_count"], err = json.Marshal(a.RiskBlockedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_blocked_count': %w", err)
+	}
+
+	object["risk_kill_switch_count"], err = json.Marshal(a.RiskKillSwitchCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_kill_switch_count': %w", err)
+	}
+
+	object["risk_reduced_count"], err = json.Marshal(a.RiskReducedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_reduced_count': %w", err)
+	}
+
+	object["run_id"], err = json.Marshal(a.RunId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'run_id': %w", err)
+	}
+
+	if a.Sharpe != nil {
+		object["sharpe"], err = json.Marshal(a.Sharpe)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe': %w", err)
+		}
+	}
+
+	if a.SharpeAnnualizationFactor != nil {
+		object["sharpe_annualization_factor"], err = json.Marshal(a.SharpeAnnualizationFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_annualization_factor': %w", err)
+		}
+	}
+
+	if a.SharpeReason != nil {
+		object["sharpe_reason"], err = json.Marshal(a.SharpeReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_reason': %w", err)
+		}
+	}
+
+	object["total_commission_i64"], err = json.Marshal(a.TotalCommissionI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_commission_i64': %w", err)
+	}
+
+	object["total_return"], err = json.Marshal(a.TotalReturn)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_return': %w", err)
+	}
+
+	object["total_slippage_i64"], err = json.Marshal(a.TotalSlippageI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_slippage_i64': %w", err)
+	}
+
+	object["trade_count"], err = json.Marshal(a.TradeCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'trade_count': %w", err)
+	}
+
+	if a.TradingDayCount != nil {
+		object["trading_day_count"], err = json.Marshal(a.TradingDayCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'trading_day_count': %w", err)
+		}
+	}
+
+	object["win_rate"], err = json.Marshal(a.WinRate)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'win_rate': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for ResearchStudyResults_Aggregate. Returns the specified
+// element and whether it was found
+func (a ResearchStudyResults_Aggregate) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for ResearchStudyResults_Aggregate
+func (a *ResearchStudyResults_Aggregate) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for ResearchStudyResults_Aggregate to handle AdditionalProperties
+func (a *ResearchStudyResults_Aggregate) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["annualized_return"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return': %w", err)
+		}
+		delete(object, "annualized_return")
+	}
+
+	if raw, found := object["annualized_volatility"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatility)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility': %w", err)
+		}
+		delete(object, "annualized_volatility")
+	}
+
+	if raw, found := object["attempted_parameter_combinations"]; found {
+		err = json.Unmarshal(raw, &a.AttemptedParameterCombinations)
+		if err != nil {
+			return fmt.Errorf("error reading 'attempted_parameter_combinations': %w", err)
+		}
+		delete(object, "attempted_parameter_combinations")
+	}
+
+	if raw, found := object["certification"]; found {
+		err = json.Unmarshal(raw, &a.Certification)
+		if err != nil {
+			return fmt.Errorf("error reading 'certification': %w", err)
+		}
+		delete(object, "certification")
+	}
+
+	if raw, found := object["certification_trade_count"]; found {
+		err = json.Unmarshal(raw, &a.CertificationTradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'certification_trade_count': %w", err)
+		}
+		delete(object, "certification_trade_count")
+	}
+
+	if raw, found := object["completed_dataset_count"]; found {
+		err = json.Unmarshal(raw, &a.CompletedDatasetCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'completed_dataset_count': %w", err)
+		}
+		delete(object, "completed_dataset_count")
+	}
+
+	if raw, found := object["completed_walk_forward_fold_count"]; found {
+		err = json.Unmarshal(raw, &a.CompletedWalkForwardFoldCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'completed_walk_forward_fold_count': %w", err)
+		}
+		delete(object, "completed_walk_forward_fold_count")
+	}
+
+	if raw, found := object["daily_return_count"]; found {
+		err = json.Unmarshal(raw, &a.DailyReturnCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'daily_return_count': %w", err)
+		}
+		delete(object, "daily_return_count")
+	}
+
+	if raw, found := object["data_status"]; found {
+		err = json.Unmarshal(raw, &a.DataStatus)
+		if err != nil {
+			return fmt.Errorf("error reading 'data_status': %w", err)
+		}
+		delete(object, "data_status")
+	}
+
+	if raw, found := object["eligible_independence_group_count"]; found {
+		err = json.Unmarshal(raw, &a.EligibleIndependenceGroupCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'eligible_independence_group_count': %w", err)
+		}
+		delete(object, "eligible_independence_group_count")
+	}
+
+	if raw, found := object["failed_dataset_count"]; found {
+		err = json.Unmarshal(raw, &a.FailedDatasetCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'failed_dataset_count': %w", err)
+		}
+		delete(object, "failed_dataset_count")
+	}
+
+	if raw, found := object["first_failure_scenario"]; found {
+		err = json.Unmarshal(raw, &a.FirstFailureScenario)
+		if err != nil {
+			return fmt.Errorf("error reading 'first_failure_scenario': %w", err)
+		}
+		delete(object, "first_failure_scenario")
+	}
+
+	if raw, found := object["independence_group_count"]; found {
+		err = json.Unmarshal(raw, &a.IndependenceGroupCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'independence_group_count': %w", err)
+		}
+		delete(object, "independence_group_count")
+	}
+
+	if raw, found := object["max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.MaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'max_drawdown': %w", err)
+		}
+		delete(object, "max_drawdown")
+	}
+
+	if raw, found := object["median_dataset_return"]; found {
+		err = json.Unmarshal(raw, &a.MedianDatasetReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'median_dataset_return': %w", err)
+		}
+		delete(object, "median_dataset_return")
+	}
+
+	if raw, found := object["minimum_completed_folds_per_group"]; found {
+		err = json.Unmarshal(raw, &a.MinimumCompletedFoldsPerGroup)
+		if err != nil {
+			return fmt.Errorf("error reading 'minimum_completed_folds_per_group': %w", err)
+		}
+		delete(object, "minimum_completed_folds_per_group")
+	}
+
+	if raw, found := object["minimum_studied_trading_days_per_group"]; found {
+		err = json.Unmarshal(raw, &a.MinimumStudiedTradingDaysPerGroup)
+		if err != nil {
+			return fmt.Errorf("error reading 'minimum_studied_trading_days_per_group': %w", err)
+		}
+		delete(object, "minimum_studied_trading_days_per_group")
+	}
+
+	if raw, found := object["out_of_sample_expectancy_i64"]; found {
+		err = json.Unmarshal(raw, &a.OutOfSampleExpectancyI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'out_of_sample_expectancy_i64': %w", err)
+		}
+		delete(object, "out_of_sample_expectancy_i64")
+	}
+
+	if raw, found := object["out_of_sample_trade_count"]; found {
+		err = json.Unmarshal(raw, &a.OutOfSampleTradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'out_of_sample_trade_count': %w", err)
+		}
+		delete(object, "out_of_sample_trade_count")
+	}
+
+	if raw, found := object["parameter_stability"]; found {
+		err = json.Unmarshal(raw, &a.ParameterStability)
+		if err != nil {
+			return fmt.Errorf("error reading 'parameter_stability': %w", err)
+		}
+		delete(object, "parameter_stability")
+	}
+
+	if raw, found := object["profitable_dataset_ratio"]; found {
+		err = json.Unmarshal(raw, &a.ProfitableDatasetRatio)
+		if err != nil {
+			return fmt.Errorf("error reading 'profitable_dataset_ratio': %w", err)
+		}
+		delete(object, "profitable_dataset_ratio")
+	}
+
+	if raw, found := object["profitable_fold_ratio"]; found {
+		err = json.Unmarshal(raw, &a.ProfitableFoldRatio)
+		if err != nil {
+			return fmt.Errorf("error reading 'profitable_fold_ratio': %w", err)
+		}
+		delete(object, "profitable_fold_ratio")
+	}
+
+	if raw, found := object["sharpe"]; found {
+		err = json.Unmarshal(raw, &a.Sharpe)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe': %w", err)
+		}
+		delete(object, "sharpe")
+	}
+
+	if raw, found := object["statistical_evidence"]; found {
+		err = json.Unmarshal(raw, &a.StatisticalEvidence)
+		if err != nil {
+			return fmt.Errorf("error reading 'statistical_evidence': %w", err)
+		}
+		delete(object, "statistical_evidence")
+	}
+
+	if raw, found := object["stress_scenarios"]; found {
+		err = json.Unmarshal(raw, &a.StressScenarios)
+		if err != nil {
+			return fmt.Errorf("error reading 'stress_scenarios': %w", err)
+		}
+		delete(object, "stress_scenarios")
+	}
+
+	if raw, found := object["total_return"]; found {
+		err = json.Unmarshal(raw, &a.TotalReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_return': %w", err)
+		}
+		delete(object, "total_return")
+	}
+
+	if raw, found := object["total_trade_count"]; found {
+		err = json.Unmarshal(raw, &a.TotalTradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_trade_count': %w", err)
+		}
+		delete(object, "total_trade_count")
+	}
+
+	if raw, found := object["walk_forward_fold_count"]; found {
+		err = json.Unmarshal(raw, &a.WalkForwardFoldCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'walk_forward_fold_count': %w", err)
+		}
+		delete(object, "walk_forward_fold_count")
+	}
+
+	if raw, found := object["worst_dataset_id"]; found {
+		err = json.Unmarshal(raw, &a.WorstDatasetId)
+		if err != nil {
+			return fmt.Errorf("error reading 'worst_dataset_id': %w", err)
+		}
+		delete(object, "worst_dataset_id")
+	}
+
+	if raw, found := object["worst_dataset_max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.WorstDatasetMaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'worst_dataset_max_drawdown': %w", err)
+		}
+		delete(object, "worst_dataset_max_drawdown")
+	}
+
+	if raw, found := object["worst_dataset_return"]; found {
+		err = json.Unmarshal(raw, &a.WorstDatasetReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'worst_dataset_return': %w", err)
+		}
+		delete(object, "worst_dataset_return")
+	}
+
+	if raw, found := object["worst_fold_max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.WorstFoldMaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'worst_fold_max_drawdown': %w", err)
+		}
+		delete(object, "worst_fold_max_drawdown")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for ResearchStudyResults_Aggregate to handle AdditionalProperties
+func (a ResearchStudyResults_Aggregate) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AnnualizedReturn != nil {
+		object["annualized_return"], err = json.Marshal(a.AnnualizedReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatility != nil {
+		object["annualized_volatility"], err = json.Marshal(a.AnnualizedVolatility)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility': %w", err)
+		}
+	}
+
+	if a.AttemptedParameterCombinations != nil {
+		object["attempted_parameter_combinations"], err = json.Marshal(a.AttemptedParameterCombinations)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'attempted_parameter_combinations': %w", err)
+		}
+	}
+
+	if a.Certification != nil {
+		object["certification"], err = json.Marshal(a.Certification)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'certification': %w", err)
+		}
+	}
+
+	if a.CertificationTradeCount != nil {
+		object["certification_trade_count"], err = json.Marshal(a.CertificationTradeCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'certification_trade_count': %w", err)
+		}
+	}
+
+	object["completed_dataset_count"], err = json.Marshal(a.CompletedDatasetCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'completed_dataset_count': %w", err)
+	}
+
+	if a.CompletedWalkForwardFoldCount != nil {
+		object["completed_walk_forward_fold_count"], err = json.Marshal(a.CompletedWalkForwardFoldCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'completed_walk_forward_fold_count': %w", err)
+		}
+	}
+
+	object["daily_return_count"], err = json.Marshal(a.DailyReturnCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'daily_return_count': %w", err)
+	}
+
+	object["data_status"], err = json.Marshal(a.DataStatus)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'data_status': %w", err)
+	}
+
+	object["eligible_independence_group_count"], err = json.Marshal(a.EligibleIndependenceGroupCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'eligible_independence_group_count': %w", err)
+	}
+
+	object["failed_dataset_count"], err = json.Marshal(a.FailedDatasetCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'failed_dataset_count': %w", err)
+	}
+
+	if a.FirstFailureScenario != nil {
+		object["first_failure_scenario"], err = json.Marshal(a.FirstFailureScenario)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'first_failure_scenario': %w", err)
+		}
+	}
+
+	object["independence_group_count"], err = json.Marshal(a.IndependenceGroupCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'independence_group_count': %w", err)
+	}
+
+	if a.MaxDrawdown != nil {
+		object["max_drawdown"], err = json.Marshal(a.MaxDrawdown)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'max_drawdown': %w", err)
+		}
+	}
+
+	if a.MedianDatasetReturn != nil {
+		object["median_dataset_return"], err = json.Marshal(a.MedianDatasetReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'median_dataset_return': %w", err)
+		}
+	}
+
+	if a.MinimumCompletedFoldsPerGroup != nil {
+		object["minimum_completed_folds_per_group"], err = json.Marshal(a.MinimumCompletedFoldsPerGroup)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'minimum_completed_folds_per_group': %w", err)
+		}
+	}
+
+	if a.MinimumStudiedTradingDaysPerGroup != nil {
+		object["minimum_studied_trading_days_per_group"], err = json.Marshal(a.MinimumStudiedTradingDaysPerGroup)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'minimum_studied_trading_days_per_group': %w", err)
+		}
+	}
+
+	if a.OutOfSampleExpectancyI64 != nil {
+		object["out_of_sample_expectancy_i64"], err = json.Marshal(a.OutOfSampleExpectancyI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'out_of_sample_expectancy_i64': %w", err)
+		}
+	}
+
+	if a.OutOfSampleTradeCount != nil {
+		object["out_of_sample_trade_count"], err = json.Marshal(a.OutOfSampleTradeCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'out_of_sample_trade_count': %w", err)
+		}
+	}
+
+	if a.ParameterStability != nil {
+		object["parameter_stability"], err = json.Marshal(a.ParameterStability)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'parameter_stability': %w", err)
+		}
+	}
+
+	if a.ProfitableDatasetRatio != nil {
+		object["profitable_dataset_ratio"], err = json.Marshal(a.ProfitableDatasetRatio)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profitable_dataset_ratio': %w", err)
+		}
+	}
+
+	if a.ProfitableFoldRatio != nil {
+		object["profitable_fold_ratio"], err = json.Marshal(a.ProfitableFoldRatio)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profitable_fold_ratio': %w", err)
+		}
+	}
+
+	if a.Sharpe != nil {
+		object["sharpe"], err = json.Marshal(a.Sharpe)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe': %w", err)
+		}
+	}
+
+	if a.StatisticalEvidence != nil {
+		object["statistical_evidence"], err = json.Marshal(a.StatisticalEvidence)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'statistical_evidence': %w", err)
+		}
+	}
+
+	if a.StressScenarios != nil {
+		object["stress_scenarios"], err = json.Marshal(a.StressScenarios)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'stress_scenarios': %w", err)
+		}
+	}
+
+	if a.TotalReturn != nil {
+		object["total_return"], err = json.Marshal(a.TotalReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'total_return': %w", err)
+		}
+	}
+
+	object["total_trade_count"], err = json.Marshal(a.TotalTradeCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_trade_count': %w", err)
+	}
+
+	if a.WalkForwardFoldCount != nil {
+		object["walk_forward_fold_count"], err = json.Marshal(a.WalkForwardFoldCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'walk_forward_fold_count': %w", err)
+		}
+	}
+
+	if a.WorstDatasetId != nil {
+		object["worst_dataset_id"], err = json.Marshal(a.WorstDatasetId)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'worst_dataset_id': %w", err)
+		}
+	}
+
+	if a.WorstDatasetMaxDrawdown != nil {
+		object["worst_dataset_max_drawdown"], err = json.Marshal(a.WorstDatasetMaxDrawdown)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'worst_dataset_max_drawdown': %w", err)
+		}
+	}
+
+	if a.WorstDatasetReturn != nil {
+		object["worst_dataset_return"], err = json.Marshal(a.WorstDatasetReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'worst_dataset_return': %w", err)
+		}
+	}
+
+	if a.WorstFoldMaxDrawdown != nil {
+		object["worst_fold_max_drawdown"], err = json.Marshal(a.WorstFoldMaxDrawdown)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'worst_fold_max_drawdown': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for ResearchStudyResults_Items_Folds_SelectedTrainMetrics. Returns the specified
+// element and whether it was found
+func (a ResearchStudyResults_Items_Folds_SelectedTrainMetrics) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for ResearchStudyResults_Items_Folds_SelectedTrainMetrics
+func (a *ResearchStudyResults_Items_Folds_SelectedTrainMetrics) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for ResearchStudyResults_Items_Folds_SelectedTrainMetrics to handle AdditionalProperties
+func (a *ResearchStudyResults_Items_Folds_SelectedTrainMetrics) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["annualized_return"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return': %w", err)
+		}
+		delete(object, "annualized_return")
+	}
+
+	if raw, found := object["annualized_return_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturnReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return_reason': %w", err)
+		}
+		delete(object, "annualized_return_reason")
+	}
+
+	if raw, found := object["annualized_volatility"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatility)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility': %w", err)
+		}
+		delete(object, "annualized_volatility")
+	}
+
+	if raw, found := object["annualized_volatility_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatilityReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility_reason': %w", err)
+		}
+		delete(object, "annualized_volatility_reason")
+	}
+
+	if raw, found := object["average_loss_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageLossI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_loss_i64': %w", err)
+		}
+		delete(object, "average_loss_i64")
+	}
+
+	if raw, found := object["average_win_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageWinI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_win_i64': %w", err)
+		}
+		delete(object, "average_win_i64")
+	}
+
+	if raw, found := object["daily_return_count"]; found {
+		err = json.Unmarshal(raw, &a.DailyReturnCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'daily_return_count': %w", err)
+		}
+		delete(object, "daily_return_count")
+	}
+
+	if raw, found := object["expectancy_i64"]; found {
+		err = json.Unmarshal(raw, &a.ExpectancyI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'expectancy_i64': %w", err)
+		}
+		delete(object, "expectancy_i64")
+	}
+
+	if raw, found := object["fill_rate"]; found {
+		err = json.Unmarshal(raw, &a.FillRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'fill_rate': %w", err)
+		}
+		delete(object, "fill_rate")
+	}
+
+	if raw, found := object["filled_quantity"]; found {
+		err = json.Unmarshal(raw, &a.FilledQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'filled_quantity': %w", err)
+		}
+		delete(object, "filled_quantity")
+	}
+
+	if raw, found := object["max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.MaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'max_drawdown': %w", err)
+		}
+		delete(object, "max_drawdown")
+	}
+
+	if raw, found := object["profit_factor"]; found {
+		err = json.Unmarshal(raw, &a.ProfitFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_factor': %w", err)
+		}
+		delete(object, "profit_factor")
+	}
+
+	if raw, found := object["profit_loss_ratio"]; found {
+		err = json.Unmarshal(raw, &a.ProfitLossRatio)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_loss_ratio': %w", err)
+		}
+		delete(object, "profit_loss_ratio")
+	}
+
+	if raw, found := object["request_id"]; found {
+		err = json.Unmarshal(raw, &a.RequestId)
+		if err != nil {
+			return fmt.Errorf("error reading 'request_id': %w", err)
+		}
+		delete(object, "request_id")
+	}
+
+	if raw, found := object["requested_quantity"]; found {
+		err = json.Unmarshal(raw, &a.RequestedQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'requested_quantity': %w", err)
+		}
+		delete(object, "requested_quantity")
+	}
+
+	if raw, found := object["risk_approved_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskApprovedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_approved_count': %w", err)
+		}
+		delete(object, "risk_approved_count")
+	}
+
+	if raw, found := object["risk_blocked_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskBlockedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_blocked_count': %w", err)
+		}
+		delete(object, "risk_blocked_count")
+	}
+
+	if raw, found := object["risk_kill_switch_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskKillSwitchCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_kill_switch_count': %w", err)
+		}
+		delete(object, "risk_kill_switch_count")
+	}
+
+	if raw, found := object["risk_reduced_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskReducedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_reduced_count': %w", err)
+		}
+		delete(object, "risk_reduced_count")
+	}
+
+	if raw, found := object["run_id"]; found {
+		err = json.Unmarshal(raw, &a.RunId)
+		if err != nil {
+			return fmt.Errorf("error reading 'run_id': %w", err)
+		}
+		delete(object, "run_id")
+	}
+
+	if raw, found := object["sharpe"]; found {
+		err = json.Unmarshal(raw, &a.Sharpe)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe': %w", err)
+		}
+		delete(object, "sharpe")
+	}
+
+	if raw, found := object["sharpe_annualization_factor"]; found {
+		err = json.Unmarshal(raw, &a.SharpeAnnualizationFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_annualization_factor': %w", err)
+		}
+		delete(object, "sharpe_annualization_factor")
+	}
+
+	if raw, found := object["sharpe_reason"]; found {
+		err = json.Unmarshal(raw, &a.SharpeReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_reason': %w", err)
+		}
+		delete(object, "sharpe_reason")
+	}
+
+	if raw, found := object["total_commission_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalCommissionI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_commission_i64': %w", err)
+		}
+		delete(object, "total_commission_i64")
+	}
+
+	if raw, found := object["total_return"]; found {
+		err = json.Unmarshal(raw, &a.TotalReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_return': %w", err)
+		}
+		delete(object, "total_return")
+	}
+
+	if raw, found := object["total_slippage_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalSlippageI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_slippage_i64': %w", err)
+		}
+		delete(object, "total_slippage_i64")
+	}
+
+	if raw, found := object["trade_count"]; found {
+		err = json.Unmarshal(raw, &a.TradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trade_count': %w", err)
+		}
+		delete(object, "trade_count")
+	}
+
+	if raw, found := object["trading_day_count"]; found {
+		err = json.Unmarshal(raw, &a.TradingDayCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trading_day_count': %w", err)
+		}
+		delete(object, "trading_day_count")
+	}
+
+	if raw, found := object["win_rate"]; found {
+		err = json.Unmarshal(raw, &a.WinRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'win_rate': %w", err)
+		}
+		delete(object, "win_rate")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for ResearchStudyResults_Items_Folds_SelectedTrainMetrics to handle AdditionalProperties
+func (a ResearchStudyResults_Items_Folds_SelectedTrainMetrics) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AnnualizedReturn != nil {
+		object["annualized_return"], err = json.Marshal(a.AnnualizedReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return': %w", err)
+		}
+	}
+
+	if a.AnnualizedReturnReason != nil {
+		object["annualized_return_reason"], err = json.Marshal(a.AnnualizedReturnReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return_reason': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatility != nil {
+		object["annualized_volatility"], err = json.Marshal(a.AnnualizedVolatility)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatilityReason != nil {
+		object["annualized_volatility_reason"], err = json.Marshal(a.AnnualizedVolatilityReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility_reason': %w", err)
+		}
+	}
+
+	if a.AverageLossI64 != nil {
+		object["average_loss_i64"], err = json.Marshal(a.AverageLossI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_loss_i64': %w", err)
+		}
+	}
+
+	if a.AverageWinI64 != nil {
+		object["average_win_i64"], err = json.Marshal(a.AverageWinI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_win_i64': %w", err)
+		}
+	}
+
+	if a.DailyReturnCount != nil {
+		object["daily_return_count"], err = json.Marshal(a.DailyReturnCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'daily_return_count': %w", err)
+		}
+	}
+
+	if a.ExpectancyI64 != nil {
+		object["expectancy_i64"], err = json.Marshal(a.ExpectancyI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'expectancy_i64': %w", err)
+		}
+	}
+
+	if a.FillRate != nil {
+		object["fill_rate"], err = json.Marshal(a.FillRate)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'fill_rate': %w", err)
+		}
+	}
+
+	if a.FilledQuantity != nil {
+		object["filled_quantity"], err = json.Marshal(a.FilledQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'filled_quantity': %w", err)
+		}
+	}
+
+	object["max_drawdown"], err = json.Marshal(a.MaxDrawdown)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'max_drawdown': %w", err)
+	}
+
+	if a.ProfitFactor != nil {
+		object["profit_factor"], err = json.Marshal(a.ProfitFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_factor': %w", err)
+		}
+	}
+
+	if a.ProfitLossRatio != nil {
+		object["profit_loss_ratio"], err = json.Marshal(a.ProfitLossRatio)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_loss_ratio': %w", err)
+		}
+	}
+
+	object["request_id"], err = json.Marshal(a.RequestId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'request_id': %w", err)
+	}
+
+	if a.RequestedQuantity != nil {
+		object["requested_quantity"], err = json.Marshal(a.RequestedQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'requested_quantity': %w", err)
+		}
+	}
+
+	object["risk_approved_count"], err = json.Marshal(a.RiskApprovedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_approved_count': %w", err)
+	}
+
+	object["risk_blocked_count"], err = json.Marshal(a.RiskBlockedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_blocked_count': %w", err)
+	}
+
+	object["risk_kill_switch_count"], err = json.Marshal(a.RiskKillSwitchCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_kill_switch_count': %w", err)
+	}
+
+	object["risk_reduced_count"], err = json.Marshal(a.RiskReducedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_reduced_count': %w", err)
+	}
+
+	object["run_id"], err = json.Marshal(a.RunId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'run_id': %w", err)
+	}
+
+	if a.Sharpe != nil {
+		object["sharpe"], err = json.Marshal(a.Sharpe)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe': %w", err)
+		}
+	}
+
+	if a.SharpeAnnualizationFactor != nil {
+		object["sharpe_annualization_factor"], err = json.Marshal(a.SharpeAnnualizationFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_annualization_factor': %w", err)
+		}
+	}
+
+	if a.SharpeReason != nil {
+		object["sharpe_reason"], err = json.Marshal(a.SharpeReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_reason': %w", err)
+		}
+	}
+
+	object["total_commission_i64"], err = json.Marshal(a.TotalCommissionI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_commission_i64': %w", err)
+	}
+
+	object["total_return"], err = json.Marshal(a.TotalReturn)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_return': %w", err)
+	}
+
+	object["total_slippage_i64"], err = json.Marshal(a.TotalSlippageI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_slippage_i64': %w", err)
+	}
+
+	object["trade_count"], err = json.Marshal(a.TradeCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'trade_count': %w", err)
+	}
+
+	if a.TradingDayCount != nil {
+		object["trading_day_count"], err = json.Marshal(a.TradingDayCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'trading_day_count': %w", err)
+		}
+	}
+
+	object["win_rate"], err = json.Marshal(a.WinRate)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'win_rate': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for ResearchStudyResults_Items_Folds_ValidationMetrics. Returns the specified
+// element and whether it was found
+func (a ResearchStudyResults_Items_Folds_ValidationMetrics) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for ResearchStudyResults_Items_Folds_ValidationMetrics
+func (a *ResearchStudyResults_Items_Folds_ValidationMetrics) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for ResearchStudyResults_Items_Folds_ValidationMetrics to handle AdditionalProperties
+func (a *ResearchStudyResults_Items_Folds_ValidationMetrics) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["annualized_return"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return': %w", err)
+		}
+		delete(object, "annualized_return")
+	}
+
+	if raw, found := object["annualized_return_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturnReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return_reason': %w", err)
+		}
+		delete(object, "annualized_return_reason")
+	}
+
+	if raw, found := object["annualized_volatility"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatility)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility': %w", err)
+		}
+		delete(object, "annualized_volatility")
+	}
+
+	if raw, found := object["annualized_volatility_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatilityReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility_reason': %w", err)
+		}
+		delete(object, "annualized_volatility_reason")
+	}
+
+	if raw, found := object["average_loss_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageLossI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_loss_i64': %w", err)
+		}
+		delete(object, "average_loss_i64")
+	}
+
+	if raw, found := object["average_win_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageWinI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_win_i64': %w", err)
+		}
+		delete(object, "average_win_i64")
+	}
+
+	if raw, found := object["daily_return_count"]; found {
+		err = json.Unmarshal(raw, &a.DailyReturnCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'daily_return_count': %w", err)
+		}
+		delete(object, "daily_return_count")
+	}
+
+	if raw, found := object["expectancy_i64"]; found {
+		err = json.Unmarshal(raw, &a.ExpectancyI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'expectancy_i64': %w", err)
+		}
+		delete(object, "expectancy_i64")
+	}
+
+	if raw, found := object["fill_rate"]; found {
+		err = json.Unmarshal(raw, &a.FillRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'fill_rate': %w", err)
+		}
+		delete(object, "fill_rate")
+	}
+
+	if raw, found := object["filled_quantity"]; found {
+		err = json.Unmarshal(raw, &a.FilledQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'filled_quantity': %w", err)
+		}
+		delete(object, "filled_quantity")
+	}
+
+	if raw, found := object["max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.MaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'max_drawdown': %w", err)
+		}
+		delete(object, "max_drawdown")
+	}
+
+	if raw, found := object["profit_factor"]; found {
+		err = json.Unmarshal(raw, &a.ProfitFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_factor': %w", err)
+		}
+		delete(object, "profit_factor")
+	}
+
+	if raw, found := object["profit_loss_ratio"]; found {
+		err = json.Unmarshal(raw, &a.ProfitLossRatio)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_loss_ratio': %w", err)
+		}
+		delete(object, "profit_loss_ratio")
+	}
+
+	if raw, found := object["request_id"]; found {
+		err = json.Unmarshal(raw, &a.RequestId)
+		if err != nil {
+			return fmt.Errorf("error reading 'request_id': %w", err)
+		}
+		delete(object, "request_id")
+	}
+
+	if raw, found := object["requested_quantity"]; found {
+		err = json.Unmarshal(raw, &a.RequestedQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'requested_quantity': %w", err)
+		}
+		delete(object, "requested_quantity")
+	}
+
+	if raw, found := object["risk_approved_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskApprovedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_approved_count': %w", err)
+		}
+		delete(object, "risk_approved_count")
+	}
+
+	if raw, found := object["risk_blocked_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskBlockedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_blocked_count': %w", err)
+		}
+		delete(object, "risk_blocked_count")
+	}
+
+	if raw, found := object["risk_kill_switch_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskKillSwitchCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_kill_switch_count': %w", err)
+		}
+		delete(object, "risk_kill_switch_count")
+	}
+
+	if raw, found := object["risk_reduced_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskReducedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_reduced_count': %w", err)
+		}
+		delete(object, "risk_reduced_count")
+	}
+
+	if raw, found := object["run_id"]; found {
+		err = json.Unmarshal(raw, &a.RunId)
+		if err != nil {
+			return fmt.Errorf("error reading 'run_id': %w", err)
+		}
+		delete(object, "run_id")
+	}
+
+	if raw, found := object["sharpe"]; found {
+		err = json.Unmarshal(raw, &a.Sharpe)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe': %w", err)
+		}
+		delete(object, "sharpe")
+	}
+
+	if raw, found := object["sharpe_annualization_factor"]; found {
+		err = json.Unmarshal(raw, &a.SharpeAnnualizationFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_annualization_factor': %w", err)
+		}
+		delete(object, "sharpe_annualization_factor")
+	}
+
+	if raw, found := object["sharpe_reason"]; found {
+		err = json.Unmarshal(raw, &a.SharpeReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_reason': %w", err)
+		}
+		delete(object, "sharpe_reason")
+	}
+
+	if raw, found := object["total_commission_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalCommissionI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_commission_i64': %w", err)
+		}
+		delete(object, "total_commission_i64")
+	}
+
+	if raw, found := object["total_return"]; found {
+		err = json.Unmarshal(raw, &a.TotalReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_return': %w", err)
+		}
+		delete(object, "total_return")
+	}
+
+	if raw, found := object["total_slippage_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalSlippageI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_slippage_i64': %w", err)
+		}
+		delete(object, "total_slippage_i64")
+	}
+
+	if raw, found := object["trade_count"]; found {
+		err = json.Unmarshal(raw, &a.TradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trade_count': %w", err)
+		}
+		delete(object, "trade_count")
+	}
+
+	if raw, found := object["trading_day_count"]; found {
+		err = json.Unmarshal(raw, &a.TradingDayCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trading_day_count': %w", err)
+		}
+		delete(object, "trading_day_count")
+	}
+
+	if raw, found := object["win_rate"]; found {
+		err = json.Unmarshal(raw, &a.WinRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'win_rate': %w", err)
+		}
+		delete(object, "win_rate")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for ResearchStudyResults_Items_Folds_ValidationMetrics to handle AdditionalProperties
+func (a ResearchStudyResults_Items_Folds_ValidationMetrics) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AnnualizedReturn != nil {
+		object["annualized_return"], err = json.Marshal(a.AnnualizedReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return': %w", err)
+		}
+	}
+
+	if a.AnnualizedReturnReason != nil {
+		object["annualized_return_reason"], err = json.Marshal(a.AnnualizedReturnReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return_reason': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatility != nil {
+		object["annualized_volatility"], err = json.Marshal(a.AnnualizedVolatility)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatilityReason != nil {
+		object["annualized_volatility_reason"], err = json.Marshal(a.AnnualizedVolatilityReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility_reason': %w", err)
+		}
+	}
+
+	if a.AverageLossI64 != nil {
+		object["average_loss_i64"], err = json.Marshal(a.AverageLossI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_loss_i64': %w", err)
+		}
+	}
+
+	if a.AverageWinI64 != nil {
+		object["average_win_i64"], err = json.Marshal(a.AverageWinI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_win_i64': %w", err)
+		}
+	}
+
+	if a.DailyReturnCount != nil {
+		object["daily_return_count"], err = json.Marshal(a.DailyReturnCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'daily_return_count': %w", err)
+		}
+	}
+
+	if a.ExpectancyI64 != nil {
+		object["expectancy_i64"], err = json.Marshal(a.ExpectancyI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'expectancy_i64': %w", err)
+		}
+	}
+
+	if a.FillRate != nil {
+		object["fill_rate"], err = json.Marshal(a.FillRate)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'fill_rate': %w", err)
+		}
+	}
+
+	if a.FilledQuantity != nil {
+		object["filled_quantity"], err = json.Marshal(a.FilledQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'filled_quantity': %w", err)
+		}
+	}
+
+	object["max_drawdown"], err = json.Marshal(a.MaxDrawdown)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'max_drawdown': %w", err)
+	}
+
+	if a.ProfitFactor != nil {
+		object["profit_factor"], err = json.Marshal(a.ProfitFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_factor': %w", err)
+		}
+	}
+
+	if a.ProfitLossRatio != nil {
+		object["profit_loss_ratio"], err = json.Marshal(a.ProfitLossRatio)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_loss_ratio': %w", err)
+		}
+	}
+
+	object["request_id"], err = json.Marshal(a.RequestId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'request_id': %w", err)
+	}
+
+	if a.RequestedQuantity != nil {
+		object["requested_quantity"], err = json.Marshal(a.RequestedQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'requested_quantity': %w", err)
+		}
+	}
+
+	object["risk_approved_count"], err = json.Marshal(a.RiskApprovedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_approved_count': %w", err)
+	}
+
+	object["risk_blocked_count"], err = json.Marshal(a.RiskBlockedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_blocked_count': %w", err)
+	}
+
+	object["risk_kill_switch_count"], err = json.Marshal(a.RiskKillSwitchCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_kill_switch_count': %w", err)
+	}
+
+	object["risk_reduced_count"], err = json.Marshal(a.RiskReducedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_reduced_count': %w", err)
+	}
+
+	object["run_id"], err = json.Marshal(a.RunId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'run_id': %w", err)
+	}
+
+	if a.Sharpe != nil {
+		object["sharpe"], err = json.Marshal(a.Sharpe)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe': %w", err)
+		}
+	}
+
+	if a.SharpeAnnualizationFactor != nil {
+		object["sharpe_annualization_factor"], err = json.Marshal(a.SharpeAnnualizationFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_annualization_factor': %w", err)
+		}
+	}
+
+	if a.SharpeReason != nil {
+		object["sharpe_reason"], err = json.Marshal(a.SharpeReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_reason': %w", err)
+		}
+	}
+
+	object["total_commission_i64"], err = json.Marshal(a.TotalCommissionI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_commission_i64': %w", err)
+	}
+
+	object["total_return"], err = json.Marshal(a.TotalReturn)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_return': %w", err)
+	}
+
+	object["total_slippage_i64"], err = json.Marshal(a.TotalSlippageI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_slippage_i64': %w", err)
+	}
+
+	object["trade_count"], err = json.Marshal(a.TradeCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'trade_count': %w", err)
+	}
+
+	if a.TradingDayCount != nil {
+		object["trading_day_count"], err = json.Marshal(a.TradingDayCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'trading_day_count': %w", err)
+		}
+	}
+
+	object["win_rate"], err = json.Marshal(a.WinRate)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'win_rate': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for ResearchStudyResults_Items_Summary. Returns the specified
+// element and whether it was found
+func (a ResearchStudyResults_Items_Summary) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for ResearchStudyResults_Items_Summary
+func (a *ResearchStudyResults_Items_Summary) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for ResearchStudyResults_Items_Summary to handle AdditionalProperties
+func (a *ResearchStudyResults_Items_Summary) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["annualized_return"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return': %w", err)
+		}
+		delete(object, "annualized_return")
+	}
+
+	if raw, found := object["annualized_return_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturnReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return_reason': %w", err)
+		}
+		delete(object, "annualized_return_reason")
+	}
+
+	if raw, found := object["annualized_volatility"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatility)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility': %w", err)
+		}
+		delete(object, "annualized_volatility")
+	}
+
+	if raw, found := object["annualized_volatility_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatilityReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility_reason': %w", err)
+		}
+		delete(object, "annualized_volatility_reason")
+	}
+
+	if raw, found := object["average_loss_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageLossI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_loss_i64': %w", err)
+		}
+		delete(object, "average_loss_i64")
+	}
+
+	if raw, found := object["average_win_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageWinI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_win_i64': %w", err)
+		}
+		delete(object, "average_win_i64")
+	}
+
+	if raw, found := object["daily_return_count"]; found {
+		err = json.Unmarshal(raw, &a.DailyReturnCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'daily_return_count': %w", err)
+		}
+		delete(object, "daily_return_count")
+	}
+
+	if raw, found := object["expectancy_i64"]; found {
+		err = json.Unmarshal(raw, &a.ExpectancyI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'expectancy_i64': %w", err)
+		}
+		delete(object, "expectancy_i64")
+	}
+
+	if raw, found := object["fill_rate"]; found {
+		err = json.Unmarshal(raw, &a.FillRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'fill_rate': %w", err)
+		}
+		delete(object, "fill_rate")
+	}
+
+	if raw, found := object["filled_quantity"]; found {
+		err = json.Unmarshal(raw, &a.FilledQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'filled_quantity': %w", err)
+		}
+		delete(object, "filled_quantity")
+	}
+
+	if raw, found := object["max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.MaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'max_drawdown': %w", err)
+		}
+		delete(object, "max_drawdown")
+	}
+
+	if raw, found := object["profit_factor"]; found {
+		err = json.Unmarshal(raw, &a.ProfitFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_factor': %w", err)
+		}
+		delete(object, "profit_factor")
+	}
+
+	if raw, found := object["profit_loss_ratio"]; found {
+		err = json.Unmarshal(raw, &a.ProfitLossRatio)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_loss_ratio': %w", err)
+		}
+		delete(object, "profit_loss_ratio")
+	}
+
+	if raw, found := object["request_id"]; found {
+		err = json.Unmarshal(raw, &a.RequestId)
+		if err != nil {
+			return fmt.Errorf("error reading 'request_id': %w", err)
+		}
+		delete(object, "request_id")
+	}
+
+	if raw, found := object["requested_quantity"]; found {
+		err = json.Unmarshal(raw, &a.RequestedQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'requested_quantity': %w", err)
+		}
+		delete(object, "requested_quantity")
+	}
+
+	if raw, found := object["risk_approved_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskApprovedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_approved_count': %w", err)
+		}
+		delete(object, "risk_approved_count")
+	}
+
+	if raw, found := object["risk_blocked_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskBlockedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_blocked_count': %w", err)
+		}
+		delete(object, "risk_blocked_count")
+	}
+
+	if raw, found := object["risk_kill_switch_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskKillSwitchCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_kill_switch_count': %w", err)
+		}
+		delete(object, "risk_kill_switch_count")
+	}
+
+	if raw, found := object["risk_reduced_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskReducedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_reduced_count': %w", err)
+		}
+		delete(object, "risk_reduced_count")
+	}
+
+	if raw, found := object["run_id"]; found {
+		err = json.Unmarshal(raw, &a.RunId)
+		if err != nil {
+			return fmt.Errorf("error reading 'run_id': %w", err)
+		}
+		delete(object, "run_id")
+	}
+
+	if raw, found := object["sharpe"]; found {
+		err = json.Unmarshal(raw, &a.Sharpe)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe': %w", err)
+		}
+		delete(object, "sharpe")
+	}
+
+	if raw, found := object["sharpe_annualization_factor"]; found {
+		err = json.Unmarshal(raw, &a.SharpeAnnualizationFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_annualization_factor': %w", err)
+		}
+		delete(object, "sharpe_annualization_factor")
+	}
+
+	if raw, found := object["sharpe_reason"]; found {
+		err = json.Unmarshal(raw, &a.SharpeReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_reason': %w", err)
+		}
+		delete(object, "sharpe_reason")
+	}
+
+	if raw, found := object["total_commission_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalCommissionI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_commission_i64': %w", err)
+		}
+		delete(object, "total_commission_i64")
+	}
+
+	if raw, found := object["total_return"]; found {
+		err = json.Unmarshal(raw, &a.TotalReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_return': %w", err)
+		}
+		delete(object, "total_return")
+	}
+
+	if raw, found := object["total_slippage_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalSlippageI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_slippage_i64': %w", err)
+		}
+		delete(object, "total_slippage_i64")
+	}
+
+	if raw, found := object["trade_count"]; found {
+		err = json.Unmarshal(raw, &a.TradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trade_count': %w", err)
+		}
+		delete(object, "trade_count")
+	}
+
+	if raw, found := object["trading_day_count"]; found {
+		err = json.Unmarshal(raw, &a.TradingDayCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trading_day_count': %w", err)
+		}
+		delete(object, "trading_day_count")
+	}
+
+	if raw, found := object["win_rate"]; found {
+		err = json.Unmarshal(raw, &a.WinRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'win_rate': %w", err)
+		}
+		delete(object, "win_rate")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for ResearchStudyResults_Items_Summary to handle AdditionalProperties
+func (a ResearchStudyResults_Items_Summary) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AnnualizedReturn != nil {
+		object["annualized_return"], err = json.Marshal(a.AnnualizedReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return': %w", err)
+		}
+	}
+
+	if a.AnnualizedReturnReason != nil {
+		object["annualized_return_reason"], err = json.Marshal(a.AnnualizedReturnReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return_reason': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatility != nil {
+		object["annualized_volatility"], err = json.Marshal(a.AnnualizedVolatility)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatilityReason != nil {
+		object["annualized_volatility_reason"], err = json.Marshal(a.AnnualizedVolatilityReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility_reason': %w", err)
+		}
+	}
+
+	if a.AverageLossI64 != nil {
+		object["average_loss_i64"], err = json.Marshal(a.AverageLossI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_loss_i64': %w", err)
+		}
+	}
+
+	if a.AverageWinI64 != nil {
+		object["average_win_i64"], err = json.Marshal(a.AverageWinI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_win_i64': %w", err)
+		}
+	}
+
+	if a.DailyReturnCount != nil {
+		object["daily_return_count"], err = json.Marshal(a.DailyReturnCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'daily_return_count': %w", err)
+		}
+	}
+
+	if a.ExpectancyI64 != nil {
+		object["expectancy_i64"], err = json.Marshal(a.ExpectancyI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'expectancy_i64': %w", err)
+		}
+	}
+
+	if a.FillRate != nil {
+		object["fill_rate"], err = json.Marshal(a.FillRate)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'fill_rate': %w", err)
+		}
+	}
+
+	if a.FilledQuantity != nil {
+		object["filled_quantity"], err = json.Marshal(a.FilledQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'filled_quantity': %w", err)
+		}
+	}
+
+	object["max_drawdown"], err = json.Marshal(a.MaxDrawdown)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'max_drawdown': %w", err)
+	}
+
+	if a.ProfitFactor != nil {
+		object["profit_factor"], err = json.Marshal(a.ProfitFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_factor': %w", err)
+		}
+	}
+
+	if a.ProfitLossRatio != nil {
+		object["profit_loss_ratio"], err = json.Marshal(a.ProfitLossRatio)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_loss_ratio': %w", err)
+		}
+	}
+
+	object["request_id"], err = json.Marshal(a.RequestId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'request_id': %w", err)
+	}
+
+	if a.RequestedQuantity != nil {
+		object["requested_quantity"], err = json.Marshal(a.RequestedQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'requested_quantity': %w", err)
+		}
+	}
+
+	object["risk_approved_count"], err = json.Marshal(a.RiskApprovedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_approved_count': %w", err)
+	}
+
+	object["risk_blocked_count"], err = json.Marshal(a.RiskBlockedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_blocked_count': %w", err)
+	}
+
+	object["risk_kill_switch_count"], err = json.Marshal(a.RiskKillSwitchCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_kill_switch_count': %w", err)
+	}
+
+	object["risk_reduced_count"], err = json.Marshal(a.RiskReducedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_reduced_count': %w", err)
+	}
+
+	object["run_id"], err = json.Marshal(a.RunId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'run_id': %w", err)
+	}
+
+	if a.Sharpe != nil {
+		object["sharpe"], err = json.Marshal(a.Sharpe)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe': %w", err)
+		}
+	}
+
+	if a.SharpeAnnualizationFactor != nil {
+		object["sharpe_annualization_factor"], err = json.Marshal(a.SharpeAnnualizationFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_annualization_factor': %w", err)
+		}
+	}
+
+	if a.SharpeReason != nil {
+		object["sharpe_reason"], err = json.Marshal(a.SharpeReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_reason': %w", err)
+		}
+	}
+
+	object["total_commission_i64"], err = json.Marshal(a.TotalCommissionI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_commission_i64': %w", err)
+	}
+
+	object["total_return"], err = json.Marshal(a.TotalReturn)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_return': %w", err)
+	}
+
+	object["total_slippage_i64"], err = json.Marshal(a.TotalSlippageI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_slippage_i64': %w", err)
+	}
+
+	object["trade_count"], err = json.Marshal(a.TradeCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'trade_count': %w", err)
+	}
+
+	if a.TradingDayCount != nil {
+		object["trading_day_count"], err = json.Marshal(a.TradingDayCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'trading_day_count': %w", err)
+		}
 	}
 
 	object["win_rate"], err = json.Marshal(a.WinRate)
@@ -5783,6 +11847,30 @@ func (a *StrategyComparisonResult_Summary) UnmarshalJSON(b []byte) error {
 		delete(object, "annualized_return")
 	}
 
+	if raw, found := object["annualized_return_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturnReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return_reason': %w", err)
+		}
+		delete(object, "annualized_return_reason")
+	}
+
+	if raw, found := object["annualized_volatility"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatility)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility': %w", err)
+		}
+		delete(object, "annualized_volatility")
+	}
+
+	if raw, found := object["annualized_volatility_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatilityReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility_reason': %w", err)
+		}
+		delete(object, "annualized_volatility_reason")
+	}
+
 	if raw, found := object["average_loss_i64"]; found {
 		err = json.Unmarshal(raw, &a.AverageLossI64)
 		if err != nil {
@@ -5799,12 +11887,36 @@ func (a *StrategyComparisonResult_Summary) UnmarshalJSON(b []byte) error {
 		delete(object, "average_win_i64")
 	}
 
+	if raw, found := object["daily_return_count"]; found {
+		err = json.Unmarshal(raw, &a.DailyReturnCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'daily_return_count': %w", err)
+		}
+		delete(object, "daily_return_count")
+	}
+
 	if raw, found := object["expectancy_i64"]; found {
 		err = json.Unmarshal(raw, &a.ExpectancyI64)
 		if err != nil {
 			return fmt.Errorf("error reading 'expectancy_i64': %w", err)
 		}
 		delete(object, "expectancy_i64")
+	}
+
+	if raw, found := object["fill_rate"]; found {
+		err = json.Unmarshal(raw, &a.FillRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'fill_rate': %w", err)
+		}
+		delete(object, "fill_rate")
+	}
+
+	if raw, found := object["filled_quantity"]; found {
+		err = json.Unmarshal(raw, &a.FilledQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'filled_quantity': %w", err)
+		}
+		delete(object, "filled_quantity")
 	}
 
 	if raw, found := object["max_drawdown"]; found {
@@ -5837,6 +11949,14 @@ func (a *StrategyComparisonResult_Summary) UnmarshalJSON(b []byte) error {
 			return fmt.Errorf("error reading 'request_id': %w", err)
 		}
 		delete(object, "request_id")
+	}
+
+	if raw, found := object["requested_quantity"]; found {
+		err = json.Unmarshal(raw, &a.RequestedQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'requested_quantity': %w", err)
+		}
+		delete(object, "requested_quantity")
 	}
 
 	if raw, found := object["risk_approved_count"]; found {
@@ -5887,6 +12007,22 @@ func (a *StrategyComparisonResult_Summary) UnmarshalJSON(b []byte) error {
 		delete(object, "sharpe")
 	}
 
+	if raw, found := object["sharpe_annualization_factor"]; found {
+		err = json.Unmarshal(raw, &a.SharpeAnnualizationFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_annualization_factor': %w", err)
+		}
+		delete(object, "sharpe_annualization_factor")
+	}
+
+	if raw, found := object["sharpe_reason"]; found {
+		err = json.Unmarshal(raw, &a.SharpeReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_reason': %w", err)
+		}
+		delete(object, "sharpe_reason")
+	}
+
 	if raw, found := object["total_commission_i64"]; found {
 		err = json.Unmarshal(raw, &a.TotalCommissionI64)
 		if err != nil {
@@ -5917,6 +12053,14 @@ func (a *StrategyComparisonResult_Summary) UnmarshalJSON(b []byte) error {
 			return fmt.Errorf("error reading 'trade_count': %w", err)
 		}
 		delete(object, "trade_count")
+	}
+
+	if raw, found := object["trading_day_count"]; found {
+		err = json.Unmarshal(raw, &a.TradingDayCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trading_day_count': %w", err)
+		}
+		delete(object, "trading_day_count")
 	}
 
 	if raw, found := object["win_rate"]; found {
@@ -5953,6 +12097,27 @@ func (a StrategyComparisonResult_Summary) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	if a.AnnualizedReturnReason != nil {
+		object["annualized_return_reason"], err = json.Marshal(a.AnnualizedReturnReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return_reason': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatility != nil {
+		object["annualized_volatility"], err = json.Marshal(a.AnnualizedVolatility)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatilityReason != nil {
+		object["annualized_volatility_reason"], err = json.Marshal(a.AnnualizedVolatilityReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility_reason': %w", err)
+		}
+	}
+
 	if a.AverageLossI64 != nil {
 		object["average_loss_i64"], err = json.Marshal(a.AverageLossI64)
 		if err != nil {
@@ -5967,10 +12132,31 @@ func (a StrategyComparisonResult_Summary) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	if a.DailyReturnCount != nil {
+		object["daily_return_count"], err = json.Marshal(a.DailyReturnCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'daily_return_count': %w", err)
+		}
+	}
+
 	if a.ExpectancyI64 != nil {
 		object["expectancy_i64"], err = json.Marshal(a.ExpectancyI64)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'expectancy_i64': %w", err)
+		}
+	}
+
+	if a.FillRate != nil {
+		object["fill_rate"], err = json.Marshal(a.FillRate)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'fill_rate': %w", err)
+		}
+	}
+
+	if a.FilledQuantity != nil {
+		object["filled_quantity"], err = json.Marshal(a.FilledQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'filled_quantity': %w", err)
 		}
 	}
 
@@ -5996,6 +12182,13 @@ func (a StrategyComparisonResult_Summary) MarshalJSON() ([]byte, error) {
 	object["request_id"], err = json.Marshal(a.RequestId)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'request_id': %w", err)
+	}
+
+	if a.RequestedQuantity != nil {
+		object["requested_quantity"], err = json.Marshal(a.RequestedQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'requested_quantity': %w", err)
+		}
 	}
 
 	object["risk_approved_count"], err = json.Marshal(a.RiskApprovedCount)
@@ -6030,6 +12223,20 @@ func (a StrategyComparisonResult_Summary) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	if a.SharpeAnnualizationFactor != nil {
+		object["sharpe_annualization_factor"], err = json.Marshal(a.SharpeAnnualizationFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_annualization_factor': %w", err)
+		}
+	}
+
+	if a.SharpeReason != nil {
+		object["sharpe_reason"], err = json.Marshal(a.SharpeReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_reason': %w", err)
+		}
+	}
+
 	object["total_commission_i64"], err = json.Marshal(a.TotalCommissionI64)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'total_commission_i64': %w", err)
@@ -6048,6 +12255,13 @@ func (a StrategyComparisonResult_Summary) MarshalJSON() ([]byte, error) {
 	object["trade_count"], err = json.Marshal(a.TradeCount)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'trade_count': %w", err)
+	}
+
+	if a.TradingDayCount != nil {
+		object["trading_day_count"], err = json.Marshal(a.TradingDayCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'trading_day_count': %w", err)
+		}
 	}
 
 	object["win_rate"], err = json.Marshal(a.WinRate)
@@ -6097,6 +12311,30 @@ func (a *StrategyComparisonResults_Items_Summary) UnmarshalJSON(b []byte) error 
 		delete(object, "annualized_return")
 	}
 
+	if raw, found := object["annualized_return_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturnReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return_reason': %w", err)
+		}
+		delete(object, "annualized_return_reason")
+	}
+
+	if raw, found := object["annualized_volatility"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatility)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility': %w", err)
+		}
+		delete(object, "annualized_volatility")
+	}
+
+	if raw, found := object["annualized_volatility_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatilityReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility_reason': %w", err)
+		}
+		delete(object, "annualized_volatility_reason")
+	}
+
 	if raw, found := object["average_loss_i64"]; found {
 		err = json.Unmarshal(raw, &a.AverageLossI64)
 		if err != nil {
@@ -6113,12 +12351,36 @@ func (a *StrategyComparisonResults_Items_Summary) UnmarshalJSON(b []byte) error 
 		delete(object, "average_win_i64")
 	}
 
+	if raw, found := object["daily_return_count"]; found {
+		err = json.Unmarshal(raw, &a.DailyReturnCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'daily_return_count': %w", err)
+		}
+		delete(object, "daily_return_count")
+	}
+
 	if raw, found := object["expectancy_i64"]; found {
 		err = json.Unmarshal(raw, &a.ExpectancyI64)
 		if err != nil {
 			return fmt.Errorf("error reading 'expectancy_i64': %w", err)
 		}
 		delete(object, "expectancy_i64")
+	}
+
+	if raw, found := object["fill_rate"]; found {
+		err = json.Unmarshal(raw, &a.FillRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'fill_rate': %w", err)
+		}
+		delete(object, "fill_rate")
+	}
+
+	if raw, found := object["filled_quantity"]; found {
+		err = json.Unmarshal(raw, &a.FilledQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'filled_quantity': %w", err)
+		}
+		delete(object, "filled_quantity")
 	}
 
 	if raw, found := object["max_drawdown"]; found {
@@ -6151,6 +12413,14 @@ func (a *StrategyComparisonResults_Items_Summary) UnmarshalJSON(b []byte) error 
 			return fmt.Errorf("error reading 'request_id': %w", err)
 		}
 		delete(object, "request_id")
+	}
+
+	if raw, found := object["requested_quantity"]; found {
+		err = json.Unmarshal(raw, &a.RequestedQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'requested_quantity': %w", err)
+		}
+		delete(object, "requested_quantity")
 	}
 
 	if raw, found := object["risk_approved_count"]; found {
@@ -6201,6 +12471,22 @@ func (a *StrategyComparisonResults_Items_Summary) UnmarshalJSON(b []byte) error 
 		delete(object, "sharpe")
 	}
 
+	if raw, found := object["sharpe_annualization_factor"]; found {
+		err = json.Unmarshal(raw, &a.SharpeAnnualizationFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_annualization_factor': %w", err)
+		}
+		delete(object, "sharpe_annualization_factor")
+	}
+
+	if raw, found := object["sharpe_reason"]; found {
+		err = json.Unmarshal(raw, &a.SharpeReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_reason': %w", err)
+		}
+		delete(object, "sharpe_reason")
+	}
+
 	if raw, found := object["total_commission_i64"]; found {
 		err = json.Unmarshal(raw, &a.TotalCommissionI64)
 		if err != nil {
@@ -6231,6 +12517,14 @@ func (a *StrategyComparisonResults_Items_Summary) UnmarshalJSON(b []byte) error 
 			return fmt.Errorf("error reading 'trade_count': %w", err)
 		}
 		delete(object, "trade_count")
+	}
+
+	if raw, found := object["trading_day_count"]; found {
+		err = json.Unmarshal(raw, &a.TradingDayCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trading_day_count': %w", err)
+		}
+		delete(object, "trading_day_count")
 	}
 
 	if raw, found := object["win_rate"]; found {
@@ -6267,6 +12561,27 @@ func (a StrategyComparisonResults_Items_Summary) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	if a.AnnualizedReturnReason != nil {
+		object["annualized_return_reason"], err = json.Marshal(a.AnnualizedReturnReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return_reason': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatility != nil {
+		object["annualized_volatility"], err = json.Marshal(a.AnnualizedVolatility)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatilityReason != nil {
+		object["annualized_volatility_reason"], err = json.Marshal(a.AnnualizedVolatilityReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility_reason': %w", err)
+		}
+	}
+
 	if a.AverageLossI64 != nil {
 		object["average_loss_i64"], err = json.Marshal(a.AverageLossI64)
 		if err != nil {
@@ -6281,10 +12596,31 @@ func (a StrategyComparisonResults_Items_Summary) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	if a.DailyReturnCount != nil {
+		object["daily_return_count"], err = json.Marshal(a.DailyReturnCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'daily_return_count': %w", err)
+		}
+	}
+
 	if a.ExpectancyI64 != nil {
 		object["expectancy_i64"], err = json.Marshal(a.ExpectancyI64)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'expectancy_i64': %w", err)
+		}
+	}
+
+	if a.FillRate != nil {
+		object["fill_rate"], err = json.Marshal(a.FillRate)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'fill_rate': %w", err)
+		}
+	}
+
+	if a.FilledQuantity != nil {
+		object["filled_quantity"], err = json.Marshal(a.FilledQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'filled_quantity': %w", err)
 		}
 	}
 
@@ -6310,6 +12646,13 @@ func (a StrategyComparisonResults_Items_Summary) MarshalJSON() ([]byte, error) {
 	object["request_id"], err = json.Marshal(a.RequestId)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'request_id': %w", err)
+	}
+
+	if a.RequestedQuantity != nil {
+		object["requested_quantity"], err = json.Marshal(a.RequestedQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'requested_quantity': %w", err)
+		}
 	}
 
 	object["risk_approved_count"], err = json.Marshal(a.RiskApprovedCount)
@@ -6344,6 +12687,20 @@ func (a StrategyComparisonResults_Items_Summary) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	if a.SharpeAnnualizationFactor != nil {
+		object["sharpe_annualization_factor"], err = json.Marshal(a.SharpeAnnualizationFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_annualization_factor': %w", err)
+		}
+	}
+
+	if a.SharpeReason != nil {
+		object["sharpe_reason"], err = json.Marshal(a.SharpeReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_reason': %w", err)
+		}
+	}
+
 	object["total_commission_i64"], err = json.Marshal(a.TotalCommissionI64)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'total_commission_i64': %w", err)
@@ -6362,6 +12719,941 @@ func (a StrategyComparisonResults_Items_Summary) MarshalJSON() ([]byte, error) {
 	object["trade_count"], err = json.Marshal(a.TradeCount)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'trade_count': %w", err)
+	}
+
+	if a.TradingDayCount != nil {
+		object["trading_day_count"], err = json.Marshal(a.TradingDayCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'trading_day_count': %w", err)
+		}
+	}
+
+	object["win_rate"], err = json.Marshal(a.WinRate)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'win_rate': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for WalkForwardFoldResult_SelectedTrainMetrics. Returns the specified
+// element and whether it was found
+func (a WalkForwardFoldResult_SelectedTrainMetrics) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for WalkForwardFoldResult_SelectedTrainMetrics
+func (a *WalkForwardFoldResult_SelectedTrainMetrics) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for WalkForwardFoldResult_SelectedTrainMetrics to handle AdditionalProperties
+func (a *WalkForwardFoldResult_SelectedTrainMetrics) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["annualized_return"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return': %w", err)
+		}
+		delete(object, "annualized_return")
+	}
+
+	if raw, found := object["annualized_return_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturnReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return_reason': %w", err)
+		}
+		delete(object, "annualized_return_reason")
+	}
+
+	if raw, found := object["annualized_volatility"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatility)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility': %w", err)
+		}
+		delete(object, "annualized_volatility")
+	}
+
+	if raw, found := object["annualized_volatility_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatilityReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility_reason': %w", err)
+		}
+		delete(object, "annualized_volatility_reason")
+	}
+
+	if raw, found := object["average_loss_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageLossI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_loss_i64': %w", err)
+		}
+		delete(object, "average_loss_i64")
+	}
+
+	if raw, found := object["average_win_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageWinI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_win_i64': %w", err)
+		}
+		delete(object, "average_win_i64")
+	}
+
+	if raw, found := object["daily_return_count"]; found {
+		err = json.Unmarshal(raw, &a.DailyReturnCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'daily_return_count': %w", err)
+		}
+		delete(object, "daily_return_count")
+	}
+
+	if raw, found := object["expectancy_i64"]; found {
+		err = json.Unmarshal(raw, &a.ExpectancyI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'expectancy_i64': %w", err)
+		}
+		delete(object, "expectancy_i64")
+	}
+
+	if raw, found := object["fill_rate"]; found {
+		err = json.Unmarshal(raw, &a.FillRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'fill_rate': %w", err)
+		}
+		delete(object, "fill_rate")
+	}
+
+	if raw, found := object["filled_quantity"]; found {
+		err = json.Unmarshal(raw, &a.FilledQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'filled_quantity': %w", err)
+		}
+		delete(object, "filled_quantity")
+	}
+
+	if raw, found := object["max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.MaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'max_drawdown': %w", err)
+		}
+		delete(object, "max_drawdown")
+	}
+
+	if raw, found := object["profit_factor"]; found {
+		err = json.Unmarshal(raw, &a.ProfitFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_factor': %w", err)
+		}
+		delete(object, "profit_factor")
+	}
+
+	if raw, found := object["profit_loss_ratio"]; found {
+		err = json.Unmarshal(raw, &a.ProfitLossRatio)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_loss_ratio': %w", err)
+		}
+		delete(object, "profit_loss_ratio")
+	}
+
+	if raw, found := object["request_id"]; found {
+		err = json.Unmarshal(raw, &a.RequestId)
+		if err != nil {
+			return fmt.Errorf("error reading 'request_id': %w", err)
+		}
+		delete(object, "request_id")
+	}
+
+	if raw, found := object["requested_quantity"]; found {
+		err = json.Unmarshal(raw, &a.RequestedQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'requested_quantity': %w", err)
+		}
+		delete(object, "requested_quantity")
+	}
+
+	if raw, found := object["risk_approved_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskApprovedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_approved_count': %w", err)
+		}
+		delete(object, "risk_approved_count")
+	}
+
+	if raw, found := object["risk_blocked_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskBlockedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_blocked_count': %w", err)
+		}
+		delete(object, "risk_blocked_count")
+	}
+
+	if raw, found := object["risk_kill_switch_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskKillSwitchCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_kill_switch_count': %w", err)
+		}
+		delete(object, "risk_kill_switch_count")
+	}
+
+	if raw, found := object["risk_reduced_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskReducedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_reduced_count': %w", err)
+		}
+		delete(object, "risk_reduced_count")
+	}
+
+	if raw, found := object["run_id"]; found {
+		err = json.Unmarshal(raw, &a.RunId)
+		if err != nil {
+			return fmt.Errorf("error reading 'run_id': %w", err)
+		}
+		delete(object, "run_id")
+	}
+
+	if raw, found := object["sharpe"]; found {
+		err = json.Unmarshal(raw, &a.Sharpe)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe': %w", err)
+		}
+		delete(object, "sharpe")
+	}
+
+	if raw, found := object["sharpe_annualization_factor"]; found {
+		err = json.Unmarshal(raw, &a.SharpeAnnualizationFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_annualization_factor': %w", err)
+		}
+		delete(object, "sharpe_annualization_factor")
+	}
+
+	if raw, found := object["sharpe_reason"]; found {
+		err = json.Unmarshal(raw, &a.SharpeReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_reason': %w", err)
+		}
+		delete(object, "sharpe_reason")
+	}
+
+	if raw, found := object["total_commission_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalCommissionI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_commission_i64': %w", err)
+		}
+		delete(object, "total_commission_i64")
+	}
+
+	if raw, found := object["total_return"]; found {
+		err = json.Unmarshal(raw, &a.TotalReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_return': %w", err)
+		}
+		delete(object, "total_return")
+	}
+
+	if raw, found := object["total_slippage_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalSlippageI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_slippage_i64': %w", err)
+		}
+		delete(object, "total_slippage_i64")
+	}
+
+	if raw, found := object["trade_count"]; found {
+		err = json.Unmarshal(raw, &a.TradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trade_count': %w", err)
+		}
+		delete(object, "trade_count")
+	}
+
+	if raw, found := object["trading_day_count"]; found {
+		err = json.Unmarshal(raw, &a.TradingDayCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trading_day_count': %w", err)
+		}
+		delete(object, "trading_day_count")
+	}
+
+	if raw, found := object["win_rate"]; found {
+		err = json.Unmarshal(raw, &a.WinRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'win_rate': %w", err)
+		}
+		delete(object, "win_rate")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for WalkForwardFoldResult_SelectedTrainMetrics to handle AdditionalProperties
+func (a WalkForwardFoldResult_SelectedTrainMetrics) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AnnualizedReturn != nil {
+		object["annualized_return"], err = json.Marshal(a.AnnualizedReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return': %w", err)
+		}
+	}
+
+	if a.AnnualizedReturnReason != nil {
+		object["annualized_return_reason"], err = json.Marshal(a.AnnualizedReturnReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return_reason': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatility != nil {
+		object["annualized_volatility"], err = json.Marshal(a.AnnualizedVolatility)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatilityReason != nil {
+		object["annualized_volatility_reason"], err = json.Marshal(a.AnnualizedVolatilityReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility_reason': %w", err)
+		}
+	}
+
+	if a.AverageLossI64 != nil {
+		object["average_loss_i64"], err = json.Marshal(a.AverageLossI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_loss_i64': %w", err)
+		}
+	}
+
+	if a.AverageWinI64 != nil {
+		object["average_win_i64"], err = json.Marshal(a.AverageWinI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_win_i64': %w", err)
+		}
+	}
+
+	if a.DailyReturnCount != nil {
+		object["daily_return_count"], err = json.Marshal(a.DailyReturnCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'daily_return_count': %w", err)
+		}
+	}
+
+	if a.ExpectancyI64 != nil {
+		object["expectancy_i64"], err = json.Marshal(a.ExpectancyI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'expectancy_i64': %w", err)
+		}
+	}
+
+	if a.FillRate != nil {
+		object["fill_rate"], err = json.Marshal(a.FillRate)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'fill_rate': %w", err)
+		}
+	}
+
+	if a.FilledQuantity != nil {
+		object["filled_quantity"], err = json.Marshal(a.FilledQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'filled_quantity': %w", err)
+		}
+	}
+
+	object["max_drawdown"], err = json.Marshal(a.MaxDrawdown)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'max_drawdown': %w", err)
+	}
+
+	if a.ProfitFactor != nil {
+		object["profit_factor"], err = json.Marshal(a.ProfitFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_factor': %w", err)
+		}
+	}
+
+	if a.ProfitLossRatio != nil {
+		object["profit_loss_ratio"], err = json.Marshal(a.ProfitLossRatio)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_loss_ratio': %w", err)
+		}
+	}
+
+	object["request_id"], err = json.Marshal(a.RequestId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'request_id': %w", err)
+	}
+
+	if a.RequestedQuantity != nil {
+		object["requested_quantity"], err = json.Marshal(a.RequestedQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'requested_quantity': %w", err)
+		}
+	}
+
+	object["risk_approved_count"], err = json.Marshal(a.RiskApprovedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_approved_count': %w", err)
+	}
+
+	object["risk_blocked_count"], err = json.Marshal(a.RiskBlockedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_blocked_count': %w", err)
+	}
+
+	object["risk_kill_switch_count"], err = json.Marshal(a.RiskKillSwitchCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_kill_switch_count': %w", err)
+	}
+
+	object["risk_reduced_count"], err = json.Marshal(a.RiskReducedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_reduced_count': %w", err)
+	}
+
+	object["run_id"], err = json.Marshal(a.RunId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'run_id': %w", err)
+	}
+
+	if a.Sharpe != nil {
+		object["sharpe"], err = json.Marshal(a.Sharpe)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe': %w", err)
+		}
+	}
+
+	if a.SharpeAnnualizationFactor != nil {
+		object["sharpe_annualization_factor"], err = json.Marshal(a.SharpeAnnualizationFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_annualization_factor': %w", err)
+		}
+	}
+
+	if a.SharpeReason != nil {
+		object["sharpe_reason"], err = json.Marshal(a.SharpeReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_reason': %w", err)
+		}
+	}
+
+	object["total_commission_i64"], err = json.Marshal(a.TotalCommissionI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_commission_i64': %w", err)
+	}
+
+	object["total_return"], err = json.Marshal(a.TotalReturn)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_return': %w", err)
+	}
+
+	object["total_slippage_i64"], err = json.Marshal(a.TotalSlippageI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_slippage_i64': %w", err)
+	}
+
+	object["trade_count"], err = json.Marshal(a.TradeCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'trade_count': %w", err)
+	}
+
+	if a.TradingDayCount != nil {
+		object["trading_day_count"], err = json.Marshal(a.TradingDayCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'trading_day_count': %w", err)
+		}
+	}
+
+	object["win_rate"], err = json.Marshal(a.WinRate)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'win_rate': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for WalkForwardFoldResult_ValidationMetrics. Returns the specified
+// element and whether it was found
+func (a WalkForwardFoldResult_ValidationMetrics) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for WalkForwardFoldResult_ValidationMetrics
+func (a *WalkForwardFoldResult_ValidationMetrics) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for WalkForwardFoldResult_ValidationMetrics to handle AdditionalProperties
+func (a *WalkForwardFoldResult_ValidationMetrics) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["annualized_return"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return': %w", err)
+		}
+		delete(object, "annualized_return")
+	}
+
+	if raw, found := object["annualized_return_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturnReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return_reason': %w", err)
+		}
+		delete(object, "annualized_return_reason")
+	}
+
+	if raw, found := object["annualized_volatility"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatility)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility': %w", err)
+		}
+		delete(object, "annualized_volatility")
+	}
+
+	if raw, found := object["annualized_volatility_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatilityReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility_reason': %w", err)
+		}
+		delete(object, "annualized_volatility_reason")
+	}
+
+	if raw, found := object["average_loss_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageLossI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_loss_i64': %w", err)
+		}
+		delete(object, "average_loss_i64")
+	}
+
+	if raw, found := object["average_win_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageWinI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_win_i64': %w", err)
+		}
+		delete(object, "average_win_i64")
+	}
+
+	if raw, found := object["daily_return_count"]; found {
+		err = json.Unmarshal(raw, &a.DailyReturnCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'daily_return_count': %w", err)
+		}
+		delete(object, "daily_return_count")
+	}
+
+	if raw, found := object["expectancy_i64"]; found {
+		err = json.Unmarshal(raw, &a.ExpectancyI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'expectancy_i64': %w", err)
+		}
+		delete(object, "expectancy_i64")
+	}
+
+	if raw, found := object["fill_rate"]; found {
+		err = json.Unmarshal(raw, &a.FillRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'fill_rate': %w", err)
+		}
+		delete(object, "fill_rate")
+	}
+
+	if raw, found := object["filled_quantity"]; found {
+		err = json.Unmarshal(raw, &a.FilledQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'filled_quantity': %w", err)
+		}
+		delete(object, "filled_quantity")
+	}
+
+	if raw, found := object["max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.MaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'max_drawdown': %w", err)
+		}
+		delete(object, "max_drawdown")
+	}
+
+	if raw, found := object["profit_factor"]; found {
+		err = json.Unmarshal(raw, &a.ProfitFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_factor': %w", err)
+		}
+		delete(object, "profit_factor")
+	}
+
+	if raw, found := object["profit_loss_ratio"]; found {
+		err = json.Unmarshal(raw, &a.ProfitLossRatio)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_loss_ratio': %w", err)
+		}
+		delete(object, "profit_loss_ratio")
+	}
+
+	if raw, found := object["request_id"]; found {
+		err = json.Unmarshal(raw, &a.RequestId)
+		if err != nil {
+			return fmt.Errorf("error reading 'request_id': %w", err)
+		}
+		delete(object, "request_id")
+	}
+
+	if raw, found := object["requested_quantity"]; found {
+		err = json.Unmarshal(raw, &a.RequestedQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'requested_quantity': %w", err)
+		}
+		delete(object, "requested_quantity")
+	}
+
+	if raw, found := object["risk_approved_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskApprovedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_approved_count': %w", err)
+		}
+		delete(object, "risk_approved_count")
+	}
+
+	if raw, found := object["risk_blocked_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskBlockedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_blocked_count': %w", err)
+		}
+		delete(object, "risk_blocked_count")
+	}
+
+	if raw, found := object["risk_kill_switch_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskKillSwitchCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_kill_switch_count': %w", err)
+		}
+		delete(object, "risk_kill_switch_count")
+	}
+
+	if raw, found := object["risk_reduced_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskReducedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_reduced_count': %w", err)
+		}
+		delete(object, "risk_reduced_count")
+	}
+
+	if raw, found := object["run_id"]; found {
+		err = json.Unmarshal(raw, &a.RunId)
+		if err != nil {
+			return fmt.Errorf("error reading 'run_id': %w", err)
+		}
+		delete(object, "run_id")
+	}
+
+	if raw, found := object["sharpe"]; found {
+		err = json.Unmarshal(raw, &a.Sharpe)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe': %w", err)
+		}
+		delete(object, "sharpe")
+	}
+
+	if raw, found := object["sharpe_annualization_factor"]; found {
+		err = json.Unmarshal(raw, &a.SharpeAnnualizationFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_annualization_factor': %w", err)
+		}
+		delete(object, "sharpe_annualization_factor")
+	}
+
+	if raw, found := object["sharpe_reason"]; found {
+		err = json.Unmarshal(raw, &a.SharpeReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_reason': %w", err)
+		}
+		delete(object, "sharpe_reason")
+	}
+
+	if raw, found := object["total_commission_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalCommissionI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_commission_i64': %w", err)
+		}
+		delete(object, "total_commission_i64")
+	}
+
+	if raw, found := object["total_return"]; found {
+		err = json.Unmarshal(raw, &a.TotalReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_return': %w", err)
+		}
+		delete(object, "total_return")
+	}
+
+	if raw, found := object["total_slippage_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalSlippageI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_slippage_i64': %w", err)
+		}
+		delete(object, "total_slippage_i64")
+	}
+
+	if raw, found := object["trade_count"]; found {
+		err = json.Unmarshal(raw, &a.TradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trade_count': %w", err)
+		}
+		delete(object, "trade_count")
+	}
+
+	if raw, found := object["trading_day_count"]; found {
+		err = json.Unmarshal(raw, &a.TradingDayCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trading_day_count': %w", err)
+		}
+		delete(object, "trading_day_count")
+	}
+
+	if raw, found := object["win_rate"]; found {
+		err = json.Unmarshal(raw, &a.WinRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'win_rate': %w", err)
+		}
+		delete(object, "win_rate")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for WalkForwardFoldResult_ValidationMetrics to handle AdditionalProperties
+func (a WalkForwardFoldResult_ValidationMetrics) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AnnualizedReturn != nil {
+		object["annualized_return"], err = json.Marshal(a.AnnualizedReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return': %w", err)
+		}
+	}
+
+	if a.AnnualizedReturnReason != nil {
+		object["annualized_return_reason"], err = json.Marshal(a.AnnualizedReturnReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return_reason': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatility != nil {
+		object["annualized_volatility"], err = json.Marshal(a.AnnualizedVolatility)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatilityReason != nil {
+		object["annualized_volatility_reason"], err = json.Marshal(a.AnnualizedVolatilityReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility_reason': %w", err)
+		}
+	}
+
+	if a.AverageLossI64 != nil {
+		object["average_loss_i64"], err = json.Marshal(a.AverageLossI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_loss_i64': %w", err)
+		}
+	}
+
+	if a.AverageWinI64 != nil {
+		object["average_win_i64"], err = json.Marshal(a.AverageWinI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_win_i64': %w", err)
+		}
+	}
+
+	if a.DailyReturnCount != nil {
+		object["daily_return_count"], err = json.Marshal(a.DailyReturnCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'daily_return_count': %w", err)
+		}
+	}
+
+	if a.ExpectancyI64 != nil {
+		object["expectancy_i64"], err = json.Marshal(a.ExpectancyI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'expectancy_i64': %w", err)
+		}
+	}
+
+	if a.FillRate != nil {
+		object["fill_rate"], err = json.Marshal(a.FillRate)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'fill_rate': %w", err)
+		}
+	}
+
+	if a.FilledQuantity != nil {
+		object["filled_quantity"], err = json.Marshal(a.FilledQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'filled_quantity': %w", err)
+		}
+	}
+
+	object["max_drawdown"], err = json.Marshal(a.MaxDrawdown)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'max_drawdown': %w", err)
+	}
+
+	if a.ProfitFactor != nil {
+		object["profit_factor"], err = json.Marshal(a.ProfitFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_factor': %w", err)
+		}
+	}
+
+	if a.ProfitLossRatio != nil {
+		object["profit_loss_ratio"], err = json.Marshal(a.ProfitLossRatio)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_loss_ratio': %w", err)
+		}
+	}
+
+	object["request_id"], err = json.Marshal(a.RequestId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'request_id': %w", err)
+	}
+
+	if a.RequestedQuantity != nil {
+		object["requested_quantity"], err = json.Marshal(a.RequestedQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'requested_quantity': %w", err)
+		}
+	}
+
+	object["risk_approved_count"], err = json.Marshal(a.RiskApprovedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_approved_count': %w", err)
+	}
+
+	object["risk_blocked_count"], err = json.Marshal(a.RiskBlockedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_blocked_count': %w", err)
+	}
+
+	object["risk_kill_switch_count"], err = json.Marshal(a.RiskKillSwitchCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_kill_switch_count': %w", err)
+	}
+
+	object["risk_reduced_count"], err = json.Marshal(a.RiskReducedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_reduced_count': %w", err)
+	}
+
+	object["run_id"], err = json.Marshal(a.RunId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'run_id': %w", err)
+	}
+
+	if a.Sharpe != nil {
+		object["sharpe"], err = json.Marshal(a.Sharpe)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe': %w", err)
+		}
+	}
+
+	if a.SharpeAnnualizationFactor != nil {
+		object["sharpe_annualization_factor"], err = json.Marshal(a.SharpeAnnualizationFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_annualization_factor': %w", err)
+		}
+	}
+
+	if a.SharpeReason != nil {
+		object["sharpe_reason"], err = json.Marshal(a.SharpeReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_reason': %w", err)
+		}
+	}
+
+	object["total_commission_i64"], err = json.Marshal(a.TotalCommissionI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_commission_i64': %w", err)
+	}
+
+	object["total_return"], err = json.Marshal(a.TotalReturn)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_return': %w", err)
+	}
+
+	object["total_slippage_i64"], err = json.Marshal(a.TotalSlippageI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_slippage_i64': %w", err)
+	}
+
+	object["trade_count"], err = json.Marshal(a.TradeCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'trade_count': %w", err)
+	}
+
+	if a.TradingDayCount != nil {
+		object["trading_day_count"], err = json.Marshal(a.TradingDayCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'trading_day_count': %w", err)
+		}
 	}
 
 	object["win_rate"], err = json.Marshal(a.WinRate)
@@ -6556,6 +13848,30 @@ func (a *GetBacktestSummary200JSONResponseBody) UnmarshalJSON(b []byte) error {
 		delete(object, "annualized_return")
 	}
 
+	if raw, found := object["annualized_return_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturnReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return_reason': %w", err)
+		}
+		delete(object, "annualized_return_reason")
+	}
+
+	if raw, found := object["annualized_volatility"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatility)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility': %w", err)
+		}
+		delete(object, "annualized_volatility")
+	}
+
+	if raw, found := object["annualized_volatility_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatilityReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility_reason': %w", err)
+		}
+		delete(object, "annualized_volatility_reason")
+	}
+
 	if raw, found := object["average_loss_i64"]; found {
 		err = json.Unmarshal(raw, &a.AverageLossI64)
 		if err != nil {
@@ -6572,12 +13888,36 @@ func (a *GetBacktestSummary200JSONResponseBody) UnmarshalJSON(b []byte) error {
 		delete(object, "average_win_i64")
 	}
 
+	if raw, found := object["daily_return_count"]; found {
+		err = json.Unmarshal(raw, &a.DailyReturnCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'daily_return_count': %w", err)
+		}
+		delete(object, "daily_return_count")
+	}
+
 	if raw, found := object["expectancy_i64"]; found {
 		err = json.Unmarshal(raw, &a.ExpectancyI64)
 		if err != nil {
 			return fmt.Errorf("error reading 'expectancy_i64': %w", err)
 		}
 		delete(object, "expectancy_i64")
+	}
+
+	if raw, found := object["fill_rate"]; found {
+		err = json.Unmarshal(raw, &a.FillRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'fill_rate': %w", err)
+		}
+		delete(object, "fill_rate")
+	}
+
+	if raw, found := object["filled_quantity"]; found {
+		err = json.Unmarshal(raw, &a.FilledQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'filled_quantity': %w", err)
+		}
+		delete(object, "filled_quantity")
 	}
 
 	if raw, found := object["max_drawdown"]; found {
@@ -6610,6 +13950,14 @@ func (a *GetBacktestSummary200JSONResponseBody) UnmarshalJSON(b []byte) error {
 			return fmt.Errorf("error reading 'request_id': %w", err)
 		}
 		delete(object, "request_id")
+	}
+
+	if raw, found := object["requested_quantity"]; found {
+		err = json.Unmarshal(raw, &a.RequestedQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'requested_quantity': %w", err)
+		}
+		delete(object, "requested_quantity")
 	}
 
 	if raw, found := object["risk_approved_count"]; found {
@@ -6660,6 +14008,22 @@ func (a *GetBacktestSummary200JSONResponseBody) UnmarshalJSON(b []byte) error {
 		delete(object, "sharpe")
 	}
 
+	if raw, found := object["sharpe_annualization_factor"]; found {
+		err = json.Unmarshal(raw, &a.SharpeAnnualizationFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_annualization_factor': %w", err)
+		}
+		delete(object, "sharpe_annualization_factor")
+	}
+
+	if raw, found := object["sharpe_reason"]; found {
+		err = json.Unmarshal(raw, &a.SharpeReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_reason': %w", err)
+		}
+		delete(object, "sharpe_reason")
+	}
+
 	if raw, found := object["total_commission_i64"]; found {
 		err = json.Unmarshal(raw, &a.TotalCommissionI64)
 		if err != nil {
@@ -6690,6 +14054,14 @@ func (a *GetBacktestSummary200JSONResponseBody) UnmarshalJSON(b []byte) error {
 			return fmt.Errorf("error reading 'trade_count': %w", err)
 		}
 		delete(object, "trade_count")
+	}
+
+	if raw, found := object["trading_day_count"]; found {
+		err = json.Unmarshal(raw, &a.TradingDayCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trading_day_count': %w", err)
+		}
+		delete(object, "trading_day_count")
 	}
 
 	if raw, found := object["win_rate"]; found {
@@ -6726,6 +14098,27 @@ func (a GetBacktestSummary200JSONResponseBody) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	if a.AnnualizedReturnReason != nil {
+		object["annualized_return_reason"], err = json.Marshal(a.AnnualizedReturnReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return_reason': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatility != nil {
+		object["annualized_volatility"], err = json.Marshal(a.AnnualizedVolatility)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatilityReason != nil {
+		object["annualized_volatility_reason"], err = json.Marshal(a.AnnualizedVolatilityReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility_reason': %w", err)
+		}
+	}
+
 	if a.AverageLossI64 != nil {
 		object["average_loss_i64"], err = json.Marshal(a.AverageLossI64)
 		if err != nil {
@@ -6740,10 +14133,31 @@ func (a GetBacktestSummary200JSONResponseBody) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	if a.DailyReturnCount != nil {
+		object["daily_return_count"], err = json.Marshal(a.DailyReturnCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'daily_return_count': %w", err)
+		}
+	}
+
 	if a.ExpectancyI64 != nil {
 		object["expectancy_i64"], err = json.Marshal(a.ExpectancyI64)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'expectancy_i64': %w", err)
+		}
+	}
+
+	if a.FillRate != nil {
+		object["fill_rate"], err = json.Marshal(a.FillRate)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'fill_rate': %w", err)
+		}
+	}
+
+	if a.FilledQuantity != nil {
+		object["filled_quantity"], err = json.Marshal(a.FilledQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'filled_quantity': %w", err)
 		}
 	}
 
@@ -6769,6 +14183,13 @@ func (a GetBacktestSummary200JSONResponseBody) MarshalJSON() ([]byte, error) {
 	object["request_id"], err = json.Marshal(a.RequestId)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'request_id': %w", err)
+	}
+
+	if a.RequestedQuantity != nil {
+		object["requested_quantity"], err = json.Marshal(a.RequestedQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'requested_quantity': %w", err)
+		}
 	}
 
 	object["risk_approved_count"], err = json.Marshal(a.RiskApprovedCount)
@@ -6803,6 +14224,20 @@ func (a GetBacktestSummary200JSONResponseBody) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	if a.SharpeAnnualizationFactor != nil {
+		object["sharpe_annualization_factor"], err = json.Marshal(a.SharpeAnnualizationFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_annualization_factor': %w", err)
+		}
+	}
+
+	if a.SharpeReason != nil {
+		object["sharpe_reason"], err = json.Marshal(a.SharpeReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_reason': %w", err)
+		}
+	}
+
 	object["total_commission_i64"], err = json.Marshal(a.TotalCommissionI64)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'total_commission_i64': %w", err)
@@ -6821,6 +14256,13 @@ func (a GetBacktestSummary200JSONResponseBody) MarshalJSON() ([]byte, error) {
 	object["trade_count"], err = json.Marshal(a.TradeCount)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'trade_count': %w", err)
+	}
+
+	if a.TradingDayCount != nil {
+		object["trading_day_count"], err = json.Marshal(a.TradingDayCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'trading_day_count': %w", err)
+		}
 	}
 
 	object["win_rate"], err = json.Marshal(a.WinRate)
@@ -7294,25 +14736,25 @@ func (a IngestClientLogsJSONBody_Events_Item) MarshalJSON() ([]byte, error) {
 	return json.Marshal(object)
 }
 
-// Getter for additional properties for GetStrategyComparisonResults200JSONResponseBody_Items_Summary. Returns the specified
+// Getter for additional properties for GetResearchStudyResults200JSONResponseBody_Aggregate. Returns the specified
 // element and whether it was found
-func (a GetStrategyComparisonResults200JSONResponseBody_Items_Summary) Get(fieldName string) (value interface{}, found bool) {
+func (a GetResearchStudyResults200JSONResponseBody_Aggregate) Get(fieldName string) (value interface{}, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
 	return
 }
 
-// Setter for additional properties for GetStrategyComparisonResults200JSONResponseBody_Items_Summary
-func (a *GetStrategyComparisonResults200JSONResponseBody_Items_Summary) Set(fieldName string, value interface{}) {
+// Setter for additional properties for GetResearchStudyResults200JSONResponseBody_Aggregate
+func (a *GetResearchStudyResults200JSONResponseBody_Aggregate) Set(fieldName string, value interface{}) {
 	if a.AdditionalProperties == nil {
 		a.AdditionalProperties = make(map[string]interface{})
 	}
 	a.AdditionalProperties[fieldName] = value
 }
 
-// Override default JSON handling for GetStrategyComparisonResults200JSONResponseBody_Items_Summary to handle AdditionalProperties
-func (a *GetStrategyComparisonResults200JSONResponseBody_Items_Summary) UnmarshalJSON(b []byte) error {
+// Override default JSON handling for GetResearchStudyResults200JSONResponseBody_Aggregate to handle AdditionalProperties
+func (a *GetResearchStudyResults200JSONResponseBody_Aggregate) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
 	err := json.Unmarshal(b, &object)
 	if err != nil {
@@ -7325,6 +14767,549 @@ func (a *GetStrategyComparisonResults200JSONResponseBody_Items_Summary) Unmarsha
 			return fmt.Errorf("error reading 'annualized_return': %w", err)
 		}
 		delete(object, "annualized_return")
+	}
+
+	if raw, found := object["annualized_volatility"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatility)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility': %w", err)
+		}
+		delete(object, "annualized_volatility")
+	}
+
+	if raw, found := object["attempted_parameter_combinations"]; found {
+		err = json.Unmarshal(raw, &a.AttemptedParameterCombinations)
+		if err != nil {
+			return fmt.Errorf("error reading 'attempted_parameter_combinations': %w", err)
+		}
+		delete(object, "attempted_parameter_combinations")
+	}
+
+	if raw, found := object["certification"]; found {
+		err = json.Unmarshal(raw, &a.Certification)
+		if err != nil {
+			return fmt.Errorf("error reading 'certification': %w", err)
+		}
+		delete(object, "certification")
+	}
+
+	if raw, found := object["certification_trade_count"]; found {
+		err = json.Unmarshal(raw, &a.CertificationTradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'certification_trade_count': %w", err)
+		}
+		delete(object, "certification_trade_count")
+	}
+
+	if raw, found := object["completed_dataset_count"]; found {
+		err = json.Unmarshal(raw, &a.CompletedDatasetCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'completed_dataset_count': %w", err)
+		}
+		delete(object, "completed_dataset_count")
+	}
+
+	if raw, found := object["completed_walk_forward_fold_count"]; found {
+		err = json.Unmarshal(raw, &a.CompletedWalkForwardFoldCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'completed_walk_forward_fold_count': %w", err)
+		}
+		delete(object, "completed_walk_forward_fold_count")
+	}
+
+	if raw, found := object["daily_return_count"]; found {
+		err = json.Unmarshal(raw, &a.DailyReturnCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'daily_return_count': %w", err)
+		}
+		delete(object, "daily_return_count")
+	}
+
+	if raw, found := object["data_status"]; found {
+		err = json.Unmarshal(raw, &a.DataStatus)
+		if err != nil {
+			return fmt.Errorf("error reading 'data_status': %w", err)
+		}
+		delete(object, "data_status")
+	}
+
+	if raw, found := object["eligible_independence_group_count"]; found {
+		err = json.Unmarshal(raw, &a.EligibleIndependenceGroupCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'eligible_independence_group_count': %w", err)
+		}
+		delete(object, "eligible_independence_group_count")
+	}
+
+	if raw, found := object["failed_dataset_count"]; found {
+		err = json.Unmarshal(raw, &a.FailedDatasetCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'failed_dataset_count': %w", err)
+		}
+		delete(object, "failed_dataset_count")
+	}
+
+	if raw, found := object["first_failure_scenario"]; found {
+		err = json.Unmarshal(raw, &a.FirstFailureScenario)
+		if err != nil {
+			return fmt.Errorf("error reading 'first_failure_scenario': %w", err)
+		}
+		delete(object, "first_failure_scenario")
+	}
+
+	if raw, found := object["independence_group_count"]; found {
+		err = json.Unmarshal(raw, &a.IndependenceGroupCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'independence_group_count': %w", err)
+		}
+		delete(object, "independence_group_count")
+	}
+
+	if raw, found := object["max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.MaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'max_drawdown': %w", err)
+		}
+		delete(object, "max_drawdown")
+	}
+
+	if raw, found := object["median_dataset_return"]; found {
+		err = json.Unmarshal(raw, &a.MedianDatasetReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'median_dataset_return': %w", err)
+		}
+		delete(object, "median_dataset_return")
+	}
+
+	if raw, found := object["minimum_completed_folds_per_group"]; found {
+		err = json.Unmarshal(raw, &a.MinimumCompletedFoldsPerGroup)
+		if err != nil {
+			return fmt.Errorf("error reading 'minimum_completed_folds_per_group': %w", err)
+		}
+		delete(object, "minimum_completed_folds_per_group")
+	}
+
+	if raw, found := object["minimum_studied_trading_days_per_group"]; found {
+		err = json.Unmarshal(raw, &a.MinimumStudiedTradingDaysPerGroup)
+		if err != nil {
+			return fmt.Errorf("error reading 'minimum_studied_trading_days_per_group': %w", err)
+		}
+		delete(object, "minimum_studied_trading_days_per_group")
+	}
+
+	if raw, found := object["out_of_sample_expectancy_i64"]; found {
+		err = json.Unmarshal(raw, &a.OutOfSampleExpectancyI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'out_of_sample_expectancy_i64': %w", err)
+		}
+		delete(object, "out_of_sample_expectancy_i64")
+	}
+
+	if raw, found := object["out_of_sample_trade_count"]; found {
+		err = json.Unmarshal(raw, &a.OutOfSampleTradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'out_of_sample_trade_count': %w", err)
+		}
+		delete(object, "out_of_sample_trade_count")
+	}
+
+	if raw, found := object["parameter_stability"]; found {
+		err = json.Unmarshal(raw, &a.ParameterStability)
+		if err != nil {
+			return fmt.Errorf("error reading 'parameter_stability': %w", err)
+		}
+		delete(object, "parameter_stability")
+	}
+
+	if raw, found := object["profitable_dataset_ratio"]; found {
+		err = json.Unmarshal(raw, &a.ProfitableDatasetRatio)
+		if err != nil {
+			return fmt.Errorf("error reading 'profitable_dataset_ratio': %w", err)
+		}
+		delete(object, "profitable_dataset_ratio")
+	}
+
+	if raw, found := object["profitable_fold_ratio"]; found {
+		err = json.Unmarshal(raw, &a.ProfitableFoldRatio)
+		if err != nil {
+			return fmt.Errorf("error reading 'profitable_fold_ratio': %w", err)
+		}
+		delete(object, "profitable_fold_ratio")
+	}
+
+	if raw, found := object["sharpe"]; found {
+		err = json.Unmarshal(raw, &a.Sharpe)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe': %w", err)
+		}
+		delete(object, "sharpe")
+	}
+
+	if raw, found := object["statistical_evidence"]; found {
+		err = json.Unmarshal(raw, &a.StatisticalEvidence)
+		if err != nil {
+			return fmt.Errorf("error reading 'statistical_evidence': %w", err)
+		}
+		delete(object, "statistical_evidence")
+	}
+
+	if raw, found := object["stress_scenarios"]; found {
+		err = json.Unmarshal(raw, &a.StressScenarios)
+		if err != nil {
+			return fmt.Errorf("error reading 'stress_scenarios': %w", err)
+		}
+		delete(object, "stress_scenarios")
+	}
+
+	if raw, found := object["total_return"]; found {
+		err = json.Unmarshal(raw, &a.TotalReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_return': %w", err)
+		}
+		delete(object, "total_return")
+	}
+
+	if raw, found := object["total_trade_count"]; found {
+		err = json.Unmarshal(raw, &a.TotalTradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_trade_count': %w", err)
+		}
+		delete(object, "total_trade_count")
+	}
+
+	if raw, found := object["walk_forward_fold_count"]; found {
+		err = json.Unmarshal(raw, &a.WalkForwardFoldCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'walk_forward_fold_count': %w", err)
+		}
+		delete(object, "walk_forward_fold_count")
+	}
+
+	if raw, found := object["worst_dataset_id"]; found {
+		err = json.Unmarshal(raw, &a.WorstDatasetId)
+		if err != nil {
+			return fmt.Errorf("error reading 'worst_dataset_id': %w", err)
+		}
+		delete(object, "worst_dataset_id")
+	}
+
+	if raw, found := object["worst_dataset_max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.WorstDatasetMaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'worst_dataset_max_drawdown': %w", err)
+		}
+		delete(object, "worst_dataset_max_drawdown")
+	}
+
+	if raw, found := object["worst_dataset_return"]; found {
+		err = json.Unmarshal(raw, &a.WorstDatasetReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'worst_dataset_return': %w", err)
+		}
+		delete(object, "worst_dataset_return")
+	}
+
+	if raw, found := object["worst_fold_max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.WorstFoldMaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'worst_fold_max_drawdown': %w", err)
+		}
+		delete(object, "worst_fold_max_drawdown")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for GetResearchStudyResults200JSONResponseBody_Aggregate to handle AdditionalProperties
+func (a GetResearchStudyResults200JSONResponseBody_Aggregate) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AnnualizedReturn != nil {
+		object["annualized_return"], err = json.Marshal(a.AnnualizedReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatility != nil {
+		object["annualized_volatility"], err = json.Marshal(a.AnnualizedVolatility)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility': %w", err)
+		}
+	}
+
+	if a.AttemptedParameterCombinations != nil {
+		object["attempted_parameter_combinations"], err = json.Marshal(a.AttemptedParameterCombinations)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'attempted_parameter_combinations': %w", err)
+		}
+	}
+
+	if a.Certification != nil {
+		object["certification"], err = json.Marshal(a.Certification)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'certification': %w", err)
+		}
+	}
+
+	if a.CertificationTradeCount != nil {
+		object["certification_trade_count"], err = json.Marshal(a.CertificationTradeCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'certification_trade_count': %w", err)
+		}
+	}
+
+	object["completed_dataset_count"], err = json.Marshal(a.CompletedDatasetCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'completed_dataset_count': %w", err)
+	}
+
+	if a.CompletedWalkForwardFoldCount != nil {
+		object["completed_walk_forward_fold_count"], err = json.Marshal(a.CompletedWalkForwardFoldCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'completed_walk_forward_fold_count': %w", err)
+		}
+	}
+
+	object["daily_return_count"], err = json.Marshal(a.DailyReturnCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'daily_return_count': %w", err)
+	}
+
+	object["data_status"], err = json.Marshal(a.DataStatus)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'data_status': %w", err)
+	}
+
+	object["eligible_independence_group_count"], err = json.Marshal(a.EligibleIndependenceGroupCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'eligible_independence_group_count': %w", err)
+	}
+
+	object["failed_dataset_count"], err = json.Marshal(a.FailedDatasetCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'failed_dataset_count': %w", err)
+	}
+
+	if a.FirstFailureScenario != nil {
+		object["first_failure_scenario"], err = json.Marshal(a.FirstFailureScenario)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'first_failure_scenario': %w", err)
+		}
+	}
+
+	object["independence_group_count"], err = json.Marshal(a.IndependenceGroupCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'independence_group_count': %w", err)
+	}
+
+	if a.MaxDrawdown != nil {
+		object["max_drawdown"], err = json.Marshal(a.MaxDrawdown)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'max_drawdown': %w", err)
+		}
+	}
+
+	if a.MedianDatasetReturn != nil {
+		object["median_dataset_return"], err = json.Marshal(a.MedianDatasetReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'median_dataset_return': %w", err)
+		}
+	}
+
+	if a.MinimumCompletedFoldsPerGroup != nil {
+		object["minimum_completed_folds_per_group"], err = json.Marshal(a.MinimumCompletedFoldsPerGroup)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'minimum_completed_folds_per_group': %w", err)
+		}
+	}
+
+	if a.MinimumStudiedTradingDaysPerGroup != nil {
+		object["minimum_studied_trading_days_per_group"], err = json.Marshal(a.MinimumStudiedTradingDaysPerGroup)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'minimum_studied_trading_days_per_group': %w", err)
+		}
+	}
+
+	if a.OutOfSampleExpectancyI64 != nil {
+		object["out_of_sample_expectancy_i64"], err = json.Marshal(a.OutOfSampleExpectancyI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'out_of_sample_expectancy_i64': %w", err)
+		}
+	}
+
+	if a.OutOfSampleTradeCount != nil {
+		object["out_of_sample_trade_count"], err = json.Marshal(a.OutOfSampleTradeCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'out_of_sample_trade_count': %w", err)
+		}
+	}
+
+	if a.ParameterStability != nil {
+		object["parameter_stability"], err = json.Marshal(a.ParameterStability)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'parameter_stability': %w", err)
+		}
+	}
+
+	if a.ProfitableDatasetRatio != nil {
+		object["profitable_dataset_ratio"], err = json.Marshal(a.ProfitableDatasetRatio)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profitable_dataset_ratio': %w", err)
+		}
+	}
+
+	if a.ProfitableFoldRatio != nil {
+		object["profitable_fold_ratio"], err = json.Marshal(a.ProfitableFoldRatio)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profitable_fold_ratio': %w", err)
+		}
+	}
+
+	if a.Sharpe != nil {
+		object["sharpe"], err = json.Marshal(a.Sharpe)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe': %w", err)
+		}
+	}
+
+	if a.StatisticalEvidence != nil {
+		object["statistical_evidence"], err = json.Marshal(a.StatisticalEvidence)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'statistical_evidence': %w", err)
+		}
+	}
+
+	if a.StressScenarios != nil {
+		object["stress_scenarios"], err = json.Marshal(a.StressScenarios)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'stress_scenarios': %w", err)
+		}
+	}
+
+	if a.TotalReturn != nil {
+		object["total_return"], err = json.Marshal(a.TotalReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'total_return': %w", err)
+		}
+	}
+
+	object["total_trade_count"], err = json.Marshal(a.TotalTradeCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_trade_count': %w", err)
+	}
+
+	if a.WalkForwardFoldCount != nil {
+		object["walk_forward_fold_count"], err = json.Marshal(a.WalkForwardFoldCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'walk_forward_fold_count': %w", err)
+		}
+	}
+
+	if a.WorstDatasetId != nil {
+		object["worst_dataset_id"], err = json.Marshal(a.WorstDatasetId)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'worst_dataset_id': %w", err)
+		}
+	}
+
+	if a.WorstDatasetMaxDrawdown != nil {
+		object["worst_dataset_max_drawdown"], err = json.Marshal(a.WorstDatasetMaxDrawdown)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'worst_dataset_max_drawdown': %w", err)
+		}
+	}
+
+	if a.WorstDatasetReturn != nil {
+		object["worst_dataset_return"], err = json.Marshal(a.WorstDatasetReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'worst_dataset_return': %w", err)
+		}
+	}
+
+	if a.WorstFoldMaxDrawdown != nil {
+		object["worst_fold_max_drawdown"], err = json.Marshal(a.WorstFoldMaxDrawdown)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'worst_fold_max_drawdown': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for GetResearchStudyResults200JSONResponseBody_Items_Folds_SelectedTrainMetrics. Returns the specified
+// element and whether it was found
+func (a GetResearchStudyResults200JSONResponseBody_Items_Folds_SelectedTrainMetrics) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for GetResearchStudyResults200JSONResponseBody_Items_Folds_SelectedTrainMetrics
+func (a *GetResearchStudyResults200JSONResponseBody_Items_Folds_SelectedTrainMetrics) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for GetResearchStudyResults200JSONResponseBody_Items_Folds_SelectedTrainMetrics to handle AdditionalProperties
+func (a *GetResearchStudyResults200JSONResponseBody_Items_Folds_SelectedTrainMetrics) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["annualized_return"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return': %w", err)
+		}
+		delete(object, "annualized_return")
+	}
+
+	if raw, found := object["annualized_return_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturnReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return_reason': %w", err)
+		}
+		delete(object, "annualized_return_reason")
+	}
+
+	if raw, found := object["annualized_volatility"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatility)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility': %w", err)
+		}
+		delete(object, "annualized_volatility")
+	}
+
+	if raw, found := object["annualized_volatility_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatilityReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility_reason': %w", err)
+		}
+		delete(object, "annualized_volatility_reason")
 	}
 
 	if raw, found := object["average_loss_i64"]; found {
@@ -7343,12 +15328,36 @@ func (a *GetStrategyComparisonResults200JSONResponseBody_Items_Summary) Unmarsha
 		delete(object, "average_win_i64")
 	}
 
+	if raw, found := object["daily_return_count"]; found {
+		err = json.Unmarshal(raw, &a.DailyReturnCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'daily_return_count': %w", err)
+		}
+		delete(object, "daily_return_count")
+	}
+
 	if raw, found := object["expectancy_i64"]; found {
 		err = json.Unmarshal(raw, &a.ExpectancyI64)
 		if err != nil {
 			return fmt.Errorf("error reading 'expectancy_i64': %w", err)
 		}
 		delete(object, "expectancy_i64")
+	}
+
+	if raw, found := object["fill_rate"]; found {
+		err = json.Unmarshal(raw, &a.FillRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'fill_rate': %w", err)
+		}
+		delete(object, "fill_rate")
+	}
+
+	if raw, found := object["filled_quantity"]; found {
+		err = json.Unmarshal(raw, &a.FilledQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'filled_quantity': %w", err)
+		}
+		delete(object, "filled_quantity")
 	}
 
 	if raw, found := object["max_drawdown"]; found {
@@ -7381,6 +15390,14 @@ func (a *GetStrategyComparisonResults200JSONResponseBody_Items_Summary) Unmarsha
 			return fmt.Errorf("error reading 'request_id': %w", err)
 		}
 		delete(object, "request_id")
+	}
+
+	if raw, found := object["requested_quantity"]; found {
+		err = json.Unmarshal(raw, &a.RequestedQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'requested_quantity': %w", err)
+		}
+		delete(object, "requested_quantity")
 	}
 
 	if raw, found := object["risk_approved_count"]; found {
@@ -7431,6 +15448,22 @@ func (a *GetStrategyComparisonResults200JSONResponseBody_Items_Summary) Unmarsha
 		delete(object, "sharpe")
 	}
 
+	if raw, found := object["sharpe_annualization_factor"]; found {
+		err = json.Unmarshal(raw, &a.SharpeAnnualizationFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_annualization_factor': %w", err)
+		}
+		delete(object, "sharpe_annualization_factor")
+	}
+
+	if raw, found := object["sharpe_reason"]; found {
+		err = json.Unmarshal(raw, &a.SharpeReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_reason': %w", err)
+		}
+		delete(object, "sharpe_reason")
+	}
+
 	if raw, found := object["total_commission_i64"]; found {
 		err = json.Unmarshal(raw, &a.TotalCommissionI64)
 		if err != nil {
@@ -7461,6 +15494,1406 @@ func (a *GetStrategyComparisonResults200JSONResponseBody_Items_Summary) Unmarsha
 			return fmt.Errorf("error reading 'trade_count': %w", err)
 		}
 		delete(object, "trade_count")
+	}
+
+	if raw, found := object["trading_day_count"]; found {
+		err = json.Unmarshal(raw, &a.TradingDayCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trading_day_count': %w", err)
+		}
+		delete(object, "trading_day_count")
+	}
+
+	if raw, found := object["win_rate"]; found {
+		err = json.Unmarshal(raw, &a.WinRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'win_rate': %w", err)
+		}
+		delete(object, "win_rate")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for GetResearchStudyResults200JSONResponseBody_Items_Folds_SelectedTrainMetrics to handle AdditionalProperties
+func (a GetResearchStudyResults200JSONResponseBody_Items_Folds_SelectedTrainMetrics) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AnnualizedReturn != nil {
+		object["annualized_return"], err = json.Marshal(a.AnnualizedReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return': %w", err)
+		}
+	}
+
+	if a.AnnualizedReturnReason != nil {
+		object["annualized_return_reason"], err = json.Marshal(a.AnnualizedReturnReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return_reason': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatility != nil {
+		object["annualized_volatility"], err = json.Marshal(a.AnnualizedVolatility)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatilityReason != nil {
+		object["annualized_volatility_reason"], err = json.Marshal(a.AnnualizedVolatilityReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility_reason': %w", err)
+		}
+	}
+
+	if a.AverageLossI64 != nil {
+		object["average_loss_i64"], err = json.Marshal(a.AverageLossI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_loss_i64': %w", err)
+		}
+	}
+
+	if a.AverageWinI64 != nil {
+		object["average_win_i64"], err = json.Marshal(a.AverageWinI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_win_i64': %w", err)
+		}
+	}
+
+	if a.DailyReturnCount != nil {
+		object["daily_return_count"], err = json.Marshal(a.DailyReturnCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'daily_return_count': %w", err)
+		}
+	}
+
+	if a.ExpectancyI64 != nil {
+		object["expectancy_i64"], err = json.Marshal(a.ExpectancyI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'expectancy_i64': %w", err)
+		}
+	}
+
+	if a.FillRate != nil {
+		object["fill_rate"], err = json.Marshal(a.FillRate)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'fill_rate': %w", err)
+		}
+	}
+
+	if a.FilledQuantity != nil {
+		object["filled_quantity"], err = json.Marshal(a.FilledQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'filled_quantity': %w", err)
+		}
+	}
+
+	object["max_drawdown"], err = json.Marshal(a.MaxDrawdown)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'max_drawdown': %w", err)
+	}
+
+	if a.ProfitFactor != nil {
+		object["profit_factor"], err = json.Marshal(a.ProfitFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_factor': %w", err)
+		}
+	}
+
+	if a.ProfitLossRatio != nil {
+		object["profit_loss_ratio"], err = json.Marshal(a.ProfitLossRatio)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_loss_ratio': %w", err)
+		}
+	}
+
+	object["request_id"], err = json.Marshal(a.RequestId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'request_id': %w", err)
+	}
+
+	if a.RequestedQuantity != nil {
+		object["requested_quantity"], err = json.Marshal(a.RequestedQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'requested_quantity': %w", err)
+		}
+	}
+
+	object["risk_approved_count"], err = json.Marshal(a.RiskApprovedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_approved_count': %w", err)
+	}
+
+	object["risk_blocked_count"], err = json.Marshal(a.RiskBlockedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_blocked_count': %w", err)
+	}
+
+	object["risk_kill_switch_count"], err = json.Marshal(a.RiskKillSwitchCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_kill_switch_count': %w", err)
+	}
+
+	object["risk_reduced_count"], err = json.Marshal(a.RiskReducedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_reduced_count': %w", err)
+	}
+
+	object["run_id"], err = json.Marshal(a.RunId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'run_id': %w", err)
+	}
+
+	if a.Sharpe != nil {
+		object["sharpe"], err = json.Marshal(a.Sharpe)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe': %w", err)
+		}
+	}
+
+	if a.SharpeAnnualizationFactor != nil {
+		object["sharpe_annualization_factor"], err = json.Marshal(a.SharpeAnnualizationFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_annualization_factor': %w", err)
+		}
+	}
+
+	if a.SharpeReason != nil {
+		object["sharpe_reason"], err = json.Marshal(a.SharpeReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_reason': %w", err)
+		}
+	}
+
+	object["total_commission_i64"], err = json.Marshal(a.TotalCommissionI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_commission_i64': %w", err)
+	}
+
+	object["total_return"], err = json.Marshal(a.TotalReturn)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_return': %w", err)
+	}
+
+	object["total_slippage_i64"], err = json.Marshal(a.TotalSlippageI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_slippage_i64': %w", err)
+	}
+
+	object["trade_count"], err = json.Marshal(a.TradeCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'trade_count': %w", err)
+	}
+
+	if a.TradingDayCount != nil {
+		object["trading_day_count"], err = json.Marshal(a.TradingDayCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'trading_day_count': %w", err)
+		}
+	}
+
+	object["win_rate"], err = json.Marshal(a.WinRate)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'win_rate': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for GetResearchStudyResults200JSONResponseBody_Items_Folds_ValidationMetrics. Returns the specified
+// element and whether it was found
+func (a GetResearchStudyResults200JSONResponseBody_Items_Folds_ValidationMetrics) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for GetResearchStudyResults200JSONResponseBody_Items_Folds_ValidationMetrics
+func (a *GetResearchStudyResults200JSONResponseBody_Items_Folds_ValidationMetrics) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for GetResearchStudyResults200JSONResponseBody_Items_Folds_ValidationMetrics to handle AdditionalProperties
+func (a *GetResearchStudyResults200JSONResponseBody_Items_Folds_ValidationMetrics) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["annualized_return"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return': %w", err)
+		}
+		delete(object, "annualized_return")
+	}
+
+	if raw, found := object["annualized_return_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturnReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return_reason': %w", err)
+		}
+		delete(object, "annualized_return_reason")
+	}
+
+	if raw, found := object["annualized_volatility"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatility)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility': %w", err)
+		}
+		delete(object, "annualized_volatility")
+	}
+
+	if raw, found := object["annualized_volatility_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatilityReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility_reason': %w", err)
+		}
+		delete(object, "annualized_volatility_reason")
+	}
+
+	if raw, found := object["average_loss_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageLossI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_loss_i64': %w", err)
+		}
+		delete(object, "average_loss_i64")
+	}
+
+	if raw, found := object["average_win_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageWinI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_win_i64': %w", err)
+		}
+		delete(object, "average_win_i64")
+	}
+
+	if raw, found := object["daily_return_count"]; found {
+		err = json.Unmarshal(raw, &a.DailyReturnCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'daily_return_count': %w", err)
+		}
+		delete(object, "daily_return_count")
+	}
+
+	if raw, found := object["expectancy_i64"]; found {
+		err = json.Unmarshal(raw, &a.ExpectancyI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'expectancy_i64': %w", err)
+		}
+		delete(object, "expectancy_i64")
+	}
+
+	if raw, found := object["fill_rate"]; found {
+		err = json.Unmarshal(raw, &a.FillRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'fill_rate': %w", err)
+		}
+		delete(object, "fill_rate")
+	}
+
+	if raw, found := object["filled_quantity"]; found {
+		err = json.Unmarshal(raw, &a.FilledQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'filled_quantity': %w", err)
+		}
+		delete(object, "filled_quantity")
+	}
+
+	if raw, found := object["max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.MaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'max_drawdown': %w", err)
+		}
+		delete(object, "max_drawdown")
+	}
+
+	if raw, found := object["profit_factor"]; found {
+		err = json.Unmarshal(raw, &a.ProfitFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_factor': %w", err)
+		}
+		delete(object, "profit_factor")
+	}
+
+	if raw, found := object["profit_loss_ratio"]; found {
+		err = json.Unmarshal(raw, &a.ProfitLossRatio)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_loss_ratio': %w", err)
+		}
+		delete(object, "profit_loss_ratio")
+	}
+
+	if raw, found := object["request_id"]; found {
+		err = json.Unmarshal(raw, &a.RequestId)
+		if err != nil {
+			return fmt.Errorf("error reading 'request_id': %w", err)
+		}
+		delete(object, "request_id")
+	}
+
+	if raw, found := object["requested_quantity"]; found {
+		err = json.Unmarshal(raw, &a.RequestedQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'requested_quantity': %w", err)
+		}
+		delete(object, "requested_quantity")
+	}
+
+	if raw, found := object["risk_approved_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskApprovedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_approved_count': %w", err)
+		}
+		delete(object, "risk_approved_count")
+	}
+
+	if raw, found := object["risk_blocked_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskBlockedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_blocked_count': %w", err)
+		}
+		delete(object, "risk_blocked_count")
+	}
+
+	if raw, found := object["risk_kill_switch_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskKillSwitchCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_kill_switch_count': %w", err)
+		}
+		delete(object, "risk_kill_switch_count")
+	}
+
+	if raw, found := object["risk_reduced_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskReducedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_reduced_count': %w", err)
+		}
+		delete(object, "risk_reduced_count")
+	}
+
+	if raw, found := object["run_id"]; found {
+		err = json.Unmarshal(raw, &a.RunId)
+		if err != nil {
+			return fmt.Errorf("error reading 'run_id': %w", err)
+		}
+		delete(object, "run_id")
+	}
+
+	if raw, found := object["sharpe"]; found {
+		err = json.Unmarshal(raw, &a.Sharpe)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe': %w", err)
+		}
+		delete(object, "sharpe")
+	}
+
+	if raw, found := object["sharpe_annualization_factor"]; found {
+		err = json.Unmarshal(raw, &a.SharpeAnnualizationFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_annualization_factor': %w", err)
+		}
+		delete(object, "sharpe_annualization_factor")
+	}
+
+	if raw, found := object["sharpe_reason"]; found {
+		err = json.Unmarshal(raw, &a.SharpeReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_reason': %w", err)
+		}
+		delete(object, "sharpe_reason")
+	}
+
+	if raw, found := object["total_commission_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalCommissionI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_commission_i64': %w", err)
+		}
+		delete(object, "total_commission_i64")
+	}
+
+	if raw, found := object["total_return"]; found {
+		err = json.Unmarshal(raw, &a.TotalReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_return': %w", err)
+		}
+		delete(object, "total_return")
+	}
+
+	if raw, found := object["total_slippage_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalSlippageI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_slippage_i64': %w", err)
+		}
+		delete(object, "total_slippage_i64")
+	}
+
+	if raw, found := object["trade_count"]; found {
+		err = json.Unmarshal(raw, &a.TradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trade_count': %w", err)
+		}
+		delete(object, "trade_count")
+	}
+
+	if raw, found := object["trading_day_count"]; found {
+		err = json.Unmarshal(raw, &a.TradingDayCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trading_day_count': %w", err)
+		}
+		delete(object, "trading_day_count")
+	}
+
+	if raw, found := object["win_rate"]; found {
+		err = json.Unmarshal(raw, &a.WinRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'win_rate': %w", err)
+		}
+		delete(object, "win_rate")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for GetResearchStudyResults200JSONResponseBody_Items_Folds_ValidationMetrics to handle AdditionalProperties
+func (a GetResearchStudyResults200JSONResponseBody_Items_Folds_ValidationMetrics) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AnnualizedReturn != nil {
+		object["annualized_return"], err = json.Marshal(a.AnnualizedReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return': %w", err)
+		}
+	}
+
+	if a.AnnualizedReturnReason != nil {
+		object["annualized_return_reason"], err = json.Marshal(a.AnnualizedReturnReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return_reason': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatility != nil {
+		object["annualized_volatility"], err = json.Marshal(a.AnnualizedVolatility)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatilityReason != nil {
+		object["annualized_volatility_reason"], err = json.Marshal(a.AnnualizedVolatilityReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility_reason': %w", err)
+		}
+	}
+
+	if a.AverageLossI64 != nil {
+		object["average_loss_i64"], err = json.Marshal(a.AverageLossI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_loss_i64': %w", err)
+		}
+	}
+
+	if a.AverageWinI64 != nil {
+		object["average_win_i64"], err = json.Marshal(a.AverageWinI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_win_i64': %w", err)
+		}
+	}
+
+	if a.DailyReturnCount != nil {
+		object["daily_return_count"], err = json.Marshal(a.DailyReturnCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'daily_return_count': %w", err)
+		}
+	}
+
+	if a.ExpectancyI64 != nil {
+		object["expectancy_i64"], err = json.Marshal(a.ExpectancyI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'expectancy_i64': %w", err)
+		}
+	}
+
+	if a.FillRate != nil {
+		object["fill_rate"], err = json.Marshal(a.FillRate)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'fill_rate': %w", err)
+		}
+	}
+
+	if a.FilledQuantity != nil {
+		object["filled_quantity"], err = json.Marshal(a.FilledQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'filled_quantity': %w", err)
+		}
+	}
+
+	object["max_drawdown"], err = json.Marshal(a.MaxDrawdown)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'max_drawdown': %w", err)
+	}
+
+	if a.ProfitFactor != nil {
+		object["profit_factor"], err = json.Marshal(a.ProfitFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_factor': %w", err)
+		}
+	}
+
+	if a.ProfitLossRatio != nil {
+		object["profit_loss_ratio"], err = json.Marshal(a.ProfitLossRatio)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_loss_ratio': %w", err)
+		}
+	}
+
+	object["request_id"], err = json.Marshal(a.RequestId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'request_id': %w", err)
+	}
+
+	if a.RequestedQuantity != nil {
+		object["requested_quantity"], err = json.Marshal(a.RequestedQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'requested_quantity': %w", err)
+		}
+	}
+
+	object["risk_approved_count"], err = json.Marshal(a.RiskApprovedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_approved_count': %w", err)
+	}
+
+	object["risk_blocked_count"], err = json.Marshal(a.RiskBlockedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_blocked_count': %w", err)
+	}
+
+	object["risk_kill_switch_count"], err = json.Marshal(a.RiskKillSwitchCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_kill_switch_count': %w", err)
+	}
+
+	object["risk_reduced_count"], err = json.Marshal(a.RiskReducedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_reduced_count': %w", err)
+	}
+
+	object["run_id"], err = json.Marshal(a.RunId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'run_id': %w", err)
+	}
+
+	if a.Sharpe != nil {
+		object["sharpe"], err = json.Marshal(a.Sharpe)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe': %w", err)
+		}
+	}
+
+	if a.SharpeAnnualizationFactor != nil {
+		object["sharpe_annualization_factor"], err = json.Marshal(a.SharpeAnnualizationFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_annualization_factor': %w", err)
+		}
+	}
+
+	if a.SharpeReason != nil {
+		object["sharpe_reason"], err = json.Marshal(a.SharpeReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_reason': %w", err)
+		}
+	}
+
+	object["total_commission_i64"], err = json.Marshal(a.TotalCommissionI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_commission_i64': %w", err)
+	}
+
+	object["total_return"], err = json.Marshal(a.TotalReturn)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_return': %w", err)
+	}
+
+	object["total_slippage_i64"], err = json.Marshal(a.TotalSlippageI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_slippage_i64': %w", err)
+	}
+
+	object["trade_count"], err = json.Marshal(a.TradeCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'trade_count': %w", err)
+	}
+
+	if a.TradingDayCount != nil {
+		object["trading_day_count"], err = json.Marshal(a.TradingDayCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'trading_day_count': %w", err)
+		}
+	}
+
+	object["win_rate"], err = json.Marshal(a.WinRate)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'win_rate': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for GetResearchStudyResults200JSONResponseBody_Items_Summary. Returns the specified
+// element and whether it was found
+func (a GetResearchStudyResults200JSONResponseBody_Items_Summary) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for GetResearchStudyResults200JSONResponseBody_Items_Summary
+func (a *GetResearchStudyResults200JSONResponseBody_Items_Summary) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for GetResearchStudyResults200JSONResponseBody_Items_Summary to handle AdditionalProperties
+func (a *GetResearchStudyResults200JSONResponseBody_Items_Summary) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["annualized_return"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return': %w", err)
+		}
+		delete(object, "annualized_return")
+	}
+
+	if raw, found := object["annualized_return_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturnReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return_reason': %w", err)
+		}
+		delete(object, "annualized_return_reason")
+	}
+
+	if raw, found := object["annualized_volatility"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatility)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility': %w", err)
+		}
+		delete(object, "annualized_volatility")
+	}
+
+	if raw, found := object["annualized_volatility_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatilityReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility_reason': %w", err)
+		}
+		delete(object, "annualized_volatility_reason")
+	}
+
+	if raw, found := object["average_loss_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageLossI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_loss_i64': %w", err)
+		}
+		delete(object, "average_loss_i64")
+	}
+
+	if raw, found := object["average_win_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageWinI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_win_i64': %w", err)
+		}
+		delete(object, "average_win_i64")
+	}
+
+	if raw, found := object["daily_return_count"]; found {
+		err = json.Unmarshal(raw, &a.DailyReturnCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'daily_return_count': %w", err)
+		}
+		delete(object, "daily_return_count")
+	}
+
+	if raw, found := object["expectancy_i64"]; found {
+		err = json.Unmarshal(raw, &a.ExpectancyI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'expectancy_i64': %w", err)
+		}
+		delete(object, "expectancy_i64")
+	}
+
+	if raw, found := object["fill_rate"]; found {
+		err = json.Unmarshal(raw, &a.FillRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'fill_rate': %w", err)
+		}
+		delete(object, "fill_rate")
+	}
+
+	if raw, found := object["filled_quantity"]; found {
+		err = json.Unmarshal(raw, &a.FilledQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'filled_quantity': %w", err)
+		}
+		delete(object, "filled_quantity")
+	}
+
+	if raw, found := object["max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.MaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'max_drawdown': %w", err)
+		}
+		delete(object, "max_drawdown")
+	}
+
+	if raw, found := object["profit_factor"]; found {
+		err = json.Unmarshal(raw, &a.ProfitFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_factor': %w", err)
+		}
+		delete(object, "profit_factor")
+	}
+
+	if raw, found := object["profit_loss_ratio"]; found {
+		err = json.Unmarshal(raw, &a.ProfitLossRatio)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_loss_ratio': %w", err)
+		}
+		delete(object, "profit_loss_ratio")
+	}
+
+	if raw, found := object["request_id"]; found {
+		err = json.Unmarshal(raw, &a.RequestId)
+		if err != nil {
+			return fmt.Errorf("error reading 'request_id': %w", err)
+		}
+		delete(object, "request_id")
+	}
+
+	if raw, found := object["requested_quantity"]; found {
+		err = json.Unmarshal(raw, &a.RequestedQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'requested_quantity': %w", err)
+		}
+		delete(object, "requested_quantity")
+	}
+
+	if raw, found := object["risk_approved_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskApprovedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_approved_count': %w", err)
+		}
+		delete(object, "risk_approved_count")
+	}
+
+	if raw, found := object["risk_blocked_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskBlockedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_blocked_count': %w", err)
+		}
+		delete(object, "risk_blocked_count")
+	}
+
+	if raw, found := object["risk_kill_switch_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskKillSwitchCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_kill_switch_count': %w", err)
+		}
+		delete(object, "risk_kill_switch_count")
+	}
+
+	if raw, found := object["risk_reduced_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskReducedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_reduced_count': %w", err)
+		}
+		delete(object, "risk_reduced_count")
+	}
+
+	if raw, found := object["run_id"]; found {
+		err = json.Unmarshal(raw, &a.RunId)
+		if err != nil {
+			return fmt.Errorf("error reading 'run_id': %w", err)
+		}
+		delete(object, "run_id")
+	}
+
+	if raw, found := object["sharpe"]; found {
+		err = json.Unmarshal(raw, &a.Sharpe)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe': %w", err)
+		}
+		delete(object, "sharpe")
+	}
+
+	if raw, found := object["sharpe_annualization_factor"]; found {
+		err = json.Unmarshal(raw, &a.SharpeAnnualizationFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_annualization_factor': %w", err)
+		}
+		delete(object, "sharpe_annualization_factor")
+	}
+
+	if raw, found := object["sharpe_reason"]; found {
+		err = json.Unmarshal(raw, &a.SharpeReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_reason': %w", err)
+		}
+		delete(object, "sharpe_reason")
+	}
+
+	if raw, found := object["total_commission_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalCommissionI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_commission_i64': %w", err)
+		}
+		delete(object, "total_commission_i64")
+	}
+
+	if raw, found := object["total_return"]; found {
+		err = json.Unmarshal(raw, &a.TotalReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_return': %w", err)
+		}
+		delete(object, "total_return")
+	}
+
+	if raw, found := object["total_slippage_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalSlippageI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_slippage_i64': %w", err)
+		}
+		delete(object, "total_slippage_i64")
+	}
+
+	if raw, found := object["trade_count"]; found {
+		err = json.Unmarshal(raw, &a.TradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trade_count': %w", err)
+		}
+		delete(object, "trade_count")
+	}
+
+	if raw, found := object["trading_day_count"]; found {
+		err = json.Unmarshal(raw, &a.TradingDayCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trading_day_count': %w", err)
+		}
+		delete(object, "trading_day_count")
+	}
+
+	if raw, found := object["win_rate"]; found {
+		err = json.Unmarshal(raw, &a.WinRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'win_rate': %w", err)
+		}
+		delete(object, "win_rate")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for GetResearchStudyResults200JSONResponseBody_Items_Summary to handle AdditionalProperties
+func (a GetResearchStudyResults200JSONResponseBody_Items_Summary) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AnnualizedReturn != nil {
+		object["annualized_return"], err = json.Marshal(a.AnnualizedReturn)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return': %w", err)
+		}
+	}
+
+	if a.AnnualizedReturnReason != nil {
+		object["annualized_return_reason"], err = json.Marshal(a.AnnualizedReturnReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return_reason': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatility != nil {
+		object["annualized_volatility"], err = json.Marshal(a.AnnualizedVolatility)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatilityReason != nil {
+		object["annualized_volatility_reason"], err = json.Marshal(a.AnnualizedVolatilityReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility_reason': %w", err)
+		}
+	}
+
+	if a.AverageLossI64 != nil {
+		object["average_loss_i64"], err = json.Marshal(a.AverageLossI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_loss_i64': %w", err)
+		}
+	}
+
+	if a.AverageWinI64 != nil {
+		object["average_win_i64"], err = json.Marshal(a.AverageWinI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'average_win_i64': %w", err)
+		}
+	}
+
+	if a.DailyReturnCount != nil {
+		object["daily_return_count"], err = json.Marshal(a.DailyReturnCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'daily_return_count': %w", err)
+		}
+	}
+
+	if a.ExpectancyI64 != nil {
+		object["expectancy_i64"], err = json.Marshal(a.ExpectancyI64)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'expectancy_i64': %w", err)
+		}
+	}
+
+	if a.FillRate != nil {
+		object["fill_rate"], err = json.Marshal(a.FillRate)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'fill_rate': %w", err)
+		}
+	}
+
+	if a.FilledQuantity != nil {
+		object["filled_quantity"], err = json.Marshal(a.FilledQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'filled_quantity': %w", err)
+		}
+	}
+
+	object["max_drawdown"], err = json.Marshal(a.MaxDrawdown)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'max_drawdown': %w", err)
+	}
+
+	if a.ProfitFactor != nil {
+		object["profit_factor"], err = json.Marshal(a.ProfitFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_factor': %w", err)
+		}
+	}
+
+	if a.ProfitLossRatio != nil {
+		object["profit_loss_ratio"], err = json.Marshal(a.ProfitLossRatio)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'profit_loss_ratio': %w", err)
+		}
+	}
+
+	object["request_id"], err = json.Marshal(a.RequestId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'request_id': %w", err)
+	}
+
+	if a.RequestedQuantity != nil {
+		object["requested_quantity"], err = json.Marshal(a.RequestedQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'requested_quantity': %w", err)
+		}
+	}
+
+	object["risk_approved_count"], err = json.Marshal(a.RiskApprovedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_approved_count': %w", err)
+	}
+
+	object["risk_blocked_count"], err = json.Marshal(a.RiskBlockedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_blocked_count': %w", err)
+	}
+
+	object["risk_kill_switch_count"], err = json.Marshal(a.RiskKillSwitchCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_kill_switch_count': %w", err)
+	}
+
+	object["risk_reduced_count"], err = json.Marshal(a.RiskReducedCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'risk_reduced_count': %w", err)
+	}
+
+	object["run_id"], err = json.Marshal(a.RunId)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'run_id': %w", err)
+	}
+
+	if a.Sharpe != nil {
+		object["sharpe"], err = json.Marshal(a.Sharpe)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe': %w", err)
+		}
+	}
+
+	if a.SharpeAnnualizationFactor != nil {
+		object["sharpe_annualization_factor"], err = json.Marshal(a.SharpeAnnualizationFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_annualization_factor': %w", err)
+		}
+	}
+
+	if a.SharpeReason != nil {
+		object["sharpe_reason"], err = json.Marshal(a.SharpeReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_reason': %w", err)
+		}
+	}
+
+	object["total_commission_i64"], err = json.Marshal(a.TotalCommissionI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_commission_i64': %w", err)
+	}
+
+	object["total_return"], err = json.Marshal(a.TotalReturn)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_return': %w", err)
+	}
+
+	object["total_slippage_i64"], err = json.Marshal(a.TotalSlippageI64)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'total_slippage_i64': %w", err)
+	}
+
+	object["trade_count"], err = json.Marshal(a.TradeCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'trade_count': %w", err)
+	}
+
+	if a.TradingDayCount != nil {
+		object["trading_day_count"], err = json.Marshal(a.TradingDayCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'trading_day_count': %w", err)
+		}
+	}
+
+	object["win_rate"], err = json.Marshal(a.WinRate)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'win_rate': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for GetStrategyComparisonResults200JSONResponseBody_Items_Summary. Returns the specified
+// element and whether it was found
+func (a GetStrategyComparisonResults200JSONResponseBody_Items_Summary) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for GetStrategyComparisonResults200JSONResponseBody_Items_Summary
+func (a *GetStrategyComparisonResults200JSONResponseBody_Items_Summary) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for GetStrategyComparisonResults200JSONResponseBody_Items_Summary to handle AdditionalProperties
+func (a *GetStrategyComparisonResults200JSONResponseBody_Items_Summary) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["annualized_return"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return': %w", err)
+		}
+		delete(object, "annualized_return")
+	}
+
+	if raw, found := object["annualized_return_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedReturnReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_return_reason': %w", err)
+		}
+		delete(object, "annualized_return_reason")
+	}
+
+	if raw, found := object["annualized_volatility"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatility)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility': %w", err)
+		}
+		delete(object, "annualized_volatility")
+	}
+
+	if raw, found := object["annualized_volatility_reason"]; found {
+		err = json.Unmarshal(raw, &a.AnnualizedVolatilityReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'annualized_volatility_reason': %w", err)
+		}
+		delete(object, "annualized_volatility_reason")
+	}
+
+	if raw, found := object["average_loss_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageLossI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_loss_i64': %w", err)
+		}
+		delete(object, "average_loss_i64")
+	}
+
+	if raw, found := object["average_win_i64"]; found {
+		err = json.Unmarshal(raw, &a.AverageWinI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'average_win_i64': %w", err)
+		}
+		delete(object, "average_win_i64")
+	}
+
+	if raw, found := object["daily_return_count"]; found {
+		err = json.Unmarshal(raw, &a.DailyReturnCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'daily_return_count': %w", err)
+		}
+		delete(object, "daily_return_count")
+	}
+
+	if raw, found := object["expectancy_i64"]; found {
+		err = json.Unmarshal(raw, &a.ExpectancyI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'expectancy_i64': %w", err)
+		}
+		delete(object, "expectancy_i64")
+	}
+
+	if raw, found := object["fill_rate"]; found {
+		err = json.Unmarshal(raw, &a.FillRate)
+		if err != nil {
+			return fmt.Errorf("error reading 'fill_rate': %w", err)
+		}
+		delete(object, "fill_rate")
+	}
+
+	if raw, found := object["filled_quantity"]; found {
+		err = json.Unmarshal(raw, &a.FilledQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'filled_quantity': %w", err)
+		}
+		delete(object, "filled_quantity")
+	}
+
+	if raw, found := object["max_drawdown"]; found {
+		err = json.Unmarshal(raw, &a.MaxDrawdown)
+		if err != nil {
+			return fmt.Errorf("error reading 'max_drawdown': %w", err)
+		}
+		delete(object, "max_drawdown")
+	}
+
+	if raw, found := object["profit_factor"]; found {
+		err = json.Unmarshal(raw, &a.ProfitFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_factor': %w", err)
+		}
+		delete(object, "profit_factor")
+	}
+
+	if raw, found := object["profit_loss_ratio"]; found {
+		err = json.Unmarshal(raw, &a.ProfitLossRatio)
+		if err != nil {
+			return fmt.Errorf("error reading 'profit_loss_ratio': %w", err)
+		}
+		delete(object, "profit_loss_ratio")
+	}
+
+	if raw, found := object["request_id"]; found {
+		err = json.Unmarshal(raw, &a.RequestId)
+		if err != nil {
+			return fmt.Errorf("error reading 'request_id': %w", err)
+		}
+		delete(object, "request_id")
+	}
+
+	if raw, found := object["requested_quantity"]; found {
+		err = json.Unmarshal(raw, &a.RequestedQuantity)
+		if err != nil {
+			return fmt.Errorf("error reading 'requested_quantity': %w", err)
+		}
+		delete(object, "requested_quantity")
+	}
+
+	if raw, found := object["risk_approved_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskApprovedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_approved_count': %w", err)
+		}
+		delete(object, "risk_approved_count")
+	}
+
+	if raw, found := object["risk_blocked_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskBlockedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_blocked_count': %w", err)
+		}
+		delete(object, "risk_blocked_count")
+	}
+
+	if raw, found := object["risk_kill_switch_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskKillSwitchCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_kill_switch_count': %w", err)
+		}
+		delete(object, "risk_kill_switch_count")
+	}
+
+	if raw, found := object["risk_reduced_count"]; found {
+		err = json.Unmarshal(raw, &a.RiskReducedCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_reduced_count': %w", err)
+		}
+		delete(object, "risk_reduced_count")
+	}
+
+	if raw, found := object["run_id"]; found {
+		err = json.Unmarshal(raw, &a.RunId)
+		if err != nil {
+			return fmt.Errorf("error reading 'run_id': %w", err)
+		}
+		delete(object, "run_id")
+	}
+
+	if raw, found := object["sharpe"]; found {
+		err = json.Unmarshal(raw, &a.Sharpe)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe': %w", err)
+		}
+		delete(object, "sharpe")
+	}
+
+	if raw, found := object["sharpe_annualization_factor"]; found {
+		err = json.Unmarshal(raw, &a.SharpeAnnualizationFactor)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_annualization_factor': %w", err)
+		}
+		delete(object, "sharpe_annualization_factor")
+	}
+
+	if raw, found := object["sharpe_reason"]; found {
+		err = json.Unmarshal(raw, &a.SharpeReason)
+		if err != nil {
+			return fmt.Errorf("error reading 'sharpe_reason': %w", err)
+		}
+		delete(object, "sharpe_reason")
+	}
+
+	if raw, found := object["total_commission_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalCommissionI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_commission_i64': %w", err)
+		}
+		delete(object, "total_commission_i64")
+	}
+
+	if raw, found := object["total_return"]; found {
+		err = json.Unmarshal(raw, &a.TotalReturn)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_return': %w", err)
+		}
+		delete(object, "total_return")
+	}
+
+	if raw, found := object["total_slippage_i64"]; found {
+		err = json.Unmarshal(raw, &a.TotalSlippageI64)
+		if err != nil {
+			return fmt.Errorf("error reading 'total_slippage_i64': %w", err)
+		}
+		delete(object, "total_slippage_i64")
+	}
+
+	if raw, found := object["trade_count"]; found {
+		err = json.Unmarshal(raw, &a.TradeCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trade_count': %w", err)
+		}
+		delete(object, "trade_count")
+	}
+
+	if raw, found := object["trading_day_count"]; found {
+		err = json.Unmarshal(raw, &a.TradingDayCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'trading_day_count': %w", err)
+		}
+		delete(object, "trading_day_count")
 	}
 
 	if raw, found := object["win_rate"]; found {
@@ -7497,6 +16930,27 @@ func (a GetStrategyComparisonResults200JSONResponseBody_Items_Summary) MarshalJS
 		}
 	}
 
+	if a.AnnualizedReturnReason != nil {
+		object["annualized_return_reason"], err = json.Marshal(a.AnnualizedReturnReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_return_reason': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatility != nil {
+		object["annualized_volatility"], err = json.Marshal(a.AnnualizedVolatility)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility': %w", err)
+		}
+	}
+
+	if a.AnnualizedVolatilityReason != nil {
+		object["annualized_volatility_reason"], err = json.Marshal(a.AnnualizedVolatilityReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'annualized_volatility_reason': %w", err)
+		}
+	}
+
 	if a.AverageLossI64 != nil {
 		object["average_loss_i64"], err = json.Marshal(a.AverageLossI64)
 		if err != nil {
@@ -7511,10 +16965,31 @@ func (a GetStrategyComparisonResults200JSONResponseBody_Items_Summary) MarshalJS
 		}
 	}
 
+	if a.DailyReturnCount != nil {
+		object["daily_return_count"], err = json.Marshal(a.DailyReturnCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'daily_return_count': %w", err)
+		}
+	}
+
 	if a.ExpectancyI64 != nil {
 		object["expectancy_i64"], err = json.Marshal(a.ExpectancyI64)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'expectancy_i64': %w", err)
+		}
+	}
+
+	if a.FillRate != nil {
+		object["fill_rate"], err = json.Marshal(a.FillRate)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'fill_rate': %w", err)
+		}
+	}
+
+	if a.FilledQuantity != nil {
+		object["filled_quantity"], err = json.Marshal(a.FilledQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'filled_quantity': %w", err)
 		}
 	}
 
@@ -7540,6 +17015,13 @@ func (a GetStrategyComparisonResults200JSONResponseBody_Items_Summary) MarshalJS
 	object["request_id"], err = json.Marshal(a.RequestId)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'request_id': %w", err)
+	}
+
+	if a.RequestedQuantity != nil {
+		object["requested_quantity"], err = json.Marshal(a.RequestedQuantity)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'requested_quantity': %w", err)
+		}
 	}
 
 	object["risk_approved_count"], err = json.Marshal(a.RiskApprovedCount)
@@ -7574,6 +17056,20 @@ func (a GetStrategyComparisonResults200JSONResponseBody_Items_Summary) MarshalJS
 		}
 	}
 
+	if a.SharpeAnnualizationFactor != nil {
+		object["sharpe_annualization_factor"], err = json.Marshal(a.SharpeAnnualizationFactor)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_annualization_factor': %w", err)
+		}
+	}
+
+	if a.SharpeReason != nil {
+		object["sharpe_reason"], err = json.Marshal(a.SharpeReason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'sharpe_reason': %w", err)
+		}
+	}
+
 	object["total_commission_i64"], err = json.Marshal(a.TotalCommissionI64)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'total_commission_i64': %w", err)
@@ -7592,6 +17088,13 @@ func (a GetStrategyComparisonResults200JSONResponseBody_Items_Summary) MarshalJS
 	object["trade_count"], err = json.Marshal(a.TradeCount)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'trade_count': %w", err)
+	}
+
+	if a.TradingDayCount != nil {
+		object["trading_day_count"], err = json.Marshal(a.TradingDayCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'trading_day_count': %w", err)
+		}
 	}
 
 	object["win_rate"], err = json.Marshal(a.WinRate)

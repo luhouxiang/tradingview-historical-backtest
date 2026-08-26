@@ -137,6 +137,16 @@ func RecoverStaleTemps(guard *storage.PathGuard, retention time.Duration, now ti
 			if !item.accept(entry.Name()) {
 				continue
 			}
+			// Atomic JSON writers use the same .name.tmp-* convention as
+			// incomplete result directories. Those regular files may briefly
+			// coexist with startup recovery and are owned by the writer, so only
+			// directory-shaped work products belong to this cleanup routine.
+			if !entry.IsDir() {
+				if entry.Type()&os.ModeSymlink != 0 {
+					return nil, fmt.Errorf("refusing link: %s", filepath.Join(root, entry.Name()))
+				}
+				continue
+			}
 			source := filepath.Join(root, entry.Name())
 			info, err := safeDirectory(source)
 			if err != nil {

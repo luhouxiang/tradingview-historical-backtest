@@ -10,24 +10,37 @@ import (
 )
 
 type Trade struct {
-	TradeID       string `json:"trade_id" parquet:"trade_id"`
-	Side          string `json:"side" parquet:"side"`
-	EntryBarIndex int64  `json:"entry_bar_index" parquet:"entry_bar_index"`
-	EntryTime     int64  `json:"entry_time" parquet:"entry_time"`
-	EntryPriceI64 int64  `json:"entry_price_i64" parquet:"entry_price_i64"`
-	ExitBarIndex  int64  `json:"exit_bar_index" parquet:"exit_bar_index"`
-	ExitTime      int64  `json:"exit_time" parquet:"exit_time"`
-	ExitPriceI64  int64  `json:"exit_price_i64" parquet:"exit_price_i64"`
-	Quantity      int64  `json:"quantity" parquet:"quantity"`
-	GrossPnLI64   int64  `json:"gross_pnl_i64" parquet:"gross_pnl_i64"`
-	NetPnLI64     int64  `json:"net_pnl_i64" parquet:"net_pnl_i64"`
-	CommissionI64 int64  `json:"commission_i64" parquet:"commission_i64"`
-	SlippageI64   int64  `json:"slippage_i64" parquet:"slippage_i64"`
+	TradeID                    string `json:"trade_id" parquet:"trade_id"`
+	Side                       string `json:"side" parquet:"side"`
+	EntryBarIndex              int64  `json:"entry_bar_index" parquet:"entry_bar_index"`
+	EntryTime                  int64  `json:"entry_time" parquet:"entry_time"`
+	EntryPriceI64              int64  `json:"entry_price_i64" parquet:"entry_price_i64"`
+	EntrySignalID              string `json:"entry_signal_id" parquet:"entry_signal_id,optional"`
+	EntrySignalKnownAtBarIndex int64  `json:"entry_signal_known_at_bar_index" parquet:"entry_signal_known_at_bar_index,optional"`
+	EntryOrderID               string `json:"entry_order_id" parquet:"entry_order_id,optional"`
+	ExitBarIndex               int64  `json:"exit_bar_index" parquet:"exit_bar_index"`
+	ExitTime                   int64  `json:"exit_time" parquet:"exit_time"`
+	ExitPriceI64               int64  `json:"exit_price_i64" parquet:"exit_price_i64"`
+	ExitSignalID               string `json:"exit_signal_id,omitempty" parquet:"exit_signal_id,optional"`
+	ExitOrderID                string `json:"exit_order_id,omitempty" parquet:"exit_order_id,optional"`
+	Quantity                   int64  `json:"quantity" parquet:"quantity"`
+	GrossPnLI64                int64  `json:"gross_pnl_i64" parquet:"gross_pnl_i64"`
+	NetPnLI64                  int64  `json:"net_pnl_i64" parquet:"net_pnl_i64"`
+	CommissionI64              int64  `json:"commission_i64" parquet:"commission_i64"`
+	SlippageI64                int64  `json:"slippage_i64" parquet:"slippage_i64"`
+	MarketL0                   string `json:"market_l0,omitempty" parquet:"market_l0,optional"`
+	CenterPhase                string `json:"center_phase,omitempty" parquet:"center_phase,optional"`
+	PriceVsCenter              string `json:"price_vs_center,omitempty" parquet:"price_vs_center,optional"`
+	TriggerCategory            string `json:"trigger_category,omitempty" parquet:"trigger_category,optional"`
+	StructureObjectID          string `json:"structure_object_id,omitempty" parquet:"structure_object_id,optional"`
+	StructureObjectRevision    int64  `json:"structure_object_revision,omitempty" parquet:"structure_object_revision,optional"`
+	AttributionReasonCode      string `json:"attribution_reason_code,omitempty" parquet:"attribution_reason_code,optional"`
 }
 
 type Equity struct {
 	BarIndex     int64   `json:"bar_index" parquet:"bar_index"`
 	TimestampUTC int64   `json:"timestamp_utc" parquet:"timestamp_utc"`
+	TradingDay   string  `json:"trading_day,omitempty" parquet:"trading_day,optional"`
 	EquityI64    int64   `json:"equity_i64" parquet:"equity_i64"`
 	CashI64      int64   `json:"cash_i64" parquet:"cash_i64"`
 	AvailableI64 int64   `json:"available_i64" parquet:"available_i64"`

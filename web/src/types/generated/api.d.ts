@@ -72,6 +72,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/datasets/import-batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 顺序导入一批已扫描的本地历史文件 */
+        post: operations["importDatasetsBatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/datasets": {
         parameters: {
             query?: never;
@@ -98,6 +115,23 @@ export interface paths {
         };
         /** 获取一个数据集的元数据 */
         get: operations["getDataset"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/datasets/research-readiness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 获取单周期研究的数据覆盖、独立性和重叠区间门禁 */
+        get: operations["getDatasetResearchReadiness"];
         put?: never;
         post?: never;
         delete?: never;
@@ -481,6 +515,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/research-studies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List completed research studies */
+        get: operations["listResearchStudies"];
+        put?: never;
+        /** Create an immutable same-timeframe multi-dataset research study */
+        post: operations["createResearchStudy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/research-studies/{research_study_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get research study status and manifest */
+        get: operations["getResearchStudy"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/research-studies/{research_study_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a running research study */
+        post: operations["cancelResearchStudy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/research-studies/{research_study_id}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resume an interrupted, cancelled, or failed research study from its journal */
+        post: operations["resumeResearchStudy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/research-studies/{research_study_id}/results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get per-dataset and independence-group-weighted research results */
+        get: operations["getResearchStudyResults"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/studies": {
         parameters: {
             query?: never;
@@ -743,11 +863,15 @@ export interface components {
             /** @enum {unknown} */
             date_semantics: "trading_day" | "calendar_date";
             timezone: string;
+            independence_group?: string;
             /** @enum {unknown} */
             timestamp_semantics?: "bar_start" | "bar_end";
             options?: {
                 [key: string]: unknown;
             };
+        };
+        ImportBatchRequest: {
+            items: components["schemas"]["ImportRequest"][];
         };
         DatasetSummary: {
             dataset_id: string;
@@ -757,8 +881,31 @@ export interface components {
             bar_count: number;
             first_timestamp_utc: number;
             last_timestamp_utc: number;
+            first_trading_day?: string;
+            last_trading_day?: string;
+            trading_day_count?: number;
+            independence_group?: string;
             /** @enum {unknown} */
             status: "ready" | "importing" | "invalid";
+        };
+        DatasetResearchReadiness: {
+            request_id: string;
+            /** @enum {unknown} */
+            status: "exploratory" | "certification_ready";
+            /** @constant */
+            required_trading_days: 504;
+            /** @constant */
+            required_independence_groups: 3;
+            eligible_independence_group_count: number;
+            datasets: {
+                dataset_id: string;
+                data_revision: string;
+                independence_group: string;
+                trading_day_count: number;
+                eligible: boolean;
+                overlapping_dataset_ids: string[];
+            }[];
+            reasons: string[];
         };
         BarColumns: {
             bar_index: number[];
@@ -1197,6 +1344,13 @@ export interface components {
                 margin_ratio: number;
                 /** @enum {unknown} */
                 intrabar_conflict_rule: "stop_first" | "target_first" | "worst_case";
+                stress_scenario_id?: string;
+                cost_multiplier?: number;
+                additional_slippage_ticks?: number;
+                additional_delay_bars?: number;
+                max_volume_participation_rate?: number;
+                /** @enum {unknown} */
+                fill_mode?: "unlimited" | "volume_cap_ioc";
             };
             capital: {
                 initial_cash_i64: number;
@@ -1314,7 +1468,13 @@ export interface components {
             status: "completed" | "failed" | "skipped";
             run_id?: string;
             run_signature?: string;
+            /** @enum {unknown} */
+            tier?: "failed" | "no_trades" | "loss_making" | "profitable_low_sample" | "profitable_candidate" | "pareto_candidate";
+            pareto?: boolean;
             summary?: components["schemas"]["BacktestSummary"];
+            attribution?: {
+                [key: string]: unknown;
+            } | null;
             error?: {
                 code: string;
                 message: string;
@@ -1324,6 +1484,242 @@ export interface components {
             request_id: string;
             comparison_id: string;
             items: components["schemas"]["StrategyComparisonResult"][];
+        };
+        ResearchDatasetRequest: {
+            dataset_id: string;
+            data_revision: string;
+            range: {
+                warmup_from_bar_index: number;
+                from_bar_index: number;
+                to_bar_index: number;
+            };
+        };
+        ResearchStudyRequest: {
+            datasets: components["schemas"]["ResearchDatasetRequest"][];
+            strategy: components["schemas"]["AlgorithmRef"];
+            parameters: {
+                [key: string]: unknown;
+            };
+            execution: {
+                [key: string]: unknown;
+            };
+            capital: {
+                [key: string]: unknown;
+            };
+            random_seed: number;
+            walk_forward?: components["schemas"]["WalkForwardConfig"];
+            stress_test?: components["schemas"]["StressTestConfig"];
+            statistical_validation?: components["schemas"]["StatisticalValidationConfig"];
+            trace_id?: string;
+        };
+        WalkForwardConfig: {
+            /** @default 252 */
+            train_trading_days: number;
+            /** @default 63 */
+            validation_trading_days: number;
+            /** @default 63 */
+            step_trading_days: number;
+            search_space: components["schemas"]["SearchParameter"][];
+            objectives: components["schemas"]["StudyObjective"][];
+            constraints: components["schemas"]["StudyConstraint"][];
+            search: components["schemas"]["SearchConfig"];
+        };
+        StressTestConfig: {
+            /** @enum {string} */
+            suite_version: "1.0.0";
+            /**
+             * @default 0.1
+             * @constant
+             */
+            volume_participation_rate: 0.1;
+        };
+        StatisticalValidationConfig: {
+            /** @enum {string} */
+            method_version: "1.0.0";
+            /** @default 5 */
+            block_size_trading_days: number;
+            /** @default 2000 */
+            iterations: number;
+            /**
+             * @default 0.95
+             * @constant
+             */
+            confidence_level: 0.95;
+            random_seed: number;
+            /**
+             * @default 0.05
+             * @constant
+             */
+            holm_alpha: 0.05;
+        };
+        ResearchStudyAccepted: {
+            request_id: string;
+            research_study_id: string;
+            /** @enum {unknown} */
+            status: "queued" | "running";
+        };
+        ResearchStudyStatus: {
+            request_id: string;
+            research_study_id: string;
+            /** @enum {unknown} */
+            status: "queued" | "running" | "cancelling" | "completed" | "failed" | "cancelled" | "interrupted";
+            progress: number;
+            result_ref?: string;
+            manifest?: components["schemas"]["research-study-manifest.schema"];
+            error?: components["schemas"]["Error"];
+        };
+        ResearchStudyDatasetResult: {
+            dataset_id: string;
+            data_revision: string;
+            independence_group: string;
+            trading_day_count: number;
+            /** @enum {unknown} */
+            status: "completed" | "failed";
+            run_id?: string;
+            run_signature?: string;
+            summary?: components["schemas"]["BacktestSummary"];
+            error?: {
+                code: string;
+                message: string;
+            };
+            folds?: components["schemas"]["WalkForwardFoldResult"][];
+            walk_forward_summary?: {
+                [key: string]: unknown;
+            };
+        };
+        WalkForwardFoldResult: {
+            dataset_id: string;
+            independence_group: string;
+            fold_index: number;
+            /** @enum {unknown} */
+            status: "completed" | "failed";
+            train_trading_day_from: string;
+            train_trading_day_to: string;
+            validation_trading_day_from: string;
+            validation_trading_day_to: string;
+            train_range: {
+                warmup_from_bar_index: number;
+                from_bar_index: number;
+                to_bar_index: number;
+            };
+            validation_range: {
+                warmup_from_bar_index: number;
+                from_bar_index: number;
+                to_bar_index: number;
+            };
+            selected_parameters?: {
+                [key: string]: unknown;
+            };
+            training_ranking?: {
+                [key: string]: unknown;
+            }[];
+            selected_train_metrics?: components["schemas"]["BacktestSummary"];
+            validation_metrics?: components["schemas"]["BacktestSummary"];
+            selected_train_run_id?: string;
+            selected_train_run_signature?: string;
+            validation_run_id?: string;
+            validation_run_signature?: string;
+            parameter_changed?: boolean;
+            changed_parameter_names?: string[];
+            error?: {
+                code: string;
+                message: string;
+            };
+        };
+        ResearchStudyAggregate: {
+            completed_dataset_count: number;
+            failed_dataset_count: number;
+            independence_group_count: number;
+            eligible_independence_group_count: number;
+            /** @enum {unknown} */
+            data_status: "exploratory" | "certification_ready";
+            daily_return_count: number;
+            total_trade_count: number;
+            total_return?: number;
+            annualized_return?: number | null;
+            sharpe?: number | null;
+            annualized_volatility?: number | null;
+            max_drawdown?: number;
+            median_dataset_return?: number | null;
+            worst_dataset_id?: string | null;
+            worst_dataset_return?: number | null;
+            profitable_dataset_ratio?: number | null;
+            worst_dataset_max_drawdown?: number;
+            walk_forward_fold_count?: number;
+            completed_walk_forward_fold_count?: number;
+            profitable_fold_ratio?: number | null;
+            worst_fold_max_drawdown?: number | null;
+            out_of_sample_trade_count?: number;
+            certification_trade_count?: number;
+            out_of_sample_expectancy_i64?: number | null;
+            minimum_completed_folds_per_group?: number;
+            minimum_studied_trading_days_per_group?: number;
+            parameter_stability?: number | null;
+            stress_scenarios?: components["schemas"]["StressScenarioResult"][];
+            first_failure_scenario?: string | null;
+            attempted_parameter_combinations?: {
+                combination_id: string;
+                parameters: {
+                    [key: string]: unknown;
+                };
+                attempt_count: number;
+                completed_count: number;
+            }[];
+            statistical_evidence?: {
+                [key: string]: unknown;
+            };
+            certification?: components["schemas"]["ResearchCertification"];
+        } & {
+            [key: string]: unknown;
+        };
+        StressScenarioResult: {
+            scenario_id: string;
+            /** @enum {unknown} */
+            status: "completed" | "failed";
+            cost_multiplier: number;
+            additional_slippage_ticks: number;
+            additional_delay_bars: number;
+            max_volume_participation_rate?: number | null;
+            /** @enum {unknown} */
+            fill_mode: "unlimited" | "volume_cap_ioc";
+            completed_run_count: number;
+            failed_run_count: number;
+            daily_return_count?: number;
+            total_return?: number | null;
+            max_drawdown?: number | null;
+            trade_count?: number;
+            requested_quantity: number;
+            filled_quantity: number;
+            fill_rate: number | null;
+            return_degradation?: number | null;
+            drawdown_degradation?: number | null;
+            fill_rate_degradation?: number | null;
+            failure_reason?: string | null;
+        };
+        ResearchCertification: {
+            rules_version: string;
+            /** @enum {unknown} */
+            tier: "exploratory" | "research_candidate" | "reliable_candidate";
+            /** @constant */
+            reliable_candidate_is_historical_only: true;
+            research_candidate_passed: boolean;
+            reliable_candidate_passed: boolean;
+            reasons: string[];
+            evidence_matrix: {
+                gate_id: string;
+                /** @enum {unknown} */
+                required_for: "research_candidate" | "reliable_candidate";
+                passed: boolean;
+                actual: unknown;
+                threshold: unknown;
+                reason: string;
+            }[];
+        };
+        ResearchStudyResults: {
+            request_id: string;
+            research_study_id: string;
+            items: components["schemas"]["ResearchStudyDatasetResult"][];
+            aggregate: components["schemas"]["ResearchStudyAggregate"];
         };
         StudyRequest: {
             dataset_id: string;
@@ -1464,8 +1860,16 @@ export interface components {
             run_id: string;
             total_return: number;
             annualized_return?: number | null;
+            annualized_return_reason?: string | null;
             max_drawdown: number;
             sharpe?: number | null;
+            sharpe_reason?: string | null;
+            annualized_volatility?: number | null;
+            annualized_volatility_reason?: string | null;
+            trading_day_count?: number;
+            daily_return_count?: number;
+            /** @constant */
+            sharpe_annualization_factor?: 252;
             trade_count: number;
             win_rate: number | null;
             average_win_i64?: number | null;
@@ -1475,6 +1879,9 @@ export interface components {
             expectancy_i64?: number | null;
             total_commission_i64: number;
             total_slippage_i64: number;
+            requested_quantity?: number;
+            filled_quantity?: number;
+            fill_rate?: number | null;
             risk_approved_count: number;
             risk_reduced_count: number;
             risk_blocked_count: number;
@@ -1482,9 +1889,47 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        BacktestTrade: {
+            trade_id: string;
+            /** @enum {unknown} */
+            side: "long" | "short";
+            entry_bar_index: number;
+            entry_time: number;
+            entry_price_i64: number;
+            entry_signal_id?: string;
+            entry_signal_known_at_bar_index?: number;
+            entry_order_id?: string;
+            exit_bar_index: number;
+            exit_time: number;
+            exit_price_i64: number;
+            exit_signal_id?: string;
+            exit_order_id?: string;
+            quantity: number;
+            gross_pnl_i64: number;
+            net_pnl_i64: number;
+            commission_i64: number;
+            slippage_i64: number;
+            /** @enum {unknown} */
+            market_l0?: "uptrend" | "downtrend" | "consolidation" | "higher_level_center_candidate" | "unknown";
+            /** @enum {unknown} */
+            center_phase?: "consolidation" | "center_oscillation" | "migrating_up" | "migrating_down" | "unknown";
+            /** @enum {unknown} */
+            price_vs_center?: "above" | "inside" | "below" | "unknown";
+            /** @enum {unknown} */
+            trigger_category?: "B1" | "B2" | "B3" | "S1" | "S2" | "S3" | "class_buy_sell" | "other";
+            structure_object_id?: string;
+            structure_object_revision?: number;
+            attribution_reason_code?: string;
+        };
+        PagedBacktestTrades: {
+            request_id: string;
+            rows: components["schemas"]["BacktestTrade"][];
+            next_cursor: string | null;
+        };
         EquityRow: {
             bar_index: number;
             timestamp_utc: number;
+            trading_day?: string;
             equity_i64: number;
             cash_i64: number;
             available_i64: number;
@@ -1637,6 +2082,13 @@ export interface components {
                 slippage: {
                     [key: string]: unknown;
                 };
+                stress_scenario_id?: string;
+                cost_multiplier?: number;
+                additional_slippage_ticks?: number;
+                additional_delay_bars?: number;
+                max_volume_participation_rate?: number;
+                /** @enum {unknown} */
+                fill_mode?: "unlimited" | "volume_cap_ioc";
                 contract_multiplier: number;
                 margin_ratio: number;
                 /** @enum {unknown} */
@@ -1654,6 +2106,7 @@ export interface components {
                 contract_version: string;
             };
             random_seed: number;
+            shared_dependency_ref?: string;
             /** Format: date-time */
             created_at: string;
             $defs: {
@@ -1699,8 +2152,10 @@ export interface components {
         /** StrategyComparisonManifest */
         "strategy-comparison-manifest.schema": {
             /** @constant */
-            schema_version: 1;
+            schema_version: 2;
             comparison_id: string;
+            comparison_signature: components["schemas"]["sha256"];
+            aggregator_version: string;
             trace_id: string;
             dataset: {
                 dataset_id: string;
@@ -1718,6 +2173,21 @@ export interface components {
             };
             random_seed: number;
             minimum_trade_count: number;
+            strategies: {
+                strategy: {
+                    /** @constant */
+                    kind: "strategy";
+                    algorithm_id: string;
+                    algorithm_version: string;
+                    source_hash: components["schemas"]["sha256"];
+                };
+                parameters: Record<string, never>;
+            }[];
+            shared_dependency?: Record<string, never>;
+            /** @enum {unknown} */
+            journal_status?: "running" | "cancelling" | "interrupted" | "cancelled";
+            completed_algorithm_ids?: string[];
+            remaining_algorithm_ids?: string[];
             strategy_count: number;
             completed_count: number;
             failed_count: number;
@@ -1732,6 +2202,179 @@ export interface components {
                 };
             };
         };
+        algorithm: {
+            /** @constant */
+            kind: "strategy";
+            algorithm_id: string;
+            algorithm_version: string;
+            source_hash: components["schemas"]["sha256"];
+        };
+        dataset: {
+            dataset_id: string;
+            data_revision: components["schemas"]["sha256"];
+            independence_group: string;
+            trading_day_count: number;
+            range: components["schemas"]["range"];
+            run_id?: string;
+            run_signature?: components["schemas"]["sha256"];
+        };
+        walk_forward: {
+            train_trading_days: number;
+            validation_trading_days: number;
+            step_trading_days: number;
+            search_space: {
+                name: string;
+                /** @enum {unknown} */
+                type: "integer" | "number" | "boolean" | "string";
+                minimum?: number;
+                maximum?: number;
+                step?: number;
+                candidates?: unknown[];
+            }[];
+            objectives: {
+                metric: string;
+                /** @enum {unknown} */
+                direction: "maximize" | "minimize";
+            }[];
+            constraints: unknown[];
+            search: {
+                /** @enum {unknown} */
+                method: "grid" | "random";
+                budget: number;
+                random_seed: number;
+            };
+        };
+        stress_test: {
+            /** @constant */
+            suite_version: "1.0.0";
+            /** @constant */
+            volume_participation_rate: 0.1;
+        };
+        statistical_validation: {
+            /** @constant */
+            method_version: "1.0.0";
+            block_size_trading_days: number;
+            iterations: number;
+            /** @constant */
+            confidence_level: 0.95;
+            random_seed: number;
+            /** @constant */
+            holm_alpha: 0.05;
+        };
+        /** ResearchStudyManifest */
+        "research-study-manifest.schema": {
+            /** @constant */
+            schema_version: 1;
+            research_study_id: string;
+            study_signature: components["schemas"]["sha256"];
+            aggregator_version: string;
+            trace_id: string;
+            /** @enum {unknown} */
+            study_mode: "fixed_parameters" | "walk_forward" | "walk_forward_stress" | "walk_forward_certification";
+            timeframe: string;
+            strategy: components["schemas"]["algorithm"];
+            parameters: Record<string, never>;
+            datasets: components["schemas"]["dataset"][];
+            child_runs: {
+                dataset_id: string;
+                run_id: string;
+                run_signature: components["schemas"]["sha256"];
+                /** @enum {unknown} */
+                role: "fixed" | "train_candidate" | "validation" | "stress" | "neighbor";
+                fold_index?: number;
+                candidate_index?: number;
+                scenario_id?: string;
+                parameter_name?: string;
+                /** @enum {unknown} */
+                neighbor_direction?: "lower" | "upper";
+            }[];
+            walk_forward?: components["schemas"]["walk_forward"];
+            stress_test?: components["schemas"]["stress_test"];
+            statistical_validation?: components["schemas"]["statistical_validation"];
+            artifacts?: {
+                out_of_sample_daily_returns?: string;
+                stress_results?: string;
+                statistical_evidence?: string;
+            };
+            execution: Record<string, never>;
+            capital: Record<string, never>;
+            random_seed: number;
+            aggregate: {
+                [key: string]: unknown;
+            };
+            engine: {
+                [key: string]: unknown;
+            };
+            /** Format: date-time */
+            created_at: string;
+            $defs: {
+                sha256: string;
+                algorithm: {
+                    /** @constant */
+                    kind: "strategy";
+                    algorithm_id: string;
+                    algorithm_version: string;
+                    source_hash: components["schemas"]["sha256"];
+                };
+                range: {
+                    warmup_from_bar_index: number;
+                    from_bar_index: number;
+                    to_bar_index: number;
+                };
+                dataset: {
+                    dataset_id: string;
+                    data_revision: components["schemas"]["sha256"];
+                    independence_group: string;
+                    trading_day_count: number;
+                    range: components["schemas"]["range"];
+                    run_id?: string;
+                    run_signature?: components["schemas"]["sha256"];
+                };
+                walk_forward: {
+                    train_trading_days: number;
+                    validation_trading_days: number;
+                    step_trading_days: number;
+                    search_space: {
+                        name: string;
+                        /** @enum {unknown} */
+                        type: "integer" | "number" | "boolean" | "string";
+                        minimum?: number;
+                        maximum?: number;
+                        step?: number;
+                        candidates?: unknown[];
+                    }[];
+                    objectives: {
+                        metric: string;
+                        /** @enum {unknown} */
+                        direction: "maximize" | "minimize";
+                    }[];
+                    constraints: unknown[];
+                    search: {
+                        /** @enum {unknown} */
+                        method: "grid" | "random";
+                        budget: number;
+                        random_seed: number;
+                    };
+                };
+                stress_test: {
+                    /** @constant */
+                    suite_version: "1.0.0";
+                    /** @constant */
+                    volume_participation_rate: 0.1;
+                };
+                statistical_validation: {
+                    /** @constant */
+                    method_version: "1.0.0";
+                    block_size_trading_days: number;
+                    iterations: number;
+                    /** @constant */
+                    confidence_level: 0.95;
+                    random_seed: number;
+                    /** @constant */
+                    holm_alpha: 0.05;
+                };
+            };
+        } & (unknown & unknown & unknown);
         /** @enum {unknown} */
         metric: "total_return" | "sharpe" | "max_drawdown" | "win_rate" | "trade_count" | "profit_factor" | "expectancy_i64";
         search_parameter: {
@@ -2200,6 +2843,7 @@ export interface components {
         ReplayId: string;
         RunId: string;
         ComparisonId: string;
+        ResearchStudyId: string;
         StudyId: string;
         ProfileId: string;
         LayoutId: string;
@@ -2302,6 +2946,31 @@ export interface operations {
             422: components["responses"]["Unprocessable"];
         };
     };
+    importDatasetsBatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportBatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Batch import accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobAccepted"];
+                };
+            };
+            422: components["responses"]["Unprocessable"];
+        };
+    };
     listDatasets: {
         parameters: {
             query?: never;
@@ -2351,6 +3020,26 @@ export interface operations {
                 };
             };
             404: components["responses"]["NotFound"];
+        };
+    };
+    getDatasetResearchReadiness: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dataset research readiness */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatasetResearchReadiness"];
+                };
+            };
         };
     };
     getBars: {
@@ -2753,7 +3442,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PagedRows"];
+                    "application/json": components["schemas"]["PagedBacktestTrades"];
                 };
             };
         };
@@ -2919,6 +3608,139 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StrategyComparisonResults"];
+                };
+            };
+        };
+    };
+    listResearchStudies: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Completed research study manifests */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        request_id: string;
+                        items: components["schemas"]["research-study-manifest.schema"][];
+                    };
+                };
+            };
+        };
+    };
+    createResearchStudy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResearchStudyRequest"];
+            };
+        };
+        responses: {
+            /** @description Research study accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchStudyAccepted"];
+                };
+            };
+        };
+    };
+    getResearchStudy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                research_study_id: components["parameters"]["ResearchStudyId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Research study status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchStudyStatus"];
+                };
+            };
+        };
+    };
+    cancelResearchStudy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                research_study_id: components["parameters"]["ResearchStudyId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cancellation requested */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    resumeResearchStudy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                research_study_id: components["parameters"]["ResearchStudyId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Research study resumed */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchStudyAccepted"];
+                };
+            };
+        };
+    };
+    getResearchStudyResults: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                research_study_id: components["parameters"]["ResearchStudyId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Research study results */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchStudyResults"];
                 };
             };
         };
@@ -3241,7 +4063,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                job_kind: "calculation" | "replay" | "backtest" | "optimization";
+                job_kind: "calculation" | "replay" | "backtest" | "optimization" | "comparison" | "research";
             };
             cookie?: never;
         };

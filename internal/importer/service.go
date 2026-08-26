@@ -13,6 +13,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -51,7 +52,14 @@ type ImportRequest struct {
 	DateSemantics      string         `json:"date_semantics"`
 	Timezone           string         `json:"timezone"`
 	TimestampSemantics string         `json:"timestamp_semantics"`
+	IndependenceGroup  string         `json:"independence_group,omitempty"`
 	Options            map[string]any `json:"options,omitempty"`
+}
+
+var independenceGroupPattern = regexp.MustCompile(`^[A-Z0-9_]+\.[A-Z0-9_]+$`)
+
+func ValidIndependenceGroup(value string) bool {
+	return value == "" || independenceGroupPattern.MatchString(value)
 }
 
 type Service struct {
@@ -235,12 +243,19 @@ func (s *Service) Import(ctx context.Context, request ImportRequest, progress fu
 		FailOnDuplicate: s.config.Import.FailOnDuplicateTimestamp, KeepZeroVolumeBars: s.config.Import.KeepZeroVolumeBars,
 		FillMissingBars: s.config.Import.FillMissingBars,
 	}
-	options.BeginTimestampUTC, options.EndTimestampUTC = s.config.ChartTimeBoundsUTC()
 	if options.TimestampSemantics == "" {
 		options.TimestampSemantics = "bar_end"
 	}
 	request.TimestampSemantics = options.TimestampSemantics
-	canonical, optionsHash, err := canonicalOptions(options)
+	independenceGroup := request.IndependenceGroup
+	if independenceGroup == "" {
+		independenceGroup = instrument.Exchange + "." + instrument.Product
+	}
+	if !independenceGroupPattern.MatchString(independenceGroup) {
+		return catalog.DatasetMeta{}, false, fmt.Errorf("invalid independence_group %q", independenceGroup)
+	}
+	request.IndependenceGroup = independenceGroup
+	canonical, optionsHash, err := canonicalImportIdentity(options, independenceGroup)
 	if err != nil {
 		return catalog.DatasetMeta{}, false, err
 	}
@@ -431,19 +446,36 @@ func fileMeta(role, relative, path string) (catalog.FileMeta, error) {
 
 func buildMeta(datasetID, revision string, source SourceFile, request ImportRequest, instrument InstrumentConfig, result ParseResult, runtimeConfig runtimeConfig, optionsHash string, files []catalog.FileMeta) catalog.DatasetMeta {
 	first, last := result.Bars[0], result.Bars[len(result.Bars)-1]
+	tradingDays := make(map[int32]struct{})
+	for _, bar := range result.Bars {
+		tradingDays[bar.TradingDay] = struct{}{}
+	}
 	counts := result.Quality.Counts
 	return catalog.DatasetMeta{
 		SchemaVersion: 1, DatasetID: datasetID, DataRevision: revision,
-		Instrument: catalog.InstrumentMeta{Exchange: request.Exchange, Symbol: request.Instrument, Product: instrument.Product, DisplayName: result.Detection.DisplayName},
-		Timeframe:  request.Timeframe,
-		Source:     catalog.SourceMeta{Path: source.Path, SHA256: source.SHA256, Encoding: result.Detection.Encoding, Format: AdapterID, Title: result.Detection.Title, TimestampSemantics: request.TimestampSemantics},
-		Time:       catalog.TimeMeta{Timezone: request.Timezone, DateSemantics: request.DateSemantics, TradingCalendarHash: runtimeConfig.calendarHash, SessionConfigHash: runtimeConfig.sessionHash},
-		Price:      catalog.PriceMeta{PriceDecimals: instrument.PriceDecimals, PriceScale: instrument.PriceScale, TickSizeI64: instrument.TickSizeI64},
-		Coverage:   catalog.CoverageMeta{BarCount: int64(len(result.Bars)), FirstBarIndex: first.BarIndex, LastBarIndex: last.BarIndex, FirstTimestampUTC: first.TimestampUTC, LastTimestampUTC: last.TimestampUTC, FirstTradingDay: fromDate32(first.TradingDay), LastTradingDay: fromDate32(last.TradingDay)},
-		Importer:   catalog.ImporterMeta{ID: AdapterID, Version: AdapterVersion, OptionsHash: optionsHash},
-		Quality:    catalog.QualityCounts{DuplicateCount: counts["duplicate_count"], InvalidOHLCCount: counts["invalid_ohlc_count"], ZeroVolumeCount: counts["zero_volume_count"], GapCount: counts["gap_count"], WarningCount: counts["warning_count"], ErrorCount: counts["error_count"]},
-		Files:      files, CreatedAt: time.Now().UTC(),
+		IndependenceGroup: request.IndependenceGroup,
+		Instrument:        catalog.InstrumentMeta{Exchange: request.Exchange, Symbol: request.Instrument, Product: instrument.Product, DisplayName: result.Detection.DisplayName},
+		Timeframe:         request.Timeframe,
+		Source:            catalog.SourceMeta{Path: source.Path, SHA256: source.SHA256, Encoding: result.Detection.Encoding, Format: AdapterID, Title: result.Detection.Title, TimestampSemantics: request.TimestampSemantics},
+		Time:              catalog.TimeMeta{Timezone: request.Timezone, DateSemantics: request.DateSemantics, TradingCalendarHash: runtimeConfig.calendarHash, SessionConfigHash: runtimeConfig.sessionHash},
+		Price:             catalog.PriceMeta{PriceDecimals: instrument.PriceDecimals, PriceScale: instrument.PriceScale, TickSizeI64: instrument.TickSizeI64},
+		Coverage:          catalog.CoverageMeta{BarCount: int64(len(result.Bars)), FirstBarIndex: first.BarIndex, LastBarIndex: last.BarIndex, FirstTimestampUTC: first.TimestampUTC, LastTimestampUTC: last.TimestampUTC, FirstTradingDay: fromDate32(first.TradingDay), LastTradingDay: fromDate32(last.TradingDay), TradingDayCount: len(tradingDays)},
+		Importer:          catalog.ImporterMeta{ID: AdapterID, Version: AdapterVersion, OptionsHash: optionsHash},
+		Quality:           catalog.QualityCounts{DuplicateCount: counts["duplicate_count"], InvalidOHLCCount: counts["invalid_ohlc_count"], ZeroVolumeCount: counts["zero_volume_count"], GapCount: counts["gap_count"], WarningCount: counts["warning_count"], ErrorCount: counts["error_count"]},
+		Files:             files, CreatedAt: time.Now().UTC(),
 	}
+}
+
+func canonicalImportIdentity(options ImportOptions, independenceGroup string) ([]byte, string, error) {
+	value := struct {
+		Options           ImportOptions `json:"options"`
+		IndependenceGroup string        `json:"independence_group"`
+	}{Options: options, IndependenceGroup: independenceGroup}
+	data, err := json.Marshal(value)
+	if err != nil {
+		return nil, "", err
+	}
+	return data, hashBytes(data), nil
 }
 
 func fromDate32(days int32) string {

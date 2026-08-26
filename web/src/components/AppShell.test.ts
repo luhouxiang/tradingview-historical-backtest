@@ -118,7 +118,7 @@ describe('AppShell', () => {
       props: { health: 'ok' },
       global: { stubs: { ChartGroup: ChartStub, DatasetPanel: true } },
     })
-    wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset)
+    wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset, 'automatic')
     await flushPromises()
     expect(api.createCalculation.mock.calls.map((call) => call[0])).toEqual([
       expect.objectContaining({ parameters: { period: 20, source: 'close' }, calculation_mode: 'full_history' }),
@@ -242,7 +242,7 @@ describe('AppShell', () => {
       props: { health: 'ok' },
       global: { stubs: { ChartGroup: ChartStub, DatasetPanel: true } },
     })
-    wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset)
+    wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset, 'automatic')
     await flushPromises()
     expect(wrapper.get('.workspace-body').attributes('style')).toContain('400px')
     expect(wrapper.findAll('[data-object-type="DrawingObject"]')).toHaveLength(1)
@@ -253,6 +253,31 @@ describe('AppShell', () => {
     const saved = api.putDrawings.mock.calls[0]?.[4]
     expect(JSON.stringify(saved)).not.toContain('"x"')
     expect(JSON.stringify(saved)).not.toContain('"y"')
+  })
+
+  it('keeps the datasets tab open when a user switches datasets', async () => {
+    api.getLayout.mockResolvedValue({
+      schema_version: 1, profile_id: 'default', layout_id: 'default-three-pane', revision: 3,
+      panes: [{ id: 'price', role: 'price', weight: 6, min_height: 240, visible: true, collapsed: false, order: 0 }],
+      right_panel: { width: 320, collapsed: false, active_tab: 'object_tree' },
+      bottom_panel: { height: 260, collapsed: true, active_tab: 'replay' }, object_order: [], series_sources: [], strategy_sources: [], updated_at: '2026-08-01T00:00:00Z',
+    })
+    api.getDrawings.mockRejectedValue(new ApiError('DRAWINGS_NOT_FOUND', 'missing', 'req-drawings'))
+    api.listAlgorithms.mockResolvedValue([])
+    const wrapper = mount(AppShell, {
+      props: { health: 'ok' }, global: { stubs: { ChartGroup: ChartStub, DatasetPanel: true } },
+    })
+
+    wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset, 'automatic')
+    await flushPromises()
+    expect(wrapper.findAll('.right-dock nav button')[3]?.classes()).toContain('active')
+
+    await wrapper.findAll('.right-dock nav button')[0]?.trigger('click')
+    wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset, 'user')
+    await flushPromises()
+
+    expect(wrapper.findAll('.right-dock nav button')[0]?.classes()).toContain('active')
+    expect(wrapper.findComponent({ name: 'DatasetPanel' }).exists()).toBe(true)
   })
 
   it('automatically persists StrategySource category visibility for the next startup', async () => {
@@ -289,7 +314,7 @@ describe('AppShell', () => {
         props: { health: 'ok' }, global: { stubs: { ChartGroup: ChartStub, DatasetPanel: true } },
       })
 
-      wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset)
+      wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset, 'automatic')
       await flushPromises()
       const categoryToggles = wrapper.findAll('.strategy-categories input[type="checkbox"]')
       expect(categoryToggles).toHaveLength(13)

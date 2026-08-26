@@ -3,19 +3,20 @@ package catalog
 import "time"
 
 type DatasetMeta struct {
-	SchemaVersion int            `json:"schema_version"`
-	DatasetID     string         `json:"dataset_id"`
-	DataRevision  string         `json:"data_revision"`
-	Instrument    InstrumentMeta `json:"instrument"`
-	Timeframe     string         `json:"timeframe"`
-	Source        SourceMeta     `json:"source"`
-	Time          TimeMeta       `json:"time"`
-	Price         PriceMeta      `json:"price"`
-	Coverage      CoverageMeta   `json:"coverage"`
-	Importer      ImporterMeta   `json:"importer"`
-	Quality       QualityCounts  `json:"quality"`
-	Files         []FileMeta     `json:"files"`
-	CreatedAt     time.Time      `json:"created_at"`
+	SchemaVersion     int            `json:"schema_version"`
+	DatasetID         string         `json:"dataset_id"`
+	DataRevision      string         `json:"data_revision"`
+	IndependenceGroup string         `json:"independence_group,omitempty"`
+	Instrument        InstrumentMeta `json:"instrument"`
+	Timeframe         string         `json:"timeframe"`
+	Source            SourceMeta     `json:"source"`
+	Time              TimeMeta       `json:"time"`
+	Price             PriceMeta      `json:"price"`
+	Coverage          CoverageMeta   `json:"coverage"`
+	Importer          ImporterMeta   `json:"importer"`
+	Quality           QualityCounts  `json:"quality"`
+	Files             []FileMeta     `json:"files"`
+	CreatedAt         time.Time      `json:"created_at"`
 }
 
 type InstrumentMeta struct {
@@ -55,6 +56,7 @@ type CoverageMeta struct {
 	LastTimestampUTC  int64  `json:"last_timestamp_utc"`
 	FirstTradingDay   string `json:"first_trading_day"`
 	LastTradingDay    string `json:"last_trading_day"`
+	TradingDayCount   int    `json:"trading_day_count,omitempty"`
 }
 
 type ImporterMeta struct {

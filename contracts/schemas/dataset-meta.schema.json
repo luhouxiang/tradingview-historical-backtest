@@ -8,6 +8,7 @@
     "schema_version",
     "dataset_id",
     "data_revision",
+    "independence_group",
     "instrument",
     "timeframe",
     "source",
@@ -29,6 +30,10 @@
     },
     "data_revision": {
       "$ref": "#/$defs/sha256"
+    },
+    "independence_group": {
+      "type": "string",
+      "pattern": "^[A-Z0-9_]+\\.[A-Z0-9_]+$"
     },
     "instrument": {
       "type": "object",
@@ -103,7 +108,8 @@
         "first_timestamp_utc",
         "last_timestamp_utc",
         "first_trading_day",
-        "last_trading_day"
+        "last_trading_day",
+        "trading_day_count"
       ],
       "properties": {
         "bar_count": {"type": "integer", "minimum": 0},
@@ -112,7 +118,8 @@
         "first_timestamp_utc": {"type": "integer"},
         "last_timestamp_utc": {"type": "integer"},
         "first_trading_day": {"type": "string", "format": "date"},
-        "last_trading_day": {"type": "string", "format": "date"}
+        "last_trading_day": {"type": "string", "format": "date"},
+        "trading_day_count": {"type": "integer", "minimum": 1}
       }
     },
     "importer": {

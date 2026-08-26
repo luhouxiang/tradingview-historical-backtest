@@ -277,6 +277,10 @@ function addStrategyRunSource(source: StrategyRunSource): void {
   rightTab.value = 'objects'
 }
 
+function focusResearchTrade(trade: { trade_id: string; entry_bar_index: number; entry_time: number; entry_price_i64: number }): void {
+  void chartRef.value?.focusSignal({ object_id: trade.trade_id, bar_index: trade.entry_bar_index, time: trade.entry_time, price_i64: trade.entry_price_i64, confirmed_at_bar_index: trade.entry_bar_index, known_at_bar_index: trade.entry_bar_index, object_revision: 1 })
+}
+
 async function installDefaultIndicators(dataset: DatasetMeta, definitions?: AlgorithmDefinition[]): Promise<void> {
   const specs = defaultIndicatorSpecs(definitions ?? await listAlgorithms())
   const created = await Promise.all(specs.map(async (spec) => {
@@ -416,7 +420,7 @@ async function restoreSources(layout: WorkspaceLayout, dataset: DatasetMeta): Pr
   if (restoredStrategies.length === 0) await installDefaultChan(dataset, definitions)
 }
 
-async function selectDataset(dataset: DatasetMeta): Promise<void> {
+async function selectDataset(dataset: DatasetMeta, origin: 'automatic' | 'user' = 'user'): Promise<void> {
   workspaceGeneration += 1
   if (strategyConfigurationSaveTimer !== undefined) {
     window.clearTimeout(strategyConfigurationSaveTimer)
@@ -452,14 +456,16 @@ async function selectDataset(dataset: DatasetMeta): Promise<void> {
   if (layoutResult.status === 'fulfilled') {
     const layout = layoutResult.value
     layoutRevision.value = layout.revision
-    rightWidth.value = layout.right_panel.width
-    rightOpen.value = !layout.right_panel.collapsed
-    bottomHeight.value = layout.bottom_panel.height
-    bottomOpen.value = !layout.bottom_panel.collapsed
-    bottomTab.value = layout.bottom_panel.active_tab
-    rightTab.value = layout.right_panel.active_tab === 'object_tree' ? 'objects' : layout.right_panel.active_tab === 'strategy_params' ? 'indicators' : 'datasets'
-    await nextTick()
-    chartRef.value?.restoreLayout({ panes: layout.panes.map((pane) => ({ id: pane.id, kind: pane.role, weight: pane.weight, minHeight: pane.min_height, collapsed: pane.collapsed })) })
+    if (origin === 'automatic') {
+      rightWidth.value = layout.right_panel.width
+      rightOpen.value = !layout.right_panel.collapsed
+      bottomHeight.value = layout.bottom_panel.height
+      bottomOpen.value = !layout.bottom_panel.collapsed
+      bottomTab.value = layout.bottom_panel.active_tab
+      rightTab.value = layout.right_panel.active_tab === 'object_tree' ? 'objects' : layout.right_panel.active_tab === 'strategy_params' ? 'indicators' : 'datasets'
+      await nextTick()
+      chartRef.value?.restoreLayout({ panes: layout.panes.map((pane) => ({ id: pane.id, kind: pane.role, weight: pane.weight, minHeight: pane.min_height, collapsed: pane.collapsed })) })
+    }
     await restoreSources(layout, dataset)
   } else if (!(layoutResult.reason instanceof ApiError && layoutResult.reason.code === 'WORKSPACE_NOT_FOUND')) {
     workspaceStatus.value = '布局恢复失败'
@@ -727,7 +733,7 @@ function resizeBottom(event: PointerEvent): void {
         <ReplayPanel v-if="bottomTab === 'replay'" :dataset="selectedDataset" :source="replaySource" @update="updateReplay" />
         <BacktestPanel v-else-if="['backtest', 'trades', 'equity'].includes(bottomTab)" :dataset="selectedDataset" :view="bottomTab === 'trades' ? 'trades' : bottomTab === 'equity' ? 'equity' : 'backtest'" @completed="addStrategyRunSource" />
         <OptimizationPanel v-else-if="bottomTab === 'optimization'" :dataset="selectedDataset" />
-        <StrategyResearchPanel v-else-if="bottomTab === 'research'" :dataset="selectedDataset" />
+        <StrategyResearchPanel v-else-if="bottomTab === 'research'" :dataset="selectedDataset" @completed="addStrategyRunSource" @focus-trade="focusResearchTrade" />
       </div>
       <span v-else>{{ workspaceStatus || '底部面板已收起' }}</span>
     </footer>

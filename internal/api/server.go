@@ -8,6 +8,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -24,6 +25,7 @@ import (
 	"github.com/tvbt/tradingview-historical-backtest/internal/optimization"
 	"github.com/tvbt/tradingview-historical-backtest/internal/pythonclient"
 	"github.com/tvbt/tradingview-historical-backtest/internal/replay"
+	"github.com/tvbt/tradingview-historical-backtest/internal/research"
 	"github.com/tvbt/tradingview-historical-backtest/internal/workspace"
 )
 
@@ -49,6 +51,7 @@ type Server struct {
 	backtests       *backtest.Service
 	optimization    *optimization.Service
 	comparisons     *comparison.Service
+	research        *research.Service
 	workspace       *workspace.Store
 	handler         http.Handler
 }
@@ -95,6 +98,10 @@ func WithComparisons(service *comparison.Service) Option {
 	return func(server *Server) { server.comparisons = service }
 }
 
+func WithResearch(service *research.Service) Option {
+	return func(server *Server) { server.research = service }
+}
+
 func WithWorkspace(store *workspace.Store) Option {
 	return func(server *Server) { server.workspace = store }
 }
@@ -116,7 +123,9 @@ func NewServer(cfg config.Config, python *pythonclient.Client, logger, vueLogger
 	mux.HandleFunc("POST /api/v1/datasets/scan", s.scanDatasets)
 	mux.HandleFunc("GET /api/v1/source-files", s.sourceFiles)
 	mux.HandleFunc("POST /api/v1/datasets/import", s.importDataset)
+	mux.HandleFunc("POST /api/v1/datasets/import-batch", s.importDatasetsBatch)
 	mux.HandleFunc("GET /api/v1/datasets", s.listDatasets)
+	mux.HandleFunc("GET /api/v1/datasets/research-readiness", s.datasetResearchReadiness)
 	mux.HandleFunc("GET /api/v1/datasets/{dataset_id}/bars", s.getBars)
 	mux.HandleFunc("GET /api/v1/datasets/{dataset_id}", s.getDataset)
 	mux.HandleFunc("GET /api/v1/jobs/{job_id}", s.getJob)
@@ -141,6 +150,12 @@ func NewServer(cfg config.Config, python *pythonclient.Client, logger, vueLogger
 	mux.HandleFunc("GET /api/v1/strategy-comparisons/{comparison_id}", s.getStrategyComparison)
 	mux.HandleFunc("POST /api/v1/strategy-comparisons/{comparison_id}/cancel", s.cancelStrategyComparison)
 	mux.HandleFunc("GET /api/v1/strategy-comparisons/{comparison_id}/results", s.getStrategyComparisonResults)
+	mux.HandleFunc("POST /api/v1/research-studies", s.createResearchStudy)
+	mux.HandleFunc("GET /api/v1/research-studies", s.listResearchStudies)
+	mux.HandleFunc("GET /api/v1/research-studies/{research_study_id}", s.getResearchStudy)
+	mux.HandleFunc("POST /api/v1/research-studies/{research_study_id}/cancel", s.cancelResearchStudy)
+	mux.HandleFunc("POST /api/v1/research-studies/{research_study_id}/resume", s.resumeResearchStudy)
+	mux.HandleFunc("GET /api/v1/research-studies/{research_study_id}/results", s.getResearchStudyResults)
 	mux.HandleFunc("POST /api/v1/studies", s.createStudy)
 	mux.HandleFunc("GET /api/v1/studies/{study_id}", s.getStudy)
 	mux.HandleFunc("POST /api/v1/studies/{study_id}/cancel", s.cancelStudy)
@@ -355,6 +370,129 @@ func (s *Server) getStrategyComparisonResults(w http.ResponseWriter, r *http.Req
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"request_id": requestID(r.Context()), "comparison_id": r.PathValue("comparison_id"), "items": items})
+}
+
+func (s *Server) createResearchStudy(w http.ResponseWriter, r *http.Request) {
+	if s.research == nil {
+		s.notImplemented(w, r)
+		return
+	}
+	defer r.Body.Close()
+	var request research.Request
+	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1024*1024))
+	decoder.DisallowUnknownFields()
+	decoder.UseNumber()
+	if err := decoder.Decode(&request); err != nil {
+		s.writeError(w, r, http.StatusBadRequest, "INVALID_RESEARCH_STUDY_REQUEST", "Research study request is invalid", nil)
+		return
+	}
+	result, err := s.research.Submit(r.Context(), requestID(r.Context()), traceID(r.Context()), request)
+	if s.writeResearchError(w, r, err) {
+		return
+	}
+	writeJSON(w, http.StatusAccepted, map[string]any{"request_id": requestID(r.Context()), "research_study_id": result.StudyID, "status": result.Job.Status})
+}
+
+func (s *Server) getResearchStudy(w http.ResponseWriter, r *http.Request) {
+	if s.research == nil {
+		s.notImplemented(w, r)
+		return
+	}
+	id := r.PathValue("research_study_id")
+	job, manifest, ok := s.research.Status(id)
+	if !ok {
+		s.writeError(w, r, http.StatusNotFound, "RESEARCH_STUDY_NOT_FOUND", "Research study was not found", nil)
+		return
+	}
+	payload := map[string]any{"request_id": requestID(r.Context()), "research_study_id": id, "status": job.Status, "progress": job.Progress}
+	if job.ResultRef != "" {
+		payload["result_ref"] = job.ResultRef
+	}
+	if manifest != nil {
+		payload["manifest"] = manifest
+	}
+	if job.Error != nil {
+		payload["error"] = job.Error
+	}
+	writeJSON(w, http.StatusOK, payload)
+}
+
+func (s *Server) cancelResearchStudy(w http.ResponseWriter, r *http.Request) {
+	if s.research == nil {
+		s.notImplemented(w, r)
+		return
+	}
+	id := r.PathValue("research_study_id")
+	job, ok := s.research.Cancel(id)
+	if !ok {
+		s.writeError(w, r, http.StatusNotFound, "RESEARCH_STUDY_NOT_FOUND", "Research study was not found", nil)
+		return
+	}
+	writeJSON(w, http.StatusAccepted, map[string]any{"request_id": requestID(r.Context()), "research_study_id": id, "status": job.Status, "progress": job.Progress})
+}
+
+func (s *Server) resumeResearchStudy(w http.ResponseWriter, r *http.Request) {
+	if s.research == nil {
+		s.notImplemented(w, r)
+		return
+	}
+	id := r.PathValue("research_study_id")
+	job, err := s.research.Resume(id, requestID(r.Context()), traceID(r.Context()))
+	if s.writeResearchError(w, r, err) {
+		return
+	}
+	writeJSON(w, http.StatusAccepted, map[string]any{"request_id": requestID(r.Context()), "research_study_id": id, "status": job.Status})
+}
+
+func (s *Server) listResearchStudies(w http.ResponseWriter, r *http.Request) {
+	if s.research == nil {
+		s.notImplemented(w, r)
+		return
+	}
+	items, err := s.research.List()
+	if err != nil {
+		s.writeError(w, r, http.StatusInternalServerError, "RESEARCH_STUDY_LIST_FAILED", "Research studies could not be listed", nil)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"request_id": requestID(r.Context()), "items": items})
+}
+
+func (s *Server) getResearchStudyResults(w http.ResponseWriter, r *http.Request) {
+	if s.research == nil {
+		s.notImplemented(w, r)
+		return
+	}
+	id := r.PathValue("research_study_id")
+	items, aggregate, err := s.research.Results(id)
+	if s.writeResearchError(w, r, err) {
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"request_id": requestID(r.Context()), "research_study_id": id, "items": items, "aggregate": aggregate})
+}
+
+func (s *Server) writeResearchError(w http.ResponseWriter, r *http.Request, err error) bool {
+	if err == nil {
+		return false
+	}
+	switch {
+	case errors.Is(err, research.ErrInvalidRequest):
+		s.writeError(w, r, http.StatusUnprocessableEntity, "INVALID_RESEARCH_STUDY_PARAMETERS", "Research study parameters are invalid", nil)
+	case errors.Is(err, research.ErrInvalidRange):
+		s.writeError(w, r, http.StatusUnprocessableEntity, "INVALID_RESEARCH_STUDY_RANGE", "Research study range is invalid", nil)
+	case errors.Is(err, research.ErrRevisionMismatch):
+		s.writeError(w, r, http.StatusConflict, "DATA_REVISION_MISMATCH", "Dataset revision does not match the active revision", nil)
+	case errors.Is(err, research.ErrTimeframeMismatch):
+		s.writeError(w, r, http.StatusUnprocessableEntity, "RESEARCH_TIMEFRAME_MISMATCH", "Research datasets must use one timeframe", nil)
+	case errors.Is(err, research.ErrNotReady):
+		s.writeError(w, r, http.StatusConflict, "RESEARCH_STUDY_NOT_READY", "Research study is not completed", nil)
+	case errors.Is(err, research.ErrNotResumable):
+		s.writeError(w, r, http.StatusConflict, "RESEARCH_STUDY_NOT_RESUMABLE", "Research study cannot be resumed", nil)
+	case errors.Is(err, catalog.ErrNotFound):
+		s.writeError(w, r, http.StatusNotFound, "RESEARCH_STUDY_NOT_FOUND", "Research study or dataset was not found", nil)
+	default:
+		s.writeError(w, r, http.StatusServiceUnavailable, "RESEARCH_STUDY_FAILED", "Research study request could not be completed", nil)
+	}
+	return true
 }
 
 func (s *Server) createBacktest(w http.ResponseWriter, r *http.Request) {
@@ -852,7 +990,7 @@ func (s *Server) importDataset(w http.ResponseWriter, r *http.Request) {
 		s.writeError(w, r, http.StatusBadRequest, "INVALID_IMPORT_REQUEST", "Import request is invalid", nil)
 		return
 	}
-	if request.SourceFileID == "" || request.Exchange == "" || request.Instrument == "" || request.Timeframe == "" || request.DateSemantics == "" || request.Timezone == "" {
+	if !validImportRequest(request) {
 		s.writeError(w, r, http.StatusUnprocessableEntity, "IMPORT_MAPPING_REQUIRED", "Import mapping fields are required", nil)
 		return
 	}
@@ -873,6 +1011,52 @@ func (s *Server) importDataset(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusAccepted, map[string]any{"request_id": requestID(r.Context()), "job_id": job.ID, "status": "queued"})
 }
 
+func (s *Server) importDatasetsBatch(w http.ResponseWriter, r *http.Request) {
+	if s.datasets == nil || s.jobs == nil {
+		s.notImplemented(w, r)
+		return
+	}
+	defer r.Body.Close()
+	var request struct {
+		Items []importer.ImportRequest `json:"items"`
+	}
+	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4*1024*1024))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&request); err != nil {
+		s.writeError(w, r, http.StatusBadRequest, "INVALID_IMPORT_BATCH_REQUEST", "Batch import request is invalid", nil)
+		return
+	}
+	if len(request.Items) == 0 || len(request.Items) > 100 {
+		s.writeError(w, r, http.StatusUnprocessableEntity, "INVALID_IMPORT_BATCH_SIZE", "Batch import requires between 1 and 100 items", nil)
+		return
+	}
+	seen := make(map[string]bool, len(request.Items))
+	for _, item := range request.Items {
+		if !validImportRequest(item) || seen[item.SourceFileID] {
+			s.writeError(w, r, http.StatusUnprocessableEntity, "INVALID_IMPORT_BATCH_ITEM", "Batch import contains an invalid or duplicate item", nil)
+			return
+		}
+		seen[item.SourceFileID] = true
+	}
+	job := s.jobs.Submit("dataset_import_batch", func(ctx context.Context, progress func(float64)) (string, error) {
+		for index, item := range request.Items {
+			base := float64(index) / float64(len(request.Items))
+			span := 1 / float64(len(request.Items))
+			_, _, err := s.datasets.Import(ctx, item, func(value float64) { progress(base + span*value) })
+			if err != nil {
+				return "", jobs.Fail("DATASET_BATCH_IMPORT_FAILED", "Dataset batch import failed", err)
+			}
+		}
+		progress(1)
+		return "datasets", nil
+	})
+	writeJSON(w, http.StatusAccepted, map[string]any{"request_id": requestID(r.Context()), "job_id": job.ID, "status": "queued"})
+}
+
+func validImportRequest(request importer.ImportRequest) bool {
+	return request.SourceFileID != "" && request.ImporterID != "" && request.Exchange != "" && request.Instrument != "" && request.Timeframe != "" && request.DateSemantics != "" && request.Timezone != "" && importer.ValidIndependenceGroup(request.IndependenceGroup)
+}
+
 func (s *Server) listDatasets(w http.ResponseWriter, r *http.Request) {
 	if s.datasets == nil {
 		s.notImplemented(w, r)
@@ -888,10 +1072,61 @@ func (s *Server) listDatasets(w http.ResponseWriter, r *http.Request) {
 		items = append(items, map[string]any{
 			"dataset_id": meta.DatasetID, "active_revision": meta.DataRevision, "instrument": meta.Instrument.Symbol,
 			"timeframe": meta.Timeframe, "bar_count": meta.Coverage.BarCount, "first_timestamp_utc": meta.Coverage.FirstTimestampUTC,
-			"last_timestamp_utc": meta.Coverage.LastTimestampUTC, "status": "ready",
+			"last_timestamp_utc": meta.Coverage.LastTimestampUTC, "first_trading_day": meta.Coverage.FirstTradingDay,
+			"last_trading_day": meta.Coverage.LastTradingDay, "trading_day_count": meta.Coverage.TradingDayCount,
+			"independence_group": effectiveIndependenceGroup(meta), "status": "ready",
 		})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"request_id": requestID(r.Context()), "catalog_revision": document.CatalogRevision, "datasets": items})
+}
+
+func (s *Server) datasetResearchReadiness(w http.ResponseWriter, r *http.Request) {
+	if s.datasets == nil {
+		s.notImplemented(w, r)
+		return
+	}
+	_, metas, err := s.datasets.ListDatasets()
+	if err != nil {
+		s.writeError(w, r, http.StatusInternalServerError, "CATALOG_READ_FAILED", "Dataset catalog could not be read", nil)
+		return
+	}
+	const requiredDays = 504
+	eligibleGroups := map[string]bool{}
+	items := make([]map[string]any, 0, len(metas))
+	reasons := make([]string, 0)
+	for _, meta := range metas {
+		group := effectiveIndependenceGroup(meta)
+		eligible := meta.Coverage.TradingDayCount >= requiredDays
+		if eligible {
+			eligibleGroups[group] = true
+		} else {
+			reasons = append(reasons, "INSUFFICIENT_TRADING_DAYS:"+meta.DatasetID)
+		}
+		overlaps := make([]string, 0)
+		for _, other := range metas {
+			if other.DatasetID == meta.DatasetID || other.Timeframe != meta.Timeframe || effectiveIndependenceGroup(other) != group {
+				continue
+			}
+			if meta.Coverage.FirstTimestampUTC <= other.Coverage.LastTimestampUTC && other.Coverage.FirstTimestampUTC <= meta.Coverage.LastTimestampUTC {
+				overlaps = append(overlaps, other.DatasetID)
+			}
+		}
+		sort.Strings(overlaps)
+		items = append(items, map[string]any{"dataset_id": meta.DatasetID, "data_revision": meta.DataRevision, "independence_group": group, "trading_day_count": meta.Coverage.TradingDayCount, "eligible": eligible, "overlapping_dataset_ids": overlaps})
+	}
+	status := "certification_ready"
+	if len(eligibleGroups) < 3 {
+		status = "exploratory"
+		reasons = append(reasons, "INSUFFICIENT_INDEPENDENCE_GROUPS")
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"request_id": requestID(r.Context()), "status": status, "required_trading_days": requiredDays, "required_independence_groups": 3, "eligible_independence_group_count": len(eligibleGroups), "datasets": items, "reasons": reasons})
+}
+
+func effectiveIndependenceGroup(meta catalog.DatasetMeta) string {
+	if meta.IndependenceGroup != "" {
+		return meta.IndependenceGroup
+	}
+	return meta.Instrument.Exchange + "." + meta.Instrument.Product
 }
 
 func (s *Server) getDataset(w http.ResponseWriter, r *http.Request) {

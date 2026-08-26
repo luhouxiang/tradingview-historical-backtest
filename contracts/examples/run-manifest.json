@@ -42,7 +42,12 @@
     },
     "contract_multiplier": 20,
     "margin_ratio": 0.12,
-    "intrabar_conflict_rule": "worst_case"
+    "intrabar_conflict_rule": "worst_case",
+    "stress_scenario_id": "cost_2x",
+    "cost_multiplier": 2,
+    "additional_slippage_ticks": 0,
+    "additional_delay_bars": 0,
+    "fill_mode": "unlimited"
   },
   "capital": {
     "initial_cash_i64": 100000000,

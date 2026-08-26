@@ -335,7 +335,7 @@ func TestImportIsImmutableAndRevisionAware(t *testing.T) {
 	if err != nil || reused {
 		t.Fatalf("first import: reused=%v err=%v", reused, err)
 	}
-	if meta.Coverage.BarCount != 5 || meta.Quality.ZeroVolumeCount != 1 {
+	if meta.Coverage.BarCount != 5 || meta.Coverage.TradingDayCount != 1 || meta.IndependenceGroup != "SHFE.AO" || meta.Quality.ZeroVolumeCount != 1 {
 		t.Fatalf("unexpected metadata: %#v", meta)
 	}
 	sourceAfter, _ := os.ReadFile(sourcePath)
@@ -390,6 +390,32 @@ func TestImportIsImmutableAndRevisionAware(t *testing.T) {
 	_, metas, _ = store.List()
 	if len(metas) != 0 {
 		t.Fatal("incomplete revision entered ready catalog results")
+	}
+}
+
+func TestImportIgnoresChartDisplayBoundsAndVersionsIndependenceOverride(t *testing.T) {
+	service, _, _, _ := newTestService(t)
+	service.config.Chart.BeginDT = "2099-01-01 00:00:00"
+	service.config.Chart.EndDT = "2099-01-02 00:00:00"
+	items, err := service.Scan(context.Background())
+	if err != nil || len(items) != 1 {
+		t.Fatalf("scan: %#v, %v", items, err)
+	}
+	request := ImportRequest{
+		SourceFileID: items[0].SourceFileID, ImporterID: AdapterID, Exchange: "SHFE", Instrument: "AO2609", Timeframe: "5m",
+		DateSemantics: "trading_day", Timezone: "Asia/Shanghai", TimestampSemantics: "bar_end", IndependenceGroup: "CUSTOM.AO",
+	}
+	meta, _, err := service.Import(context.Background(), request, func(float64) {})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if meta.Coverage.BarCount != 5 || meta.IndependenceGroup != "CUSTOM.AO" {
+		t.Fatalf("chart bounds truncated import or group was lost: %#v", meta)
+	}
+	request.IndependenceGroup = "CUSTOM.METAL"
+	second, reused, err := service.Import(context.Background(), request, func(float64) {})
+	if err != nil || reused || second.DataRevision == meta.DataRevision {
+		t.Fatalf("independence override did not version metadata: reused=%v first=%s second=%s err=%v", reused, meta.DataRevision, second.DataRevision, err)
 	}
 }
 
@@ -741,9 +767,9 @@ func sr701Fixture() string {
 `
 }
 
-func TestImportAppliesConfiguredTimeWindowBeforeWritingDataset(t *testing.T) {
-	// 测试图表起止时间对导入范围的约束；期望标准化数据只包含配置窗口内的 K 线并产生新修订。
-	service, guard, _, _ := newTestService(t)
+func TestImportDoesNotApplyChartDisplayWindow(t *testing.T) {
+	// 测试图表起止时间不会改变权威标准化数据；期望调整显示窗口后仍复用完整历史修订。
+	service, _, _, _ := newTestService(t)
 	items, err := service.Scan(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -759,29 +785,15 @@ func TestImportAppliesConfiguredTimeWindowBeforeWritingDataset(t *testing.T) {
 	service.config.App.Timezone = "Asia/Shanghai"
 	service.config.Chart.BeginDT = "2025-09-22 01:00:00"
 	service.config.Chart.EndDT = "2025-09-22 09:05:00"
-	bounded, reused, err := service.Import(context.Background(), request, func(float64) {})
+	second, reused, err := service.Import(context.Background(), request, func(float64) {})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if reused || bounded.DataRevision == full.DataRevision {
-		t.Fatalf("bounded import should create a distinct revision: reused=%v full=%s bounded=%s", reused, full.DataRevision, bounded.DataRevision)
+	if !reused || second.DataRevision != full.DataRevision {
+		t.Fatalf("chart bounds changed import identity: reused=%v full=%s second=%s", reused, full.DataRevision, second.DataRevision)
 	}
-	if bounded.Coverage.BarCount != 2 || bounded.Coverage.FirstBarIndex != 0 || bounded.Coverage.LastBarIndex != 1 || bounded.Quality.ZeroVolumeCount != 1 {
-		t.Fatalf("unexpected bounded metadata: %#v", bounded)
-	}
-	barsPath, err := guard.Resolve(bounded.Files[0].Path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	rows, err := parquet.ReadFile[Bar](barsPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	location, _ := time.LoadLocation("Asia/Shanghai")
-	wantFirst := time.Date(2025, 9, 22, 1, 0, 0, 0, location).UTC().UnixMilli()
-	wantLast := time.Date(2025, 9, 22, 9, 5, 0, 0, location).UTC().UnixMilli()
-	if len(rows) != 2 || rows[0].BarIndex != 0 || rows[1].BarIndex != 1 || rows[0].TimestampUTC != wantFirst || rows[1].TimestampUTC != wantLast {
-		t.Fatalf("unexpected bounded rows: %#v", rows)
+	if second.Coverage.BarCount != 5 || second.Coverage.FirstBarIndex != 0 || second.Coverage.LastBarIndex != 4 {
+		t.Fatalf("chart bounds truncated authoritative data: %#v", second)
 	}
 }
 

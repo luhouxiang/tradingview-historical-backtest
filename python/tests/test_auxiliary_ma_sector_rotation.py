@@ -244,6 +244,9 @@ def test_formal_zero_trade_run_records_ranking_context_and_chart_facts(
                 {
                     "bar_index": pa.array(range(12), type=pa.int64()),
                     "timestamp_utc": pa.array(range(12), type=pa.int64()),
+                    "trading_day": pa.array(
+                        [f"2026-01-{index + 1:02d}" for index in range(12)], type=pa.string()
+                    ),
                     "open_i64": pa.array(closes, type=pa.int64()),
                     "high_i64": pa.array([value + 1 for value in closes], type=pa.int64()),
                     "low_i64": pa.array([value - 1 for value in closes], type=pa.int64()),

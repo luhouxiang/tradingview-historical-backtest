@@ -65,6 +65,18 @@ func TestStudyValidationRejectsOverlappingRangesAndOversizedBudget(t *testing.T)
 	}
 }
 
+func TestWalkForwardValidationAllowsOneFixedBaseCandidate(t *testing.T) {
+	err := ValidateWalkForwardSearchConfiguration(
+		map[string]any{}, nil,
+		[]Objective{{Metric: "total_return", Direction: "maximize"}}, nil,
+		SearchConfig{Method: "grid", Budget: 1, RandomSeed: 7},
+		map[string]any{"type": "object", "additionalProperties": false, "properties": map[string]any{}},
+	)
+	if err != nil {
+		t.Fatalf("fixed-parameter walk-forward configuration was rejected: %v", err)
+	}
+}
+
 func repeat(value string, count int) string {
 	result := ""
 	for range count {

@@ -2,6 +2,7 @@
   "schema_version": 1,
   "dataset_id": "SHFE.AO2609.5m",
   "data_revision": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "independence_group": "SHFE.AO",
   "instrument": {
     "exchange": "SHFE",
     "symbol": "AO2609",
@@ -35,7 +36,8 @@
     "first_timestamp_utc": 1757943900000,
     "last_timestamp_utc": 1785104400000,
     "first_trading_day": "2025-09-16",
-    "last_trading_day": "2026-07-27"
+    "last_trading_day": "2026-07-27",
+    "trading_day_count": 211
   },
   "importer": {
     "id": "tdx_txt_v1",

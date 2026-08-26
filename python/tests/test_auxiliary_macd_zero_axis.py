@@ -146,6 +146,7 @@ def test_runner_and_formal_run_publish_visible_events_but_no_trades(tmp_path: Pa
                     [1_700_000_000_000 + index * 300_000 for index in range(len(closes))],
                     type=pa.int64(),
                 ),
+                "trading_day": pa.array(["2026-01-05"] * len(closes), type=pa.string()),
                 "open_i64": pa.array(closes, type=pa.int64()),
                 "high_i64": pa.array([value + 1 for value in closes], type=pa.int64()),
                 "low_i64": pa.array([value - 1 for value in closes], type=pa.int64()),

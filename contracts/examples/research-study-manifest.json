@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "research_study_id": "research-example",
+  "study_signature": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "aggregator_version": "1.0.0",
+  "trace_id": "trace-example",
+  "study_mode": "fixed_parameters",
+  "timeframe": "5m",
+  "strategy": {"kind": "strategy", "algorithm_id": "ma20_retest_short", "algorithm_version": "1.0.0", "source_hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+  "parameters": {},
+  "datasets": [
+    {"dataset_id": "SHFE.AO2609.5m", "data_revision": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "independence_group": "SHFE.AO", "trading_day_count": 520, "range": {"warmup_from_bar_index": 0, "from_bar_index": 0, "to_bar_index": 1000}, "run_id": "run-ao", "run_signature": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"},
+    {"dataset_id": "DCE.I2609.5m", "data_revision": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "independence_group": "DCE.I", "trading_day_count": 520, "range": {"warmup_from_bar_index": 0, "from_bar_index": 0, "to_bar_index": 1000}, "run_id": "run-i", "run_signature": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}
+  ],
+  "child_runs": [
+    {"dataset_id": "SHFE.AO2609.5m", "run_id": "run-ao", "run_signature": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "role": "fixed"},
+    {"dataset_id": "DCE.I2609.5m", "run_id": "run-i", "run_signature": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "role": "fixed"}
+  ],
+  "execution": {"signal_timing": "bar_close", "fill_timing": "next_bar_open"},
+  "capital": {"initial_cash_i64": 10000000, "currency": "CNY", "money_scale": 100},
+  "random_seed": 7,
+  "aggregate": {"data_status": "exploratory", "independence_group_count": 2, "completed_dataset_count": 2},
+  "engine": {"engine_version": "1.0.0", "python_version": "3.14", "contract_version": "1.0.0"},
+  "created_at": "2026-08-24T00:00:00Z"
+}

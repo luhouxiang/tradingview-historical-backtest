@@ -2,8 +2,10 @@ package comparison
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -19,6 +21,8 @@ import (
 	"github.com/tvbt/tradingview-historical-backtest/internal/pythonclient"
 	"github.com/tvbt/tradingview-historical-backtest/internal/storage"
 )
+
+const aggregatorVersion = "2.0.0"
 
 var (
 	ErrInvalidRequest   = errors.New("invalid strategy comparison request")
@@ -162,23 +166,28 @@ func (s *Service) Submit(ctx context.Context, requestID, traceID string, request
 		}
 		prepared = append(prepared, preparedItem{Strategy: item.Strategy, Parameters: parameters, Name: definition.Name, StrategyFamily: definition.StrategyFamily, RunID: jobs.NewID(), RunSignature: signature})
 	}
+	comparisonSignature, err := Signature(request, prepared, engineVersion)
+	if err != nil {
+		return Submission{}, err
+	}
 	comparisonID := "comparison-" + strings.TrimPrefix(jobs.NewID(), "job-")
 	s.mu.Lock()
 	s.details[comparisonID] = ProgressDetail{TotalCount: len(prepared)}
 	s.mu.Unlock()
-	job := s.start(comparisonID, requestID, traceID, request, prepared, meta)
+	job := s.start(comparisonID, comparisonSignature, requestID, traceID, request, prepared, meta)
 	return Submission{ComparisonID: comparisonID, Job: job}, nil
 }
 
-func (s *Service) start(comparisonID, requestID, traceID string, request Request, prepared []preparedItem, meta catalog.DatasetMeta) *jobs.Job {
+func (s *Service) start(comparisonID, comparisonSignature, requestID, traceID string, request Request, prepared []preparedItem, meta catalog.DatasetMeta) *jobs.Job {
 	ref := "comparisons/" + comparisonID
 	return s.jobs.SubmitID(comparisonID, "comparison", func(ctx context.Context, progress func(float64)) (string, error) {
 		barsPath, metaPath := datasetPaths(meta)
 		payload := map[string]any{
 			"contract_version": s.contractVersion, "request_id": requestID, "trace_id": traceID,
 			"job_id": comparisonID, "comparison_id": comparisonID,
-			"dataset":    map[string]any{"dataset_id": meta.DatasetID, "data_revision": meta.DataRevision, "bars_path": barsPath, "meta_path": metaPath},
-			"strategies": prepared, "range": request.Range, "execution": request.Execution,
+			"comparison_signature": comparisonSignature,
+			"dataset":              map[string]any{"dataset_id": meta.DatasetID, "data_revision": meta.DataRevision, "bars_path": barsPath, "meta_path": metaPath},
+			"strategies":           prepared, "range": request.Range, "execution": request.Execution,
 			"capital": request.Capital, "random_seed": request.RandomSeed,
 			"minimum_trade_count": request.MinimumTradeCount, "output_path": ref,
 		}
@@ -223,6 +232,27 @@ func (s *Service) start(comparisonID, requestID, traceID string, request Request
 	})
 }
 
+// Signature covers every fact that can change a child result or its comparison tier.
+func Signature(request Request, prepared []preparedItem, engineVersion string) (string, error) {
+	strategies := make([]map[string]any, 0, len(prepared))
+	for _, item := range prepared {
+		strategies = append(strategies, map[string]any{"strategy": item.Strategy, "parameters": item.Parameters})
+	}
+	facts := map[string]any{
+		"dataset_id": request.DatasetID, "data_revision": request.DataRevision,
+		"range": request.Range, "strategies": strategies, "execution": request.Execution,
+		"capital": request.Capital, "risk_overlay": request.RiskOverlay,
+		"random_seed": request.RandomSeed, "minimum_trade_count": request.MinimumTradeCount,
+		"engine_version": engineVersion, "aggregator_version": aggregatorVersion,
+	}
+	data, err := json.Marshal(facts)
+	if err != nil {
+		return "", err
+	}
+	digest := sha256.Sum256(data)
+	return "sha256:" + fmt.Sprintf("%x", digest), nil
+}
+
 func (s *Service) captureProgress(comparisonID string, value map[string]any) {
 	detail := ProgressDetail{}
 	detail.TotalCount = int(number(value["total_count"]))
@@ -253,6 +283,13 @@ func (s *Service) Status(comparisonID string) (*jobs.Job, ProgressDetail, map[st
 			detail.TotalCount = int(number(manifest["strategy_count"]))
 			detail.CompletedCount = int(number(manifest["completed_count"])) + int(number(manifest["failed_count"]))
 			detail.FailedCount = int(number(manifest["failed_count"]))
+		}
+	} else {
+		journalRef := "comparisons/" + comparisonID + ".journal.json"
+		if path, err := s.guard.Resolve(journalRef); err == nil {
+			if data, readErr := os.ReadFile(path); readErr == nil {
+				_ = json.Unmarshal(data, &manifest)
+			}
 		}
 	}
 	return job, detail, manifest, true
@@ -343,7 +380,41 @@ func (s *Service) validComparison(ref, comparisonID string) bool {
 		}
 	}
 	manifest, err := s.readObject(ref, "comparison.json")
-	return err == nil && manifest["comparison_id"] == comparisonID
+	if err != nil || manifest["comparison_id"] != comparisonID {
+		return false
+	}
+	dependency, ok := manifest["shared_dependency"].(map[string]any)
+	if !ok {
+		return true
+	}
+	dependencyRef, _ := dependency["dependency_ref"].(string)
+	if dependencyRef == "" {
+		return false
+	}
+	directory, err := s.guard.Resolve(dependencyRef)
+	if err != nil {
+		return false
+	}
+	for _, name := range []string{"manifest.json", "runtime.pkl", "_SUCCESS"} {
+		if info, statErr := os.Stat(filepath.Join(directory, name)); statErr != nil || !info.Mode().IsRegular() {
+			return false
+		}
+	}
+	data, err := os.ReadFile(filepath.Join(directory, "runtime.pkl"))
+	if err != nil {
+		return false
+	}
+	digest := sha256.Sum256(data)
+	if dependency["content_hash"] != "sha256:"+fmt.Sprintf("%x", digest) {
+		return false
+	}
+	identity, ok := dependency["identity"].(map[string]any)
+	dataset, _ := manifest["dataset"].(map[string]any)
+	algorithm, algorithmOK := identity["algorithm"].(map[string]any)
+	_, parametersOK := identity["parameters"].(map[string]any)
+	return ok && identity["dataset_id"] == dataset["dataset_id"] && identity["data_revision"] == dataset["data_revision"] &&
+		identity["dependency_kind"] == "chan_causal_runtime" && algorithmOK && stringValue(algorithm["algorithm_version"]) != "" &&
+		stringValue(algorithm["source_hash"]) != "" && parametersOK
 }
 
 func (s *Service) readObject(ref, name string) (map[string]any, error) {

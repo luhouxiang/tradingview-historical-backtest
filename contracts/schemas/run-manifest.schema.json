@@ -134,6 +134,12 @@
         "fill_timing": {"enum": ["next_bar_open", "bar_close"]},
         "commission": {"type": "object", "additionalProperties": true},
         "slippage": {"type": "object", "additionalProperties": true},
+        "stress_scenario_id": {"type": "string", "minLength": 1},
+        "cost_multiplier": {"type": "number", "minimum": 0},
+        "additional_slippage_ticks": {"type": "number", "minimum": 0},
+        "additional_delay_bars": {"type": "integer", "minimum": 0},
+        "max_volume_participation_rate": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+        "fill_mode": {"enum": ["unlimited", "volume_cap_ioc"]},
         "contract_multiplier": {"type": "number", "exclusiveMinimum": 0},
         "margin_ratio": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
         "intrabar_conflict_rule": {
@@ -162,6 +168,7 @@
       }
     },
     "random_seed": {"type": "integer"},
+    "shared_dependency_ref": {"type": "string", "pattern": "^cache/comparison_dependencies/[0-9a-f]{64}$"},
     "created_at": {"type": "string", "format": "date-time"}
   },
   "$defs": {

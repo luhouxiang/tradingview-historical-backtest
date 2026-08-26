@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/research-study-manifest.schema.json",
+  "title": "ResearchStudyManifest",
+  "type": "object",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {"properties": {"study_mode": {"enum": ["walk_forward", "walk_forward_stress", "walk_forward_certification"]}}},
+      "then": {"required": ["walk_forward", "artifacts"]}
+    },
+    {
+      "if": {"properties": {"study_mode": {"const": "walk_forward_stress"}}},
+      "then": {"required": ["stress_test"]}
+    },
+    {
+      "if": {"properties": {"study_mode": {"const": "walk_forward_certification"}}},
+      "then": {"required": ["statistical_validation"]}
+    }
+  ],
+  "required": ["schema_version", "research_study_id", "study_signature", "aggregator_version", "trace_id", "study_mode", "timeframe", "strategy", "parameters", "datasets", "child_runs", "execution", "capital", "random_seed", "aggregate", "engine", "created_at"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "research_study_id": {"type": "string", "minLength": 1},
+    "study_signature": {"$ref": "#/$defs/sha256"},
+    "aggregator_version": {"type": "string", "minLength": 1},
+    "trace_id": {"type": "string", "minLength": 1},
+    "study_mode": {"enum": ["fixed_parameters", "walk_forward", "walk_forward_stress", "walk_forward_certification"]},
+    "timeframe": {"type": "string", "minLength": 1},
+    "strategy": {"$ref": "#/$defs/algorithm"},
+    "parameters": {"type": "object"},
+    "datasets": {"type": "array", "minItems": 2, "maxItems": 32, "items": {"$ref": "#/$defs/dataset"}},
+    "child_runs": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["dataset_id", "run_id", "run_signature", "role"],
+        "properties": {
+          "dataset_id": {"type": "string"}, "run_id": {"type": "string"},
+          "run_signature": {"$ref": "#/$defs/sha256"},
+          "role": {"enum": ["fixed", "train_candidate", "validation", "stress", "neighbor"]},
+          "fold_index": {"type": "integer", "minimum": 0},
+          "candidate_index": {"type": "integer", "minimum": 0},
+          "scenario_id": {"type": "string", "minLength": 1},
+          "parameter_name": {"type": "string", "minLength": 1},
+          "neighbor_direction": {"enum": ["lower", "upper"]}
+        }
+      }
+    },
+    "walk_forward": {"$ref": "#/$defs/walk_forward"},
+    "stress_test": {"$ref": "#/$defs/stress_test"},
+    "statistical_validation": {"$ref": "#/$defs/statistical_validation"},
+    "artifacts": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "out_of_sample_daily_returns": {"type": "string", "pattern": "^research-studies/[A-Za-z0-9_-]+/out_of_sample_daily_returns\\.parquet$"},
+        "stress_results": {"type": "string", "pattern": "^research-studies/[A-Za-z0-9_-]+/stress_results\\.json$"},
+        "statistical_evidence": {"type": "string", "pattern": "^research-studies/[A-Za-z0-9_-]+/statistical_evidence\\.json$"}
+      }
+    },
+    "execution": {"type": "object"},
+    "capital": {"type": "object"},
+    "random_seed": {"type": "integer"},
+    "aggregate": {"type": "object", "additionalProperties": true},
+    "engine": {"type": "object", "additionalProperties": true},
+    "created_at": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "algorithm": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "algorithm_id", "algorithm_version", "source_hash"],
+      "properties": {
+        "kind": {"const": "strategy"}, "algorithm_id": {"type": "string"},
+        "algorithm_version": {"type": "string"}, "source_hash": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "range": {
+      "type": "object", "additionalProperties": false,
+      "required": ["warmup_from_bar_index", "from_bar_index", "to_bar_index"],
+      "properties": {
+        "warmup_from_bar_index": {"type": "integer", "minimum": 0},
+        "from_bar_index": {"type": "integer", "minimum": 0},
+        "to_bar_index": {"type": "integer", "minimum": 0}
+      }
+    },
+    "dataset": {
+      "type": "object", "additionalProperties": false,
+      "required": ["dataset_id", "data_revision", "independence_group", "trading_day_count", "range"],
+      "properties": {
+        "dataset_id": {"type": "string", "minLength": 1},
+        "data_revision": {"$ref": "#/$defs/sha256"},
+        "independence_group": {"type": "string", "minLength": 1},
+        "trading_day_count": {"type": "integer", "minimum": 0},
+        "range": {"$ref": "#/$defs/range"},
+        "run_id": {"type": "string", "minLength": 1},
+        "run_signature": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "walk_forward": {
+      "type": "object", "additionalProperties": false,
+      "required": ["train_trading_days", "validation_trading_days", "step_trading_days", "search_space", "objectives", "constraints", "search"],
+      "properties": {
+        "train_trading_days": {"type": "integer", "minimum": 2},
+        "validation_trading_days": {"type": "integer", "minimum": 1},
+        "step_trading_days": {"type": "integer", "minimum": 1},
+        "search_space": {
+          "type": "array",
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["name", "type"],
+            "properties": {
+              "name": {"type": "string"}, "type": {"enum": ["integer", "number", "boolean", "string"]},
+              "minimum": {"type": "number"}, "maximum": {"type": "number"}, "step": {"type": "number", "exclusiveMinimum": 0},
+              "candidates": {"type": "array", "minItems": 1}
+            }
+          }
+        },
+        "objectives": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["metric", "direction"],
+            "properties": {"metric": {"type": "string"}, "direction": {"enum": ["maximize", "minimize"]}}
+          }
+        },
+        "constraints": {"type": "array"},
+        "search": {
+          "type": "object", "additionalProperties": false,
+          "required": ["method", "budget", "random_seed"],
+          "properties": {"method": {"enum": ["grid", "random"]}, "budget": {"type": "integer", "minimum": 1, "maximum": 100}, "random_seed": {"type": "integer"}}
+        }
+      }
+    },
+    "stress_test": {
+      "type": "object", "additionalProperties": false,
+      "required": ["suite_version", "volume_participation_rate"],
+      "properties": {
+        "suite_version": {"const": "1.0.0"},
+        "volume_participation_rate": {"type": "number", "const": 0.1}
+      }
+    },
+    "statistical_validation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["method_version", "block_size_trading_days", "iterations", "confidence_level", "random_seed", "holm_alpha"],
+      "properties": {
+        "method_version": {"const": "1.0.0"},
+        "block_size_trading_days": {"type": "integer", "minimum": 1},
+        "iterations": {"type": "integer", "minimum": 100, "maximum": 10000},
+        "confidence_level": {"type": "number", "const": 0.95},
+        "random_seed": {"type": "integer"},
+        "holm_alpha": {"type": "number", "const": 0.05}
+      }
+    }
+  }
+}

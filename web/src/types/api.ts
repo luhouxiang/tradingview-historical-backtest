@@ -50,6 +50,10 @@ export interface DatasetSummary {
   bar_count: number
   first_timestamp_utc: number
   last_timestamp_utc: number
+  first_trading_day?: string
+  last_trading_day?: string
+  trading_day_count?: number
+  independence_group?: string
   status: 'ready' | 'importing' | 'invalid'
 }
 
@@ -57,6 +61,7 @@ export interface DatasetMeta {
   request_id: string
   dataset_id: string
   data_revision: string
+  independence_group?: string
   instrument: { exchange: string; symbol: string; product: string; display_name?: string }
   timeframe: string
   source: { path: string; encoding: string; format: string; title?: string; timestamp_semantics?: 'bar_start' | 'bar_end' }
@@ -70,8 +75,26 @@ export interface DatasetMeta {
     last_timestamp_utc: number
     first_trading_day: string
     last_trading_day: string
+    trading_day_count?: number
   }
   quality: Record<string, number>
+}
+
+export interface DatasetResearchReadiness {
+  request_id: string
+  status: 'exploratory' | 'certification_ready'
+  required_trading_days: 504
+  required_independence_groups: 3
+  eligible_independence_group_count: number
+  datasets: Array<{
+    dataset_id: string
+    data_revision: string
+    independence_group: string
+    trading_day_count: number
+    eligible: boolean
+    overlapping_dataset_ids: string[]
+  }>
+  reasons: string[]
 }
 
 export interface BarColumns {
@@ -488,6 +511,12 @@ export interface BacktestRequest {
     contract_multiplier: number
     margin_ratio: number
     intrabar_conflict_rule: 'stop_first' | 'target_first' | 'worst_case'
+    stress_scenario_id?: string
+    cost_multiplier?: number
+    additional_slippage_ticks?: number
+    additional_delay_bars?: number
+    max_volume_participation_rate?: number
+    fill_mode?: 'unlimited' | 'volume_cap_ioc'
   }
   capital: { initial_cash_i64: number; currency: string; money_scale: number }
   random_seed: number
@@ -516,8 +545,14 @@ export interface BacktestSummary {
   run_id: string
   total_return: number
   annualized_return: number | null
+  annualized_return_reason?: string | null
   max_drawdown: number
   sharpe: number | null
+  sharpe_reason?: string | null
+  annualized_volatility?: number | null
+  annualized_volatility_reason?: string | null
+  trading_day_count?: number
+  daily_return_count?: number
   trade_count: number
   win_rate: number | null
   average_win_i64: number | null
@@ -527,6 +562,9 @@ export interface BacktestSummary {
   expectancy_i64: number | null
   total_commission_i64: number
   total_slippage_i64: number
+  requested_quantity?: number
+  filled_quantity?: number
+  fill_rate?: number | null
   risk_approved_count: number
   risk_reduced_count: number
   risk_blocked_count: number
@@ -539,14 +577,26 @@ export interface BacktestTrade {
   entry_bar_index: number
   entry_time: number
   entry_price_i64: number
+  entry_signal_id: string
+  entry_signal_known_at_bar_index: number
+  entry_order_id: string
   exit_bar_index: number
   exit_time: number
   exit_price_i64: number
+  exit_signal_id?: string
+  exit_order_id?: string
   quantity: number
   gross_pnl_i64: number
   net_pnl_i64: number
   commission_i64: number
   slippage_i64: number
+  market_l0?: 'uptrend' | 'downtrend' | 'consolidation' | 'higher_level_center_candidate' | 'unknown'
+  center_phase?: 'consolidation' | 'center_oscillation' | 'migrating_up' | 'migrating_down' | 'unknown'
+  price_vs_center?: 'above' | 'inside' | 'below' | 'unknown'
+  trigger_category?: 'B1' | 'B2' | 'B3' | 'S1' | 'S2' | 'S3' | 'class_buy_sell' | 'other'
+  structure_object_id?: string
+  structure_object_revision?: number
+  attribution_reason_code?: string
 }
 
 export interface EquityRow {
@@ -622,8 +672,10 @@ export interface StrategyComparisonStatus {
 }
 
 export interface StrategyComparisonManifest {
-  schema_version: 1
+  schema_version: 2
   comparison_id: string
+  comparison_signature: string
+  aggregator_version: string
   trace_id: string
   dataset: { dataset_id: string; data_revision: string }
   range: BacktestRequest['range']
@@ -631,6 +683,7 @@ export interface StrategyComparisonManifest {
   capital: Record<string, unknown>
   random_seed: number
   minimum_trade_count: number
+  strategies: Array<{ strategy: AlgorithmRef; parameters: Record<string, string | number | boolean> }>
   strategy_count: number
   completed_count: number
   failed_count: number
@@ -645,8 +698,227 @@ export interface StrategyComparisonResult {
   status: 'completed' | 'failed' | 'skipped'
   run_id?: string
   run_signature?: string
+  tier?: 'failed' | 'no_trades' | 'loss_making' | 'profitable_low_sample' | 'profitable_candidate' | 'pareto_candidate'
+  pareto?: boolean
+  summary?: BacktestSummary
+  attribution?: {
+    attribution_supported: boolean
+    realized_pnl_i64: number
+    dimensions: Array<{
+      dimension: string; value: string; trade_count: number; win_rate: number | null
+      realized_net_pnl_i64: number; expectancy_i64: number | null; profit_factor: number | null
+      average_holding_bars: number; commission_i64: number; slippage_i64: number
+    }>
+  } | null
+  error?: { code: string; message: string }
+}
+
+export interface ResearchStudyRequest {
+  datasets: Array<{ dataset_id: string; data_revision: string; range: BacktestRequest['range'] }>
+  strategy: AlgorithmRef
+  parameters: Record<string, string | number | boolean>
+  execution: BacktestRequest['execution']
+  capital: BacktestRequest['capital']
+  random_seed: number
+  walk_forward?: WalkForwardConfig
+  stress_test?: StressTestConfig
+  statistical_validation?: StatisticalValidationConfig
+}
+
+export interface StressTestConfig {
+  suite_version: '1.0.0'
+  volume_participation_rate: number
+}
+
+export interface StatisticalValidationConfig {
+  method_version: '1.0.0'
+  block_size_trading_days: number
+  iterations: number
+  confidence_level: 0.95
+  random_seed: number
+  holm_alpha: 0.05
+}
+
+export interface ResearchEvidenceGate {
+  gate_id: string
+  required_for: 'research_candidate' | 'reliable_candidate'
+  passed: boolean
+  actual: unknown
+  threshold: unknown
+  reason: string
+}
+
+export interface ResearchCertification {
+  rules_version: string
+  tier: 'exploratory' | 'research_candidate' | 'reliable_candidate'
+  reliable_candidate_is_historical_only: true
+  research_candidate_passed: boolean
+  reliable_candidate_passed: boolean
+  reasons: string[]
+  evidence_matrix: ResearchEvidenceGate[]
+}
+
+export interface StressScenarioResult {
+  scenario_id: string
+  status: 'completed' | 'failed'
+  cost_multiplier: number
+  additional_slippage_ticks: number
+  additional_delay_bars: number
+  max_volume_participation_rate: number | null
+  fill_mode: 'unlimited' | 'volume_cap_ioc'
+  completed_run_count: number
+  failed_run_count: number
+  daily_return_count?: number
+  total_return: number | null
+  max_drawdown: number | null
+  trade_count: number
+  requested_quantity: number
+  filled_quantity: number
+  fill_rate: number | null
+  return_degradation: number | null
+  drawdown_degradation: number | null
+  fill_rate_degradation: number | null
+  failure_reason: string | null
+}
+
+export interface WalkForwardConfig {
+  train_trading_days: number
+  validation_trading_days: number
+  step_trading_days: number
+  search_space: Array<{
+    name: string
+    type: 'integer' | 'number' | 'boolean' | 'string'
+    candidates: Array<string | number | boolean>
+  }>
+  objectives: Array<{ metric: StudyMetric; direction: 'maximize' | 'minimize' }>
+  constraints: Array<{ metric: StudyMetric; operator: '>=' | '<='; value: number }>
+  search: { method: 'grid' | 'random'; budget: number; random_seed: number }
+}
+
+export interface ResearchStudyAccepted {
+  request_id: string
+  research_study_id: string
+  status: 'queued' | 'running'
+}
+
+export interface ResearchStudyAggregate {
+  completed_dataset_count: number
+  failed_dataset_count: number
+  independence_group_count: number
+  eligible_independence_group_count: number
+  data_status: 'exploratory' | 'certification_ready'
+  daily_return_count: number
+  total_trade_count: number
+  total_return: number
+  annualized_return: number | null
+  sharpe: number | null
+  annualized_volatility: number | null
+  max_drawdown: number
+  median_dataset_return: number | null
+  worst_dataset_id: string | null
+  worst_dataset_return: number | null
+  profitable_dataset_ratio: number | null
+  worst_dataset_max_drawdown: number
+  walk_forward_fold_count?: number
+  completed_walk_forward_fold_count?: number
+  profitable_fold_ratio?: number | null
+  worst_fold_max_drawdown?: number | null
+  out_of_sample_trade_count?: number
+  parameter_stability?: number | null
+  stress_scenarios?: StressScenarioResult[]
+  first_failure_scenario?: string | null
+  attempted_parameter_combinations?: Array<{ combination_id: string; parameters: Record<string, string | number | boolean>; attempt_count: number; completed_count: number }>
+  statistical_evidence?: {
+    bootstrap?: {
+      method: string; sample_count: number; block_size_trading_days: number; iterations: number
+      confidence_level: number; random_seed: number
+      metrics: Record<string, { point_estimate: number | null; lower: number | null; upper: number | null; reason: string | null }>
+    }
+    multiple_comparisons?: { candidate_count: number; comparison_count: number; multiple_comparison_warning: boolean; warning: string | null; comparisons: Array<Record<string, unknown>> }
+    parameter_neighborhood?: { evaluated_neighbor_count: number; completed_neighbor_count: number; pass_rate: number | null; required_pass_rate: number; passed: boolean; reason: string | null }
+    certification?: ResearchCertification
+  }
+  certification?: ResearchCertification
+  certification_trade_count?: number
+  out_of_sample_expectancy_i64?: number | null
+  minimum_completed_folds_per_group?: number
+  minimum_studied_trading_days_per_group?: number
+}
+
+export interface ResearchStudyManifest {
+  schema_version: 1
+  research_study_id: string
+  study_signature: string
+  aggregator_version: string
+  trace_id: string
+  timeframe: string
+  strategy: AlgorithmRef
+  parameters: Record<string, string | number | boolean>
+  datasets: Array<{ dataset_id: string; data_revision: string; independence_group: string; trading_day_count: number; range: BacktestRequest['range']; run_id?: string; run_signature?: string }>
+  execution: Record<string, unknown>
+  capital: Record<string, unknown>
+  random_seed: number
+  study_mode: 'fixed_parameters' | 'walk_forward' | 'walk_forward_stress' | 'walk_forward_certification'
+  walk_forward?: WalkForwardConfig
+  stress_test?: StressTestConfig
+  statistical_validation?: StatisticalValidationConfig
+  child_runs: Array<{ dataset_id: string; run_id: string; run_signature: string; role: 'fixed' | 'train_candidate' | 'validation' | 'stress' | 'neighbor'; fold_index?: number; candidate_index?: number; scenario_id?: string; parameter_name?: string; neighbor_direction?: 'lower' | 'upper' }>
+  artifacts?: { out_of_sample_daily_returns?: string; stress_results?: string; statistical_evidence?: string }
+  aggregate: ResearchStudyAggregate
+  created_at: string
+}
+
+export interface ResearchStudyStatus {
+  request_id: string
+  research_study_id: string
+  status: JobStatus['status']
+  progress: number
+  result_ref?: string
+  manifest?: ResearchStudyManifest
+  error?: { code: string; message: string }
+}
+
+export interface ResearchDatasetResult {
+  dataset_id: string
+  data_revision: string
+  independence_group: string
+  trading_day_count: number
+  status: 'completed' | 'failed'
+  run_id?: string
+  run_signature?: string
   summary?: BacktestSummary
   error?: { code: string; message: string }
+  folds?: WalkForwardFoldResult[]
+  walk_forward_summary?: Record<string, number | null>
+}
+
+export interface WalkForwardFoldResult {
+  dataset_id: string
+  independence_group: string
+  fold_index: number
+  status: 'completed' | 'failed'
+  train_trading_day_from?: string
+  train_trading_day_to?: string
+  validation_trading_day_from?: string
+  validation_trading_day_to?: string
+  train_range: BacktestRequest['range']
+  validation_range: BacktestRequest['range']
+  selected_parameters?: Record<string, string | number | boolean>
+  training_ranking?: Array<Record<string, unknown>>
+  selected_train_metrics?: BacktestSummary
+  validation_metrics?: BacktestSummary
+  selected_train_run_id?: string
+  selected_train_run_signature?: string
+  validation_run_id?: string
+  validation_run_signature?: string
+  parameter_changed?: boolean
+  changed_parameter_names?: string[]
+  error?: { code: string; message: string }
+}
+
+export interface ResearchStudyResults {
+  items: ResearchDatasetResult[]
+  aggregate: ResearchStudyAggregate
 }
 
 export interface StudyAccepted {

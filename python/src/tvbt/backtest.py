@@ -102,6 +102,8 @@ SCHEMAS = {
             ("fill_bar_index", pa.int64()),
             ("action", pa.string()),
             ("quantity", pa.int64()),
+            ("requested_quantity", pa.int64()),
+            ("filled_quantity", pa.int64()),
             ("status", pa.string()),
             ("reason_code", pa.string()),
         ]
@@ -126,14 +128,26 @@ SCHEMAS = {
             ("entry_bar_index", pa.int64()),
             ("entry_time", pa.int64()),
             ("entry_price_i64", pa.int64()),
+            ("entry_signal_id", pa.string()),
+            ("entry_signal_known_at_bar_index", pa.int64()),
+            ("entry_order_id", pa.string()),
             ("exit_bar_index", pa.int64()),
             ("exit_time", pa.int64()),
             ("exit_price_i64", pa.int64()),
+            ("exit_signal_id", pa.string()),
+            ("exit_order_id", pa.string()),
             ("quantity", pa.int64()),
             ("gross_pnl_i64", pa.int64()),
             ("net_pnl_i64", pa.int64()),
             ("commission_i64", pa.int64()),
             ("slippage_i64", pa.int64()),
+            ("market_l0", pa.string()),
+            ("center_phase", pa.string()),
+            ("price_vs_center", pa.string()),
+            ("trigger_category", pa.string()),
+            ("structure_object_id", pa.string()),
+            ("structure_object_revision", pa.int64()),
+            ("attribution_reason_code", pa.string()),
         ]
     ),
     "positions": pa.schema(
@@ -150,11 +164,19 @@ SCHEMAS = {
         [
             ("bar_index", pa.int64()),
             ("timestamp_utc", pa.int64()),
+            ("trading_day", pa.string()),
             ("equity_i64", pa.int64()),
             ("cash_i64", pa.int64()),
             ("available_i64", pa.int64()),
             ("margin_i64", pa.int64()),
             ("drawdown", pa.float64()),
+        ]
+    ),
+    "daily_returns": pa.schema(
+        [
+            ("trading_day", pa.string()),
+            ("ending_equity_i64", pa.int64()),
+            ("daily_return", pa.float64()),
         ]
     ),
 }
@@ -173,13 +195,15 @@ def _commission(execution: dict[str, Any], notional_i64: int, quantity: int) -> 
     value = execution["commission"]
     if value["mode"] == "fixed_per_contract":
         source_scale = int(value.get("money_scale", 1))
-        return round(
+        amount = round(
             int(value.get("amount_i64", 0))
             * quantity
             / source_scale
             * int(execution["money_scale"])
         )
-    return round(abs(notional_i64) * float(value.get("rate", 0)))
+    else:
+        amount = round(abs(notional_i64) * float(value.get("rate", 0)))
+    return round(amount * float(execution.get("cost_multiplier", 1)))
 
 
 def _trade_signal_quantity(signal: dict[str, Any]) -> int:
@@ -191,15 +215,25 @@ def _trade_signal_quantity(signal: dict[str, Any]) -> int:
     return value
 
 
+def _volume_limited_quantity(requested: int, volume: int, participation_rate: float) -> int:
+    if requested < 0 or volume < 0 or not 0 < participation_rate <= 1:
+        raise ValueError("volume participation inputs are invalid")
+    return min(requested, math.floor(volume * participation_rate))
+
+
 def _fill_price(
     open_i64: int, action: str, execution: dict[str, Any], tick_size: int
 ) -> tuple[int, int]:
     slippage = execution["slippage"]
     selling = action in {"open_short", "add_short", "close_long", "reduce_long"}
     if slippage["mode"] == "ticks":
-        delta = round(float(slippage["value"]) * tick_size)
+        base_delta = float(slippage["value"]) * tick_size
     else:
-        delta = round(open_i64 * float(slippage["value"]) / 10_000)
+        base_delta = open_i64 * float(slippage["value"]) / 10_000
+    delta = round(
+        base_delta * float(execution.get("cost_multiplier", 1))
+        + float(execution.get("additional_slippage_ticks", 0)) * tick_size
+    )
     return (open_i64 - delta if selling else open_i64 + delta), abs(delta)
 
 
@@ -336,6 +370,19 @@ def _risk_market_facts(path: Path, start: int, end: int) -> dict[int, tuple[str,
     return facts
 
 
+def _trading_day_facts(path: Path, start: int, end: int) -> dict[int, str]:
+    table = pq.read_table(path, columns=["bar_index", "trading_day"])
+    facts: dict[int, str] = {}
+    for position in range(table.num_rows):
+        bar_index = int(table["bar_index"][position].as_py())
+        if start <= bar_index <= end:
+            trading_day = table["trading_day"][position].as_py()
+            if trading_day is None:
+                raise ValueError("backtest bars require trading_day")
+            facts[bar_index] = str(trading_day)
+    return facts
+
+
 def _risk_snapshot(
     *,
     bar_index: int,
@@ -455,6 +502,78 @@ def _kill_switch_decision(state: RiskState, reason: str) -> RiskDecision:
     )
 
 
+def _attribute_trades(
+    trades: list[dict[str, Any]], signals: list[dict[str, Any]], events: list[dict[str, Any]]
+) -> None:
+    signal_by_id = {str(value["signal_id"]): value for value in signals}
+    for trade in trades:
+        known_at = int(trade["entry_signal_known_at_bar_index"])
+        latest: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
+        for event in events:
+            if int(event["known_at_bar_index"]) > known_at:
+                continue
+            try:
+                event_payload = json.loads(str(event["payload_json"]))
+            except ValueError, TypeError:
+                continue
+            latest[str(event["object_type"])] = (event, event_payload)
+        movement = latest.get("level_movement") or latest.get("movement_state")
+        direction = "" if movement is None else str(movement[1].get("direction", "")).lower()
+        center = (
+            latest.get("level_center") or latest.get("segment_zhongshu") or latest.get("zhongshu")
+        )
+        market_l0 = (
+            "uptrend"
+            if direction in {"up", "upward", "long"}
+            else "downtrend"
+            if direction in {"down", "downward", "short"}
+            else "consolidation"
+            if center is not None
+            else "unknown"
+        )
+        phase, relation, structure_id, reason = (
+            "unknown",
+            "unknown",
+            "",
+            "NO_VISIBLE_CONFIRMED_STRUCTURE",
+        )
+        structure_revision = 0
+        if center is not None:
+            event, center_payload = center
+            structure_id, structure_revision = (
+                str(event["object_id"]),
+                int(event["object_revision"]),
+            )
+            raw_phase = str(
+                center_payload.get("phase", center_payload.get("state", "consolidation"))
+            ).lower()
+            phase = (
+                raw_phase
+                if raw_phase
+                in {"consolidation", "center_oscillation", "migrating_up", "migrating_down"}
+                else "consolidation"
+            )
+            zd, zg = center_payload.get("zd_i64"), center_payload.get("zg_i64")
+            if zd is not None and zg is not None:
+                price = int(trade["entry_price_i64"])
+                relation = "above" if price > int(zg) else "below" if price < int(zd) else "inside"
+            reason = "VISIBLE_AT_ENTRY_SIGNAL"
+        signal = signal_by_id.get(str(trade["entry_signal_id"]), {})
+        token = (str(signal.get("reason_code", "")) + " " + str(signal.get("action", ""))).upper()
+        trigger = next(
+            (value for value in ("B1", "B2", "B3", "S1", "S2", "S3") if value in token), "other"
+        )
+        trade.update(
+            market_l0=market_l0,
+            center_phase=phase,
+            price_vs_center=relation,
+            trigger_category=trigger,
+            structure_object_id=structure_id,
+            structure_object_revision=structure_revision,
+            attribution_reason_code=reason,
+        )
+
+
 def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading.Event) -> str:
     dataset = payload.get("dataset")
     algorithm = payload.get("algorithm")
@@ -489,16 +608,20 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
     risk_config: RiskConfig | None = None
     risk_context: RiskContext | None = None
     risk_market: dict[int, tuple[str, int]] = {}
+    volume_cap = execution.get("max_volume_participation_rate")
     if risk_overlay is not None:
         _, risk_config, risk_context = risk_overlay
+    if risk_overlay is not None or volume_cap is not None:
         risk_market = _risk_market_facts(guard.resolve(str(dataset["bars_path"])), start, end)
     signals = [
         signal for signal in strategy.trade_signals if start <= signal["known_at_bar_index"] <= end
     ]
     due: dict[int, list[dict[str, Any]]] = {}
     for signal in signals:
-        fill_index = signal["known_at_bar_index"] + (
-            1 if execution["fill_timing"] == "next_bar_open" else 0
+        fill_index = (
+            signal["known_at_bar_index"]
+            + (1 if execution["fill_timing"] == "next_bar_open" else 0)
+            + int(execution.get("additional_delay_bars", 0))
         )
         due.setdefault(fill_index, []).append(signal)
     cash = int(capital["initial_cash_i64"])
@@ -517,6 +640,9 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
     current_trading_day: str | None = None
     day_start_equity = cash
     bars = [bar for bar in strategy.bars if start <= bar.bar_index <= end]
+    trading_days = _trading_day_facts(guard.resolve(str(dataset["bars_path"])), start, end)
+    if len(trading_days) != len(bars):
+        raise ValueError("backtest range has incomplete trading_day facts")
     for bar in bars:
         if cancelled.is_set():
             raise InterruptedError("backtest cancelled")
@@ -524,9 +650,9 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
             bar.open_i64 if execution["fill_timing"] == "next_bar_open" else bar.close_i64
         )
         market_observation = None
-        market_volume: int | None = None
+        market_volume: int | None = None if not risk_market else risk_market[bar.bar_index][1]
         if risk_config is not None and risk_context is not None:
-            trading_day, market_volume = risk_market[bar.bar_index]
+            trading_day, _ = risk_market[bar.bar_index]
             mark_unrealized = _position_unrealized(
                 position,
                 source_price,
@@ -565,8 +691,10 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
         for signal in due.get(bar.bar_index, []):
             action = str(signal["action"])
             requested_quantity = _trade_signal_quantity(signal)
-            original_execution_bar_index = int(signal["known_at_bar_index"]) + (
-                1 if execution["fill_timing"] == "next_bar_open" else 0
+            original_execution_bar_index = (
+                int(signal["known_at_bar_index"])
+                + (1 if execution["fill_timing"] == "next_bar_open" else 0)
+                + int(execution.get("additional_delay_bars", 0))
             )
             if risk_config is not None and risk_context is not None:
                 assert market_observation is not None
@@ -665,6 +793,27 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
             if closes_position:
                 assert position is not None
                 quantity = _position_quantity(position)
+            desired_quantity = quantity
+            if volume_cap is not None:
+                if market_volume is None:
+                    raise ValueError("volume participation execution requires market volume")
+                quantity = _volume_limited_quantity(quantity, market_volume, float(volume_cap))
+                if quantity == 0:
+                    orders.append(
+                        {
+                            "order_id": order_id,
+                            "signal_id": signal["signal_id"],
+                            "created_at_bar_index": signal["known_at_bar_index"],
+                            "fill_bar_index": bar.bar_index,
+                            "action": action,
+                            "quantity": 0,
+                            "requested_quantity": desired_quantity,
+                            "filled_quantity": 0,
+                            "status": "rejected",
+                            "reason_code": "VOLUME_PARTICIPATION_ZERO_CAPACITY",
+                        }
+                    )
+                    continue
             fill_price, slippage_price = _fill_price(source_price, action, execution, tick_size)
             slippage_cost = quantity * _money(
                 slippage_price,
@@ -677,8 +826,9 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
             )
             notional = notional_per_contract * quantity
             commission = _commission(execution, notional, quantity)
-            reason = "FILLED"
-            status = "filled"
+            partial = quantity < desired_quantity
+            reason = "VOLUME_PARTICIPATION_PARTIAL_IOC" if partial else "FILLED"
+            status = "partially_filled" if partial else "filled"
             if action in {"open_short", "open_long"} and position is None:
                 margin = round(abs(notional) * float(execution["margin_ratio"]))
                 if cash < margin + commission:
@@ -695,6 +845,11 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
                                 "quantity": quantity,
                                 "entry_commission_i64": commission,
                                 "entry_slippage_i64": slippage_cost,
+                                "entry_signal_id": str(signal["signal_id"]),
+                                "entry_signal_known_at_bar_index": int(
+                                    signal["known_at_bar_index"]
+                                ),
+                                "entry_order_id": order_id,
                             }
                         ],
                     }
@@ -713,6 +868,9 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
                             "quantity": quantity,
                             "entry_commission_i64": commission,
                             "entry_slippage_i64": slippage_cost,
+                            "entry_signal_id": str(signal["signal_id"]),
+                            "entry_signal_known_at_bar_index": int(signal["known_at_bar_index"]),
+                            "entry_order_id": order_id,
                         }
                     )
             elif closes_position or reduces_position:
@@ -767,9 +925,16 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
                                 "entry_bar_index": lot["entry_bar_index"],
                                 "entry_time": lot["entry_time"],
                                 "entry_price_i64": lot["entry_price_i64"],
+                                "entry_signal_id": lot["entry_signal_id"],
+                                "entry_signal_known_at_bar_index": lot[
+                                    "entry_signal_known_at_bar_index"
+                                ],
+                                "entry_order_id": lot["entry_order_id"],
                                 "exit_bar_index": bar.bar_index,
                                 "exit_time": bar.timestamp_utc,
                                 "exit_price_i64": fill_price,
+                                "exit_signal_id": str(signal["signal_id"]),
+                                "exit_order_id": order_id,
                                 "quantity": lot_quantity,
                                 "gross_pnl_i64": gross,
                                 "net_pnl_i64": gross - trade_commission,
@@ -790,11 +955,13 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
                     "fill_bar_index": bar.bar_index,
                     "action": action,
                     "quantity": quantity,
+                    "requested_quantity": desired_quantity,
+                    "filled_quantity": quantity if status in {"filled", "partially_filled"} else 0,
                     "status": status,
                     "reason_code": reason,
                 }
             )
-            if status == "filled":
+            if status in {"filled", "partially_filled"}:
                 total_commission += commission
                 total_slippage += slippage_cost
                 fills.append(
@@ -851,6 +1018,7 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
             {
                 "bar_index": bar.bar_index,
                 "timestamp_utc": bar.timestamp_utc,
+                "trading_day": trading_days[bar.bar_index],
                 "equity_i64": equity_value,
                 "cash_i64": cash,
                 "available_i64": equity_value - margin,
@@ -924,6 +1092,8 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
                     "fill_bar_index": None,
                     "action": signal["action"],
                     "quantity": _trade_signal_quantity(signal),
+                    "requested_quantity": _trade_signal_quantity(signal),
+                    "filled_quantity": 0,
                     "status": "rejected",
                     "reason_code": "NO_NEXT_BAR",
                 }
@@ -933,7 +1103,20 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
     )
     for event_seq, event in enumerate(strategy.events):
         event["event_seq"] = event_seq
-    summary = _summary(capital, equity, trades, total_commission, total_slippage, risk_decisions)
+    _attribute_trades(trades, strategy.trade_signals, strategy.events)
+    daily_returns = _daily_returns(int(capital["initial_cash_i64"]), equity)
+    summary = _summary(
+        capital,
+        equity,
+        daily_returns,
+        trades,
+        total_commission,
+        total_slippage,
+        risk_decisions,
+        orders,
+        fills,
+    )
+    summary["attribution_supported"] = True
     output = guard.resolve(str(payload["output_path"]))
     if output.exists():
         raise ValueError("formal backtest run directory already exists")
@@ -952,6 +1135,7 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
             "trades": trades,
             "positions": positions,
             "equity": equity,
+            "daily_returns": daily_returns,
         }
         fact_hashes: dict[str, str] = {}
         for name, rows in table_rows.items():
@@ -1029,6 +1213,8 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
             manifest["ranking_context"] = ranking_context
         if risk_overlay is not None:
             manifest["risk_overlay"] = risk_overlay[0]
+        if payload.get("_shared_dependency_ref") is not None:
+            manifest["shared_dependency_ref"] = payload["_shared_dependency_ref"]
         (temporary / "run.json").write_text(
             json.dumps(manifest, separators=(",", ":")), encoding="utf-8"
         )
@@ -1173,28 +1359,64 @@ def _format_formal_log_event(event: dict[str, Any]) -> str:
 def _summary(
     capital: dict[str, Any],
     equity: list[dict[str, Any]],
+    daily_returns: list[dict[str, Any]],
     trades: list[dict[str, Any]],
     commission: int,
     slippage: int,
     risk_decisions: list[dict[str, Any]],
+    orders: list[dict[str, Any]] | None = None,
+    fills: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     initial = int(capital["initial_cash_i64"])
     final = equity[-1]["equity_i64"] if equity else initial
     wins = [trade["net_pnl_i64"] for trade in trades if trade["net_pnl_i64"] > 0]
     losses = [trade["net_pnl_i64"] for trade in trades if trade["net_pnl_i64"] < 0]
-    returns = [
+    period_returns = [
         (equity[index]["equity_i64"] - equity[index - 1]["equity_i64"])
         / equity[index - 1]["equity_i64"]
         for index in range(1, len(equity))
         if equity[index - 1]["equity_i64"] != 0
     ]
-    mean = sum(returns) / len(returns) if returns else 0
+    mean = sum(period_returns) / len(period_returns) if period_returns else 0
     variance = (
-        sum((value - mean) ** 2 for value in returns) / (len(returns) - 1)
-        if len(returns) > 1
+        sum((value - mean) ** 2 for value in period_returns) / (len(period_returns) - 1)
+        if len(period_returns) > 1
         else 0
     )
-    sharpe = mean / math.sqrt(variance) * math.sqrt(252) if variance > 0 else None
+    period_sharpe = mean / math.sqrt(variance) if variance > 0 else None
+    daily_values = [float(row["daily_return"]) for row in daily_returns]
+    daily_count = len(daily_values)
+    daily_mean = sum(daily_values) / daily_count if daily_values else 0.0
+    daily_variance = (
+        sum((value - daily_mean) ** 2 for value in daily_values) / (daily_count - 1)
+        if daily_count > 1
+        else 0.0
+    )
+    daily_deviation = math.sqrt(daily_variance)
+    if daily_count < 2:
+        sharpe = None
+        sharpe_reason: str | None = "insufficient_daily_returns"
+        annualized_volatility = None
+        volatility_reason: str | None = "insufficient_daily_returns"
+    elif daily_deviation == 0:
+        sharpe = None
+        sharpe_reason = "daily_return_variance_zero"
+        annualized_volatility = 0.0
+        volatility_reason = None
+    else:
+        sharpe = daily_mean / daily_deviation * math.sqrt(252)
+        sharpe_reason = None
+        annualized_volatility = daily_deviation * math.sqrt(252)
+        volatility_reason = None
+    if daily_count < 2:
+        annualized_return = None
+        annualized_return_reason: str | None = "insufficient_trading_days"
+    elif initial <= 0 or final <= 0:
+        annualized_return = None
+        annualized_return_reason = "nonpositive_equity"
+    else:
+        annualized_return = (final / initial) ** (252 / daily_count) - 1
+        annualized_return_reason = None
     profit_factor = sum(wins) / abs(sum(losses)) if losses else None
     average_win = round(sum(wins) / len(wins)) if wins else None
     average_loss = round(sum(losses) / len(losses)) if losses else None
@@ -1203,16 +1425,26 @@ def _summary(
     if drawdown_end is not None:
         candidates = [row for row in equity if row["bar_index"] <= drawdown_end["bar_index"]]
         drawdown_start = max(candidates, key=lambda row: row["equity_i64"], default=None)
+    requested_quantity = sum(
+        int(row.get("requested_quantity", row["quantity"])) for row in (orders or [])
+    )
+    filled_quantity = sum(int(row["quantity"]) for row in (fills or []))
     return {
         "total_return": 0 if initial == 0 else (final - initial) / initial,
-        "annualized_return": None,
-        "annualized_return_reason": "timeframe_annualization_not_configured",
+        "annualized_return": annualized_return,
+        "annualized_return_reason": annualized_return_reason,
         "max_drawdown": max((row["drawdown"] for row in equity), default=0),
         "max_drawdown_start_bar_index": (
             None if drawdown_start is None else drawdown_start["bar_index"]
         ),
         "max_drawdown_end_bar_index": None if drawdown_end is None else drawdown_end["bar_index"],
         "sharpe": sharpe,
+        "sharpe_reason": sharpe_reason,
+        "annualized_volatility": annualized_volatility,
+        "annualized_volatility_reason": volatility_reason,
+        "trading_day_count": daily_count,
+        "daily_return_count": daily_count,
+        "period_sharpe": period_sharpe,
         "sharpe_risk_free_rate": 0,
         "sharpe_annualization_factor": 252,
         "trade_count": len(trades),
@@ -1230,6 +1462,9 @@ def _summary(
         "max_consecutive_losses": _streak(trades, False),
         "total_commission_i64": commission,
         "total_slippage_i64": slippage,
+        "requested_quantity": requested_quantity,
+        "filled_quantity": filled_quantity,
+        "fill_rate": (filled_quantity / requested_quantity if requested_quantity else None),
         "risk_approved_count": sum(
             value["decision_type"] == "approved_order_intent" for value in risk_decisions
         ),
@@ -1253,6 +1488,29 @@ def _summary(
             ),
         },
     }
+
+
+def _daily_returns(initial_equity_i64: int, equity: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    day_ends: list[dict[str, Any]] = []
+    for row in equity:
+        if day_ends and day_ends[-1]["trading_day"] == row["trading_day"]:
+            day_ends[-1] = row
+        else:
+            day_ends.append(row)
+    previous = initial_equity_i64
+    result: list[dict[str, Any]] = []
+    for row in day_ends:
+        ending = int(row["equity_i64"])
+        daily_return = 0.0 if previous == 0 else (ending - previous) / previous
+        result.append(
+            {
+                "trading_day": str(row["trading_day"]),
+                "ending_equity_i64": ending,
+                "daily_return": daily_return,
+            }
+        )
+        previous = ending
+    return result
 
 
 def _streak(trades: list[dict[str, Any]], wins: bool) -> int:

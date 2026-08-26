@@ -16,7 +16,7 @@ import (
 
 const (
 	AdapterID      = "tdx_txt_v1"
-	AdapterVersion = "1.0.0"
+	AdapterVersion = "1.1.0"
 
 	FlagZeroVolume           uint32 = 1 << 0
 	FlagSessionGapBefore     uint32 = 1 << 1

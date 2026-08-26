@@ -9,7 +9,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from tvbt.backtest import _trade_signal_quantity, run_backtest
+from tvbt.backtest import _daily_returns, _summary, _trade_signal_quantity, run_backtest
 from tvbt.replay import generate_replay
 from tvbt.storage.path_guard import PathGuard
 from tvbt.strategy import (
@@ -81,6 +81,30 @@ def test_trade_signal_quantity_defaults_to_one_and_rejects_invalid_values() -> N
     for value in (0, -1, True, 1.5, "2"):
         with pytest.raises(ValueError, match="positive integer"):
             _trade_signal_quantity({"quantity": value})
+
+
+def test_daily_metrics_use_trading_day_closes_and_explain_insufficient_samples() -> None:
+    equity = [
+        {"bar_index": 0, "trading_day": "2026-01-05", "equity_i64": 100, "drawdown": 0.0},
+        {"bar_index": 1, "trading_day": "2026-01-05", "equity_i64": 110, "drawdown": 0.0},
+        {"bar_index": 2, "trading_day": "2026-01-06", "equity_i64": 99, "drawdown": 0.1},
+        {"bar_index": 3, "trading_day": "2026-01-07", "equity_i64": 108, "drawdown": 0.02},
+    ]
+    daily = _daily_returns(100, equity)
+    assert [row["trading_day"] for row in daily] == ["2026-01-05", "2026-01-06", "2026-01-07"]
+    assert daily[0]["daily_return"] == pytest.approx(0.1)
+    assert daily[1]["daily_return"] == pytest.approx(-0.1)
+    summary = _summary({"initial_cash_i64": 100}, equity, daily, [], 0, 0, [])
+    assert summary["trading_day_count"] == 3
+    assert summary["sharpe"] is not None
+    assert summary["annualized_return"] is not None
+    assert summary["sharpe_annualization_factor"] == 252
+
+    one_day = _daily_returns(100, equity[:2])
+    insufficient = _summary({"initial_cash_i64": 100}, equity[:2], one_day, [], 0, 0, [])
+    assert insufficient["sharpe"] is None
+    assert insufficient["sharpe_reason"] == "insufficient_daily_returns"
+    assert insufficient["annualized_return_reason"] == "insufficient_trading_days"
 
 
 def test_ma_retest_strategy_emits_entry_and_exit_after_causal_transitions() -> None:
@@ -446,6 +470,7 @@ def test_third_point_migration_hold_exits_on_new_centre_or_opposing_trend_diverg
             {
                 "bar_index": pa.array(range(6), type=pa.int64()),
                 "timestamp_utc": pa.array([index * 300_000 for index in range(6)]),
+                "trading_day": pa.array(["2026-01-05"] * 6, type=pa.string()),
                 "open_i64": pa.array(closes, type=pa.int64()),
                 "high_i64": pa.array([value + 2 for value in closes], type=pa.int64()),
                 "low_i64": pa.array([value - 2 for value in closes], type=pa.int64()),
@@ -652,6 +677,7 @@ def test_second_buy_only_hands_strongest_B2_to_B3_and_backtests_two_contracts(
             {
                 "bar_index": pa.array(range(6), type=pa.int64()),
                 "timestamp_utc": pa.array([index * 300_000 for index in range(6)]),
+                "trading_day": pa.array(["2026-01-05"] * 6, type=pa.string()),
                 "open_i64": pa.array(opens, type=pa.int64()),
                 "high_i64": pa.array([value + 2 for value in closes], type=pa.int64()),
                 "low_i64": pa.array([value - 2 for value in closes], type=pa.int64()),
@@ -1586,6 +1612,7 @@ def test_centre_oscillation_spread_swings_both_directions_then_hands_off_on_B3(
             {
                 "bar_index": pa.array(range(len(closes)), type=pa.int64()),
                 "timestamp_utc": pa.array([index * 300_000 for index in range(len(closes))]),
+                "trading_day": pa.array(["2026-01-05"] * len(closes), type=pa.string()),
                 "open_i64": pa.array(closes, type=pa.int64()),
                 "high_i64": pa.array([value + 2 for value in closes], type=pa.int64()),
                 "low_i64": pa.array([value - 2 for value in closes], type=pa.int64()),
@@ -2132,6 +2159,7 @@ def test_same_level_decomposition_compares_Ai_Ai_plus_2_and_branches_on_Ai_plus_
                 "timestamp_utc": pa.array(
                     [index * 300_000 for index in range(len(closes))], type=pa.int64()
                 ),
+                "trading_day": pa.array(["2026-01-05"] * len(closes), type=pa.string()),
                 "open_i64": pa.array(closes, type=pa.int64()),
                 "high_i64": pa.array([value + 2 for value in closes], type=pa.int64()),
                 "low_i64": pa.array([value - 2 for value in closes], type=pa.int64()),
@@ -3233,6 +3261,7 @@ def _run_segmented_fixture(
                 "timestamp_utc": pa.array(
                     [index * 300_000 for index in range(len(closes))], type=pa.int64()
                 ),
+                "trading_day": pa.array(["2026-01-05"] * len(closes), type=pa.string()),
                 "open_i64": pa.array(closes, type=pa.int64()),
                 "high_i64": pa.array([value + 2 for value in closes], type=pa.int64()),
                 "low_i64": pa.array([value - 2 for value in closes], type=pa.int64()),
@@ -4086,10 +4115,12 @@ def test_replay_and_backtest_share_signals_and_next_open_fills(tmp_path: Path) -
                 "timestamp_utc": pa.array(
                     [index * 60_000 for index in range(len(closes))], type=pa.int64()
                 ),
+                "trading_day": pa.array(["2026-01-05"] * len(closes), type=pa.string()),
                 "open_i64": pa.array(opens, type=pa.int64()),
                 "high_i64": pa.array(highs, type=pa.int64()),
                 "low_i64": pa.array(lows, type=pa.int64()),
                 "close_i64": pa.array(closes, type=pa.int64()),
+                "volume": pa.array([0] * len(closes), type=pa.int64()),
             }
         ),
         dataset / "bars.parquet",
@@ -4164,6 +4195,31 @@ def test_replay_and_backtest_share_signals_and_next_open_fills(tmp_path: Path) -
     assert all(f'"signal_id":"{value["signal_id"]}"' in log_text for value in run_signals)
     assert '"trace_id":"trace-1"' in log_text
     assert (tmp_path / run_ref / "_SUCCESS").is_file()
+
+    capped_payload = {
+        **backtest_payload,
+        "run_id": "run-volume-cap",
+        "run_signature": "sha256:" + "4" * 64,
+        "output_path": "runs/run-volume-cap",
+        "execution": {
+            **backtest_payload["execution"],
+            "stress_scenario_id": "volume_participation_10pct",
+            "cost_multiplier": 1,
+            "additional_slippage_ticks": 0,
+            "additional_delay_bars": 0,
+            "max_volume_participation_rate": 0.1,
+            "fill_mode": "volume_cap_ioc",
+        },
+    }
+    capped_ref = run_backtest(capped_payload, guard, threading.Event())
+    capped_orders = pq.read_table(tmp_path / capped_ref / "orders.parquet").to_pylist()
+    capped_summary = json.loads((tmp_path / capped_ref / "summary.json").read_text())
+    assert capped_orders and all(
+        row["reason_code"] == "VOLUME_PARTICIPATION_ZERO_CAPACITY" for row in capped_orders
+    )
+    assert capped_summary["requested_quantity"] == len(capped_orders)
+    assert capped_summary["filled_quantity"] == 0
+    assert capped_summary["fill_rate"] == 0
 
 
 def test_chan_strategies_run_on_real_aol9_prefix(tmp_path: Path) -> None:

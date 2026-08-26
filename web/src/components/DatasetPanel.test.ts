@@ -5,9 +5,11 @@ import DatasetPanel from './DatasetPanel.vue'
 
 const api = vi.hoisted(() => ({
   getDataset: vi.fn(),
+  getDatasetResearchReadiness: vi.fn(),
   getJob: vi.fn(),
   getSourceFiles: vi.fn(),
   importSource: vi.fn(),
+  importSourcesBatch: vi.fn(),
   listDatasets: vi.fn(),
   startDatasetScan: vi.fn(),
 }))
@@ -19,6 +21,11 @@ describe('DatasetPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     api.getSourceFiles.mockResolvedValue([])
+    api.getDatasetResearchReadiness.mockResolvedValue({
+      request_id: 'request-1', status: 'exploratory', required_trading_days: 504,
+      required_independence_groups: 3, eligible_independence_group_count: 0,
+      datasets: [], reasons: ['INSUFFICIENT_INDEPENDENCE_GROUPS'],
+    })
     api.listDatasets.mockResolvedValue({ catalog_revision: 0, datasets: [] })
     api.getJob.mockResolvedValue({ job_id: 'job-1', status: 'completed', progress: 1 })
     api.startDatasetScan.mockResolvedValue({ job_id: 'job-1', status: 'queued' })
@@ -65,7 +72,26 @@ describe('DatasetPanel', () => {
     const wrapper = mount(DatasetPanel)
     await flushPromises()
     expect(api.getDataset).toHaveBeenCalledWith(summary.dataset_id, summary.active_revision)
-    expect(wrapper.emitted('selected')?.[0]).toEqual([metadata])
+    expect(wrapper.emitted('selected')?.[0]).toEqual([metadata, 'automatic'])
+  })
+
+  it('does not reselect the startup dataset when the data tab is reopened', async () => {
+    const current = {
+      dataset_id: 'DCE.YL9.5m', data_revision: `sha256:${'4'.repeat(64)}`,
+      coverage: { first_trading_day: '2023-01-01', last_trading_day: '2026-01-01' },
+      source: { format: 'tdx_txt_v1', encoding: 'GB18030' },
+    } as DatasetMeta
+    api.listDatasets.mockResolvedValue({ catalog_revision: 1, datasets: [{
+      dataset_id: 'SHFE.AOL9.5m', active_revision: `sha256:${'5'.repeat(64)}`,
+      instrument: 'AOL9', timeframe: '5m', bar_count: 100, status: 'ready',
+    }] })
+
+    const wrapper = mount(DatasetPanel, { props: { selectedDataset: current } })
+    await flushPromises()
+
+    expect(api.getDataset).not.toHaveBeenCalled()
+    expect(wrapper.emitted('selected')).toBeUndefined()
+    expect(wrapper.get('.dataset-meta').text()).toContain('DCE.YL9.5m')
   })
 
   it('shows a readable mapping status and issue message', async () => {
@@ -89,6 +115,20 @@ describe('DatasetPanel', () => {
     expect(wrapper.text()).toContain('待补充映射')
     expect(wrapper.text()).toContain('缺少 2023-06-20 的前一交易日')
     expect(wrapper.get('.issue').attributes('title')).toBe('TRADING_CALENDAR_MAPPING_MISSING')
+  })
+
+  it('imports every currently importable source in one batch and shows readiness', async () => {
+    api.getSourceFiles.mockResolvedValueOnce([
+      { source_file_id: 'source-1', path: 'history/a.txt', status: 'importable', sha256: 'sha256:a', size_bytes: 1, detected: { symbol: 'AOL9' }, issues: [] },
+      { source_file_id: 'source-2', path: 'history/b.txt', status: 'needs_mapping', sha256: 'sha256:b', size_bytes: 1, detected: { symbol: 'SRL9' }, issues: [] },
+    ])
+    api.importSourcesBatch.mockResolvedValue({ job_id: 'job-batch', status: 'queued' })
+    const wrapper = mount(DatasetPanel)
+    await flushPromises()
+    await wrapper.get('.dataset-actions button:nth-child(2)').trigger('click')
+    await flushPromises()
+    expect(api.importSourcesBatch).toHaveBeenCalledWith([expect.objectContaining({ source_file_id: 'source-1' })])
+    expect(wrapper.text()).toContain('仅探索级数据')
   })
 
   it('reflects a dataset selected by the global keyboard picker', async () => {

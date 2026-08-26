@@ -38,6 +38,7 @@ trading-data/
 /workspaces/
 /logs/
 /trash/
+/tmp/
 
 # 即使派生文件被误写到 data_root 之外，也不提交大数据和运行日志。
 *.parquet

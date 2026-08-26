@@ -1,0 +1,22 @@
+{
+  "datasets": [
+    {"dataset_id": "SHFE.AO2609.5m", "data_revision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "range": {"warmup_from_bar_index": 0, "from_bar_index": 0, "to_bar_index": 20000}},
+    {"dataset_id": "DCE.I2609.5m", "data_revision": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "range": {"warmup_from_bar_index": 0, "from_bar_index": 0, "to_bar_index": 20000}}
+  ],
+  "strategy": {"kind": "strategy", "algorithm_id": "downtrend_reversal_only", "algorithm_version": "1.0.0", "source_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"},
+  "parameters": {"checkpoint_interval": 1024},
+  "execution": {"signal_timing": "bar_close", "fill_timing": "next_bar_open", "commission": {"mode": "fixed_per_contract", "amount_i64": 0, "money_scale": 100}, "slippage": {"mode": "ticks", "value": 1}, "contract_multiplier": 1, "margin_ratio": 0.1, "intrabar_conflict_rule": "worst_case"},
+  "capital": {"initial_cash_i64": 100000000, "currency": "CNY", "money_scale": 100},
+  "random_seed": 7,
+  "walk_forward": {
+    "train_trading_days": 252,
+    "validation_trading_days": 63,
+    "step_trading_days": 63,
+    "search_space": [{"name": "checkpoint_interval", "type": "integer", "candidates": [512, 1024, 2048]}],
+    "objectives": [{"metric": "total_return", "direction": "maximize"}],
+    "constraints": [{"metric": "trade_count", "operator": ">=", "value": 1}],
+    "search": {"method": "grid", "budget": 3, "random_seed": 7}
+  },
+  "stress_test": {"suite_version": "1.0.0", "volume_participation_rate": 0.1},
+  "statistical_validation": {"method_version": "1.0.0", "block_size_trading_days": 5, "iterations": 2000, "confidence_level": 0.95, "random_seed": 7, "holm_alpha": 0.05}
+}

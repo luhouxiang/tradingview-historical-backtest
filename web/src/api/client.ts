@@ -1,5 +1,6 @@
 import type {
   DatasetMeta,
+  DatasetResearchReadiness,
   DatasetSummary,
   BarRangeResponse,
   ErrorResponse,
@@ -31,6 +32,11 @@ import type {
   StrategyComparisonStatus,
   StrategyComparisonManifest,
   StrategyComparisonResult,
+  ResearchStudyRequest,
+  ResearchStudyAccepted,
+  ResearchStudyStatus,
+  ResearchStudyManifest,
+  ResearchStudyResults,
 } from '../types/api'
 
 export class ApiError extends Error {
@@ -88,20 +94,35 @@ export async function getSourceFiles(): Promise<SourceFile[]> {
 }
 
 export function importSource(source: SourceFile): Promise<JobAccepted> {
-  const detected = source.detected ?? {}
   return apiRequest<JobAccepted>('/api/v1/datasets/import', {
     method: 'POST',
-    body: JSON.stringify({
-      source_file_id: source.source_file_id,
-      importer_id: 'tdx_txt_v1',
-      exchange: detected.exchange,
-      instrument: detected.symbol,
-      timeframe: detected.timeframe,
-      date_semantics: detected.date_semantics ?? 'trading_day',
-      timezone: detected.timezone ?? 'Asia/Shanghai',
-      timestamp_semantics: detected.timestamp_semantics ?? 'bar_end',
-    }),
+    body: JSON.stringify(importMapping(source)),
   })
+}
+
+function importMapping(source: SourceFile): Record<string, unknown> {
+  const detected = source.detected ?? {}
+  return {
+    source_file_id: source.source_file_id,
+    importer_id: 'tdx_txt_v1',
+    exchange: detected.exchange,
+    instrument: detected.symbol,
+    timeframe: detected.timeframe,
+    date_semantics: detected.date_semantics ?? 'trading_day',
+    timezone: detected.timezone ?? 'Asia/Shanghai',
+    timestamp_semantics: detected.timestamp_semantics ?? 'bar_end',
+  }
+}
+
+export function importSourcesBatch(sources: SourceFile[]): Promise<JobAccepted> {
+  return apiRequest<JobAccepted>('/api/v1/datasets/import-batch', {
+    method: 'POST',
+    body: JSON.stringify({ items: sources.map(importMapping) }),
+  })
+}
+
+export function getDatasetResearchReadiness(): Promise<DatasetResearchReadiness> {
+  return apiRequest('/api/v1/datasets/research-readiness')
 }
 
 export async function listDatasets(): Promise<{ catalog_revision: number; datasets: DatasetSummary[] }> {
@@ -212,6 +233,32 @@ export async function listStrategyComparisons(datasetId?: string): Promise<Strat
 export async function getStrategyComparisonResults(comparisonId: string): Promise<StrategyComparisonResult[]> {
   const response = await apiRequest<{ request_id: string; comparison_id: string; items: StrategyComparisonResult[] }>(`/api/v1/strategy-comparisons/${encodeURIComponent(comparisonId)}/results`)
   return response.items
+}
+
+export function createResearchStudy(request: ResearchStudyRequest): Promise<ResearchStudyAccepted> {
+  return apiRequest('/api/v1/research-studies', { method: 'POST', body: JSON.stringify(request) })
+}
+
+export function getResearchStudy(studyId: string): Promise<ResearchStudyStatus> {
+  return apiRequest(`/api/v1/research-studies/${encodeURIComponent(studyId)}`)
+}
+
+export function cancelResearchStudy(studyId: string): Promise<ResearchStudyStatus> {
+  return apiRequest(`/api/v1/research-studies/${encodeURIComponent(studyId)}/cancel`, { method: 'POST' })
+}
+
+export function resumeResearchStudy(studyId: string): Promise<ResearchStudyAccepted> {
+  return apiRequest(`/api/v1/research-studies/${encodeURIComponent(studyId)}/resume`, { method: 'POST' })
+}
+
+export async function listResearchStudies(): Promise<ResearchStudyManifest[]> {
+  const response = await apiRequest<{ request_id: string; items: ResearchStudyManifest[] }>('/api/v1/research-studies')
+  return response.items
+}
+
+export async function getResearchStudyResults(studyId: string): Promise<ResearchStudyResults> {
+  const response = await apiRequest<{ request_id: string; research_study_id: string } & ResearchStudyResults>(`/api/v1/research-studies/${encodeURIComponent(studyId)}/results`)
+  return { items: response.items, aggregate: response.aggregate }
 }
 
 export function createStudy(request: StudyRequest): Promise<StudyAccepted> {

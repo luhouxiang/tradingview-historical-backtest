@@ -26,6 +26,7 @@ import (
 	"github.com/tvbt/tradingview-historical-backtest/internal/optimization"
 	"github.com/tvbt/tradingview-historical-backtest/internal/pythonclient"
 	"github.com/tvbt/tradingview-historical-backtest/internal/replay"
+	"github.com/tvbt/tradingview-historical-backtest/internal/research"
 	"github.com/tvbt/tradingview-historical-backtest/internal/storage"
 	"github.com/tvbt/tradingview-historical-backtest/internal/workspace"
 )
@@ -95,8 +96,9 @@ func main() {
 	backtestService := backtest.NewService(guard, catalogStore, python, jobManager, cfg.App.ContractVersion, cfg.PythonJobPollInterval())
 	optimizationService := optimization.NewService(guard, catalogStore, python, jobManager, cfg.App.ContractVersion, cfg.PythonJobPollInterval())
 	comparisonService := comparison.NewService(guard, catalogStore, python, jobManager, cfg.App.ContractVersion, cfg.PythonJobPollInterval())
+	researchService := research.NewService(guard, catalogStore, python, jobManager, cfg.App.ContractVersion, cfg.PythonJobPollInterval())
 	workspaceStore := workspace.NewStore(guard)
-	server := &http.Server{Addr: cfg.Server.Listen, Handler: api.NewServer(cfg, python, logger, vueLogger, api.WithDatasets(datasetService, jobManager), api.WithBarReader(barReader), api.WithCalculations(calculationService), api.WithReplays(replayService), api.WithBacktests(backtestService), api.WithOptimization(optimizationService), api.WithComparisons(comparisonService), api.WithWorkspace(workspaceStore)).Handler(), ReadTimeout: cfg.ReadTimeout(), WriteTimeout: cfg.WriteTimeout()}
+	server := &http.Server{Addr: cfg.Server.Listen, Handler: api.NewServer(cfg, python, logger, vueLogger, api.WithDatasets(datasetService, jobManager), api.WithBarReader(barReader), api.WithCalculations(calculationService), api.WithReplays(replayService), api.WithBacktests(backtestService), api.WithOptimization(optimizationService), api.WithComparisons(comparisonService), api.WithResearch(researchService), api.WithWorkspace(workspaceStore)).Handler(), ReadTimeout: cfg.ReadTimeout(), WriteTimeout: cfg.WriteTimeout()}
 	logger.Info("app.started", "Go API starting", map[string]any{"listen": cfg.Server.Listen, "contract_version": cfg.App.ContractVersion})
 	errCh := make(chan error, 1)
 	go func() { errCh <- server.ListenAndServe() }()

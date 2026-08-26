@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -22,6 +23,24 @@ func (f fakeCatalog) Get(string, string) (catalog.DatasetMeta, error) { return f
 type fakePython struct {
 	guard       *storage.PathGuard
 	definitions []pythonclient.AlgorithmDefinition
+}
+
+func TestSignatureStableAndSensitive(t *testing.T) {
+	request := Request{DatasetID: "TEST.5m", DataRevision: "sha256:" + strings.Repeat("1", 64), Range: backtest.Range{WarmupFromBarIndex: 0, FromBarIndex: 1, ToBarIndex: 9}, Execution: map[string]any{"fill_timing": "next_bar_open"}, Capital: map[string]any{"initial_cash_i64": 1000}, RandomSeed: 7, MinimumTradeCount: 20}
+	items := []preparedItem{{Strategy: pythonclient.AlgorithmRef{Kind: "strategy", AlgorithmID: "a", AlgorithmVersion: "1", SourceHash: "sha256:" + strings.Repeat("2", 64)}, Parameters: map[string]any{"x": 1}}}
+	first, err := Signature(request, items, "engine-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, _ := Signature(request, items, "engine-1")
+	if first != second {
+		t.Fatalf("signature is unstable: %s != %s", first, second)
+	}
+	request.MinimumTradeCount++
+	changed, _ := Signature(request, items, "engine-1")
+	if first == changed {
+		t.Fatal("tier-affecting field did not change signature")
+	}
 }
 
 func (f *fakePython) Algorithms(context.Context, string, string) ([]pythonclient.AlgorithmDefinition, error) {

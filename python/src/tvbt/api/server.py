@@ -21,10 +21,11 @@ from tvbt.logging_config import StructuredLogger, set_runtime_logger
 from tvbt.logging_proxy import logger
 from tvbt.optimization import run_study
 from tvbt.replay import generate_replay
+from tvbt.research import run_research_study
 from tvbt.storage.path_guard import PathGuard
 
 ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
-VALID_KINDS = {"calculation", "replay", "backtest", "optimization", "comparison"}
+VALID_KINDS = {"calculation", "replay", "backtest", "optimization", "comparison", "research"}
 
 
 class InternalServer(ThreadingHTTPServer):
@@ -99,6 +100,24 @@ class InternalServer(ThreadingHTTPServer):
             logger.info(
                 "comparison.finished",
                 "strategy comparison finished",
+                {"job_id": job_id, "status": job.status, "progress": job.progress},
+            )
+
+    def run_research(self, job_id: str) -> None:
+        self.jobs.run(
+            job_id,
+            lambda value, event: run_research_study(
+                value,
+                self.guard,
+                event,
+                lambda progress, detail: self.jobs.progress(job_id, progress, detail),
+            ),
+        )
+        job = self.jobs.get(job_id)
+        if job is not None:
+            logger.info(
+                "research.finished",
+                "multi-dataset research study finished",
                 {"job_id": job_id, "status": job.status, "progress": job.progress},
             )
 
@@ -209,6 +228,12 @@ class InternalHandler(BaseHTTPRequestHandler):
             elif kind == "comparison":
                 threading.Thread(
                     target=self.server.run_comparison,
+                    args=(job_id,),
+                    daemon=True,
+                ).start()
+            elif kind == "research":
+                threading.Thread(
+                    target=self.server.run_research,
                     args=(job_id,),
                     daemon=True,
                 ).start()

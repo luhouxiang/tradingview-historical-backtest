@@ -278,25 +278,44 @@ func (s *Service) validStudy(ref, studyID string) bool {
 }
 
 func validateStudy(request Request, schema map[string]any) error {
-	if len(request.SearchSpace) == 0 || len(request.Objectives) == 0 || request.Search.Budget < 1 || request.Search.Budget > 100 || (request.Search.Method != "grid" && request.Search.Method != "random") {
-		return ErrInvalidRequest
+	if err := ValidateSearchConfiguration(request.BaseParameters, request.SearchSpace, request.Objectives, request.Constraints, request.Search, schema); err != nil {
+		return err
 	}
 	if !validExecution(request.Execution) || !validCapital(request.Capital) {
 		return ErrInvalidRequest
 	}
-	for _, objective := range request.Objectives {
+	return nil
+}
+
+// ValidateSearchConfiguration validates the reusable deterministic finite-search
+// contract without depending on a particular train/validation range.
+func ValidateSearchConfiguration(baseParameters map[string]any, searchSpace []SearchParameter, objectives []Objective, constraints []Constraint, search SearchConfig, schema map[string]any) error {
+	return validateSearchConfiguration(baseParameters, searchSpace, objectives, constraints, search, schema, false)
+}
+
+// ValidateWalkForwardSearchConfiguration permits an empty search space, which
+// represents one fixed base-parameter candidate for strategies without tunable semantics.
+func ValidateWalkForwardSearchConfiguration(baseParameters map[string]any, searchSpace []SearchParameter, objectives []Objective, constraints []Constraint, search SearchConfig, schema map[string]any) error {
+	return validateSearchConfiguration(baseParameters, searchSpace, objectives, constraints, search, schema, true)
+}
+
+func validateSearchConfiguration(baseParameters map[string]any, searchSpace []SearchParameter, objectives []Objective, constraints []Constraint, search SearchConfig, schema map[string]any, allowEmpty bool) error {
+	if (!allowEmpty && len(searchSpace) == 0) || len(objectives) == 0 || search.Budget < 1 || search.Budget > 100 || (search.Method != "grid" && search.Method != "random") {
+		return ErrInvalidRequest
+	}
+	for _, objective := range objectives {
 		if !supportedMetrics[objective.Metric] || (objective.Direction != "maximize" && objective.Direction != "minimize") {
 			return ErrInvalidRequest
 		}
 	}
-	for _, constraint := range request.Constraints {
+	for _, constraint := range constraints {
 		if !supportedMetrics[constraint.Metric] || (constraint.Operator != ">=" && constraint.Operator != "<=") || math.IsNaN(constraint.Value) || math.IsInf(constraint.Value, 0) {
 			return ErrInvalidRequest
 		}
 	}
 	seen := map[string]bool{}
 	combinations := int64(1)
-	for _, space := range request.SearchSpace {
+	for _, space := range searchSpace {
 		if space.Name == "" || seen[space.Name] {
 			return ErrInvalidRequest
 		}
@@ -310,7 +329,7 @@ func validateStudy(request Request, schema map[string]any) error {
 			return ErrInvalidRequest
 		}
 		for _, candidate := range values {
-			parameters := cloneMap(request.BaseParameters)
+			parameters := cloneMap(baseParameters)
 			parameters[space.Name] = candidate
 			if _, err := calculation.NormalizeParameters(schema, parameters); err != nil {
 				return ErrInvalidRequest

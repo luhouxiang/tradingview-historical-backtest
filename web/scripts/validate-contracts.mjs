@@ -62,6 +62,14 @@ await validateFile(
   'schemas/strategy-comparison-manifest.schema.json',
   'examples/strategy-comparison-manifest.json',
 )
+await validateFile(
+  'schemas/research-study-manifest.schema.json',
+  'examples/research-study-manifest.json',
+)
+await validateFile(
+  'schemas/research-study-manifest.schema.json',
+  'examples/research-walk-forward-manifest.json',
+)
 
 for (const [examplePath, schemaName] of [
   ['examples/indicator-job.json', 'CalculationRequest'],
@@ -71,6 +79,7 @@ for (const [examplePath, schemaName] of [
   ['examples/ranking-backtest-job.json', 'BacktestRequest'],
   ['examples/risk-backtest-job.json', 'BacktestRequest'],
   ['examples/study-job.json', 'StudyRequest'],
+  ['examples/research-study-job.json', 'ResearchStudyRequest'],
   ['examples/chan-calculation-results.json', 'CalculationResults'],
 ]) {
   const example = await json(examplePath)
@@ -81,4 +90,4 @@ for (const [examplePath, schemaName] of [
   }
 }
 
-console.log('OpenAPI and 21 contract examples validated successfully.')
+console.log('OpenAPI and 24 contract examples validated successfully.')

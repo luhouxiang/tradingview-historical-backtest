@@ -91,6 +91,24 @@ func TestRecoverStaleTempsMovesKnownNames(t *testing.T) {
 	}
 }
 
+func TestRecoverStaleTempsIgnoresAtomicTemporaryFiles(t *testing.T) {
+	guard, _ := storage.NewPathGuard(t.TempDir())
+	path, _ := guard.Resolve("comparisons/.comparison-1.journal.json.tmp-deadbeef")
+	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte("{}\n"), 0o640); err != nil {
+		t.Fatal(err)
+	}
+	moves, err := RecoverStaleTemps(guard, 0, time.Now().UTC())
+	if err != nil || len(moves) != 0 {
+		t.Fatalf("moves=%#v err=%v", moves, err)
+	}
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("atomic temporary file was changed: %v", err)
+	}
+}
+
 func TestCleanupCachesRejectsSymlinkEntry(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("symlink creation usually requires elevated Windows privileges")
