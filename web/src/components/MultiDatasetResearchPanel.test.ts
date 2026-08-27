@@ -60,4 +60,54 @@ describe('MultiDatasetResearchPanel', () => {
     expect(wrapper.text()).toContain('Holm')
     expect(wrapper.find('[aria-label="走步样本外收益折线"]').exists()).toBe(true)
   })
+
+  it('runs one dataset as explicitly exploratory evidence instead of staying idle', async () => {
+    const wrapper = mount(MultiDatasetResearchPanel, { props: { dataset: null } })
+    await flushPromises()
+    const boxes = wrapper.findAll('.dataset-grid input[type="checkbox"]')
+    await boxes[1]?.setValue(false)
+    await boxes[2]?.setValue(false)
+
+    expect(wrapper.text()).toContain('单数据集研究可以执行')
+    expect(wrapper.text()).toContain('配置就绪，请点击“运行研究”启动')
+    expect(wrapper.get('[aria-label="运行单周期可靠性研究"]').classes()).toContain('primary-action')
+    expect(wrapper.get('.actions button').attributes('disabled')).toBeUndefined()
+    await wrapper.get('.actions button').trigger('click')
+    await flushPromises()
+
+    const request = api.createResearchStudy.mock.calls[0]?.[0]
+    expect(request.datasets).toHaveLength(1)
+    expect(request.datasets[0].dataset_id).toBe('AO2609.5m')
+  })
+
+  it('shows granular work after the study reaches its long-running final phases', async () => {
+    vi.useFakeTimers()
+    try {
+      api.getResearchStudy
+        .mockResolvedValueOnce({
+          research_study_id: 'research-1', status: 'running', progress: .63,
+          progress_detail: {
+            stage: 'stress_test', completed_count: 23, total_count: 119,
+            current_dataset_id: 'DCE.YL9.5m', current_scenario_id: 'cost_1_5x',
+            current_fold_index: 5,
+          },
+        })
+        .mockResolvedValueOnce({ research_study_id: 'research-1', status: 'completed', progress: 1 })
+      const wrapper = mount(MultiDatasetResearchPanel, { props: { dataset: null } })
+      await flushPromises()
+
+      void wrapper.get('.actions button').trigger('click')
+      await flushPromises()
+      expect(wrapper.text()).toContain('running · 63%')
+      expect(wrapper.text()).toContain('执行与成本压力测试 23/119')
+      expect(wrapper.text()).toContain('cost_1_5x')
+      expect(wrapper.text()).toContain('DCE.YL9.5m')
+
+      await vi.advanceTimersByTimeAsync(250)
+      await flushPromises()
+      expect(wrapper.text()).toContain('completed · 100%')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })

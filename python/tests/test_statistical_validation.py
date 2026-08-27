@@ -137,13 +137,22 @@ def test_parameter_neighborhood_is_independence_group_equal_weighted(
         }
         for dataset in payload["datasets"]
     ]
+    progress_updates: list[tuple[float, dict[str, Any]]] = []
     summary, details, children = run_parameter_neighborhood(
-        payload, results, PathGuard(tmp_path), threading.Event()
+        payload,
+        results,
+        PathGuard(tmp_path),
+        threading.Event(),
+        lambda value, detail: progress_updates.append((value, detail)),
     )
     # AO group first averages 1 and 0 to 0.5; DCE.Y contributes 1.0.
     assert summary["pass_rate"] == pytest.approx(0.75)
     assert summary["passed"] is True
     assert len(details) == len(children) == 3
+    assert progress_updates[-1][0] == 1
+    assert progress_updates[-1][1]["stage"] == "parameter_neighborhood"
+    assert progress_updates[-1][1]["completed_count"] == 3
+    assert progress_updates[-1][1]["total_count"] == 3
 
 
 def test_certification_applies_all_research_and_reliable_gates() -> None:

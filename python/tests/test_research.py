@@ -205,6 +205,22 @@ def test_research_study_is_versioned_resumable_and_immutable(
     with pytest.raises(ValueError, match="already exists"):
         run_research_study(payload, guard, threading.Event())
 
+    single_payload = {
+        **payload,
+        "job_id": "research-single",
+        "research_study_id": "research-single",
+        "study_signature": "sha256:" + "b" * 64,
+        "datasets": datasets[:1],
+        "output_path": "research-studies/research-single",
+    }
+    single_output = guard.resolve(run_research_study(single_payload, guard, threading.Event()))
+    single_manifest = json.loads(
+        (single_output / "research-study.json").read_text(encoding="utf-8")
+    )
+    assert len(single_manifest["datasets"]) == 1
+    assert single_manifest["aggregate"]["independence_group_count"] == 1
+    assert single_manifest["aggregate"]["data_status"] == "exploratory"
+
 
 def test_research_rejects_mixed_timeframes(tmp_path: Path) -> None:
     payload = {
@@ -338,8 +354,17 @@ def test_walk_forward_research_persists_oos_daily_artifact_and_child_runs(
         results_value: list[dict[str, Any]],
         guard_value: PathGuard,
         cancelled: threading.Event,
+        progress: Any,
     ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
         del payload_value, results_value, guard_value, cancelled
+        progress(
+            1.0,
+            {
+                "stage": "stress_test",
+                "completed_count": 2,
+                "total_count": 2,
+            },
+        )
         scenario = {
             "scenario_id": "baseline",
             "status": "completed",

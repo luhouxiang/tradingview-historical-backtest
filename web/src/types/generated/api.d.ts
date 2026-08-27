@@ -1564,9 +1564,19 @@ export interface components {
             /** @enum {unknown} */
             status: "queued" | "running" | "cancelling" | "completed" | "failed" | "cancelled" | "interrupted";
             progress: number;
+            progress_detail?: components["schemas"]["ResearchStudyProgressDetail"];
             result_ref?: string;
             manifest?: components["schemas"]["research-study-manifest.schema"];
             error?: components["schemas"]["Error"];
+        };
+        ResearchStudyProgressDetail: {
+            /** @enum {unknown} */
+            stage: "dataset_backtests" | "walk_forward" | "stress_test" | "bootstrap" | "parameter_neighborhood" | "aggregation" | "committing";
+            completed_count: number;
+            total_count: number;
+            current_dataset_id?: string | null;
+            current_scenario_id?: string | null;
+            current_fold_index?: number | null;
         };
         ResearchStudyDatasetResult: {
             dataset_id: string;

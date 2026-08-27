@@ -7,7 +7,8 @@ import {
 } from '../api/client'
 import type {
   AlgorithmDefinition, DatasetMeta, DatasetSummary, ResearchDatasetResult,
-  ResearchStudyAggregate, ResearchStudyManifest, ResearchStudyRequest, WalkForwardFoldResult,
+  ResearchStudyAggregate, ResearchStudyManifest, ResearchStudyProgressDetail,
+  ResearchStudyRequest, WalkForwardFoldResult,
 } from '../types/api'
 
 const props = defineProps<{ dataset: DatasetMeta | null }>()
@@ -20,6 +21,7 @@ const history = ref<ResearchStudyManifest[]>([])
 const studyId = ref('')
 const status = ref('idle')
 const progress = ref(0)
+const progressDetail = ref<ResearchStudyProgressDetail | null>(null)
 const error = ref('')
 const results = ref<ResearchDatasetResult[]>([])
 const aggregate = ref<ResearchStudyAggregate | null>(null)
@@ -98,6 +100,34 @@ function evidenceValue(value: unknown): string {
   return String(value)
 }
 
+const stageText: Record<ResearchStudyProgressDetail['stage'], string> = {
+  dataset_backtests: '逐数据集回测',
+  walk_forward: '走步训练与验证',
+  stress_test: '执行与成本压力测试',
+  bootstrap: '区块 Bootstrap',
+  parameter_neighborhood: '参数邻域验证',
+  aggregation: '统计汇总与认证',
+  committing: '原子提交研究结果',
+}
+
+const progressText = computed(() => {
+  const detail = progressDetail.value
+  if (!detail) {
+    return running.value && progress.value >= 0.99
+      ? '最后阶段仍在执行（旧任务未提供细分进度）'
+      : ''
+  }
+  const count = detail.total_count > 0 ? ` ${detail.completed_count}/${detail.total_count}` : ''
+  const scenario = detail.current_scenario_id ? ` · ${detail.current_scenario_id}` : ''
+  const dataset = detail.current_dataset_id ? ` · ${detail.current_dataset_id}` : ''
+  return `${stageText[detail.stage]}${count}${scenario}${dataset}`
+})
+const idleText = computed(() => {
+  if (chosen.value.length === 0) return '请选择至少一个数据集'
+  if (!currentStrategy.value) return '请选择一个正式策略'
+  return '配置就绪，请点击“运行研究”启动'
+})
+
 async function load(): Promise<void> {
   try {
     const [catalog, algorithms, studies] = await Promise.all([listDatasets(), listAlgorithms(), listResearchStudies()])
@@ -113,11 +143,11 @@ async function load(): Promise<void> {
 async function poll(id: string): Promise<void> {
   let current = await getResearchStudy(id)
   while (['queued', 'running', 'cancelling'].includes(current.status)) {
-    status.value = current.status; progress.value = current.progress
+    status.value = current.status; progress.value = current.progress; progressDetail.value = current.progress_detail ?? null
     await new Promise((resolve) => setTimeout(resolve, 250))
     current = await getResearchStudy(id)
   }
-  status.value = current.status; progress.value = current.progress
+  status.value = current.status; progress.value = current.progress; progressDetail.value = current.progress_detail ?? null
   if (current.status === 'completed') {
     const value = await getResearchStudyResults(id)
     results.value = value.items; aggregate.value = value.aggregate
@@ -127,8 +157,8 @@ async function poll(id: string): Promise<void> {
 
 async function start(): Promise<void> {
   const strategy = currentStrategy.value
-  if (!strategy || chosen.value.length < 2) { error.value = '请选择至少两个同周期数据集和一个正式策略。'; return }
-  error.value = ''; results.value = []; aggregate.value = null
+  if (!strategy || chosen.value.length < 1) { error.value = '请选择至少一个数据集和一个正式策略。'; return }
+  error.value = ''; results.value = []; aggregate.value = null; progressDetail.value = null
   try {
     const metas = await Promise.all(chosen.value.map((item) => getDataset(item.dataset_id, item.active_revision)))
     const spaces = searchSpace()
@@ -159,7 +189,7 @@ async function start(): Promise<void> {
 }
 
 async function restore(item: ResearchStudyManifest): Promise<void> {
-  studyId.value = item.research_study_id; status.value = 'completed'; progress.value = 1
+  studyId.value = item.research_study_id; status.value = 'completed'; progress.value = 1; progressDetail.value = null
   const value = await getResearchStudyResults(studyId.value)
   results.value = value.items; aggregate.value = value.aggregate
 }
@@ -196,12 +226,14 @@ onMounted(load)
       <label v-for="item in compatible" :key="item.dataset_id"><input v-model="selected[item.dataset_id]" type="checkbox">{{ item.dataset_id }} <small>{{ item.independence_group }} · {{ item.trading_day_count ?? 0 }}日</small></label>
     </div>
     <div class="actions">
-      <button :disabled="running || chosen.length < 2" @click="start">运行研究</button>
-      <button :disabled="!running" @click="cancel">取消</button>
-      <button :disabled="!['failed', 'cancelled', 'interrupted'].includes(status)" @click="resume">恢复</button>
-      <span>{{ status }} · {{ Math.round(progress * 100) }}%</span>
+      <button class="primary-action" aria-label="运行单周期可靠性研究" :disabled="running || chosen.length < 1 || !currentStrategy" @click="start">▶ 运行研究</button>
+      <button class="secondary-action" :disabled="!running" @click="cancel">取消</button>
+      <button class="secondary-action" :disabled="!['failed', 'cancelled', 'interrupted'].includes(status)" @click="resume">恢复</button>
+      <strong :class="{ ready: status === 'idle' && chosen.length > 0 && currentStrategy }">{{ status === 'idle' ? idleText : `${status} · ${Math.round(progress * 100)}%` }}</strong>
+      <span v-if="progressText" class="progress-detail">{{ progressText }}</span>
     </div>
     <p v-if="error" role="alert">{{ error }}</p>
+    <p v-if="chosen.length === 1" class="warning" role="note">单数据集研究可以执行走步、压力和统计验证，但独立组不足，只能形成探索性证据。</p>
     <div v-if="aggregate" class="evidence">
       <strong>{{ aggregate.data_status === 'certification_ready' ? '数据达到认证基础' : '探索性证据' }}</strong>
       <span>独立组 {{ aggregate.eligible_independence_group_count }}/3</span><span>等权收益 {{ percent(aggregate.total_return) }}</span>
@@ -287,5 +319,6 @@ onMounted(load)
 
 <style scoped>
 .multi-research{border:1px solid #334155;padding:10px;margin-bottom:12px;background:#101827;color:#dbeafe}.multi-research header,.actions,.evidence{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.multi-research h3{margin:0}.controls,.walk-config,.dataset-grid{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.controls label,.walk-config label,.dataset-grid label{display:flex;gap:5px;align-items:center}.dataset-grid label{padding:5px;border:1px solid #334155}.dataset-grid small{color:#94a3b8}.evidence{padding:8px;background:#172033;margin-top:8px}table{width:100%;border-collapse:collapse;margin-top:8px}th,td{text-align:left;border-bottom:1px solid #334155;padding:4px}.fold-table{font-size:12px}details button{display:block;margin:4px 0}
+.actions{padding:8px 0}.actions button{height:32px;padding:0 14px;border:1px solid #475569;border-radius:4px;cursor:pointer}.actions button:disabled{cursor:not-allowed;opacity:.55}.actions .primary-action{border-color:#2563eb;background:#2563eb;color:#fff;font-weight:700}.actions .primary-action:hover:not(:disabled){background:#1d4ed8}.actions .secondary-action{background:#1e293b}.actions .ready{color:#7dd3fc}
 .fold-chart,.certification{margin-top:8px;padding:8px;background:#172033}.fold-chart svg{display:block;width:100%;height:110px}.fold-chart line{stroke:#64748b;stroke-width:.5}.fold-chart polyline{fill:none;stroke:#38bdf8;stroke-width:2}.certification{display:flex;gap:12px;flex-wrap:wrap}.certification small{flex-basis:100%;color:#fbbf24}.tier-reliable_candidate{border:1px solid #22c55e}.tier-research_candidate{border:1px solid #38bdf8}.tier-exploratory{border:1px solid #f59e0b}.warning{color:#fbbf24}.evidence-matrix td:last-child{max-width:320px;overflow-wrap:anywhere}
 </style>

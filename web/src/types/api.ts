@@ -873,9 +873,19 @@ export interface ResearchStudyStatus {
   research_study_id: string
   status: JobStatus['status']
   progress: number
+  progress_detail?: ResearchStudyProgressDetail
   result_ref?: string
   manifest?: ResearchStudyManifest
   error?: { code: string; message: string }
+}
+
+export interface ResearchStudyProgressDetail {
+  stage: 'dataset_backtests' | 'walk_forward' | 'stress_test' | 'bootstrap' | 'parameter_neighborhood' | 'aggregation' | 'committing'
+  completed_count: number
+  total_count: number
+  current_dataset_id?: string | null
+  current_scenario_id?: string | null
+  current_fold_index?: number | null
 }
 
 export interface ResearchDatasetResult {

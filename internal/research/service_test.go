@@ -128,6 +128,38 @@ func TestSubmitRejectsMixedTimeframesAndRevisionDrift(t *testing.T) {
 	}
 }
 
+func TestSubmitAllowsOneDatasetAsExploratoryStudy(t *testing.T) {
+	guard, err := storage.NewPathGuard(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	revision := "sha256:" + strings.Repeat("1", 64)
+	definition := pythonclient.AlgorithmDefinition{
+		AlgorithmRef:       pythonclient.AlgorithmRef{Kind: "strategy", AlgorithmID: "formal", AlgorithmVersion: "1", SourceHash: "sha256:" + strings.Repeat("2", 64)},
+		ComparisonEligible: true, ResearchRole: "formal_strategy",
+		ParameterSchema: map[string]any{"type": "object", "additionalProperties": false, "properties": map[string]any{}},
+	}
+	manager := jobs.NewManager()
+	service := NewService(
+		guard,
+		testCatalog{"A.5m": meta("A.5m", "5m", "SHFE.AO", revision)},
+		testPython{definition},
+		manager,
+		"1.0.0",
+		time.Millisecond,
+	)
+	requestValue := request(definition, revision)
+	requestValue.Datasets = requestValue.Datasets[:1]
+
+	submission, err := service.Submit(context.Background(), "request", "trace", requestValue)
+	if err != nil {
+		t.Fatalf("single-dataset exploratory study was rejected: %v", err)
+	}
+	if submission.StudyID == "" || submission.Job.Kind != "research" {
+		t.Fatalf("unexpected submission: %#v", submission)
+	}
+}
+
 func TestSignatureIncludesIndependenceGroup(t *testing.T) {
 	definition := pythonclient.AlgorithmRef{Kind: "strategy", AlgorithmID: "formal", AlgorithmVersion: "1", SourceHash: "sha256:" + strings.Repeat("2", 64)}
 	requestValue := Request{Strategy: definition, Parameters: map[string]any{}, Execution: map[string]any{}, Capital: map[string]any{}, RandomSeed: 7}

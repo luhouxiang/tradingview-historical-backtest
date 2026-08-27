@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import statistics
 import threading
+from collections.abc import Callable
 from typing import Any
 
 from tvbt.storage.path_guard import PathGuard
 from tvbt.walk_forward import _return_metrics, _run
+
+Progress = Callable[[float, dict[str, Any]], None]
 
 
 def _scenarios(participation_rate: float) -> list[dict[str, Any]]:
@@ -101,15 +104,20 @@ def run_stress_suite(
     results: list[dict[str, Any]],
     guard: PathGuard,
     cancelled: threading.Event,
+    progress: Progress | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     config = payload["stress_test"]
     datasets = {str(item["dataset_id"]): item for item in payload["datasets"]}
     scenario_details: list[dict[str, Any]] = []
     child_runs: list[dict[str, Any]] = []
     aggregates: list[dict[str, Any]] = []
-    for scenario_index, scenario in enumerate(
-        _scenarios(float(config["volume_participation_rate"]))
-    ):
+    scenarios = _scenarios(float(config["volume_participation_rate"]))
+    fold_count = sum(
+        fold.get("status") == "completed" for result in results for fold in result.get("folds", [])
+    )
+    total_runs = len(scenarios) * fold_count
+    completed_runs = 0
+    for scenario_index, scenario in enumerate(scenarios):
         execution = _execution(payload["execution"], scenario)
         runs: list[dict[str, Any]] = []
         for dataset_index, result in enumerate(results):
@@ -169,6 +177,19 @@ def run_stress_suite(
                             "error": {"code": "STRESS_RUN_FAILED", "message": str(exc)},
                         }
                     )
+                completed_runs += 1
+                if progress is not None:
+                    progress(
+                        completed_runs / total_runs if total_runs else 1.0,
+                        {
+                            "stage": "stress_test",
+                            "completed_count": completed_runs,
+                            "total_count": total_runs,
+                            "current_dataset_id": dataset["dataset_id"],
+                            "current_scenario_id": scenario["scenario_id"],
+                            "current_fold_index": fold_index,
+                        },
+                    )
         aggregate = _aggregate_scenario(scenario, runs)
         aggregates.append(aggregate)
         scenario_details.append(
@@ -179,6 +200,18 @@ def run_stress_suite(
                     for run in runs
                 ],
             }
+        )
+    if progress is not None and total_runs == 0:
+        progress(
+            1.0,
+            {
+                "stage": "stress_test",
+                "completed_count": 0,
+                "total_count": 0,
+                "current_dataset_id": None,
+                "current_scenario_id": None,
+                "current_fold_index": None,
+            },
         )
     baseline = aggregates[0]
     for aggregate in aggregates:

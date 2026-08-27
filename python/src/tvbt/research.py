@@ -46,8 +46,8 @@ def _signature(value: Any) -> str:
 
 def _validate(payload: dict[str, Any]) -> None:
     datasets = payload.get("datasets")
-    if not isinstance(datasets, list) or not 2 <= len(datasets) <= 32:
-        raise ValueError("research study requires 2 to 32 datasets")
+    if not isinstance(datasets, list) or not 1 <= len(datasets) <= 32:
+        raise ValueError("research study requires 1 to 32 datasets")
     if not isinstance(payload.get("strategy"), dict):
         raise ValueError("research strategy is required")
     if not isinstance(payload.get("parameters"), dict):
@@ -492,6 +492,25 @@ def run_research_study(
     _write_journal(journal_path, payload, signature, results)
     total = len(payload["datasets"])
     walk_forward = isinstance(payload.get("walk_forward"), dict)
+    data_stage = "walk_forward" if walk_forward else "dataset_backtests"
+    has_stress = isinstance(payload.get("stress_test"), dict)
+    has_statistics = isinstance(payload.get("statistical_validation"), dict)
+    data_phase_end = (
+        0.45
+        if has_stress and has_statistics
+        else 0.55
+        if has_stress
+        else 0.65
+        if has_statistics
+        else 0.99
+    )
+    stress_phase_end = 0.86 if has_stress and has_statistics else 0.99
+
+    def phase_progress(start: float, end: float) -> Progress:
+        return lambda value, detail: (
+            progress(start + (end - start) * value, detail) if progress is not None else None
+        )
+
     for dataset_index, item in enumerate(payload["datasets"]):
         dataset_id = str(item["dataset_id"])
         if dataset_id in completed_ids:
@@ -500,8 +519,9 @@ def run_research_study(
             raise InterruptedError("research study cancelled")
         if progress is not None:
             progress(
-                len(results) / total,
+                data_phase_end * len(results) / total,
                 {
+                    "stage": data_stage,
                     "total_count": total,
                     "completed_count": len(results),
                     "current_dataset_id": dataset_id,
@@ -536,8 +556,9 @@ def run_research_study(
                     cancelled,
                     lambda value, current_dataset_id=dataset_id: (
                         progress(
-                            (len(results) + value) / total,
+                            data_phase_end * (len(results) + value) / total,
                             {
+                                "stage": data_stage,
                                 "total_count": total,
                                 "completed_count": len(results),
                                 "current_dataset_id": current_dataset_id,
@@ -585,6 +606,18 @@ def run_research_study(
                 }
             )
         _write_journal(journal_path, payload, signature, results)
+    if progress is not None:
+        progress(
+            data_phase_end,
+            {
+                "stage": data_stage,
+                "total_count": total,
+                "completed_count": total,
+                "current_dataset_id": None,
+                "current_scenario_id": None,
+                "current_fold_index": None,
+            },
+        )
     aggregate = _aggregate_walk_forward(results) if walk_forward else _aggregate(results)
     if walk_forward:
         aggregate["attempted_parameter_combinations"] = attempted_parameter_combinations(results)
@@ -593,7 +626,11 @@ def run_research_study(
     stress_child_runs: list[dict[str, Any]] = []
     if isinstance(payload.get("stress_test"), dict):
         stress_aggregates, stress_details, stress_child_runs = run_stress_suite(
-            payload, results, guard, cancelled
+            payload,
+            results,
+            guard,
+            cancelled,
+            phase_progress(data_phase_end, stress_phase_end),
         )
         aggregate["stress_scenarios"] = stress_aggregates
         aggregate["first_failure_scenario"] = next(
@@ -609,7 +646,13 @@ def run_research_study(
     statistical_child_runs: list[dict[str, Any]] = []
     if isinstance(payload.get("statistical_validation"), dict):
         statistical_evidence, statistical_child_runs = run_statistical_validation(
-            payload, results, aggregate, oos_daily_rows, guard, cancelled
+            payload,
+            results,
+            aggregate,
+            oos_daily_rows,
+            guard,
+            cancelled,
+            phase_progress(stress_phase_end if has_stress else data_phase_end, 0.99),
         )
         aggregate["statistical_evidence"] = {
             key: value
@@ -690,6 +733,18 @@ def run_research_study(
         manifest["statistical_validation"] = payload["statistical_validation"]
         manifest["artifacts"]["statistical_evidence"] = (
             f"{payload['output_path']}/statistical_evidence.json"
+        )
+    if progress is not None:
+        progress(
+            0.995,
+            {
+                "stage": "committing",
+                "completed_count": 0,
+                "total_count": 1,
+                "current_dataset_id": None,
+                "current_scenario_id": None,
+                "current_fold_index": None,
+            },
         )
     temporary = output.parent / f".{output.name}.tmp-{uuid.uuid4().hex}"
     temporary.mkdir()

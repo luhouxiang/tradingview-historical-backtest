@@ -69,8 +69,13 @@ def test_stress_suite_freezes_fold_parameters_and_aggregates_fill_rate(
             ],
         }
     ]
+    progress_updates: list[tuple[float, dict[str, Any]]] = []
     aggregates, details, children = run_stress_suite(
-        payload, results, PathGuard(tmp_path), threading.Event()
+        payload,
+        results,
+        PathGuard(tmp_path),
+        threading.Event(),
+        lambda value, detail: progress_updates.append((value, detail)),
     )
     assert len(aggregates) == len(details) == len(children) == 7
     assert all(call["parameters"] == {"threshold": 7} for call in calls)
@@ -79,3 +84,12 @@ def test_stress_suite_freezes_fold_parameters_and_aggregates_fill_rate(
     assert aggregates[-1]["fill_rate_degradation"] == pytest.approx(0.9)
     assert calls[-1]["execution"]["max_volume_participation_rate"] == pytest.approx(0.1)
     assert children[-1]["role"] == "stress"
+    assert progress_updates[-1][0] == 1
+    assert progress_updates[-1][1] == {
+        "stage": "stress_test",
+        "completed_count": 7,
+        "total_count": 7,
+        "current_dataset_id": "AO",
+        "current_scenario_id": "volume_participation_10pct",
+        "current_fold_index": 0,
+    }

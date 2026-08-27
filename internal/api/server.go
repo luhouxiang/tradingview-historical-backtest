@@ -405,6 +405,9 @@ func (s *Server) getResearchStudy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	payload := map[string]any{"request_id": requestID(r.Context()), "research_study_id": id, "status": job.Status, "progress": job.Progress}
+	if detail := s.research.ProgressDetail(id); len(detail) > 0 {
+		payload["progress_detail"] = detail
+	}
 	if job.ResultRef != "" {
 		payload["result_ref"] = job.ResultRef
 	}

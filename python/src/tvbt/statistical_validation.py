@@ -244,12 +244,19 @@ def run_parameter_neighborhood(
     results: list[dict[str, Any]],
     guard: PathGuard,
     cancelled: threading.Event,
+    progress: Callable[[float, dict[str, Any]], None] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]], list[dict[str, Any]]]:
     datasets = {str(item["dataset_id"]): item for item in payload["datasets"]}
     search_space = cast(list[dict[str, Any]], payload["walk_forward"]["search_space"])
     details: list[dict[str, Any]] = []
     child_runs: list[dict[str, Any]] = []
     group_dataset_passes: dict[str, dict[str, list[bool]]] = defaultdict(lambda: defaultdict(list))
+    total_neighbors = sum(
+        len(_numeric_neighbors(search_space, dict(fold["selected_parameters"])))
+        for result in results
+        for fold in result.get("folds", [])
+        if fold.get("status") == "completed"
+    )
     for dataset_index, result in enumerate(results):
         dataset_id = str(result["dataset_id"])
         dataset = datasets[dataset_id]
@@ -317,6 +324,30 @@ def run_parameter_neighborhood(
                     }
                     group_dataset_passes[group][dataset_id].append(False)
                 details.append(detail)
+                if progress is not None:
+                    progress(
+                        len(details) / total_neighbors if total_neighbors else 1.0,
+                        {
+                            "stage": "parameter_neighborhood",
+                            "completed_count": len(details),
+                            "total_count": total_neighbors,
+                            "current_dataset_id": dataset_id,
+                            "current_scenario_id": None,
+                            "current_fold_index": fold_index,
+                        },
+                    )
+    if progress is not None and total_neighbors == 0:
+        progress(
+            1.0,
+            {
+                "stage": "parameter_neighborhood",
+                "completed_count": 0,
+                "total_count": 0,
+                "current_dataset_id": None,
+                "current_scenario_id": None,
+                "current_fold_index": None,
+            },
+        )
     group_rates = {
         group: statistics.fmean(
             statistics.fmean(1.0 if value else 0.0 for value in passes)
@@ -519,6 +550,7 @@ def run_statistical_validation(
     oos_daily_rows: list[dict[str, Any]],
     guard: PathGuard,
     cancelled: threading.Event,
+    progress: Callable[[float, dict[str, Any]], None] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     config = payload["statistical_validation"]
     portfolio_returns = [
@@ -531,8 +563,28 @@ def run_statistical_validation(
         confidence_level=float(config["confidence_level"]),
         random_seed=int(config["random_seed"]),
     )
+    if progress is not None:
+        progress(
+            0.05,
+            {
+                "stage": "bootstrap",
+                "completed_count": int(config["iterations"]),
+                "total_count": int(config["iterations"]),
+                "current_dataset_id": None,
+                "current_scenario_id": None,
+                "current_fold_index": None,
+            },
+        )
     neighborhood, details, child_runs = run_parameter_neighborhood(
-        payload, results, guard, cancelled
+        payload,
+        results,
+        guard,
+        cancelled,
+        (
+            lambda value, detail: (
+                progress(0.05 + value * 0.9, detail) if progress is not None else None
+            )
+        ),
     )
     evidence = {
         "method_version": config["method_version"],
@@ -544,4 +596,16 @@ def run_statistical_validation(
         "parameter_neighborhood_runs": details,
     }
     evidence["certification"] = certification(aggregate, evidence)
+    if progress is not None:
+        progress(
+            1.0,
+            {
+                "stage": "aggregation",
+                "completed_count": 1,
+                "total_count": 1,
+                "current_dataset_id": None,
+                "current_scenario_id": None,
+                "current_fold_index": None,
+            },
+        )
     return evidence, child_runs

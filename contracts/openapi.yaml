@@ -2247,7 +2247,7 @@ components:
       properties:
         datasets:
           type: array
-          minItems: 2
+          minItems: 1
           maxItems: 32
           items: {$ref: "#/components/schemas/ResearchDatasetRequest"}
         strategy: {$ref: "#/components/schemas/AlgorithmRef"}
@@ -2318,9 +2318,24 @@ components:
         research_study_id: {type: string}
         status: {enum: [queued, running, cancelling, completed, failed, cancelled, interrupted]}
         progress: {type: number, minimum: 0, maximum: 1}
+        progress_detail:
+          $ref: "#/components/schemas/ResearchStudyProgressDetail"
         result_ref: {type: string}
         manifest: {$ref: "./schemas/research-study-manifest.schema.json"}
         error: {$ref: "#/components/schemas/Error"}
+
+    ResearchStudyProgressDetail:
+      type: object
+      additionalProperties: false
+      required: [stage, completed_count, total_count]
+      properties:
+        stage:
+          enum: [dataset_backtests, walk_forward, stress_test, bootstrap, parameter_neighborhood, aggregation, committing]
+        completed_count: {type: integer, minimum: 0}
+        total_count: {type: integer, minimum: 0}
+        current_dataset_id: {type: [string, "null"]}
+        current_scenario_id: {type: [string, "null"]}
+        current_fold_index: {type: [integer, "null"], minimum: 0}
 
     ResearchStudyDatasetResult:
       type: object

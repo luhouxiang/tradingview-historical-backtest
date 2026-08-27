@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/tvbt/tradingview-historical-backtest/internal/backtest"
@@ -112,6 +113,7 @@ type Service struct {
 	jobs            *jobs.Manager
 	contractVersion string
 	pollInterval    time.Duration
+	progressDetails sync.Map
 }
 
 func NewService(guard *storage.PathGuard, catalogStore Catalog, python Python, manager *jobs.Manager, contractVersion string, pollInterval time.Duration) *Service {
@@ -119,7 +121,7 @@ func NewService(guard *storage.PathGuard, catalogStore Catalog, python Python, m
 }
 
 func (s *Service) Submit(ctx context.Context, requestID, traceID string, request Request) (Submission, error) {
-	if len(request.Datasets) < 2 || len(request.Datasets) > 32 || !backtest.ValidExecution(request.Execution) || !backtest.ValidCapital(request.Capital) {
+	if len(request.Datasets) < 1 || len(request.Datasets) > 32 || !backtest.ValidExecution(request.Execution) || !backtest.ValidCapital(request.Capital) {
 		return Submission{}, ErrInvalidRequest
 	}
 	definitions, err := s.python.Algorithms(ctx, requestID, traceID)
@@ -255,6 +257,9 @@ func (s *Service) start(studyID, pythonJobID, requestID, traceID string, payload
 					return "", jobs.Fail("PYTHON_POLL_FAILED", "Python research study status could not be read", err)
 				}
 				progress(status.Progress)
+				if len(status.ProgressDetail) > 0 {
+					s.progressDetails.Store(studyID, status.ProgressDetail)
+				}
 				switch status.Status {
 				case "completed":
 					if !s.valid(ref, studyID) {
@@ -272,6 +277,22 @@ func (s *Service) start(studyID, pythonJobID, requestID, traceID string, payload
 			}
 		}
 	})
+}
+
+func (s *Service) ProgressDetail(studyID string) map[string]any {
+	value, ok := s.progressDetails.Load(studyID)
+	if !ok {
+		return nil
+	}
+	detail, ok := value.(map[string]any)
+	if !ok {
+		return nil
+	}
+	copy := make(map[string]any, len(detail))
+	for key, item := range detail {
+		copy[key] = item
+	}
+	return copy
 }
 
 func (s *Service) Status(studyID string) (*jobs.Job, map[string]any, bool) {

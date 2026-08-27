@@ -4928,6 +4928,16 @@ type ResearchStudyDatasetResult_Summary struct {
 	AdditionalProperties       map[string]interface{}                                      `json:"-"`
 }
 
+// ResearchStudyProgressDetail defines model for ResearchStudyProgressDetail.
+type ResearchStudyProgressDetail struct {
+	CompletedCount    int         `json:"completed_count"`
+	CurrentDatasetId  *string     `json:"current_dataset_id,omitempty"`
+	CurrentFoldIndex  *int        `json:"current_fold_index,omitempty"`
+	CurrentScenarioId *string     `json:"current_scenario_id,omitempty"`
+	Stage             interface{} `json:"stage"`
+	TotalCount        int         `json:"total_count"`
+}
+
 // ResearchStudyRequest defines model for ResearchStudyRequest.
 type ResearchStudyRequest struct {
 	Capital  map[string]interface{} `json:"capital"`
@@ -5344,7 +5354,15 @@ type ResearchStudyStatus struct {
 			ValidationTradingDays int `json:"validation_trading_days"`
 		} `json:"walk_forward,omitempty"`
 	} `json:"manifest,omitempty"`
-	Progress        float32     `json:"progress"`
+	Progress       float32 `json:"progress"`
+	ProgressDetail *struct {
+		CompletedCount    int         `json:"completed_count"`
+		CurrentDatasetId  *string     `json:"current_dataset_id,omitempty"`
+		CurrentFoldIndex  *int        `json:"current_fold_index,omitempty"`
+		CurrentScenarioId *string     `json:"current_scenario_id,omitempty"`
+		Stage             interface{} `json:"stage"`
+		TotalCount        int         `json:"total_count"`
+	} `json:"progress_detail,omitempty"`
 	RequestId       string      `json:"request_id"`
 	ResearchStudyId string      `json:"research_study_id"`
 	ResultRef       *string     `json:"result_ref,omitempty"`
