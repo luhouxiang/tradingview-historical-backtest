@@ -381,10 +381,57 @@ func (s *Service) markImported(sourceFileID string) {
 }
 
 func (s *Service) ListDatasets() (catalog.Document, []catalog.DatasetMeta, error) {
-	return s.catalog.List()
+	document, metas, err := s.catalog.List()
+	if err != nil {
+		return catalog.Document{}, nil, err
+	}
+	s.configMu.Lock()
+	runtime, err := loadRuntimeConfig(s.guard)
+	s.configMu.Unlock()
+	if err != nil {
+		return catalog.Document{}, nil, err
+	}
+	for index := range metas {
+		metas[index], err = enrichInstrumentFacts(metas[index], runtime)
+		if err != nil {
+			return catalog.Document{}, nil, err
+		}
+	}
+	return document, metas, nil
 }
 func (s *Service) GetDataset(datasetID, revision string) (catalog.DatasetMeta, error) {
-	return s.catalog.Get(datasetID, revision)
+	return s.Get(datasetID, revision)
+}
+
+// Get implements the catalog view consumed by execution services. Persisted
+// version-1 metadata did not expose the already-versioned contract multiplier,
+// so the service enriches that fact from the same instrument configuration
+// whose hash is part of data_revision.
+func (s *Service) Get(datasetID, revision string) (catalog.DatasetMeta, error) {
+	meta, err := s.catalog.Get(datasetID, revision)
+	if err != nil {
+		return catalog.DatasetMeta{}, err
+	}
+	return s.enrichInstrumentFacts(meta)
+}
+
+func (s *Service) enrichInstrumentFacts(meta catalog.DatasetMeta) (catalog.DatasetMeta, error) {
+	s.configMu.Lock()
+	runtime, err := loadRuntimeConfig(s.guard)
+	s.configMu.Unlock()
+	if err != nil {
+		return catalog.DatasetMeta{}, err
+	}
+	return enrichInstrumentFacts(meta, runtime)
+}
+
+func enrichInstrumentFacts(meta catalog.DatasetMeta, runtime runtimeConfig) (catalog.DatasetMeta, error) {
+	instrument, ok := runtime.instrument(meta.Instrument.Exchange, meta.Instrument.Symbol)
+	if !ok || instrument.ContractMultiplier < 1 {
+		return catalog.DatasetMeta{}, fmt.Errorf("instrument execution mapping not found for %s", meta.DatasetID)
+	}
+	meta.Instrument.ContractMultiplier = instrument.ContractMultiplier
+	return meta, nil
 }
 
 func findInstrument(instruments []InstrumentConfig, symbol string) (InstrumentConfig, bool) {

@@ -20,10 +20,11 @@ type DatasetMeta struct {
 }
 
 type InstrumentMeta struct {
-	Exchange    string `json:"exchange"`
-	Symbol      string `json:"symbol"`
-	Product     string `json:"product"`
-	DisplayName string `json:"display_name,omitempty"`
+	Exchange           string `json:"exchange"`
+	Symbol             string `json:"symbol"`
+	Product            string `json:"product"`
+	DisplayName        string `json:"display_name,omitempty"`
+	ContractMultiplier int64  `json:"contract_multiplier,omitempty"`
 }
 
 type SourceMeta struct {

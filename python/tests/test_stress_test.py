@@ -54,7 +54,18 @@ def test_stress_suite_freezes_fold_parameters_and_aggregates_fill_rate(
         "research_study_id": "research-1",
         "execution": {"fill_timing": "next_bar_open"},
         "stress_test": {"suite_version": "1.0.0", "volume_participation_rate": 0.1},
-        "datasets": [{"dataset_id": "AO", "independence_group": "SHFE.AO"}],
+        "datasets": [
+            {
+                "dataset_id": "AO",
+                "independence_group": "SHFE.AO",
+                "execution": {
+                    "semantic_version": "1.0.0",
+                    "contract_multiplier": 20,
+                    "contract_multiplier_source": "instrument_config",
+                    "fill_timing": "next_bar_open",
+                },
+            }
+        ],
     }
     results = [
         {
@@ -83,6 +94,7 @@ def test_stress_suite_freezes_fold_parameters_and_aggregates_fill_rate(
     assert aggregates[-1]["fill_rate"] == pytest.approx(0.1)
     assert aggregates[-1]["fill_rate_degradation"] == pytest.approx(0.9)
     assert calls[-1]["execution"]["max_volume_participation_rate"] == pytest.approx(0.1)
+    assert all(call["execution"]["contract_multiplier"] == 20 for call in calls)
     assert children[-1]["role"] == "stress"
     assert progress_updates[-1][0] == 1
     assert progress_updates[-1][1] == {

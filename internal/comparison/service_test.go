@@ -110,13 +110,13 @@ func TestComparisonCompletesAndRegistersFormalChildRuns(t *testing.T) {
 	}
 	python := &fakePython{guard: guard, definitions: []pythonclient.AlgorithmDefinition{definition}}
 	revision := "sha256:" + repeat("1", 64)
-	meta := catalog.DatasetMeta{DatasetID: "TEST.5m", DataRevision: revision, Coverage: catalog.CoverageMeta{FirstBarIndex: 0, LastBarIndex: 100}, Files: []catalog.FileMeta{{Role: "bars", Path: "normalized/TEST/bars.parquet"}}}
+	meta := catalog.DatasetMeta{DatasetID: "TEST.5m", DataRevision: revision, Instrument: catalog.InstrumentMeta{ContractMultiplier: 20}, Coverage: catalog.CoverageMeta{FirstBarIndex: 0, LastBarIndex: 100}, Files: []catalog.FileMeta{{Role: "bars", Path: "normalized/TEST/bars.parquet"}}}
 	service := NewService(guard, fakeCatalog{meta}, python, manager, "1.0.0", time.Millisecond)
 	request := Request{
 		DatasetID: "TEST.5m", DataRevision: revision,
 		Strategies: []Item{{Strategy: definition.AlgorithmRef, Parameters: map[string]any{}}},
 		Range:      backtest.Range{WarmupFromBarIndex: 0, FromBarIndex: 0, ToBarIndex: 100},
-		Execution:  map[string]any{"signal_timing": "bar_close", "fill_timing": "next_bar_open", "commission": map[string]any{"mode": "fixed_per_contract"}, "slippage": map[string]any{"mode": "ticks", "value": 0}},
+		Execution:  map[string]any{"semantic_version": backtest.ExecutionSemanticVersion, "signal_timing": "bar_close", "fill_timing": "next_bar_open", "commission": map[string]any{"mode": "fixed_per_contract", "amount_i64": 300, "money_scale": 100}, "slippage": map[string]any{"mode": "ticks", "value": 0}, "margin_ratio": .12, "intrabar_conflict_rule": "worst_case"},
 		Capital:    map[string]any{"initial_cash_i64": 1000, "currency": "CNY", "money_scale": 100},
 		RandomSeed: 7, MinimumTradeCount: 20,
 	}

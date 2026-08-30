@@ -1,0 +1,256 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "AOL9 回测零信号诊断",
+    "description": "解释一键比较回测与单周期可靠性研究的职责，并核对 17,017 根与 69,289 根正式回测的信号漏斗。",
+    "generatedAt": "2026-08-29T00:00:00+08:00",
+    "sources": [
+      {
+        "id": "src-diagnostic-notebook",
+        "label": "AOL9 / AO2609 零信号诊断 notebook",
+        "path": "reports/aol9-zero-signal-diagnosis.ipynb",
+        "query": {
+          "language": "sql",
+          "engine": "SQLite",
+          "executed_at": "2026-08-29T00:00:00+08:00",
+          "sql": "WITH stage_funnel(run_case,dataset_id,raw_bars,stage,count) AS (VALUES ('17,017 根 AO2609','SHFE.AO2609.5m',17017,'标准一类点',0),('17,017 根 AO2609','SHFE.AO2609.5m',17017,'交易信号',0),('17,017 根 AO2609','SHFE.AO2609.5m',17017,'成交',0),('17,017 根 AO2609','SHFE.AO2609.5m',17017,'已平仓交易',0),('69,289 根 AOL9','SHFE.AOL9.5m',69289,'标准一类点',1),('69,289 根 AOL9','SHFE.AOL9.5m',69289,'交易信号',1),('69,289 根 AOL9','SHFE.AOL9.5m',69289,'成交',1),('69,289 根 AOL9','SHFE.AOL9.5m',69289,'已平仓交易',0)) SELECT * FROM stage_funnel;",
+          "description": "报告图表的可执行行投影；数值由 notebook 读取不可变 comparison/run、规范化元数据、Parquet 事实表和内容寻址缠论运行时后验证。",
+          "filters": [
+            "17,017 根：comparison-20260826T155130000000000-3053e7a5029c61a2534e",
+            "69,289 根：comparison-20260827T133620000000000-14d72060fc030dad785e",
+            "只统计最终有效语义对象；对象修订不重复计数"
+          ],
+          "metric_definitions": [
+            "trade_signals：策略输出的交易意图数量",
+            "fills：模拟撮合成交数量",
+            "closed_trades：已完成入场与出场配对的交易数量",
+            "standard_first_points：signal_class=standard 且 signal_type 为 buy_1 或 sell_1 的最终有效买卖点"
+          ],
+          "tables_used": [
+            "trading-data/comparisons/*/comparison.json",
+            "trading-data/runs/*/*.parquet",
+            "trading-data/normalized/*/*/meta.json",
+            "trading-data/cache/comparison_dependencies/*/runtime.pkl"
+          ]
+        }
+      }
+    ],
+    "charts": [
+      {
+        "id": "chart-stage-funnel",
+        "title": "标准一类点到已平仓交易的阶段计数",
+        "subtitle": "17,017 根 AO2609 与 69,289 根 AOL9 正式 run；每个柱表示最终对象或事实行数",
+        "intent": "comparison",
+        "question": "两次 run 的 0 分别发生在哪一个交易阶段？",
+        "rationale": "分组柱状图保留离散阶段顺序，并直接比较两次 run；结构总量留在审计表中，避免不同样本长度造成比例误读。",
+        "comparisonContext": {
+          "grain": "每个正式 run 的阶段计数",
+          "unit": "个",
+          "denominator": "不使用比例；展示标准一类点、策略交易信号、成交和已平仓交易的绝对数量"
+        },
+        "type": "bar",
+        "dataset": "stage_funnel",
+        "sourceId": "src-diagnostic-notebook",
+        "encodings": {
+          "x": {"field": "stage", "type": "ordinal", "label": "阶段"},
+          "y": {"field": "count", "type": "quantitative", "aggregate": "sum", "format": "number", "label": "数量", "unit": "个"},
+          "color": {"field": "run_case", "type": "nominal", "label": "正式 run"},
+          "tooltip": [
+            {"field": "dataset_id", "type": "text", "label": "dataset_id"},
+            {"field": "raw_bars", "type": "quantitative", "format": "number", "label": "K线数"},
+            {"field": "count", "type": "quantitative", "format": "number", "label": "阶段数量"}
+          ]
+        },
+        "valueFormat": "number",
+        "unit": "个",
+        "layout": "full",
+        "labels": {"values": "all"},
+        "legend": {"position": "bottom", "sort": "spec", "title": "正式 run"},
+        "palette": {"kind": "categorical", "name": "blue-orange"},
+        "settings": {"groupMode": "grouped", "orientation": "vertical", "sort": "none", "showValues": true},
+        "surface": {"surface": "card", "interactiveLegend": true, "showControls": false, "viewMode": "both"}
+      }
+    ],
+    "tables": [
+      {
+        "id": "table-run-funnel",
+        "title": "两次正式回测的结构与交易漏斗",
+        "subtitle": "最终有效对象与正式 run 事实；已平仓交易数不等于交易信号数",
+        "dataset": "run_funnel",
+        "defaultSort": {
+          "field": "raw_bars",
+          "direction": "asc"
+        },
+        "density": "spacious",
+        "layout": "full",
+        "sourceId": "src-diagnostic-notebook",
+        "columns": [
+          {"field": "case", "label": "回测"},
+          {"field": "dataset_id", "label": "dataset_id"},
+          {"field": "raw_bars", "label": "K线", "format": "number"},
+          {"field": "segments", "label": "线段", "format": "number"},
+          {"field": "segment_centres", "label": "线段中枢", "format": "number"},
+          {"field": "consolidation_divergences", "label": "盘整背驰", "format": "number"},
+          {"field": "standard_b1", "label": "标准一买", "format": "number"},
+          {"field": "standard_s1", "label": "标准一卖", "format": "number"},
+          {"field": "trade_signals", "label": "交易信号", "format": "number"},
+          {"field": "fills", "label": "成交", "format": "number"},
+          {"field": "closed_trades", "label": "已平仓交易", "format": "number"},
+          {"field": "final_position", "label": "期末持仓"}
+        ]
+      }
+    ],
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "layout": "full",
+        "body": "# AOL9 回测零信号诊断"
+      },
+      {
+        "id": "executive-summary",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "src-diagnostic-notebook",
+        "body": "## Executive Summary\n\n- **17,017 根那次并不是 AOL9。** 正式清单记录的是 `SHFE.AO2609.5m`，覆盖 2025-09-16 至 2026-07-27，共 206 个交易日。\n- **0 信号发生在策略入口条件。** 结构层形成了 99 条线段、17 个线段中枢、45 个已确认背驰和 79 个买卖点，但 45 个背驰全部是盘整背驰，没有策略要求的标准一买/一卖，因此风控、订单和撮合阶段均为 0。\n- **当前真正的 AOL9 全量并非 0 信号。** 69,289 根 `SHFE.AOL9.5m` 有 1 个标准一买、1 个开多信号和 1 次成交；因为没有反向标准一卖，期末仍持有 1 手多仓，`trade_count` 仍显示 0。\n- **两个按钮是独立任务。** “一键回测”在当前数据集批量比较多个策略；“运行研究”固定另一个面板中当前选定的一个策略，跨所选同周期数据集做走步、压力与统计验证，不会自动继承一键回测中的勾选。"
+      },
+      {
+        "id": "workflow",
+        "type": "markdown",
+        "layout": "full",
+        "body": "## 两个按钮分别做什么\n\n**一键回测所选策略**把当前数据集、完整 revision、区间、资金、成本、成交规则、统一风控和每个勾选策略的参数提交为一个 comparison。Go 校验并编排，Python 对每个策略生成独立、不可覆盖的正式 run；批次内只共享一次权威缠论因果计算。结果用于同一标的上的初筛和横向比较。\n\n**运行研究**使用顶部“单周期可靠性研究”面板自己的“固定策略”、参数、数据集勾选和研究开关。开启走步后，每折只在训练窗选参，再用唯一验证 run 评估样本外表现；随后可冻结参数做成本、滑点、延迟和成交量压力测试，并执行 Bootstrap、多重比较和参数邻域稳定性检查。单数据集能运行，但只形成探索性证据。\n\n**关键交互事实：** 点击一键回测的某个策略，不会把它自动传给“运行研究”。用户必须在顶部“固定策略”下拉框中再次确认。"
+      },
+      {
+        "id": "evidence-intro",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "src-diagnostic-notebook",
+        "body": "## 17,017 根不是没有结构，而是没有该策略接受的一类点\n\n下表把“结构形成”“策略信号”“风险批准”“订单成交”和“已平仓交易”分开。17,017 根样本的 0 发生在策略信号阶段；69,289 根 AOL9 的 0 则只发生在已平仓交易口径。"
+      },
+      {
+        "id": "run-funnel",
+        "type": "chart",
+        "layout": "full",
+        "chartId": "chart-stage-funnel"
+      },
+      {
+        "id": "run-funnel-table",
+        "type": "table",
+        "layout": "full",
+        "tableId": "table-run-funnel"
+      },
+      {
+        "id": "why-zero",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "src-diagnostic-notebook",
+        "body": "## 策略为什么会过滤掉这些买卖点\n\n`trend_divergence_reversal` 只消费 `confirmed=true`、`signal_class=standard` 且 `signal_type` 为 `buy_1` 或 `sell_1` 的权威买卖点。标准趋势背驰要求同级至少两个时间和完整外围价格范围均分离的中枢，离开段方向一致、末段创新方向极值、MACD 力度弱于参考段，并由首个反向完成段确认端点。\n\n17,017 根样本最终存在 22 个类一买、18 个类一卖、15 个类二买、12 个类二卖、2 个标准三买和 4 个标准三卖，但标准一买和标准一卖都是 0。类一来自盘整背驰，三类点属于另一种入场逻辑；为避免改变已确认的数据语义，本策略有意全部过滤。K 线数量只提高结构出现的机会，并不保证这组严格条件一定命中。"
+      },
+      {
+        "id": "ui-interpretation",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "src-diagnostic-notebook",
+        "body": "## “0 笔交易”当前会掩盖未平仓信号\n\nAOL9 全量 run 在 bar 37,899 产生标准一买，在下一根 bar 37,900 以 3,301 成交开多；期末仍持有 1 手多仓，未实现盈亏为 -65,000 money-i64。因为 `trades.parquet` 只保存完成入场与出场配对的交易，汇总 `trade_count=0`。\n\n因此结果页只看“交易数”会得到错误直觉。应同时展示：交易信号数、风险批准/阻断数、订单数、成交数、已平仓交易数和期末持仓。"
+      },
+      {
+        "id": "next-steps",
+        "type": "markdown",
+        "layout": "full",
+        "body": "## 建议下一步\n\n1. 在 UI 中把 `trade_count` 明确改名为“已平仓交易数”，并新增“信号 / 成交 / 期末持仓”列。\n2. 在“一键回测”结果旁增加“带入运行研究”，显式同步策略 ID、版本和参数；运行研究前再次展示即将执行的策略摘要。\n3. 对 0 信号 run 展示结构漏斗：标准一买/一卖、类一、标准三类点、被策略过滤数量和风险阻断数量。\n4. 如果研究目标是让盘整背驰或三买/三卖参与交易，应选择对应正式策略，而不是放宽趋势背驰双向反转的语义。\n5. 对 17,017 根 AO2609 的 1,224 根零成交量和 365 个缺口警告做单独敏感性检查；它们可能改变结构频率，但目前没有证据表明风控或撮合吞掉了信号。"
+      },
+      {
+        "id": "questions",
+        "type": "markdown",
+        "layout": "full",
+        "body": "## 仍需确认的问题\n\n- 用户当时看到的标题是否把 `AO2609` 显示成了 `AOL9`，还是选择数据集时发生了混淆？正式清单只支持前者为 `SHFE.AO2609.5m`。\n- 产品是否要在回测区间结束时强制平仓？当前模型保留期末未平仓持仓，因此信号和成交可以存在而已平仓交易数为 0。"
+      },
+      {
+        "id": "caveats",
+        "type": "markdown",
+        "layout": "full",
+        "body": "## Caveats and assumptions\n\n本结论基于仓库截至 2026-08-29 的不可变 comparison/run 产物和当前算法版本。17,017 根与 69,289 根属于不同 dataset_id、revision 和覆盖区间，不能把两者当成同一数据集的简单前后缀比较。结构计数按最终有效对象统计，不把同一对象的多次因果修订重复算作多个信号。"
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "generatedAt": "2026-08-29T00:00:00+08:00",
+    "status": "ready",
+    "datasets": {
+      "stage_funnel": [
+        {"run_case": "17,017 根 AO2609", "dataset_id": "SHFE.AO2609.5m", "raw_bars": 17017, "stage": "标准一类点", "count": 0},
+        {"run_case": "17,017 根 AO2609", "dataset_id": "SHFE.AO2609.5m", "raw_bars": 17017, "stage": "交易信号", "count": 0},
+        {"run_case": "17,017 根 AO2609", "dataset_id": "SHFE.AO2609.5m", "raw_bars": 17017, "stage": "成交", "count": 0},
+        {"run_case": "17,017 根 AO2609", "dataset_id": "SHFE.AO2609.5m", "raw_bars": 17017, "stage": "已平仓交易", "count": 0},
+        {"run_case": "69,289 根 AOL9", "dataset_id": "SHFE.AOL9.5m", "raw_bars": 69289, "stage": "标准一类点", "count": 1},
+        {"run_case": "69,289 根 AOL9", "dataset_id": "SHFE.AOL9.5m", "raw_bars": 69289, "stage": "交易信号", "count": 1},
+        {"run_case": "69,289 根 AOL9", "dataset_id": "SHFE.AOL9.5m", "raw_bars": 69289, "stage": "成交", "count": 1},
+        {"run_case": "69,289 根 AOL9", "dataset_id": "SHFE.AOL9.5m", "raw_bars": 69289, "stage": "已平仓交易", "count": 0}
+      ],
+      "run_funnel": [
+        {
+          "case": "17,017 根正式 run",
+          "dataset_id": "SHFE.AO2609.5m",
+          "raw_bars": 17017,
+          "segments": 99,
+          "segment_centres": 17,
+          "consolidation_divergences": 45,
+          "standard_b1": 0,
+          "standard_s1": 0,
+          "trade_signals": 0,
+          "fills": 0,
+          "closed_trades": 0,
+          "final_position": "空仓"
+        },
+        {
+          "case": "69,289 根 AOL9 全量 run",
+          "dataset_id": "SHFE.AOL9.5m",
+          "raw_bars": 69289,
+          "segments": 450,
+          "segment_centres": 64,
+          "consolidation_divergences": 229,
+          "standard_b1": 1,
+          "standard_s1": 0,
+          "trade_signals": 1,
+          "fills": 1,
+          "closed_trades": 0,
+          "final_position": "多 1 手"
+        }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "id": "src-diagnostic-notebook",
+      "label": "AOL9 / AO2609 零信号诊断 notebook",
+      "path": "reports/aol9-zero-signal-diagnosis.ipynb",
+      "query": {
+        "language": "sql",
+        "engine": "SQLite",
+        "executed_at": "2026-08-29T00:00:00+08:00",
+        "sql": "WITH stage_funnel(run_case,dataset_id,raw_bars,stage,count) AS (VALUES ('17,017 根 AO2609','SHFE.AO2609.5m',17017,'标准一类点',0),('17,017 根 AO2609','SHFE.AO2609.5m',17017,'交易信号',0),('17,017 根 AO2609','SHFE.AO2609.5m',17017,'成交',0),('17,017 根 AO2609','SHFE.AO2609.5m',17017,'已平仓交易',0),('69,289 根 AOL9','SHFE.AOL9.5m',69289,'标准一类点',1),('69,289 根 AOL9','SHFE.AOL9.5m',69289,'交易信号',1),('69,289 根 AOL9','SHFE.AOL9.5m',69289,'成交',1),('69,289 根 AOL9','SHFE.AOL9.5m',69289,'已平仓交易',0)) SELECT * FROM stage_funnel;",
+        "description": "报告图表的可执行行投影；数值由 notebook 读取不可变 comparison/run、规范化元数据、Parquet 事实表和内容寻址缠论运行时后验证。",
+        "filters": [
+          "17,017 根：comparison-20260826T155130000000000-3053e7a5029c61a2534e",
+          "69,289 根：comparison-20260827T133620000000000-14d72060fc030dad785e",
+          "只统计最终有效语义对象；对象修订不重复计数"
+        ],
+        "metric_definitions": [
+          "trade_signals：策略输出的交易意图数量",
+          "fills：模拟撮合成交数量",
+          "closed_trades：已完成入场与出场配对的交易数量",
+          "standard_first_points：signal_class=standard 且 signal_type 为 buy_1 或 sell_1 的最终有效买卖点"
+        ],
+        "tables_used": [
+          "trading-data/comparisons/*/comparison.json",
+          "trading-data/runs/*/*.parquet",
+          "trading-data/normalized/*/*/meta.json",
+          "trading-data/cache/comparison_dependencies/*/runtime.pkl"
+        ]
+      }
+    }
+  ]
+}

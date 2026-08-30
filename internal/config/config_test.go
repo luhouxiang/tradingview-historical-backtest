@@ -16,7 +16,7 @@ func TestLoadExample(t *testing.T) {
 	if cfg.App.ContractVersion != ContractVersion || cfg.Logging.BackupCount != 9 {
 		t.Fatalf("unexpected config: %#v", cfg)
 	}
-	if cfg.InitialInstrument() != "AO2609" {
+	if cfg.InitialInstrument() != "AOL9" {
 		t.Fatalf("unexpected initial instrument %q", cfg.InitialInstrument())
 	}
 	if cfg.Chart.BeginDT != "2026-04-27 11:30:00" || cfg.Chart.EndDT != "2026-07-24 21:50:00" {
@@ -45,8 +45,8 @@ func TestLoadDefaultsInitialInstrument(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	text := strings.Replace(string(data), "  initial_instrument: AO2609\r\n", "", 1)
-	text = strings.Replace(text, "  initial_instrument: AO2609\n", "", 1)
+	text := strings.Replace(string(data), "  initial_instrument: AOL9\r\n", "", 1)
+	text = strings.Replace(text, "  initial_instrument: AOL9\n", "", 1)
 	data = []byte(text)
 	if err := os.WriteFile(path, data, 0o600); err != nil {
 		t.Fatal(err)

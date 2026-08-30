@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import MultiDatasetResearchPanel from './MultiDatasetResearchPanel.vue'
+import { capitalConfig, executionRequest } from '../execution/config'
 import {
   cancelStrategyComparison,
   createStrategyComparison,
@@ -32,10 +33,9 @@ const parameters = ref<Record<string, Record<string, string | number | boolean>>
 const riskFilter = ref<AlgorithmDefinition | null>(null)
 const riskParameters = ref<Record<string, string | number | boolean>>({})
 const initialCash = ref(100_000_000)
-const commission = ref(0)
+const commission = ref(300)
 const slippageTicks = ref(1)
-const multiplier = ref(1)
-const marginRatio = ref(0.1)
+const marginRatio = ref(0.12)
 const minimumTradeCount = ref(20)
 const status = ref('idle')
 const progress = ref(0)
@@ -197,16 +197,8 @@ async function run(): Promise<void> {
         from_bar_index: dataset.coverage.first_bar_index,
         to_bar_index: dataset.coverage.last_bar_index,
       },
-      execution: {
-        signal_timing: 'bar_close',
-        fill_timing: 'next_bar_open',
-        commission: { mode: 'fixed_per_contract', amount_i64: commission.value, money_scale: 100 },
-        slippage: { mode: 'ticks', value: slippageTicks.value },
-        contract_multiplier: multiplier.value,
-        margin_ratio: marginRatio.value,
-        intrabar_conflict_rule: 'worst_case',
-      },
-      capital: { initial_cash_i64: initialCash.value, currency: 'CNY', money_scale: 100 },
+      execution: executionRequest({ commissionAmountI64: commission.value, slippageTicks: slippageTicks.value, marginRatio: marginRatio.value, contractMultiplier: dataset.instrument.contract_multiplier }),
+      capital: capitalConfig(initialCash.value),
       random_seed: 20260822,
       minimum_trade_count: minimumTradeCount.value,
     })
@@ -278,7 +270,7 @@ onMounted(async () => {
       <label>初始资金 <input v-model.number="initialCash" type="number" min="1" /></label>
       <label>每手手续费 <input v-model.number="commission" type="number" min="0" /></label>
       <label>滑点(tick) <input v-model.number="slippageTicks" type="number" min="0" step="1" /></label>
-      <label>乘数 <input v-model.number="multiplier" type="number" min="0.01" step="0.01" /></label>
+      <label>合约乘数 <output>{{ dataset?.instrument.contract_multiplier ?? '—' }}</output></label>
       <label>保证金率 <input v-model.number="marginRatio" type="number" min="0.01" max="1" step="0.01" /></label>
       <details v-if="riskFilter" class="risk-settings">
         <summary>统一风控参数</summary>

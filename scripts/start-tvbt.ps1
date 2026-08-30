@@ -1,5 +1,6 @@
 param(
     [switch]$NoBrowser,
+    [switch]$ForceBuild,
     [ValidateRange(0, 3600)][int]$HoldSeconds = 0
 )
 
@@ -68,8 +69,7 @@ $demoData = & "$PSScriptRoot/prepare-demo-data.ps1" | ConvertFrom-Json
 $initialInstrument = [string]$demoData.initial_instrument
 $preferredDatasetId = [string]$demoData.dataset_id
 New-Item -ItemType Directory -Force "$projectRoot/bin/runtime" | Out-Null
-go build -o "$projectRoot/bin/chartd.exe" ./cmd/chartd
-if ($LASTEXITCODE -ne 0) { throw "chartd build failed with exit code $LASTEXITCODE." }
+$build = & "$PSScriptRoot/build-chartd.ps1" -Force:$ForceBuild | ConvertFrom-Json
 
 $processes = [Collections.Generic.List[Diagnostics.Process]]::new()
 $runtimeRoot = "$projectRoot/bin/runtime"
@@ -129,6 +129,8 @@ try {
     Write-Host ''
     Write-Host 'TVBT is ready: http://127.0.0.1:5173/' -ForegroundColor Green
     Write-Host "Python: $PythonExecutable"
+    Write-Host "Go binary: $(if ($build.rebuilt) { 'rebuilt' } else { 'reused' }) in $($build.elapsed_ms) ms"
+    Write-Host "Calendar preparation: $(if ($demoData.calendar_cache_hit) { 'cache hit' } else { 'refreshed' })"
     Write-Host "Dataset: $($preferredDataset.dataset_id), $($preferredDataset.bar_count) bars"
     Write-Host "The $initialInstrument dataset is selected automatically. Open the bottom Backtest tab and click Start formal backtest."
     Write-Host 'Press Ctrl+C in this window to stop the exact service process trees.'

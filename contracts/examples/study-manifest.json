@@ -17,10 +17,12 @@
     "validation": {"warmup_from_bar_index": 0, "from_bar_index": 1001, "to_bar_index": 1500}
   },
   "execution": {
-    "signal_timing": "bar_close", "fill_timing": "next_bar_open",
-    "commission": {"mode": "fixed_per_contract", "amount_i64": 300},
+    "semantic_version": "1.0.0", "signal_timing": "bar_close", "fill_timing": "next_bar_open",
+    "commission": {"mode": "fixed_per_contract", "amount_i64": 300, "money_scale": 100},
     "slippage": {"mode": "ticks", "value": 1},
-    "contract_multiplier": 20, "margin_ratio": 0.12, "intrabar_conflict_rule": "worst_case"
+    "contract_multiplier": 20, "contract_multiplier_source": "instrument_config", "margin_ratio": 0.12,
+    "intrabar_conflict_rule": "worst_case", "stress_scenario_id": "baseline", "cost_multiplier": 1,
+    "additional_slippage_ticks": 0, "additional_delay_bars": 0, "fill_mode": "unlimited"
   },
   "capital": {"initial_cash_i64": 100000000, "currency": "CNY", "money_scale": 100},
   "evaluation_count": 2,

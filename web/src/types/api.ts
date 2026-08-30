@@ -62,7 +62,7 @@ export interface DatasetMeta {
   dataset_id: string
   data_revision: string
   independence_group?: string
-  instrument: { exchange: string; symbol: string; product: string; display_name?: string }
+  instrument: { exchange: string; symbol: string; product: string; contract_multiplier: number; display_name?: string }
   timeframe: string
   source: { path: string; encoding: string; format: string; title?: string; timestamp_semantics?: 'bar_start' | 'bar_end' }
   time: { timezone: string; date_semantics: string }
@@ -504,11 +504,13 @@ export interface BacktestRequest {
   risk_overlay?: RiskOverlay
   range: { warmup_from_bar_index: number; from_bar_index: number; to_bar_index: number }
   execution: {
+    semantic_version: '1.0.0'
     signal_timing: 'bar_close'
     fill_timing: 'next_bar_open' | 'bar_close'
     commission: Record<string, string | number>
     slippage: { mode: 'ticks' | 'bps'; value: number }
-    contract_multiplier: number
+    contract_multiplier?: number
+    contract_multiplier_source?: 'instrument_config'
     margin_ratio: number
     intrabar_conflict_rule: 'stop_first' | 'target_first' | 'worst_case'
     stress_scenario_id?: string
@@ -854,7 +856,7 @@ export interface ResearchStudyManifest {
   timeframe: string
   strategy: AlgorithmRef
   parameters: Record<string, string | number | boolean>
-  datasets: Array<{ dataset_id: string; data_revision: string; independence_group: string; trading_day_count: number; range: BacktestRequest['range']; run_id?: string; run_signature?: string }>
+  datasets: Array<{ dataset_id: string; data_revision: string; independence_group: string; trading_day_count: number; range: BacktestRequest['range']; execution?: Record<string, unknown>; run_id?: string; run_signature?: string }>
   execution: Record<string, unknown>
   capital: Record<string, unknown>
   random_seed: number

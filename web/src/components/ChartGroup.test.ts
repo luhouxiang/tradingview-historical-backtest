@@ -44,7 +44,7 @@ const revision = `sha256:${'a'.repeat(64)}`
 function dataset(): DatasetMeta {
   return {
     request_id: 'req', dataset_id: 'SHFE.AO2609.5m', data_revision: revision,
-    instrument: { exchange: 'SHFE', symbol: 'AO2609', product: 'AO' }, timeframe: '5m',
+    instrument: { exchange: 'SHFE', symbol: 'AO2609', product: 'AO', contract_multiplier: 20 }, timeframe: '5m',
     source: { path: 'history/sample.txt', encoding: 'GB18030', format: 'tdx_txt_v1' },
     time: { timezone: 'Asia/Shanghai', date_semantics: 'trading_day' }, price: { price_decimals: 0, price_scale: 1 },
     coverage: { bar_count: 2, first_bar_index: 0, last_bar_index: 1, first_timestamp_utc: 1_700_000_000_000, last_timestamp_utc: 1_700_000_300_000, first_trading_day: '2025-01-01', last_trading_day: '2025-01-01' },

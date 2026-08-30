@@ -104,7 +104,7 @@ def _run(
     cancelled: threading.Event,
     execution: dict[str, Any] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]], str]:
-    execution_facts = payload["execution"] if execution is None else execution
+    execution_facts = dataset["execution"] if execution is None else execution
     facts = {
         "dataset": {
             "dataset_id": dataset["dataset_id"],

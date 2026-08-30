@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { createBacktest, getBacktest, getBacktestChartEvents, getBacktestEquity, getBacktestSummary, getBacktestTrades, listAlgorithms } from '../api/client'
+import { capitalConfig, executionRequest } from '../execution/config'
 import type { AlgorithmDefinition, BacktestSummary, BacktestTrade, ChanTreeObject, DatasetMeta, EquityRow, RankingContext, RiskContext, StrategyRunSource } from '../types/api'
 
 const props = defineProps<{ dataset: DatasetMeta | null; view: 'backtest' | 'trades' | 'equity' }>()
@@ -20,12 +21,31 @@ const signature = ref('')
 const summary = ref<BacktestSummary | null>(null)
 const trades = ref<BacktestTrade[]>([])
 const equity = ref<EquityRow[]>([])
+const executionFacts = ref<Record<string, unknown> | null>(null)
 const initialCash = ref(100_000_000)
 const commission = ref(300)
-const multiplier = ref(20)
 const marginRatio = ref(.12)
 const rankingContextText = ref('')
+const restored = ref(false)
+const restoreAttemptKey = ref('')
+const LAST_RUN_STORAGE_KEY = 'tvbt:last-backtest:v1'
+
+interface StoredBacktestRun {
+  dataset_id: string
+  data_revision: string
+  run_id: string
+  run_signature: string
+  algorithm_id: string
+}
 const auxiliaryOnly = computed(() => strategy.value?.algorithm_id.startsWith('aux_') ?? false)
+const executionSummary = computed(() => {
+  const facts = executionFacts.value
+  if (!facts) return ''
+  if (facts.semantic_version !== '1.0.0') return '执行语义：未版本化旧结果（仅按原始 manifest 解释）'
+  const commission = facts.commission as Record<string, unknown> | undefined
+  const slippage = facts.slippage as Record<string, unknown> | undefined
+  return `执行语义 v${facts.semantic_version} · 合约乘数 ${facts.contract_multiplier ?? '—'}（${facts.contract_multiplier_source ?? '来源未知'}） · 手续费 ${commission?.amount_i64 ?? commission?.rate ?? '—'} · 滑点 ${slippage?.value ?? '—'} ${slippage?.mode ?? ''}`
+})
 const rankingOnly = computed(() => strategy.value?.algorithm_id === 'aux_ma_sector_rotation')
 const daily30mProfileIssue = computed(() => {
   if (strategy.value?.algorithm_id !== 'aux_daily_30m_classification' || !props.dataset) return ''
@@ -95,13 +115,34 @@ const points = computed(() => {
   return values.map((value, index) => `${index / (values.length - 1) * 600},${100 - (value - low) / span * 90}`).join(' ')
 })
 
-async function run(): Promise<void> {
+function readStoredRun(dataset: DatasetMeta): StoredBacktestRun | null {
+  try {
+    const raw = window.localStorage.getItem(LAST_RUN_STORAGE_KEY)
+    if (!raw) return null
+    const value = JSON.parse(raw) as Partial<StoredBacktestRun>
+    if (value.dataset_id !== dataset.dataset_id || value.data_revision !== dataset.data_revision) return null
+    if (![value.run_id, value.run_signature, value.algorithm_id].every((item) => typeof item === 'string' && item.length > 0)) return null
+    return value as StoredBacktestRun
+  }
+  catch { return null }
+}
+
+function storeRun(value: StoredBacktestRun): void {
+  try { window.localStorage.setItem(LAST_RUN_STORAGE_KEY, JSON.stringify(value)) }
+  catch { /* 浏览器禁用持久化时不影响正式回测。 */ }
+}
+
+async function execute(resume: StoredBacktestRun | null = null): Promise<void> {
   const dataset = props.dataset
-  const definition = strategy.value
+  const definition = resume
+    ? strategies.value.find((candidate) => candidate.algorithm_id === resume.algorithm_id) ?? null
+    : strategy.value
   if (!dataset || !definition) return
   status.value = 'queued'
   error.value = ''
   summary.value = null
+  executionFacts.value = null
+  restored.value = false
   try {
     const parameters = { ...strategyParameters.value }
     const ranking = rankingOnly.value ? rankingContext.value : null
@@ -115,39 +156,57 @@ async function run(): Promise<void> {
       },
       parameters: { ...riskParameters.value }, context: riskContextValue,
     } : null
-    const accepted = await createBacktest({
-      dataset_id: dataset.dataset_id, data_revision: dataset.data_revision,
-      strategy: {
-        kind: definition.kind, algorithm_id: definition.algorithm_id,
-        algorithm_version: definition.algorithm_version, source_hash: definition.source_hash,
-      },
-      parameters,
-      ...(ranking ? { ranking_context: ranking } : {}),
-      ...(risk ? { risk_overlay: risk } : {}),
-      range: {
-        warmup_from_bar_index: dataset.coverage.first_bar_index,
-        from_bar_index: Math.max(dataset.coverage.first_bar_index, dataset.coverage.last_bar_index - 2999),
-        to_bar_index: dataset.coverage.last_bar_index,
-      },
-      execution: {
-        signal_timing: 'bar_close', fill_timing: 'next_bar_open',
-        commission: { mode: 'fixed_per_contract', amount_i64: commission.value, money_scale: 100 },
-        slippage: { mode: 'ticks', value: 1 }, contract_multiplier: multiplier.value,
-        margin_ratio: marginRatio.value, intrabar_conflict_rule: 'worst_case',
-      },
-      capital: { initial_cash_i64: initialCash.value, currency: 'CNY', money_scale: 100 },
-      random_seed: 20260801,
-    })
-    runId.value = accepted.run_id
-    signature.value = accepted.run_signature
-    let current = await getBacktest(accepted.run_id)
+    let current
+    if (resume) {
+      runId.value = resume.run_id
+      signature.value = resume.run_signature
+      current = await getBacktest(resume.run_id)
+      const manifestDataset = current.manifest?.dataset as Record<string, unknown> | undefined
+      const manifestStrategy = current.manifest?.strategy as Record<string, unknown> | undefined
+      if (current.run_signature !== resume.run_signature
+        || manifestDataset?.dataset_id !== dataset.dataset_id
+        || manifestDataset?.data_revision !== dataset.data_revision
+        || manifestStrategy?.strategy_id !== definition.algorithm_id) {
+        throw new Error('最近回测与当前数据集或策略不匹配')
+      }
+      restored.value = true
+    }
+    else {
+      const accepted = await createBacktest({
+        dataset_id: dataset.dataset_id, data_revision: dataset.data_revision,
+        strategy: {
+          kind: definition.kind, algorithm_id: definition.algorithm_id,
+          algorithm_version: definition.algorithm_version, source_hash: definition.source_hash,
+        },
+        parameters,
+        ...(ranking ? { ranking_context: ranking } : {}),
+        ...(risk ? { risk_overlay: risk } : {}),
+        range: {
+          warmup_from_bar_index: dataset.coverage.first_bar_index,
+          from_bar_index: Math.max(dataset.coverage.first_bar_index, dataset.coverage.last_bar_index - 2999),
+          to_bar_index: dataset.coverage.last_bar_index,
+        },
+        execution: executionRequest({ commissionAmountI64: commission.value, marginRatio: marginRatio.value, contractMultiplier: dataset.instrument.contract_multiplier }),
+        capital: capitalConfig(initialCash.value),
+        random_seed: 20260801,
+      })
+      runId.value = accepted.run_id
+      signature.value = accepted.run_signature
+      storeRun({
+        dataset_id: dataset.dataset_id, data_revision: dataset.data_revision,
+        run_id: accepted.run_id, run_signature: accepted.run_signature,
+        algorithm_id: definition.algorithm_id,
+      })
+      current = await getBacktest(accepted.run_id)
+    }
     while (!['completed', 'failed', 'cancelled', 'interrupted'].includes(current.status)) {
       status.value = current.status
       await new Promise((resolve) => window.setTimeout(resolve, 250))
-      current = await getBacktest(accepted.run_id)
+      current = await getBacktest(runId.value)
     }
     if (current.status !== 'completed') throw new Error(current.error?.message ?? `回测${current.status}`)
     status.value = 'completed'
+    executionFacts.value = (current.manifest?.execution as Record<string, unknown> | undefined) ?? null
     const [summaryValue, tradeValue, equityValue, causalEvents] = await Promise.all([
       getBacktestSummary(runId.value), getBacktestTrades(runId.value), getBacktestEquity(runId.value), getBacktestChartEvents(runId.value),
     ])
@@ -308,6 +367,19 @@ async function run(): Promise<void> {
   }
 }
 
+async function run(): Promise<void> {
+  await execute()
+}
+
+async function restoreForDataset(dataset: DatasetMeta | null): Promise<void> {
+  if (!dataset || strategies.value.length === 0) return
+  const key = `${dataset.dataset_id}:${dataset.data_revision}`
+  if (restoreAttemptKey.value === key) return
+  restoreAttemptKey.value = key
+  const stored = readStoredRun(dataset)
+  if (stored) await execute(stored)
+}
+
 onMounted(async () => {
   try {
     const definitions = await listAlgorithms()
@@ -315,9 +387,12 @@ onMounted(async () => {
     riskFilters.value = definitions.filter((value) => value.kind === 'risk_filter')
     strategy.value = strategies.value[0] ?? null
     riskFilter.value = riskFilters.value.find((value) => value.algorithm_id === 'unified_risk_execution_overlay') ?? riskFilters.value[0] ?? null
+    await restoreForDataset(props.dataset)
   }
   catch (cause) { error.value = cause instanceof Error ? cause.message : '策略不可用' }
 })
+
+watch(() => props.dataset, (dataset) => { void restoreForDataset(dataset) })
 
 function timeframeMinutes(value: string | undefined): number | null {
   const match = value?.match(/^([1-9][0-9]*)(m|h|d)$/)
@@ -418,14 +493,15 @@ watch([riskFilter, () => props.dataset], ([definition, dataset]) => {
       </details>
       <label>初始资金 <input v-model.number="initialCash" type="number" min="0" /></label>
       <label>每手手续费 <input v-model.number="commission" type="number" min="0" /></label>
-      <label>乘数 <input v-model.number="multiplier" type="number" min="0.01" step="0.01" /></label>
+      <label>合约乘数 <output>{{ dataset?.instrument.contract_multiplier ?? '—' }}</output></label>
       <label>保证金 <input v-model.number="marginRatio" type="number" min="0.01" max="1" step="0.01" /></label>
       <button :disabled="!dataset || !strategy || Boolean(algorithmContextIssue) || ['queued', 'running'].includes(status)" @click="run">{{ auxiliaryOnly ? '生成辅助事件（不交易）' : '开始正式回测' }}</button>
-      <span>{{ status }} <small v-if="runId">{{ runId }} · {{ signature.slice(0, 18) }}</small></span>
+      <span>{{ status }} <small v-if="restored">· 已恢复最近结果</small> <small v-if="runId">{{ runId }} · {{ signature.slice(0, 18) }}</small></span>
       <span v-if="algorithmContextIssue" class="issue">{{ algorithmContextIssue }}</span>
       <span v-if="error" class="issue">{{ error }}</span>
     </div>
     <div v-if="view === 'backtest'" class="summary-grid">
+      <span v-if="executionSummary" class="execution-summary">{{ executionSummary }}</span>
       <template v-if="summary">
         <span>总收益 {{ (summary.total_return * 100).toFixed(2) }}%</span>
         <span>最大回撤 {{ (summary.max_drawdown * 100).toFixed(2) }}%</span>

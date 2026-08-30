@@ -541,7 +541,7 @@ def run_research_study(
             "algorithm": payload["strategy"],
             "parameters": payload["parameters"],
             "range": item["range"],
-            "execution": payload["execution"],
+            "execution": item["execution"],
             "capital": payload["capital"],
             "random_seed": payload["random_seed"],
             "output_path": f"runs/{run_id}",
@@ -697,6 +697,7 @@ def run_research_study(
                         "independence_group",
                         "trading_day_count",
                         "range",
+                        "execution",
                     )
                 },
                 **(

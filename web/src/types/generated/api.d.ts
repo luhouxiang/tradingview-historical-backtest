@@ -1308,6 +1308,55 @@ export interface components {
             cache_key?: string;
             error?: components["schemas"]["Error"];
         };
+        CommissionConfig: {
+            /** @enum {unknown} */
+            mode: "fixed_per_contract" | "proportional";
+            amount_i64?: number;
+            money_scale?: number;
+            rate?: number;
+        } & (unknown & unknown);
+        SlippageConfig: {
+            /** @enum {unknown} */
+            mode: "ticks" | "bps";
+            value: number;
+        };
+        CapitalConfig: {
+            initial_cash_i64: number;
+            currency: string;
+            money_scale: number;
+        };
+        ExecutionRequest: {
+            /** @constant */
+            semantic_version: "1.0.0";
+            /** @constant */
+            signal_timing: "bar_close";
+            /** @enum {unknown} */
+            fill_timing: "next_bar_open" | "bar_close";
+            commission: components["schemas"]["CommissionConfig"];
+            slippage: components["schemas"]["SlippageConfig"];
+            /** @description Optional assertion; Go resolves the authoritative value from instrument_config. */
+            contract_multiplier?: number;
+            /** @constant */
+            contract_multiplier_source?: "instrument_config";
+            margin_ratio: number;
+            /** @enum {unknown} */
+            intrabar_conflict_rule: "stop_first" | "target_first" | "worst_case";
+            /** @description Go defaults this to baseline. */
+            stress_scenario_id?: string;
+            /** @description Go defaults this to 1. */
+            cost_multiplier?: number;
+            /** @description Go defaults this to 0. */
+            additional_slippage_ticks?: number;
+            /** @description Go defaults this to 0. */
+            additional_delay_bars?: number;
+            max_volume_participation_rate?: number;
+            /**
+             * @description Go defaults this to unlimited.
+             * @enum {unknown}
+             */
+            fill_mode?: "unlimited" | "volume_cap_ioc";
+        } & (unknown & unknown);
+        ResolvedExecutionConfig: components["schemas"]["ExecutionRequest"] & Record<string, never>;
         BacktestRequest: {
             dataset_id: string;
             data_revision: string;
@@ -1322,41 +1371,8 @@ export interface components {
                 to_bar_index: number;
                 warmup_from_bar_index: number;
             };
-            execution: {
-                /** @constant */
-                signal_timing: "bar_close";
-                /** @enum {unknown} */
-                fill_timing: "next_bar_open" | "bar_close";
-                commission: {
-                    /** @enum {unknown} */
-                    mode: "fixed_per_contract" | "proportional";
-                } & {
-                    [key: string]: unknown;
-                };
-                slippage: {
-                    /** @enum {unknown} */
-                    mode: "ticks" | "bps";
-                    value: number;
-                } & {
-                    [key: string]: unknown;
-                };
-                contract_multiplier: number;
-                margin_ratio: number;
-                /** @enum {unknown} */
-                intrabar_conflict_rule: "stop_first" | "target_first" | "worst_case";
-                stress_scenario_id?: string;
-                cost_multiplier?: number;
-                additional_slippage_ticks?: number;
-                additional_delay_bars?: number;
-                max_volume_participation_rate?: number;
-                /** @enum {unknown} */
-                fill_mode?: "unlimited" | "volume_cap_ioc";
-            };
-            capital: {
-                initial_cash_i64: number;
-                currency: string;
-                money_scale: number;
-            };
+            execution: components["schemas"]["ExecutionRequest"];
+            capital: components["schemas"]["CapitalConfig"];
             random_seed: number;
             trace_id?: string;
         };
@@ -1426,12 +1442,8 @@ export interface components {
                 to_bar_index: number;
                 warmup_from_bar_index: number;
             };
-            execution: {
-                [key: string]: unknown;
-            };
-            capital: {
-                [key: string]: unknown;
-            };
+            execution: components["schemas"]["ExecutionRequest"];
+            capital: components["schemas"]["CapitalConfig"];
             random_seed: number;
             /** @default 20 */
             minimum_trade_count: number;
@@ -1500,12 +1512,8 @@ export interface components {
             parameters: {
                 [key: string]: unknown;
             };
-            execution: {
-                [key: string]: unknown;
-            };
-            capital: {
-                [key: string]: unknown;
-            };
+            execution: components["schemas"]["ExecutionRequest"];
+            capital: components["schemas"]["CapitalConfig"];
             random_seed: number;
             walk_forward?: components["schemas"]["WalkForwardConfig"];
             stress_test?: components["schemas"]["StressTestConfig"];
@@ -1746,12 +1754,8 @@ export interface components {
                 train: components["schemas"]["StudyRange"];
                 validation: components["schemas"]["StudyRange"];
             };
-            execution: {
-                [key: string]: unknown;
-            };
-            capital: {
-                [key: string]: unknown;
-            };
+            execution: components["schemas"]["ExecutionRequest"];
+            capital: components["schemas"]["CapitalConfig"];
             risk_overlay?: components["schemas"]["RiskOverlay"];
             trace_id?: string;
         };
@@ -2000,6 +2004,82 @@ export interface components {
             };
         };
         sha256: string;
+        relative_path: string;
+        /** DatasetMeta */
+        "dataset-meta.schema": {
+            request_id?: string;
+            /** @constant */
+            schema_version: 1;
+            dataset_id: string;
+            data_revision: components["schemas"]["sha256"];
+            independence_group: string;
+            instrument: {
+                exchange: string;
+                symbol: string;
+                product: string;
+                contract_multiplier?: number;
+                display_name?: string;
+            };
+            timeframe: string;
+            source: {
+                path: components["schemas"]["relative_path"];
+                sha256: components["schemas"]["sha256"];
+                encoding: string;
+                format: string;
+                title?: string;
+                /** @enum {unknown} */
+                timestamp_semantics?: "bar_start" | "bar_end";
+            };
+            time: {
+                timezone: string;
+                /** @enum {unknown} */
+                date_semantics: "trading_day" | "calendar_date";
+                trading_calendar_hash: components["schemas"]["sha256"];
+                session_config_hash?: components["schemas"]["sha256"];
+            };
+            price: {
+                price_decimals: number;
+                price_scale: number;
+                tick_size_i64?: number;
+            };
+            coverage: {
+                bar_count: number;
+                first_bar_index: number;
+                last_bar_index: number;
+                first_timestamp_utc: number;
+                last_timestamp_utc: number;
+                /** Format: date */
+                first_trading_day: string;
+                /** Format: date */
+                last_trading_day: string;
+                trading_day_count: number;
+            };
+            importer: {
+                id: string;
+                version: string;
+                options_hash: components["schemas"]["sha256"];
+            };
+            quality: {
+                duplicate_count: number;
+                invalid_ohlc_count: number;
+                zero_volume_count: number;
+                gap_count: number;
+                warning_count: number;
+                error_count: number;
+            };
+            files: {
+                role: string;
+                path: components["schemas"]["relative_path"];
+                sha256: components["schemas"]["sha256"];
+                size_bytes: number;
+            }[];
+            /** Format: date-time */
+            created_at: string;
+            $defs: {
+                sha256: string;
+                relative_path: string;
+            };
+        };
         risk_market_observation: {
             effective_from_bar_index: number;
             available_at_bar_index: number;
@@ -2082,6 +2162,8 @@ export interface components {
             };
             risk_overlay?: components["schemas"]["risk_overlay"];
             execution: {
+                /** @constant */
+                semantic_version?: "1.0.0";
                 /** @enum {unknown} */
                 signal_timing: "bar_close";
                 /** @enum {unknown} */
@@ -2100,6 +2182,8 @@ export interface components {
                 /** @enum {unknown} */
                 fill_mode?: "unlimited" | "volume_cap_ioc";
                 contract_multiplier: number;
+                /** @constant */
+                contract_multiplier_source?: "instrument_config";
                 margin_ratio: number;
                 /** @enum {unknown} */
                 intrabar_conflict_rule?: "stop_first" | "target_first" | "worst_case";
@@ -2225,6 +2309,7 @@ export interface components {
             independence_group: string;
             trading_day_count: number;
             range: components["schemas"]["range"];
+            execution?: Record<string, never>;
             run_id?: string;
             run_signature?: components["schemas"]["sha256"];
         };
@@ -2306,6 +2391,7 @@ export interface components {
                 stress_results?: string;
                 statistical_evidence?: string;
             };
+            /** @description Versioned execution policy; contract_multiplier is resolved per dataset. */
             execution: Record<string, never>;
             capital: Record<string, never>;
             random_seed: number;
@@ -2337,6 +2423,7 @@ export interface components {
                     independence_group: string;
                     trading_day_count: number;
                     range: components["schemas"]["range"];
+                    execution?: Record<string, never>;
                     run_id?: string;
                     run_signature?: components["schemas"]["sha256"];
                 };
@@ -2440,6 +2527,8 @@ export interface components {
             };
             execution: {
                 /** @constant */
+                semantic_version?: "1.0.0";
+                /** @constant */
                 signal_timing: "bar_close";
                 /** @enum {unknown} */
                 fill_timing: "next_bar_open" | "bar_close";
@@ -2450,9 +2539,18 @@ export interface components {
                     [key: string]: unknown;
                 };
                 contract_multiplier: number;
+                /** @constant */
+                contract_multiplier_source?: "instrument_config";
                 margin_ratio: number;
                 /** @enum {unknown} */
                 intrabar_conflict_rule: "stop_first" | "target_first" | "worst_case";
+                stress_scenario_id?: string;
+                cost_multiplier?: number;
+                additional_slippage_ticks?: number;
+                additional_delay_bars?: number;
+                max_volume_participation_rate?: number;
+                /** @enum {unknown} */
+                fill_mode?: "unlimited" | "volume_cap_ioc";
             };
             capital: {
                 initial_cash_i64: number;
@@ -3024,9 +3122,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["dataset-meta.schema"];
                 };
             };
             404: components["responses"]["NotFound"];

@@ -99,6 +99,7 @@ type preparedDataset struct {
 	Range             backtest.Range `json:"range"`
 	RunID             string         `json:"run_id"`
 	RunSignature      string         `json:"run_signature"`
+	Execution         map[string]any `json:"execution"`
 }
 
 type Submission struct {
@@ -121,9 +122,14 @@ func NewService(guard *storage.PathGuard, catalogStore Catalog, python Python, m
 }
 
 func (s *Service) Submit(ctx context.Context, requestID, traceID string, request Request) (Submission, error) {
-	if len(request.Datasets) < 1 || len(request.Datasets) > 32 || !backtest.ValidExecution(request.Execution) || !backtest.ValidCapital(request.Capital) {
+	if len(request.Datasets) < 1 || len(request.Datasets) > 32 {
 		return Submission{}, ErrInvalidRequest
 	}
+	capital, err := backtest.NormalizeCapital(request.Capital)
+	if err != nil {
+		return Submission{}, ErrInvalidRequest
+	}
+	request.Capital = capital
 	definitions, err := s.python.Algorithms(ctx, requestID, traceID)
 	if err != nil {
 		return Submission{}, err
@@ -174,6 +180,10 @@ func (s *Service) Submit(ctx context.Context, requestID, traceID string, request
 		if !validRange(item.Range, meta.Coverage.LastBarIndex) {
 			return Submission{}, ErrInvalidRange
 		}
+		execution, err := backtest.NormalizeExecution(request.Execution, request.Capital, meta.Instrument.ContractMultiplier)
+		if err != nil {
+			return Submission{}, ErrInvalidRequest
+		}
 		if request.WalkForward != nil && item.Range.WarmupFromBarIndex != meta.Coverage.FirstBarIndex {
 			return Submission{}, ErrInvalidRange
 		}
@@ -189,12 +199,12 @@ func (s *Service) Submit(ctx context.Context, requestID, traceID string, request
 			group = meta.Instrument.Exchange + "." + meta.Instrument.Product
 		}
 		runID := "run-" + strings.TrimPrefix(jobs.NewID(), "job-")
-		runRequest := backtest.Request{DatasetID: meta.DatasetID, DataRevision: meta.DataRevision, Strategy: request.Strategy, Parameters: parameters, Range: item.Range, Execution: request.Execution, Capital: request.Capital, RandomSeed: request.RandomSeed}
+		runRequest := backtest.Request{DatasetID: meta.DatasetID, DataRevision: meta.DataRevision, Strategy: request.Strategy, Parameters: parameters, Range: item.Range, Execution: execution, Capital: request.Capital, RandomSeed: request.RandomSeed}
 		runSignature, err := backtest.Signature(runRequest, engineVersion)
 		if err != nil {
 			return Submission{}, err
 		}
-		prepared = append(prepared, preparedDataset{DatasetID: meta.DatasetID, DataRevision: meta.DataRevision, Timeframe: meta.Timeframe, IndependenceGroup: group, TradingDayCount: meta.Coverage.TradingDayCount, BarsPath: barsPath, MetaPath: metaPath, Range: item.Range, RunID: runID, RunSignature: runSignature})
+		prepared = append(prepared, preparedDataset{DatasetID: meta.DatasetID, DataRevision: meta.DataRevision, Timeframe: meta.Timeframe, IndependenceGroup: group, TradingDayCount: meta.Coverage.TradingDayCount, BarsPath: barsPath, MetaPath: metaPath, Range: item.Range, RunID: runID, RunSignature: runSignature, Execution: execution})
 	}
 	sort.Slice(prepared, func(i, j int) bool { return prepared[i].DatasetID < prepared[j].DatasetID })
 	studyID := "research-" + strings.TrimPrefix(jobs.NewID(), "job-")
@@ -206,7 +216,7 @@ func (s *Service) Submit(ctx context.Context, requestID, traceID string, request
 		"contract_version": s.contractVersion, "request_id": requestID, "trace_id": traceID,
 		"job_id": studyID, "research_study_id": studyID, "study_signature": signature,
 		"datasets": prepared, "strategy": request.Strategy, "parameters": parameters,
-		"execution": request.Execution, "capital": request.Capital, "random_seed": request.RandomSeed,
+		"execution": executionPolicy(prepared[0].Execution), "capital": request.Capital, "random_seed": request.RandomSeed,
 		"output_path": "research-studies/" + studyID,
 	}
 	if request.WalkForward != nil {
@@ -225,15 +235,26 @@ func (s *Service) Submit(ctx context.Context, requestID, traceID string, request
 func Signature(request Request, prepared []preparedDataset, engineVersion string) (string, error) {
 	datasets := make([]map[string]any, 0, len(prepared))
 	for _, item := range prepared {
-		datasets = append(datasets, map[string]any{"dataset_id": item.DatasetID, "data_revision": item.DataRevision, "independence_group": item.IndependenceGroup, "range": item.Range})
+		datasets = append(datasets, map[string]any{"dataset_id": item.DatasetID, "data_revision": item.DataRevision, "independence_group": item.IndependenceGroup, "range": item.Range, "execution": item.Execution})
 	}
-	facts := map[string]any{"datasets": datasets, "strategy": request.Strategy, "parameters": request.Parameters, "execution": request.Execution, "capital": request.Capital, "random_seed": request.RandomSeed, "walk_forward": request.WalkForward, "stress_test": request.StressTest, "statistical_validation": request.StatisticalValidation, "engine_version": engineVersion, "aggregator_version": aggregatorVersion}
+	facts := map[string]any{"datasets": datasets, "strategy": request.Strategy, "parameters": request.Parameters, "capital": request.Capital, "random_seed": request.RandomSeed, "walk_forward": request.WalkForward, "stress_test": request.StressTest, "statistical_validation": request.StatisticalValidation, "engine_version": engineVersion, "aggregator_version": aggregatorVersion}
 	data, err := json.Marshal(facts)
 	if err != nil {
 		return "", err
 	}
 	digest := sha256.Sum256(data)
 	return "sha256:" + fmt.Sprintf("%x", digest), nil
+}
+
+func executionPolicy(resolved map[string]any) map[string]any {
+	policy := make(map[string]any, len(resolved)-1)
+	for key, value := range resolved {
+		if key != "contract_multiplier" {
+			policy[key] = value
+		}
+	}
+	policy["contract_multiplier_source"] = "per_dataset_instrument_config"
+	return policy
 }
 
 func (s *Service) start(studyID, pythonJobID, requestID, traceID string, payload map[string]any) *jobs.Job {

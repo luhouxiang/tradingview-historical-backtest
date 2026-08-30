@@ -56,33 +56,63 @@ if (-not (Test-Path -LiteralPath $instrumentPath)) {
 }
 
 $calendarPath = Join-Path $runtimeConfigRoot 'trading_calendar.csv'
-$sourceText = [Text.Encoding]::GetEncoding(54936).GetString([IO.File]::ReadAllBytes($target))
-$tradingDays = @($sourceText -split "`r?`n" |
-    ForEach-Object { if ($_ -match '^(\d{4}/\d{2}/\d{2}),') { $matches[1] } } |
-    Select-Object -Unique)
-if ($tradingDays.Count -lt 2) { throw "Cannot derive trading days from trading-data/history/30#$initialInstrument.txt." }
-$calendarByDay = @{}
-if (Test-Path -LiteralPath $calendarPath) {
-    foreach ($entry in @(Import-Csv -LiteralPath $calendarPath)) { $calendarByDay[$entry.trading_day] = $entry }
+$statePath = Join-Path $runtimeConfigRoot 'demo-data-state.json'
+$sourceHash = (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash.ToLowerInvariant()
+$calendarCacheHit = $false
+if ((Test-Path -LiteralPath $calendarPath) -and (Test-Path -LiteralPath $statePath)) {
+    try {
+        $state = Get-Content -Raw -Encoding UTF8 -LiteralPath $statePath | ConvertFrom-Json
+        $calendarHash = (Get-FileHash -LiteralPath $calendarPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        $calendarCacheHit = $state.schema_version -eq 1 -and
+            $state.initial_instrument -eq $initialInstrument -and
+            $state.source_sha256 -eq "sha256:$sourceHash" -and
+            $state.calendar_sha256 -eq "sha256:$calendarHash"
+    } catch { $calendarCacheHit = $false }
 }
-for ($index = 0; $index -lt $tradingDays.Count; $index++) {
-    $day = [datetime]::ParseExact($tradingDays[$index], 'yyyy/MM/dd', $null)
-    $dayText = $day.ToString('yyyy-MM-dd')
-    if ($calendarByDay.ContainsKey($dayText)) { continue }
-    $night = if ($index -eq 0) {
-        $day.AddDays(-1)
-    } else {
-        [datetime]::ParseExact($tradingDays[$index - 1], 'yyyy/MM/dd', $null)
+
+if (-not $calendarCacheHit) {
+    $sourceText = [Text.Encoding]::GetEncoding(54936).GetString([IO.File]::ReadAllBytes($target))
+    $tradingDays = @($sourceText -split "`r?`n" |
+        ForEach-Object { if ($_ -match '^(\d{4}/\d{2}/\d{2}),') { $matches[1] } } |
+        Select-Object -Unique)
+    if ($tradingDays.Count -lt 2) { throw "Cannot derive trading days from trading-data/history/30#$initialInstrument.txt." }
+    $calendarByDay = @{}
+    if (Test-Path -LiteralPath $calendarPath) {
+        foreach ($entry in @(Import-Csv -LiteralPath $calendarPath)) { $calendarByDay[$entry.trading_day] = $entry }
     }
-    $calendarByDay[$dayText] = [pscustomobject]@{
-        trading_day = $dayText
-        night_session_date = $night.ToString('yyyy-MM-dd')
-        is_open = 'true'
-        note = 'demo'
+    for ($index = 0; $index -lt $tradingDays.Count; $index++) {
+        $day = [datetime]::ParseExact($tradingDays[$index], 'yyyy/MM/dd', $null)
+        $dayText = $day.ToString('yyyy-MM-dd')
+        if ($calendarByDay.ContainsKey($dayText)) { continue }
+        $night = if ($index -eq 0) {
+            $day.AddDays(-1)
+        } else {
+            [datetime]::ParseExact($tradingDays[$index - 1], 'yyyy/MM/dd', $null)
+        }
+        $calendarByDay[$dayText] = [pscustomobject]@{
+            trading_day = $dayText
+            night_session_date = $night.ToString('yyyy-MM-dd')
+            is_open = 'true'
+            note = 'demo'
+        }
     }
+    $calendarCsv = @($calendarByDay.Values | Sort-Object trading_day | ConvertTo-Csv -NoTypeInformation) -join [Environment]::NewLine
+    $calendarContent = $calendarCsv + [Environment]::NewLine
+    $existingCalendar = if (Test-Path -LiteralPath $calendarPath) { Get-Content -Raw -Encoding UTF8 -LiteralPath $calendarPath } else { $null }
+    if ($existingCalendar -cne $calendarContent) {
+        Write-Utf8Atomic -Path $calendarPath -Content $calendarContent
+    }
+    $calendarHash = (Get-FileHash -LiteralPath $calendarPath -Algorithm SHA256).Hash.ToLowerInvariant()
+    $state = [ordered]@{
+        schema_version = 1
+        initial_instrument = $initialInstrument
+        source_path = "history/30#$initialInstrument.txt"
+        source_sha256 = "sha256:$sourceHash"
+        calendar_sha256 = "sha256:$calendarHash"
+        updated_at = [datetime]::UtcNow.ToString('o')
+    }
+    Write-Utf8Atomic -Path $statePath -Content (($state | ConvertTo-Json) + [Environment]::NewLine)
 }
-$calendarCsv = @($calendarByDay.Values | Sort-Object trading_day | ConvertTo-Csv -NoTypeInformation) -join [Environment]::NewLine
-Write-Utf8Atomic -Path $calendarPath -Content ($calendarCsv + [Environment]::NewLine)
 
 [pscustomobject]@{
     data_root = $dataRoot
@@ -90,4 +120,5 @@ Write-Utf8Atomic -Path $calendarPath -Content ($calendarCsv + [Environment]::New
     dataset_id = "SHFE.$initialInstrument.5m"
     source = $target
     calendar = $calendarPath
+    calendar_cache_hit = $calendarCacheHit
 } | ConvertTo-Json -Compress

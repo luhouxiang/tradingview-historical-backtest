@@ -140,6 +140,16 @@ func (s *Service) Submit(ctx context.Context, requestID, traceID string, request
 		return Submission{}, ErrInvalidRequest
 	}
 	request.RiskOverlay = riskOverlay
+	capital, err := backtest.NormalizeCapital(request.Capital)
+	if err != nil {
+		return Submission{}, ErrInvalidRequest
+	}
+	execution, err := backtest.NormalizeExecution(request.Execution, capital, meta.Instrument.ContractMultiplier)
+	if err != nil {
+		return Submission{}, ErrInvalidRequest
+	}
+	request.Capital = capital
+	request.Execution = execution
 	if err := validateStudy(request, definition.ParameterSchema); err != nil {
 		return Submission{}, err
 	}
@@ -281,9 +291,6 @@ func validateStudy(request Request, schema map[string]any) error {
 	if err := ValidateSearchConfiguration(request.BaseParameters, request.SearchSpace, request.Objectives, request.Constraints, request.Search, schema); err != nil {
 		return err
 	}
-	if !validExecution(request.Execution) || !validCapital(request.Capital) {
-		return ErrInvalidRequest
-	}
 	return nil
 }
 
@@ -424,14 +431,6 @@ func numeric(value any) (float64, bool) {
 
 func validRange(value backtest.Range, last int64) bool {
 	return value.WarmupFromBarIndex >= 0 && value.FromBarIndex >= value.WarmupFromBarIndex && value.ToBarIndex >= value.FromBarIndex && value.ToBarIndex <= last
-}
-
-func validExecution(value map[string]any) bool {
-	return value["signal_timing"] == "bar_close" && (value["fill_timing"] == "next_bar_open" || value["fill_timing"] == "bar_close") && value["commission"] != nil && value["slippage"] != nil
-}
-
-func validCapital(value map[string]any) bool {
-	return value["initial_cash_i64"] != nil && value["money_scale"] != nil && value["currency"] != nil
 }
 
 func findDefinition(values []pythonclient.AlgorithmDefinition, ref pythonclient.AlgorithmRef) (pythonclient.AlgorithmDefinition, bool) {

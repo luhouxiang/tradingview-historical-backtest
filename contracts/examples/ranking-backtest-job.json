@@ -56,11 +56,13 @@
     "warmup_from_bar_index": 0
   },
   "execution": {
+    "semantic_version": "1.0.0",
     "signal_timing": "bar_close",
     "fill_timing": "next_bar_open",
-    "commission": {"mode": "fixed_per_contract", "amount_i64": 0},
+    "commission": {"mode": "fixed_per_contract", "amount_i64": 0, "money_scale": 100},
     "slippage": {"mode": "ticks", "value": 0},
     "contract_multiplier": 1,
+    "contract_multiplier_source": "instrument_config",
     "margin_ratio": 1,
     "intrabar_conflict_rule": "worst_case"
   },

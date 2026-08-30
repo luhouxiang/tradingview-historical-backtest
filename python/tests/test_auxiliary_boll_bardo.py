@@ -346,6 +346,7 @@ def test_runner_and_formal_run_publish_boll_events_without_trades(tmp_path: Path
             "trace_id": "trace-aux-boll",
             "range": {"warmup_from_bar_index": 0, "from_bar_index": 0, "to_bar_index": 9},
             "execution": {
+                "semantic_version": "1.0.0",
                 "signal_timing": "bar_close",
                 "fill_timing": "next_bar_open",
                 "commission": {
@@ -355,8 +356,14 @@ def test_runner_and_formal_run_publish_boll_events_without_trades(tmp_path: Path
                 },
                 "slippage": {"mode": "ticks", "value": 0},
                 "contract_multiplier": 1,
+                "contract_multiplier_source": "instrument_config",
                 "margin_ratio": 0.1,
                 "intrabar_conflict_rule": "worst_case",
+                "stress_scenario_id": "baseline",
+                "cost_multiplier": 1.0,
+                "additional_slippage_ticks": 0.0,
+                "additional_delay_bars": 0,
+                "fill_mode": "unlimited",
             },
             "capital": {
                 "initial_cash_i64": 1_000_000,

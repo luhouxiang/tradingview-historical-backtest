@@ -150,8 +150,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                additionalProperties: true
+                $ref: "./schemas/dataset-meta.schema.json"
         "404":
           $ref: "#/components/responses/NotFound"
 
@@ -1902,6 +1901,82 @@ components:
         error:
           $ref: "#/components/schemas/Error"
 
+    CommissionConfig:
+      type: object
+      additionalProperties: false
+      required: [mode]
+      properties:
+        mode: {enum: [fixed_per_contract, proportional]}
+        amount_i64: {type: integer, minimum: 0}
+        money_scale: {type: integer, minimum: 1}
+        rate: {type: number, minimum: 0, maximum: 1}
+      allOf:
+        - if: {properties: {mode: {const: fixed_per_contract}}, required: [mode]}
+          then:
+            required: [amount_i64, money_scale]
+            not: {required: [rate]}
+        - if: {properties: {mode: {const: proportional}}, required: [mode]}
+          then:
+            required: [rate]
+            not:
+              anyOf:
+                - {required: [amount_i64]}
+                - {required: [money_scale]}
+
+    SlippageConfig:
+      type: object
+      additionalProperties: false
+      required: [mode, value]
+      properties:
+        mode: {enum: [ticks, bps]}
+        value: {type: number, minimum: 0}
+
+    CapitalConfig:
+      type: object
+      additionalProperties: false
+      required: [initial_cash_i64, currency, money_scale]
+      properties:
+        initial_cash_i64: {type: integer, minimum: 0}
+        currency: {type: string, pattern: "^[A-Z]{3}$"}
+        money_scale: {type: integer, minimum: 1}
+
+    ExecutionRequest:
+      type: object
+      additionalProperties: false
+      required: [semantic_version, signal_timing, fill_timing, commission, slippage, margin_ratio, intrabar_conflict_rule]
+      properties:
+        semantic_version: {const: 1.0.0}
+        signal_timing: {const: bar_close}
+        fill_timing: {enum: [next_bar_open, bar_close]}
+        commission: {$ref: "#/components/schemas/CommissionConfig"}
+        slippage: {$ref: "#/components/schemas/SlippageConfig"}
+        contract_multiplier: {type: integer, minimum: 1, description: Optional assertion; Go resolves the authoritative value from instrument_config.}
+        contract_multiplier_source: {const: instrument_config}
+        margin_ratio: {type: number, exclusiveMinimum: 0, maximum: 1}
+        intrabar_conflict_rule: {enum: [stop_first, target_first, worst_case]}
+        stress_scenario_id: {type: string, minLength: 1, description: Go defaults this to baseline.}
+        cost_multiplier: {type: number, minimum: 0, description: Go defaults this to 1.}
+        additional_slippage_ticks: {type: number, minimum: 0, description: Go defaults this to 0.}
+        additional_delay_bars: {type: integer, minimum: 0, description: Go defaults this to 0.}
+        max_volume_participation_rate: {type: number, exclusiveMinimum: 0, maximum: 1}
+        fill_mode: {enum: [unlimited, volume_cap_ioc], description: Go defaults this to unlimited.}
+      allOf:
+        - if:
+            properties: {fill_mode: {const: volume_cap_ioc}}
+            required: [fill_mode]
+          then: {required: [max_volume_participation_rate]}
+        - if:
+            properties: {fill_mode: {const: unlimited}}
+            required: [fill_mode]
+          then:
+            not: {required: [max_volume_participation_rate]}
+
+    ResolvedExecutionConfig:
+      allOf:
+        - $ref: "#/components/schemas/ExecutionRequest"
+        - type: object
+          required: [contract_multiplier, contract_multiplier_source, stress_scenario_id, cost_multiplier, additional_slippage_ticks, additional_delay_bars, fill_mode]
+
     BacktestRequest:
       type: object
       additionalProperties: false
@@ -1936,43 +2011,8 @@ components:
             from_bar_index: {type: integer, minimum: 0}
             to_bar_index: {type: integer, minimum: 0}
             warmup_from_bar_index: {type: integer, minimum: 0}
-        execution:
-          type: object
-          additionalProperties: false
-          required: [signal_timing, fill_timing, commission, slippage, contract_multiplier, margin_ratio, intrabar_conflict_rule]
-          properties:
-            signal_timing: {const: bar_close}
-            fill_timing: {enum: [next_bar_open, bar_close]}
-            commission:
-              type: object
-              additionalProperties: true
-              required: [mode]
-              properties:
-                mode: {enum: [fixed_per_contract, proportional]}
-            slippage:
-              type: object
-              additionalProperties: true
-              required: [mode, value]
-              properties:
-                mode: {enum: [ticks, bps]}
-                value: {type: number, minimum: 0}
-            contract_multiplier: {type: number, exclusiveMinimum: 0}
-            margin_ratio: {type: number, exclusiveMinimum: 0, maximum: 1}
-            intrabar_conflict_rule: {enum: [stop_first, target_first, worst_case]}
-            stress_scenario_id: {type: string, minLength: 1}
-            cost_multiplier: {type: number, minimum: 0}
-            additional_slippage_ticks: {type: number, minimum: 0}
-            additional_delay_bars: {type: integer, minimum: 0}
-            max_volume_participation_rate: {type: number, exclusiveMinimum: 0, maximum: 1}
-            fill_mode: {enum: [unlimited, volume_cap_ioc]}
-        capital:
-          type: object
-          additionalProperties: false
-          required: [initial_cash_i64, currency, money_scale]
-          properties:
-            initial_cash_i64: {type: integer, minimum: 0}
-            currency: {type: string, minLength: 3, maxLength: 3}
-            money_scale: {type: integer, minimum: 1}
+        execution: {$ref: "#/components/schemas/ExecutionRequest"}
+        capital: {$ref: "#/components/schemas/CapitalConfig"}
         random_seed:
           type: integer
         trace_id:
@@ -2151,12 +2191,8 @@ components:
             from_bar_index: {type: integer, minimum: 0}
             to_bar_index: {type: integer, minimum: 0}
             warmup_from_bar_index: {type: integer, minimum: 0}
-        execution:
-          type: object
-          additionalProperties: true
-        capital:
-          type: object
-          additionalProperties: true
+        execution: {$ref: "#/components/schemas/ExecutionRequest"}
+        capital: {$ref: "#/components/schemas/CapitalConfig"}
         random_seed: {type: integer}
         minimum_trade_count: {type: integer, minimum: 1, maximum: 100000, default: 20}
         trace_id: {type: string}
@@ -2252,8 +2288,8 @@ components:
           items: {$ref: "#/components/schemas/ResearchDatasetRequest"}
         strategy: {$ref: "#/components/schemas/AlgorithmRef"}
         parameters: {type: object, additionalProperties: true}
-        execution: {type: object, additionalProperties: true}
-        capital: {type: object, additionalProperties: true}
+        execution: {$ref: "#/components/schemas/ExecutionRequest"}
+        capital: {$ref: "#/components/schemas/CapitalConfig"}
         random_seed: {type: integer}
         walk_forward: {$ref: "#/components/schemas/WalkForwardConfig"}
         stress_test: {$ref: "#/components/schemas/StressTestConfig"}
@@ -2553,12 +2589,8 @@ components:
           properties:
             train: {$ref: "#/components/schemas/StudyRange"}
             validation: {$ref: "#/components/schemas/StudyRange"}
-        execution:
-          type: object
-          additionalProperties: true
-        capital:
-          type: object
-          additionalProperties: true
+        execution: {$ref: "#/components/schemas/ExecutionRequest"}
+        capital: {$ref: "#/components/schemas/CapitalConfig"}
         risk_overlay:
           $ref: "#/components/schemas/RiskOverlay"
         trace_id: {type: string}

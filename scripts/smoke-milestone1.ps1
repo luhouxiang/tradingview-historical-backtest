@@ -31,8 +31,8 @@ $historyRoot = Join-Path $dataRoot 'history'
 $runtimeConfigRoot = Join-Path $dataRoot 'config'
 New-Item -ItemType Directory -Force $historyRoot, $runtimeConfigRoot | Out-Null
 
-$sourcePath = Join-Path $historyRoot '30#AO2609.txt'
-$canonicalSourcePath = Join-Path $projectRoot 'trading-data/history/30#AO2609.txt'
+$sourcePath = Join-Path $historyRoot '30#AOL9.txt'
+$canonicalSourcePath = Join-Path $projectRoot 'trading-data/history/30#AOL9.txt'
 if (-not (Test-Path -LiteralPath $canonicalSourcePath)) {
     throw "Canonical history source is missing: $canonicalSourcePath"
 }
@@ -41,6 +41,14 @@ Copy-Item -LiteralPath "$projectRoot/config/examples/instruments.json" -Destinat
 Copy-Item -LiteralPath "$projectRoot/config/examples/sessions.json" -Destination $runtimeConfigRoot
 
 $sourceText = [Text.Encoding]::GetEncoding(54936).GetString([IO.File]::ReadAllBytes($sourcePath))
+$sourceRows = @($sourceText -split "`r?`n" | Where-Object { $_ -match '^\d{4}/\d{2}/\d{2},\d{4},' })
+$expectedBarCount = $sourceRows.Count
+$expectedZeroVolumeCount = @($sourceRows | Where-Object { ($_ -split ',')[6] -eq '0' }).Count
+if ($expectedBarCount -lt 4500) { throw "Canonical source has too few bars: $expectedBarCount" }
+$expectedLastBarIndex = $expectedBarCount - 1
+$expectedTailFirstBarIndex = $expectedBarCount - 3000
+$expectedPrefetchFirstBarIndex = $expectedBarCount - 4500
+$expectedPrefetchLastBarIndex = $expectedBarCount - 3001
 $tradingDays = @($sourceText -split "`r?`n" |
     ForEach-Object { if ($_ -match '^(\d{4}/\d{2}/\d{2}),') { $matches[1] } } |
     Select-Object -Unique)
@@ -214,7 +222,7 @@ try {
         source_file_id = $sources.items[0].source_file_id
         importer_id = 'tdx_txt_v1'
         exchange = 'SHFE'
-        instrument = 'AO2609'
+        instrument = 'AOL9'
         timeframe = '5m'
         date_semantics = 'trading_day'
         timezone = 'Asia/Shanghai'
@@ -227,31 +235,31 @@ try {
     $elapsedMs = [int]((Get-Date) - $started).TotalMilliseconds
 
     $catalog = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/v1/datasets'
-    if ($catalog.datasets.Count -ne 1 -or $catalog.datasets[0].bar_count -ne 17017 -or $catalog.catalog_revision -ne 1) {
+    if ($catalog.datasets.Count -ne 1 -or $catalog.datasets[0].bar_count -ne $expectedBarCount -or $catalog.catalog_revision -ne 1) {
         throw "Unexpected catalog: $($catalog | ConvertTo-Json -Depth 8 -Compress)"
     }
     $revision = $catalog.datasets[0].active_revision
     $escapedRevision = [uri]::EscapeDataString($revision)
-    $meta = Invoke-RestMethod -Uri "http://127.0.0.1:8080/api/v1/datasets/SHFE.AO2609.5m?revision=$escapedRevision"
-    if ($meta.coverage.bar_count -ne 17017 -or $meta.quality.zero_volume_count -ne 1224) {
+    $meta = Invoke-RestMethod -Uri "http://127.0.0.1:8080/api/v1/datasets/SHFE.AOL9.5m?revision=$escapedRevision"
+    if ($meta.coverage.bar_count -ne $expectedBarCount -or $meta.quality.zero_volume_count -ne $expectedZeroVolumeCount) {
         throw "Unexpected metadata: $($meta | ConvertTo-Json -Depth 8 -Compress)"
     }
 
     $barsP95 = $null
     $prefetchCount = $null
     if ($VerifyBars) {
-        $tailUri = "http://127.0.0.1:8080/api/v1/datasets/SHFE.AO2609.5m/bars?revision=$escapedRevision&generation_id=gen-smoke&tail=3000"
+        $tailUri = "http://127.0.0.1:8080/api/v1/datasets/SHFE.AOL9.5m/bars?revision=$escapedRevision&generation_id=gen-smoke&tail=3000"
         $tail = Invoke-RestMethod -Uri $tailUri
-        if ($tail.bars.bar_index.Count -ne 3000 -or $tail.coverage.first_bar_index -ne 14017 -or $tail.coverage.last_bar_index -ne 17016 -or -not $tail.has_more_before) {
+        if ($tail.bars.bar_index.Count -ne 3000 -or $tail.coverage.first_bar_index -ne $expectedTailFirstBarIndex -or $tail.coverage.last_bar_index -ne $expectedLastBarIndex -or -not $tail.has_more_before) {
             throw "Unexpected tail range: $($tail.coverage | ConvertTo-Json -Compress)"
         }
         if ($tail.generation_id -ne 'gen-smoke' -or $tail.checksum -notmatch '^sha256:[0-9a-f]{64}$') {
             throw 'Tail response identity or checksum is invalid.'
         }
         $before = $tail.coverage.first_bar_index
-        $prefetch = Invoke-RestMethod -Uri "http://127.0.0.1:8080/api/v1/datasets/SHFE.AO2609.5m/bars?revision=$escapedRevision&generation_id=gen-smoke&before_bar_index=$before&limit=1500"
+        $prefetch = Invoke-RestMethod -Uri "http://127.0.0.1:8080/api/v1/datasets/SHFE.AOL9.5m/bars?revision=$escapedRevision&generation_id=gen-smoke&before_bar_index=$before&limit=1500"
         $prefetchCount = $prefetch.bars.bar_index.Count
-        if ($prefetchCount -ne 1500 -or $prefetch.coverage.first_bar_index -ne 12517 -or $prefetch.coverage.last_bar_index -ne 14016) {
+        if ($prefetchCount -ne 1500 -or $prefetch.coverage.first_bar_index -ne $expectedPrefetchFirstBarIndex -or $prefetch.coverage.last_bar_index -ne $expectedPrefetchLastBarIndex) {
             throw "Unexpected prefetch range: $($prefetch.coverage | ConvertTo-Json -Compress)"
         }
         $timings = [Collections.Generic.List[double]]::new()
@@ -268,7 +276,7 @@ try {
         $badRevision = [uri]::EscapeDataString("sha256:$('f' * 64)")
         $conflictStatus = 0
         try {
-            Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:8080/api/v1/datasets/SHFE.AO2609.5m/bars?revision=$badRevision&generation_id=gen-smoke&tail=3000" | Out-Null
+            Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:8080/api/v1/datasets/SHFE.AOL9.5m/bars?revision=$badRevision&generation_id=gen-smoke&tail=3000" | Out-Null
         } catch {
             $conflictStatus = [int]$_.Exception.Response.StatusCode
         }
@@ -456,6 +464,7 @@ try {
             parameters = $strategyParameters
             range = @{ warmup_from_bar_index = 0; from_bar_index = 100; to_bar_index = 17016 }
             execution = @{
+                semantic_version = '1.0.0'
                 signal_timing = 'bar_close'; fill_timing = 'next_bar_open'
                 commission = @{ mode = 'fixed_per_contract'; amount_i64 = 300; money_scale = 100 }
                 slippage = @{ mode = 'ticks'; value = 1 }; contract_multiplier = 20
@@ -539,6 +548,7 @@ try {
                 validation = @{ warmup_from_bar_index = 0; from_bar_index = 10001; to_bar_index = 17016 }
             }
             execution = @{
+                semantic_version = '1.0.0'
                 signal_timing = 'bar_close'; fill_timing = 'next_bar_open'
                 commission = @{ mode = 'fixed_per_contract'; amount_i64 = 300; money_scale = 100 }
                 slippage = @{ mode = 'ticks'; value = 1 }; contract_multiplier = 20

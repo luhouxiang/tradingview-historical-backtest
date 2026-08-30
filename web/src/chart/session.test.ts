@@ -7,7 +7,7 @@ const revision = `sha256:${'a'.repeat(64)}`
 function meta(): DatasetMeta {
   return {
     request_id: 'req', dataset_id: 'SHFE.AO2609.5m', data_revision: revision,
-    instrument: { exchange: 'SHFE', symbol: 'AO2609', product: 'AO' }, timeframe: '5m',
+    instrument: { exchange: 'SHFE', symbol: 'AO2609', product: 'AO', contract_multiplier: 20 }, timeframe: '5m',
     source: { path: 'history/sample.txt', encoding: 'GB18030', format: 'tdx_txt_v1' },
     time: { timezone: 'Asia/Shanghai', date_semantics: 'trading_day' },
     price: { price_decimals: 0, price_scale: 1 },

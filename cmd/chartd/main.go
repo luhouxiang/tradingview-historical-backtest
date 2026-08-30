@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
@@ -37,6 +38,7 @@ func main() {
 		os.Exit(2)
 	}
 	configPath := flag.String("config", "config/app.yaml", "path to application configuration")
+	webRoot := flag.String("web-root", "", "optional built Vue directory served for non-API routes")
 	flag.Parse()
 	cfg, err := config.Load(*configPath)
 	if err != nil {
@@ -93,12 +95,20 @@ func main() {
 	python := pythonclient.New(cfg.PythonEngine.BaseURL, cfg.App.ContractVersion, cfg.PythonRequestTimeout())
 	calculationService := calculation.NewService(guard, catalogStore, python, jobManager, cfg.App.ContractVersion, cfg.PythonJobPollInterval())
 	replayService := replay.NewService(guard, catalogStore, python, jobManager, cfg.App.ContractVersion, cfg.PythonJobPollInterval())
-	backtestService := backtest.NewService(guard, catalogStore, python, jobManager, cfg.App.ContractVersion, cfg.PythonJobPollInterval())
-	optimizationService := optimization.NewService(guard, catalogStore, python, jobManager, cfg.App.ContractVersion, cfg.PythonJobPollInterval())
-	comparisonService := comparison.NewService(guard, catalogStore, python, jobManager, cfg.App.ContractVersion, cfg.PythonJobPollInterval())
-	researchService := research.NewService(guard, catalogStore, python, jobManager, cfg.App.ContractVersion, cfg.PythonJobPollInterval())
+	backtestService := backtest.NewService(guard, datasetService, python, jobManager, cfg.App.ContractVersion, cfg.PythonJobPollInterval())
+	optimizationService := optimization.NewService(guard, datasetService, python, jobManager, cfg.App.ContractVersion, cfg.PythonJobPollInterval())
+	comparisonService := comparison.NewService(guard, datasetService, python, jobManager, cfg.App.ContractVersion, cfg.PythonJobPollInterval())
+	researchService := research.NewService(guard, datasetService, python, jobManager, cfg.App.ContractVersion, cfg.PythonJobPollInterval())
 	workspaceStore := workspace.NewStore(guard)
-	server := &http.Server{Addr: cfg.Server.Listen, Handler: api.NewServer(cfg, python, logger, vueLogger, api.WithDatasets(datasetService, jobManager), api.WithBarReader(barReader), api.WithCalculations(calculationService), api.WithReplays(replayService), api.WithBacktests(backtestService), api.WithOptimization(optimizationService), api.WithComparisons(comparisonService), api.WithResearch(researchService), api.WithWorkspace(workspaceStore)).Handler(), ReadTimeout: cfg.ReadTimeout(), WriteTimeout: cfg.WriteTimeout()}
+	handler := api.NewServer(cfg, python, logger, vueLogger, api.WithDatasets(datasetService, jobManager), api.WithBarReader(barReader), api.WithCalculations(calculationService), api.WithReplays(replayService), api.WithBacktests(backtestService), api.WithOptimization(optimizationService), api.WithComparisons(comparisonService), api.WithResearch(researchService), api.WithWorkspace(workspaceStore)).Handler()
+	if *webRoot != "" {
+		handler, err = withWebUI(handler, *webRoot)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "web root error: %v\n", err)
+			os.Exit(2)
+		}
+	}
+	server := &http.Server{Addr: cfg.Server.Listen, Handler: handler, ReadTimeout: cfg.ReadTimeout(), WriteTimeout: cfg.WriteTimeout()}
 	logger.Info("app.started", "Go API starting", map[string]any{"listen": cfg.Server.Listen, "contract_version": cfg.App.ContractVersion})
 	errCh := make(chan error, 1)
 	go func() { errCh <- server.ListenAndServe() }()
@@ -117,6 +127,31 @@ func main() {
 			os.Exit(1)
 		}
 	}
+}
+
+func withWebUI(apiHandler http.Handler, root string) (http.Handler, error) {
+	absoluteRoot, err := filepath.Abs(root)
+	if err != nil {
+		return nil, err
+	}
+	indexPath := filepath.Join(absoluteRoot, "index.html")
+	if info, statErr := os.Stat(indexPath); statErr != nil || info.IsDir() {
+		return nil, fmt.Errorf("index.html is unavailable in %s", absoluteRoot)
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/api/") || r.URL.Path == "/api" || (r.Method != http.MethodGet && r.Method != http.MethodHead) {
+			apiHandler.ServeHTTP(w, r)
+			return
+		}
+		requested := filepath.Join(absoluteRoot, filepath.FromSlash(strings.TrimPrefix(filepath.Clean(r.URL.Path), string(filepath.Separator))))
+		if relative, relErr := filepath.Rel(absoluteRoot, requested); relErr == nil && relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+			if info, statErr := os.Stat(requested); statErr == nil && !info.IsDir() {
+				http.ServeFile(w, r, requested)
+				return
+			}
+		}
+		http.ServeFile(w, r, indexPath)
+	}), nil
 }
 
 type ioDiscard struct{}

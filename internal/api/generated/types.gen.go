@@ -3135,19 +3135,40 @@ type BacktestRequest struct {
 	DataRevision string `json:"data_revision"`
 	DatasetId    string `json:"dataset_id"`
 	Execution    struct {
-		AdditionalDelayBars        *int                                 `json:"additional_delay_bars,omitempty"`
-		AdditionalSlippageTicks    *float32                             `json:"additional_slippage_ticks,omitempty"`
-		Commission                 BacktestRequest_Execution_Commission `json:"commission"`
-		ContractMultiplier         float32                              `json:"contract_multiplier"`
-		CostMultiplier             *float32                             `json:"cost_multiplier,omitempty"`
-		FillMode                   interface{}                          `json:"fill_mode,omitempty"`
-		FillTiming                 interface{}                          `json:"fill_timing"`
-		IntrabarConflictRule       interface{}                          `json:"intrabar_conflict_rule"`
-		MarginRatio                float32                              `json:"margin_ratio"`
-		MaxVolumeParticipationRate *float32                             `json:"max_volume_participation_rate,omitempty"`
-		SignalTiming               interface{}                          `json:"signal_timing"`
-		Slippage                   BacktestRequest_Execution_Slippage   `json:"slippage"`
-		StressScenarioId           *string                              `json:"stress_scenario_id,omitempty"`
+		// AdditionalDelayBars Go defaults this to 0.
+		AdditionalDelayBars *int `json:"additional_delay_bars,omitempty"`
+
+		// AdditionalSlippageTicks Go defaults this to 0.
+		AdditionalSlippageTicks *float32 `json:"additional_slippage_ticks,omitempty"`
+		Commission              struct {
+			AmountI64  *int        `json:"amount_i64,omitempty"`
+			Mode       interface{} `json:"mode"`
+			MoneyScale *int        `json:"money_scale,omitempty"`
+			Rate       *float32    `json:"rate,omitempty"`
+		} `json:"commission"`
+
+		// ContractMultiplier Optional assertion; Go resolves the authoritative value from instrument_config.
+		ContractMultiplier       *int        `json:"contract_multiplier,omitempty"`
+		ContractMultiplierSource interface{} `json:"contract_multiplier_source,omitempty"`
+
+		// CostMultiplier Go defaults this to 1.
+		CostMultiplier *float32 `json:"cost_multiplier,omitempty"`
+
+		// FillMode Go defaults this to unlimited.
+		FillMode                   interface{} `json:"fill_mode,omitempty"`
+		FillTiming                 interface{} `json:"fill_timing"`
+		IntrabarConflictRule       interface{} `json:"intrabar_conflict_rule"`
+		MarginRatio                float32     `json:"margin_ratio"`
+		MaxVolumeParticipationRate *float32    `json:"max_volume_participation_rate,omitempty"`
+		SemanticVersion            interface{} `json:"semantic_version"`
+		SignalTiming               interface{} `json:"signal_timing"`
+		Slippage                   struct {
+			Mode  interface{} `json:"mode"`
+			Value float32     `json:"value"`
+		} `json:"slippage"`
+
+		// StressScenarioId Go defaults this to baseline.
+		StressScenarioId *string `json:"stress_scenario_id,omitempty"`
 	} `json:"execution"`
 	Parameters map[string]interface{} `json:"parameters"`
 	RandomSeed int                    `json:"random_seed"`
@@ -3205,19 +3226,6 @@ type BacktestRequest struct {
 		SourceHash       string      `json:"source_hash"`
 	} `json:"strategy"`
 	TraceId *string `json:"trace_id,omitempty"`
-}
-
-// BacktestRequest_Execution_Commission defines model for BacktestRequest.Execution.Commission.
-type BacktestRequest_Execution_Commission struct {
-	Mode                 interface{}            `json:"mode"`
-	AdditionalProperties map[string]interface{} `json:"-"`
-}
-
-// BacktestRequest_Execution_Slippage defines model for BacktestRequest.Execution.Slippage.
-type BacktestRequest_Execution_Slippage struct {
-	Mode                 interface{}            `json:"mode"`
-	Value                float32                `json:"value"`
-	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
 // BacktestSummary defines model for BacktestSummary.
@@ -3722,6 +3730,13 @@ type CalculationResultsObjectsZhongshuLeaveDirection string
 
 // CalculationResultsObjectsZhongshuStatus defines model for CalculationResults.Objects.Zhongshu.Status.
 type CalculationResultsObjectsZhongshuStatus string
+
+// CapitalConfig defines model for CapitalConfig.
+type CapitalConfig struct {
+	Currency       string `json:"currency"`
+	InitialCashI64 int    `json:"initial_cash_i64"`
+	MoneyScale     int    `json:"money_scale"`
+}
 
 // CausalEvent defines model for CausalEvent.
 type CausalEvent struct {
@@ -4386,6 +4401,14 @@ type ChanZhongshuLeaveDirection string
 // ChanZhongshuStatus defines model for ChanZhongshu.Status.
 type ChanZhongshuStatus string
 
+// CommissionConfig defines model for CommissionConfig.
+type CommissionConfig struct {
+	AmountI64  *int        `json:"amount_i64,omitempty"`
+	Mode       interface{} `json:"mode"`
+	MoneyScale *int        `json:"money_scale,omitempty"`
+	Rate       *float32    `json:"rate,omitempty"`
+}
+
 // DatasetRef defines model for DatasetRef.
 type DatasetRef struct {
 	BarsPath     string `json:"bars_path"`
@@ -4461,6 +4484,44 @@ type ErrorResponse struct {
 		Message   string                  `json:"message"`
 		RequestId string                  `json:"request_id"`
 	} `json:"error"`
+}
+
+// ExecutionRequest defines model for ExecutionRequest.
+type ExecutionRequest struct {
+	// AdditionalDelayBars Go defaults this to 0.
+	AdditionalDelayBars *int `json:"additional_delay_bars,omitempty"`
+
+	// AdditionalSlippageTicks Go defaults this to 0.
+	AdditionalSlippageTicks *float32 `json:"additional_slippage_ticks,omitempty"`
+	Commission              struct {
+		AmountI64  *int        `json:"amount_i64,omitempty"`
+		Mode       interface{} `json:"mode"`
+		MoneyScale *int        `json:"money_scale,omitempty"`
+		Rate       *float32    `json:"rate,omitempty"`
+	} `json:"commission"`
+
+	// ContractMultiplier Optional assertion; Go resolves the authoritative value from instrument_config.
+	ContractMultiplier       *int        `json:"contract_multiplier,omitempty"`
+	ContractMultiplierSource interface{} `json:"contract_multiplier_source,omitempty"`
+
+	// CostMultiplier Go defaults this to 1.
+	CostMultiplier *float32 `json:"cost_multiplier,omitempty"`
+
+	// FillMode Go defaults this to unlimited.
+	FillMode                   interface{} `json:"fill_mode,omitempty"`
+	FillTiming                 interface{} `json:"fill_timing"`
+	IntrabarConflictRule       interface{} `json:"intrabar_conflict_rule"`
+	MarginRatio                float32     `json:"margin_ratio"`
+	MaxVolumeParticipationRate *float32    `json:"max_volume_participation_rate,omitempty"`
+	SemanticVersion            interface{} `json:"semantic_version"`
+	SignalTiming               interface{} `json:"signal_timing"`
+	Slippage                   struct {
+		Mode  interface{} `json:"mode"`
+		Value float32     `json:"value"`
+	} `json:"slippage"`
+
+	// StressScenarioId Go defaults this to baseline.
+	StressScenarioId *string `json:"stress_scenario_id,omitempty"`
 }
 
 // HealthResponse defines model for HealthResponse.
@@ -4940,7 +5001,11 @@ type ResearchStudyProgressDetail struct {
 
 // ResearchStudyRequest defines model for ResearchStudyRequest.
 type ResearchStudyRequest struct {
-	Capital  map[string]interface{} `json:"capital"`
+	Capital struct {
+		Currency       string `json:"currency"`
+		InitialCashI64 int    `json:"initial_cash_i64"`
+		MoneyScale     int    `json:"money_scale"`
+	} `json:"capital"`
 	Datasets []struct {
 		DataRevision string `json:"data_revision"`
 		DatasetId    string `json:"dataset_id"`
@@ -4950,7 +5015,42 @@ type ResearchStudyRequest struct {
 			WarmupFromBarIndex int `json:"warmup_from_bar_index"`
 		} `json:"range"`
 	} `json:"datasets"`
-	Execution             map[string]interface{} `json:"execution"`
+	Execution struct {
+		// AdditionalDelayBars Go defaults this to 0.
+		AdditionalDelayBars *int `json:"additional_delay_bars,omitempty"`
+
+		// AdditionalSlippageTicks Go defaults this to 0.
+		AdditionalSlippageTicks *float32 `json:"additional_slippage_ticks,omitempty"`
+		Commission              struct {
+			AmountI64  *int        `json:"amount_i64,omitempty"`
+			Mode       interface{} `json:"mode"`
+			MoneyScale *int        `json:"money_scale,omitempty"`
+			Rate       *float32    `json:"rate,omitempty"`
+		} `json:"commission"`
+
+		// ContractMultiplier Optional assertion; Go resolves the authoritative value from instrument_config.
+		ContractMultiplier       *int        `json:"contract_multiplier,omitempty"`
+		ContractMultiplierSource interface{} `json:"contract_multiplier_source,omitempty"`
+
+		// CostMultiplier Go defaults this to 1.
+		CostMultiplier *float32 `json:"cost_multiplier,omitempty"`
+
+		// FillMode Go defaults this to unlimited.
+		FillMode                   interface{} `json:"fill_mode,omitempty"`
+		FillTiming                 interface{} `json:"fill_timing"`
+		IntrabarConflictRule       interface{} `json:"intrabar_conflict_rule"`
+		MarginRatio                float32     `json:"margin_ratio"`
+		MaxVolumeParticipationRate *float32    `json:"max_volume_participation_rate,omitempty"`
+		SemanticVersion            interface{} `json:"semantic_version"`
+		SignalTiming               interface{} `json:"signal_timing"`
+		Slippage                   struct {
+			Mode  interface{} `json:"mode"`
+			Value float32     `json:"value"`
+		} `json:"slippage"`
+
+		// StressScenarioId Go defaults this to baseline.
+		StressScenarioId *string `json:"stress_scenario_id,omitempty"`
+	} `json:"execution"`
 	Parameters            map[string]interface{} `json:"parameters"`
 	RandomSeed            int                    `json:"random_seed"`
 	StatisticalValidation *struct {
@@ -5290,9 +5390,10 @@ type ResearchStudyStatus struct {
 		} `json:"child_runs"`
 		CreatedAt time.Time `json:"created_at"`
 		Datasets  []struct {
-			DataRevision      string `json:"data_revision"`
-			DatasetId         string `json:"dataset_id"`
-			IndependenceGroup string `json:"independence_group"`
+			DataRevision      string                  `json:"data_revision"`
+			DatasetId         string                  `json:"dataset_id"`
+			Execution         *map[string]interface{} `json:"execution,omitempty"`
+			IndependenceGroup string                  `json:"independence_group"`
 			Range             struct {
 				FromBarIndex       int `json:"from_bar_index"`
 				ToBarIndex         int `json:"to_bar_index"`
@@ -5302,7 +5403,9 @@ type ResearchStudyStatus struct {
 			RunSignature    *string `json:"run_signature,omitempty"`
 			TradingDayCount int     `json:"trading_day_count"`
 		} `json:"datasets"`
-		Engine                map[string]interface{} `json:"engine"`
+		Engine map[string]interface{} `json:"engine"`
+
+		// Execution Versioned execution policy; contract_multiplier is resolved per dataset.
 		Execution             map[string]interface{} `json:"execution"`
 		Parameters            map[string]interface{} `json:"parameters"`
 		RandomSeed            int                    `json:"random_seed"`
@@ -5377,6 +5480,9 @@ type ResearchStudyStatusManifestStatisticalValidationHolmAlpha float32
 
 // ResearchStudyStatusManifestStressTestVolumeParticipationRate defines model for ResearchStudyStatus.Manifest.StressTest.VolumeParticipationRate.
 type ResearchStudyStatusManifestStressTestVolumeParticipationRate float32
+
+// ResolvedExecutionConfig defines model for ResolvedExecutionConfig.
+type ResolvedExecutionConfig = interface{}
 
 // RiskContext defines model for RiskContext.
 type RiskContext struct {
@@ -5468,12 +5574,14 @@ type RunStatus struct {
 			AdditionalSlippageTicks    *float32               `json:"additional_slippage_ticks,omitempty"`
 			Commission                 map[string]interface{} `json:"commission"`
 			ContractMultiplier         float32                `json:"contract_multiplier"`
+			ContractMultiplierSource   interface{}            `json:"contract_multiplier_source,omitempty"`
 			CostMultiplier             *float32               `json:"cost_multiplier,omitempty"`
 			FillMode                   interface{}            `json:"fill_mode,omitempty"`
 			FillTiming                 interface{}            `json:"fill_timing"`
 			IntrabarConflictRule       interface{}            `json:"intrabar_conflict_rule,omitempty"`
 			MarginRatio                float32                `json:"margin_ratio"`
 			MaxVolumeParticipationRate *float32               `json:"max_volume_participation_rate,omitempty"`
+			SemanticVersion            interface{}            `json:"semantic_version,omitempty"`
 			SignalTiming               interface{}            `json:"signal_timing"`
 			Slippage                   map[string]interface{} `json:"slippage"`
 			StressScenarioId           *string                `json:"stress_scenario_id,omitempty"`
@@ -5567,6 +5675,12 @@ type SearchParameter struct {
 	Type       interface{}    `json:"type"`
 }
 
+// SlippageConfig defines model for SlippageConfig.
+type SlippageConfig struct {
+	Mode  interface{} `json:"mode"`
+	Value float32     `json:"value"`
+}
+
 // SourceFile defines model for SourceFile.
 type SourceFile struct {
 	Detected     *map[string]interface{}   `json:"detected,omitempty"`
@@ -5615,12 +5729,51 @@ type StrategyComparisonItem struct {
 
 // StrategyComparisonRequest defines model for StrategyComparisonRequest.
 type StrategyComparisonRequest struct {
-	Capital           map[string]interface{} `json:"capital"`
-	DataRevision      string                 `json:"data_revision"`
-	DatasetId         string                 `json:"dataset_id"`
-	Execution         map[string]interface{} `json:"execution"`
-	MinimumTradeCount int                    `json:"minimum_trade_count"`
-	RandomSeed        int                    `json:"random_seed"`
+	Capital struct {
+		Currency       string `json:"currency"`
+		InitialCashI64 int    `json:"initial_cash_i64"`
+		MoneyScale     int    `json:"money_scale"`
+	} `json:"capital"`
+	DataRevision string `json:"data_revision"`
+	DatasetId    string `json:"dataset_id"`
+	Execution    struct {
+		// AdditionalDelayBars Go defaults this to 0.
+		AdditionalDelayBars *int `json:"additional_delay_bars,omitempty"`
+
+		// AdditionalSlippageTicks Go defaults this to 0.
+		AdditionalSlippageTicks *float32 `json:"additional_slippage_ticks,omitempty"`
+		Commission              struct {
+			AmountI64  *int        `json:"amount_i64,omitempty"`
+			Mode       interface{} `json:"mode"`
+			MoneyScale *int        `json:"money_scale,omitempty"`
+			Rate       *float32    `json:"rate,omitempty"`
+		} `json:"commission"`
+
+		// ContractMultiplier Optional assertion; Go resolves the authoritative value from instrument_config.
+		ContractMultiplier       *int        `json:"contract_multiplier,omitempty"`
+		ContractMultiplierSource interface{} `json:"contract_multiplier_source,omitempty"`
+
+		// CostMultiplier Go defaults this to 1.
+		CostMultiplier *float32 `json:"cost_multiplier,omitempty"`
+
+		// FillMode Go defaults this to unlimited.
+		FillMode                   interface{} `json:"fill_mode,omitempty"`
+		FillTiming                 interface{} `json:"fill_timing"`
+		IntrabarConflictRule       interface{} `json:"intrabar_conflict_rule"`
+		MarginRatio                float32     `json:"margin_ratio"`
+		MaxVolumeParticipationRate *float32    `json:"max_volume_participation_rate,omitempty"`
+		SemanticVersion            interface{} `json:"semantic_version"`
+		SignalTiming               interface{} `json:"signal_timing"`
+		Slippage                   struct {
+			Mode  interface{} `json:"mode"`
+			Value float32     `json:"value"`
+		} `json:"slippage"`
+
+		// StressScenarioId Go defaults this to baseline.
+		StressScenarioId *string `json:"stress_scenario_id,omitempty"`
+	} `json:"execution"`
+	MinimumTradeCount int `json:"minimum_trade_count"`
+	RandomSeed        int `json:"random_seed"`
 	Range             struct {
 		FromBarIndex       int `json:"from_bar_index"`
 		ToBarIndex         int `json:"to_bar_index"`
@@ -5937,16 +6090,55 @@ type StudyRange struct {
 // StudyRequest defines model for StudyRequest.
 type StudyRequest struct {
 	BaseParameters map[string]interface{} `json:"base_parameters"`
-	Capital        map[string]interface{} `json:"capital"`
-	Constraints    []struct {
+	Capital        struct {
+		Currency       string `json:"currency"`
+		InitialCashI64 int    `json:"initial_cash_i64"`
+		MoneyScale     int    `json:"money_scale"`
+	} `json:"capital"`
+	Constraints []struct {
 		Metric   interface{} `json:"metric"`
 		Operator interface{} `json:"operator"`
 		Value    float32     `json:"value"`
 	} `json:"constraints"`
-	DataRevision string                 `json:"data_revision"`
-	DatasetId    string                 `json:"dataset_id"`
-	Execution    map[string]interface{} `json:"execution"`
-	Objectives   []struct {
+	DataRevision string `json:"data_revision"`
+	DatasetId    string `json:"dataset_id"`
+	Execution    struct {
+		// AdditionalDelayBars Go defaults this to 0.
+		AdditionalDelayBars *int `json:"additional_delay_bars,omitempty"`
+
+		// AdditionalSlippageTicks Go defaults this to 0.
+		AdditionalSlippageTicks *float32 `json:"additional_slippage_ticks,omitempty"`
+		Commission              struct {
+			AmountI64  *int        `json:"amount_i64,omitempty"`
+			Mode       interface{} `json:"mode"`
+			MoneyScale *int        `json:"money_scale,omitempty"`
+			Rate       *float32    `json:"rate,omitempty"`
+		} `json:"commission"`
+
+		// ContractMultiplier Optional assertion; Go resolves the authoritative value from instrument_config.
+		ContractMultiplier       *int        `json:"contract_multiplier,omitempty"`
+		ContractMultiplierSource interface{} `json:"contract_multiplier_source,omitempty"`
+
+		// CostMultiplier Go defaults this to 1.
+		CostMultiplier *float32 `json:"cost_multiplier,omitempty"`
+
+		// FillMode Go defaults this to unlimited.
+		FillMode                   interface{} `json:"fill_mode,omitempty"`
+		FillTiming                 interface{} `json:"fill_timing"`
+		IntrabarConflictRule       interface{} `json:"intrabar_conflict_rule"`
+		MarginRatio                float32     `json:"margin_ratio"`
+		MaxVolumeParticipationRate *float32    `json:"max_volume_participation_rate,omitempty"`
+		SemanticVersion            interface{} `json:"semantic_version"`
+		SignalTiming               interface{} `json:"signal_timing"`
+		Slippage                   struct {
+			Mode  interface{} `json:"mode"`
+			Value float32     `json:"value"`
+		} `json:"slippage"`
+
+		// StressScenarioId Go defaults this to baseline.
+		StressScenarioId *string `json:"stress_scenario_id,omitempty"`
+	} `json:"execution"`
+	Objectives []struct {
 		Direction interface{} `json:"direction"`
 		Metric    interface{} `json:"metric"`
 	} `json:"objectives"`
@@ -6039,13 +6231,21 @@ type StudyStatus struct {
 		} `json:"engine"`
 		EvaluationCount int `json:"evaluation_count"`
 		Execution       struct {
-			Commission           map[string]interface{} `json:"commission"`
-			ContractMultiplier   float32                `json:"contract_multiplier"`
-			FillTiming           interface{}            `json:"fill_timing"`
-			IntrabarConflictRule interface{}            `json:"intrabar_conflict_rule"`
-			MarginRatio          float32                `json:"margin_ratio"`
-			SignalTiming         interface{}            `json:"signal_timing"`
-			Slippage             map[string]interface{} `json:"slippage"`
+			AdditionalDelayBars        *int                   `json:"additional_delay_bars,omitempty"`
+			AdditionalSlippageTicks    *float32               `json:"additional_slippage_ticks,omitempty"`
+			Commission                 map[string]interface{} `json:"commission"`
+			ContractMultiplier         float32                `json:"contract_multiplier"`
+			ContractMultiplierSource   interface{}            `json:"contract_multiplier_source,omitempty"`
+			CostMultiplier             *float32               `json:"cost_multiplier,omitempty"`
+			FillMode                   interface{}            `json:"fill_mode,omitempty"`
+			FillTiming                 interface{}            `json:"fill_timing"`
+			IntrabarConflictRule       interface{}            `json:"intrabar_conflict_rule"`
+			MarginRatio                float32                `json:"margin_ratio"`
+			MaxVolumeParticipationRate *float32               `json:"max_volume_participation_rate,omitempty"`
+			SemanticVersion            interface{}            `json:"semantic_version,omitempty"`
+			SignalTiming               interface{}            `json:"signal_timing"`
+			Slippage                   map[string]interface{} `json:"slippage"`
+			StressScenarioId           *string                `json:"stress_scenario_id,omitempty"`
 		} `json:"execution"`
 		Objectives []struct {
 			Direction interface{} `json:"direction"`
@@ -6342,19 +6542,40 @@ type CreateBacktestJSONBody struct {
 	DataRevision string `json:"data_revision"`
 	DatasetId    string `json:"dataset_id"`
 	Execution    struct {
-		AdditionalDelayBars        *int                                        `json:"additional_delay_bars,omitempty"`
-		AdditionalSlippageTicks    *float32                                    `json:"additional_slippage_ticks,omitempty"`
-		Commission                 CreateBacktestJSONBody_Execution_Commission `json:"commission"`
-		ContractMultiplier         float32                                     `json:"contract_multiplier"`
-		CostMultiplier             *float32                                    `json:"cost_multiplier,omitempty"`
-		FillMode                   interface{}                                 `json:"fill_mode,omitempty"`
-		FillTiming                 interface{}                                 `json:"fill_timing"`
-		IntrabarConflictRule       interface{}                                 `json:"intrabar_conflict_rule"`
-		MarginRatio                float32                                     `json:"margin_ratio"`
-		MaxVolumeParticipationRate *float32                                    `json:"max_volume_participation_rate,omitempty"`
-		SignalTiming               interface{}                                 `json:"signal_timing"`
-		Slippage                   CreateBacktestJSONBody_Execution_Slippage   `json:"slippage"`
-		StressScenarioId           *string                                     `json:"stress_scenario_id,omitempty"`
+		// AdditionalDelayBars Go defaults this to 0.
+		AdditionalDelayBars *int `json:"additional_delay_bars,omitempty"`
+
+		// AdditionalSlippageTicks Go defaults this to 0.
+		AdditionalSlippageTicks *float32 `json:"additional_slippage_ticks,omitempty"`
+		Commission              struct {
+			AmountI64  *int        `json:"amount_i64,omitempty"`
+			Mode       interface{} `json:"mode"`
+			MoneyScale *int        `json:"money_scale,omitempty"`
+			Rate       *float32    `json:"rate,omitempty"`
+		} `json:"commission"`
+
+		// ContractMultiplier Optional assertion; Go resolves the authoritative value from instrument_config.
+		ContractMultiplier       *int        `json:"contract_multiplier,omitempty"`
+		ContractMultiplierSource interface{} `json:"contract_multiplier_source,omitempty"`
+
+		// CostMultiplier Go defaults this to 1.
+		CostMultiplier *float32 `json:"cost_multiplier,omitempty"`
+
+		// FillMode Go defaults this to unlimited.
+		FillMode                   interface{} `json:"fill_mode,omitempty"`
+		FillTiming                 interface{} `json:"fill_timing"`
+		IntrabarConflictRule       interface{} `json:"intrabar_conflict_rule"`
+		MarginRatio                float32     `json:"margin_ratio"`
+		MaxVolumeParticipationRate *float32    `json:"max_volume_participation_rate,omitempty"`
+		SemanticVersion            interface{} `json:"semantic_version"`
+		SignalTiming               interface{} `json:"signal_timing"`
+		Slippage                   struct {
+			Mode  interface{} `json:"mode"`
+			Value float32     `json:"value"`
+		} `json:"slippage"`
+
+		// StressScenarioId Go defaults this to baseline.
+		StressScenarioId *string `json:"stress_scenario_id,omitempty"`
 	} `json:"execution"`
 	Parameters map[string]interface{} `json:"parameters"`
 	RandomSeed int                    `json:"random_seed"`
@@ -6417,19 +6638,6 @@ type CreateBacktestJSONBody struct {
 // CreateBacktestParams defines parameters for CreateBacktest.
 type CreateBacktestParams struct {
 	IdempotencyKey *string `json:"Idempotency-Key,omitempty"`
-}
-
-// CreateBacktestJSONBody_Execution_Commission defines parameters for CreateBacktest.
-type CreateBacktestJSONBody_Execution_Commission struct {
-	Mode                 interface{}            `json:"mode"`
-	AdditionalProperties map[string]interface{} `json:"-"`
-}
-
-// CreateBacktestJSONBody_Execution_Slippage defines parameters for CreateBacktest.
-type CreateBacktestJSONBody_Execution_Slippage struct {
-	Mode                 interface{}            `json:"mode"`
-	Value                float32                `json:"value"`
-	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
 // GetBacktestSummary200JSONResponseBodySharpeAnnualizationFactor defines parameters for GetBacktestSummary.
@@ -6708,7 +6916,11 @@ type ListResearchStudies200JSONResponseBodyItemsStressTestVolumeParticipationRat
 
 // CreateResearchStudyJSONBody defines parameters for CreateResearchStudy.
 type CreateResearchStudyJSONBody struct {
-	Capital  map[string]interface{} `json:"capital"`
+	Capital struct {
+		Currency       string `json:"currency"`
+		InitialCashI64 int    `json:"initial_cash_i64"`
+		MoneyScale     int    `json:"money_scale"`
+	} `json:"capital"`
 	Datasets []struct {
 		DataRevision string `json:"data_revision"`
 		DatasetId    string `json:"dataset_id"`
@@ -6718,7 +6930,42 @@ type CreateResearchStudyJSONBody struct {
 			WarmupFromBarIndex int `json:"warmup_from_bar_index"`
 		} `json:"range"`
 	} `json:"datasets"`
-	Execution             map[string]interface{} `json:"execution"`
+	Execution struct {
+		// AdditionalDelayBars Go defaults this to 0.
+		AdditionalDelayBars *int `json:"additional_delay_bars,omitempty"`
+
+		// AdditionalSlippageTicks Go defaults this to 0.
+		AdditionalSlippageTicks *float32 `json:"additional_slippage_ticks,omitempty"`
+		Commission              struct {
+			AmountI64  *int        `json:"amount_i64,omitempty"`
+			Mode       interface{} `json:"mode"`
+			MoneyScale *int        `json:"money_scale,omitempty"`
+			Rate       *float32    `json:"rate,omitempty"`
+		} `json:"commission"`
+
+		// ContractMultiplier Optional assertion; Go resolves the authoritative value from instrument_config.
+		ContractMultiplier       *int        `json:"contract_multiplier,omitempty"`
+		ContractMultiplierSource interface{} `json:"contract_multiplier_source,omitempty"`
+
+		// CostMultiplier Go defaults this to 1.
+		CostMultiplier *float32 `json:"cost_multiplier,omitempty"`
+
+		// FillMode Go defaults this to unlimited.
+		FillMode                   interface{} `json:"fill_mode,omitempty"`
+		FillTiming                 interface{} `json:"fill_timing"`
+		IntrabarConflictRule       interface{} `json:"intrabar_conflict_rule"`
+		MarginRatio                float32     `json:"margin_ratio"`
+		MaxVolumeParticipationRate *float32    `json:"max_volume_participation_rate,omitempty"`
+		SemanticVersion            interface{} `json:"semantic_version"`
+		SignalTiming               interface{} `json:"signal_timing"`
+		Slippage                   struct {
+			Mode  interface{} `json:"mode"`
+			Value float32     `json:"value"`
+		} `json:"slippage"`
+
+		// StressScenarioId Go defaults this to baseline.
+		StressScenarioId *string `json:"stress_scenario_id,omitempty"`
+	} `json:"execution"`
 	Parameters            map[string]interface{} `json:"parameters"`
 	RandomSeed            int                    `json:"random_seed"`
 	StatisticalValidation *struct {
@@ -6989,12 +7236,51 @@ type ListStrategyComparisonsParams struct {
 
 // CreateStrategyComparisonJSONBody defines parameters for CreateStrategyComparison.
 type CreateStrategyComparisonJSONBody struct {
-	Capital           map[string]interface{} `json:"capital"`
-	DataRevision      string                 `json:"data_revision"`
-	DatasetId         string                 `json:"dataset_id"`
-	Execution         map[string]interface{} `json:"execution"`
-	MinimumTradeCount int                    `json:"minimum_trade_count"`
-	RandomSeed        int                    `json:"random_seed"`
+	Capital struct {
+		Currency       string `json:"currency"`
+		InitialCashI64 int    `json:"initial_cash_i64"`
+		MoneyScale     int    `json:"money_scale"`
+	} `json:"capital"`
+	DataRevision string `json:"data_revision"`
+	DatasetId    string `json:"dataset_id"`
+	Execution    struct {
+		// AdditionalDelayBars Go defaults this to 0.
+		AdditionalDelayBars *int `json:"additional_delay_bars,omitempty"`
+
+		// AdditionalSlippageTicks Go defaults this to 0.
+		AdditionalSlippageTicks *float32 `json:"additional_slippage_ticks,omitempty"`
+		Commission              struct {
+			AmountI64  *int        `json:"amount_i64,omitempty"`
+			Mode       interface{} `json:"mode"`
+			MoneyScale *int        `json:"money_scale,omitempty"`
+			Rate       *float32    `json:"rate,omitempty"`
+		} `json:"commission"`
+
+		// ContractMultiplier Optional assertion; Go resolves the authoritative value from instrument_config.
+		ContractMultiplier       *int        `json:"contract_multiplier,omitempty"`
+		ContractMultiplierSource interface{} `json:"contract_multiplier_source,omitempty"`
+
+		// CostMultiplier Go defaults this to 1.
+		CostMultiplier *float32 `json:"cost_multiplier,omitempty"`
+
+		// FillMode Go defaults this to unlimited.
+		FillMode                   interface{} `json:"fill_mode,omitempty"`
+		FillTiming                 interface{} `json:"fill_timing"`
+		IntrabarConflictRule       interface{} `json:"intrabar_conflict_rule"`
+		MarginRatio                float32     `json:"margin_ratio"`
+		MaxVolumeParticipationRate *float32    `json:"max_volume_participation_rate,omitempty"`
+		SemanticVersion            interface{} `json:"semantic_version"`
+		SignalTiming               interface{} `json:"signal_timing"`
+		Slippage                   struct {
+			Mode  interface{} `json:"mode"`
+			Value float32     `json:"value"`
+		} `json:"slippage"`
+
+		// StressScenarioId Go defaults this to baseline.
+		StressScenarioId *string `json:"stress_scenario_id,omitempty"`
+	} `json:"execution"`
+	MinimumTradeCount int `json:"minimum_trade_count"`
+	RandomSeed        int `json:"random_seed"`
 	Range             struct {
 		FromBarIndex       int `json:"from_bar_index"`
 		ToBarIndex         int `json:"to_bar_index"`
@@ -7076,16 +7362,55 @@ type GetStrategyComparisonResults200JSONResponseBody_Items_Summary struct {
 // CreateStudyJSONBody defines parameters for CreateStudy.
 type CreateStudyJSONBody struct {
 	BaseParameters map[string]interface{} `json:"base_parameters"`
-	Capital        map[string]interface{} `json:"capital"`
-	Constraints    []struct {
+	Capital        struct {
+		Currency       string `json:"currency"`
+		InitialCashI64 int    `json:"initial_cash_i64"`
+		MoneyScale     int    `json:"money_scale"`
+	} `json:"capital"`
+	Constraints []struct {
 		Metric   interface{} `json:"metric"`
 		Operator interface{} `json:"operator"`
 		Value    float32     `json:"value"`
 	} `json:"constraints"`
-	DataRevision string                 `json:"data_revision"`
-	DatasetId    string                 `json:"dataset_id"`
-	Execution    map[string]interface{} `json:"execution"`
-	Objectives   []struct {
+	DataRevision string `json:"data_revision"`
+	DatasetId    string `json:"dataset_id"`
+	Execution    struct {
+		// AdditionalDelayBars Go defaults this to 0.
+		AdditionalDelayBars *int `json:"additional_delay_bars,omitempty"`
+
+		// AdditionalSlippageTicks Go defaults this to 0.
+		AdditionalSlippageTicks *float32 `json:"additional_slippage_ticks,omitempty"`
+		Commission              struct {
+			AmountI64  *int        `json:"amount_i64,omitempty"`
+			Mode       interface{} `json:"mode"`
+			MoneyScale *int        `json:"money_scale,omitempty"`
+			Rate       *float32    `json:"rate,omitempty"`
+		} `json:"commission"`
+
+		// ContractMultiplier Optional assertion; Go resolves the authoritative value from instrument_config.
+		ContractMultiplier       *int        `json:"contract_multiplier,omitempty"`
+		ContractMultiplierSource interface{} `json:"contract_multiplier_source,omitempty"`
+
+		// CostMultiplier Go defaults this to 1.
+		CostMultiplier *float32 `json:"cost_multiplier,omitempty"`
+
+		// FillMode Go defaults this to unlimited.
+		FillMode                   interface{} `json:"fill_mode,omitempty"`
+		FillTiming                 interface{} `json:"fill_timing"`
+		IntrabarConflictRule       interface{} `json:"intrabar_conflict_rule"`
+		MarginRatio                float32     `json:"margin_ratio"`
+		MaxVolumeParticipationRate *float32    `json:"max_volume_participation_rate,omitempty"`
+		SemanticVersion            interface{} `json:"semantic_version"`
+		SignalTiming               interface{} `json:"signal_timing"`
+		Slippage                   struct {
+			Mode  interface{} `json:"mode"`
+			Value float32     `json:"value"`
+		} `json:"slippage"`
+
+		// StressScenarioId Go defaults this to baseline.
+		StressScenarioId *string `json:"stress_scenario_id,omitempty"`
+	} `json:"execution"`
+	Objectives []struct {
 		Direction interface{} `json:"direction"`
 		Metric    interface{} `json:"metric"`
 	} `json:"objectives"`
@@ -7400,151 +7725,6 @@ type PutStrategySourceConfigJSONRequestBody PutStrategySourceConfigJSONBody
 
 // SubmitPythonJobJSONRequestBody defines body for SubmitPythonJob for application/json ContentType.
 type SubmitPythonJobJSONRequestBody SubmitPythonJobJSONBody
-
-// Getter for additional properties for BacktestRequest_Execution_Commission. Returns the specified
-// element and whether it was found
-func (a BacktestRequest_Execution_Commission) Get(fieldName string) (value interface{}, found bool) {
-	if a.AdditionalProperties != nil {
-		value, found = a.AdditionalProperties[fieldName]
-	}
-	return
-}
-
-// Setter for additional properties for BacktestRequest_Execution_Commission
-func (a *BacktestRequest_Execution_Commission) Set(fieldName string, value interface{}) {
-	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
-	}
-	a.AdditionalProperties[fieldName] = value
-}
-
-// Override default JSON handling for BacktestRequest_Execution_Commission to handle AdditionalProperties
-func (a *BacktestRequest_Execution_Commission) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if raw, found := object["mode"]; found {
-		err = json.Unmarshal(raw, &a.Mode)
-		if err != nil {
-			return fmt.Errorf("error reading 'mode': %w", err)
-		}
-		delete(object, "mode")
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
-		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
-			err := json.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default JSON handling for BacktestRequest_Execution_Commission to handle AdditionalProperties
-func (a BacktestRequest_Execution_Commission) MarshalJSON() ([]byte, error) {
-	var err error
-	object := make(map[string]json.RawMessage)
-
-	object["mode"], err = json.Marshal(a.Mode)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'mode': %w", err)
-	}
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
-		}
-	}
-	return json.Marshal(object)
-}
-
-// Getter for additional properties for BacktestRequest_Execution_Slippage. Returns the specified
-// element and whether it was found
-func (a BacktestRequest_Execution_Slippage) Get(fieldName string) (value interface{}, found bool) {
-	if a.AdditionalProperties != nil {
-		value, found = a.AdditionalProperties[fieldName]
-	}
-	return
-}
-
-// Setter for additional properties for BacktestRequest_Execution_Slippage
-func (a *BacktestRequest_Execution_Slippage) Set(fieldName string, value interface{}) {
-	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
-	}
-	a.AdditionalProperties[fieldName] = value
-}
-
-// Override default JSON handling for BacktestRequest_Execution_Slippage to handle AdditionalProperties
-func (a *BacktestRequest_Execution_Slippage) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if raw, found := object["mode"]; found {
-		err = json.Unmarshal(raw, &a.Mode)
-		if err != nil {
-			return fmt.Errorf("error reading 'mode': %w", err)
-		}
-		delete(object, "mode")
-	}
-
-	if raw, found := object["value"]; found {
-		err = json.Unmarshal(raw, &a.Value)
-		if err != nil {
-			return fmt.Errorf("error reading 'value': %w", err)
-		}
-		delete(object, "value")
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
-		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
-			err := json.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default JSON handling for BacktestRequest_Execution_Slippage to handle AdditionalProperties
-func (a BacktestRequest_Execution_Slippage) MarshalJSON() ([]byte, error) {
-	var err error
-	object := make(map[string]json.RawMessage)
-
-	object["mode"], err = json.Marshal(a.Mode)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'mode': %w", err)
-	}
-
-	object["value"], err = json.Marshal(a.Value)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'value': %w", err)
-	}
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
-		}
-	}
-	return json.Marshal(object)
-}
 
 // Getter for additional properties for BacktestSummary. Returns the specified
 // element and whether it was found
@@ -13677,151 +13857,6 @@ func (a WalkForwardFoldResult_ValidationMetrics) MarshalJSON() ([]byte, error) {
 	object["win_rate"], err = json.Marshal(a.WinRate)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'win_rate': %w", err)
-	}
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
-		}
-	}
-	return json.Marshal(object)
-}
-
-// Getter for additional properties for CreateBacktestJSONBody_Execution_Commission. Returns the specified
-// element and whether it was found
-func (a CreateBacktestJSONBody_Execution_Commission) Get(fieldName string) (value interface{}, found bool) {
-	if a.AdditionalProperties != nil {
-		value, found = a.AdditionalProperties[fieldName]
-	}
-	return
-}
-
-// Setter for additional properties for CreateBacktestJSONBody_Execution_Commission
-func (a *CreateBacktestJSONBody_Execution_Commission) Set(fieldName string, value interface{}) {
-	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
-	}
-	a.AdditionalProperties[fieldName] = value
-}
-
-// Override default JSON handling for CreateBacktestJSONBody_Execution_Commission to handle AdditionalProperties
-func (a *CreateBacktestJSONBody_Execution_Commission) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if raw, found := object["mode"]; found {
-		err = json.Unmarshal(raw, &a.Mode)
-		if err != nil {
-			return fmt.Errorf("error reading 'mode': %w", err)
-		}
-		delete(object, "mode")
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
-		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
-			err := json.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default JSON handling for CreateBacktestJSONBody_Execution_Commission to handle AdditionalProperties
-func (a CreateBacktestJSONBody_Execution_Commission) MarshalJSON() ([]byte, error) {
-	var err error
-	object := make(map[string]json.RawMessage)
-
-	object["mode"], err = json.Marshal(a.Mode)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'mode': %w", err)
-	}
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
-		}
-	}
-	return json.Marshal(object)
-}
-
-// Getter for additional properties for CreateBacktestJSONBody_Execution_Slippage. Returns the specified
-// element and whether it was found
-func (a CreateBacktestJSONBody_Execution_Slippage) Get(fieldName string) (value interface{}, found bool) {
-	if a.AdditionalProperties != nil {
-		value, found = a.AdditionalProperties[fieldName]
-	}
-	return
-}
-
-// Setter for additional properties for CreateBacktestJSONBody_Execution_Slippage
-func (a *CreateBacktestJSONBody_Execution_Slippage) Set(fieldName string, value interface{}) {
-	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
-	}
-	a.AdditionalProperties[fieldName] = value
-}
-
-// Override default JSON handling for CreateBacktestJSONBody_Execution_Slippage to handle AdditionalProperties
-func (a *CreateBacktestJSONBody_Execution_Slippage) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if raw, found := object["mode"]; found {
-		err = json.Unmarshal(raw, &a.Mode)
-		if err != nil {
-			return fmt.Errorf("error reading 'mode': %w", err)
-		}
-		delete(object, "mode")
-	}
-
-	if raw, found := object["value"]; found {
-		err = json.Unmarshal(raw, &a.Value)
-		if err != nil {
-			return fmt.Errorf("error reading 'value': %w", err)
-		}
-		delete(object, "value")
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
-		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
-			err := json.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default JSON handling for CreateBacktestJSONBody_Execution_Slippage to handle AdditionalProperties
-func (a CreateBacktestJSONBody_Execution_Slippage) MarshalJSON() ([]byte, error) {
-	var err error
-	object := make(map[string]json.RawMessage)
-
-	object["mode"], err = json.Marshal(a.Mode)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'mode': %w", err)
-	}
-
-	object["value"], err = json.Marshal(a.Value)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'value': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {

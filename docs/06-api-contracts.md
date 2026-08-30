@@ -101,6 +101,19 @@ K 线查询：
 
 POST /backtests 每次创建新 run_id，即使参数相同；响应可同时给出相同 run_signature，供用户判断重复。
 
+`BacktestRequest`、`StudyRequest`、`StrategyComparisonRequest` 和 `ResearchStudyRequest` 共用
+`ExecutionRequest`。当前必须声明 `semantic_version=1.0.0`；未给出的压力场景事实由 Go
+规范化为 `baseline / cost_multiplier=1 / additional_slippage_ticks=0 /
+additional_delay_bars=0 / fill_mode=unlimited`。固定每手手续费的 `money_scale` 必须与资金配置
+一致。单数据集请求可携带 `contract_multiplier` 作为断言，但权威值始终来自该数据 revision
+绑定的 `instrument_config`；不一致即拒绝。多数据集 Research Study 不携带统一乘数，Go 为每个
+dataset 单独解析并将完整执行事实写入子 run、研究签名和 manifest。回放只生成同一策略的因果
+信号流，不撮合成交，因此没有独立 execution 配置。
+
+Python 只接受 `contract_multiplier_source=instrument_config` 和受支持语义版本的 Go 已解析载荷。
+缺少 `semantic_version` 的旧 manifest 继续只读、不可覆盖，Vue 将其显示为“未版本化旧结果”，
+不得按当前默认值补写或冒充 `1.0.0`。
+
 `BacktestRequest` 和 `StudyRequest` 可携带同构的 `risk_overlay`，其中包含已发布
 `kind=risk_filter` AlgorithmRef、完整显式参数和点时 `RiskContext`。context 保存市场状态
 revision、板块 ID、合法/已处理未来分支以及严格按 `effective_from_bar_index` 排序的 observation；

@@ -22,8 +22,12 @@ func TestSearchValuesAndStudyKeyAreDeterministic(t *testing.T) {
 		Objectives:     []Objective{{Metric: "total_return", Direction: "maximize"}},
 		Search:         SearchConfig{Method: "random", Budget: 2, RandomSeed: 7},
 		Ranges:         Ranges{Train: backtest.Range{FromBarIndex: 10, ToBarIndex: 20}, Validation: backtest.Range{FromBarIndex: 21, ToBarIndex: 30}},
-		Execution:      map[string]any{"signal_timing": "bar_close", "fill_timing": "next_bar_open"},
-		Capital:        map[string]any{"initial_cash_i64": int64(1000), "currency": "CNY", "money_scale": int64(100)},
+		Execution: map[string]any{
+			"semantic_version": backtest.ExecutionSemanticVersion, "signal_timing": "bar_close", "fill_timing": "next_bar_open",
+			"commission": map[string]any{"mode": "fixed_per_contract", "amount_i64": 300, "money_scale": 100},
+			"slippage":   map[string]any{"mode": "ticks", "value": 1}, "margin_ratio": .12, "intrabar_conflict_rule": "worst_case",
+		},
+		Capital: map[string]any{"initial_cash_i64": int64(1000), "currency": "CNY", "money_scale": int64(100)},
 	}
 	first, err := studyKey(request, "engine-1")
 	if err != nil {

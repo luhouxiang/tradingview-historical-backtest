@@ -200,7 +200,7 @@ const unifiedRiskOverlay = {
 }
 const dataset = {
   dataset_id: 'TEST.A1.5m', data_revision: `sha256:${'2'.repeat(64)}`,
-  timeframe: '5m', instrument: { exchange: 'TEST', symbol: 'A1', product: 'A' },
+  timeframe: '5m', instrument: { exchange: 'TEST', symbol: 'A1', product: 'A', contract_multiplier: 20 },
   coverage: { first_bar_index: 0, last_bar_index: 100 },
 } as DatasetMeta
 const daily30mDataset = {
@@ -225,9 +225,13 @@ const rankingDataset = {
 describe('BacktestPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    window.localStorage.clear()
     api.listAlgorithms.mockResolvedValue([strategy, secondBuyStrategy, thirdBuyStrategy, oscillationStrategy, sameLevelStrategy, threeLevelStrategy, segmentedStrategy, constructionStrategy, auxiliaryMaKiss, auxiliaryMacdDefense, auxiliaryBollBardo, auxiliaryDaily30m, auxiliaryMaSectorRotation, unifiedRiskOverlay])
     api.createBacktest.mockResolvedValue({ run_id: 'run-1', run_signature: `sha256:${'3'.repeat(64)}`, status: 'queued' })
-    api.getBacktest.mockResolvedValue({ run_id: 'run-1', status: 'completed', progress: 1 })
+    api.getBacktest.mockResolvedValue({
+      run_id: 'run-1', status: 'completed', progress: 1,
+      manifest: { execution: { semantic_version: '1.0.0', contract_multiplier: 20, contract_multiplier_source: 'instrument_config', commission: { amount_i64: 300 }, slippage: { mode: 'ticks', value: 1 } } },
+    })
     api.getBacktestSummary.mockResolvedValue({
       total_return: .1, max_drawdown: .02, trade_count: 2, win_rate: .5, sharpe: 1.2, total_commission_i64: 600,
       risk_approved_count: 1, risk_reduced_count: 0, risk_blocked_count: 0, risk_kill_switch_count: 0,
@@ -255,7 +259,7 @@ describe('BacktestPanel', () => {
     await wrapper.get('.backtest-controls button').trigger('click')
     await flushPromises()
     expect(api.createBacktest).toHaveBeenCalledWith(expect.objectContaining({
-      execution: expect.objectContaining({ fill_timing: 'next_bar_open' }),
+      execution: expect.objectContaining({ semantic_version: '1.0.0', fill_timing: 'next_bar_open', contract_multiplier: 20, contract_multiplier_source: 'instrument_config' }),
       risk_overlay: expect.objectContaining({
         algorithm: expect.objectContaining({ kind: 'risk_filter', algorithm_id: 'unified_risk_execution_overlay' }),
         parameters: expect.objectContaining({ leverage_allowed: false, max_position_weight_ppm: 100_000 }),
@@ -263,6 +267,7 @@ describe('BacktestPanel', () => {
       }),
     }))
     expect(wrapper.get('.summary-grid').text()).toContain('10.00%')
+    expect(wrapper.get('.execution-summary').text()).toContain('执行语义 v1.0.0 · 合约乘数 20')
     expect(wrapper.emitted('completed')?.[0]?.[0]).toMatchObject({
       run_id: 'run-1', objects: [
         expect.objectContaining({ object_id: 'state-80', label: '中枢上方·有三买', bar_index: 80 }),
@@ -274,6 +279,45 @@ describe('BacktestPanel', () => {
     expect(wrapper.get('.trade-table').text()).toContain('trade-1')
     await wrapper.setProps({ view: 'equity' })
     expect(wrapper.get('.equity-chart polyline').attributes('points')).not.toBe('')
+  })
+
+  it('restores the latest completed run for the same dataset revision after remount', async () => {
+    window.localStorage.setItem('tvbt:last-backtest:v1', JSON.stringify({
+      dataset_id: dataset.dataset_id,
+      data_revision: dataset.data_revision,
+      run_id: 'run-restored',
+      run_signature: `sha256:${'3'.repeat(64)}`,
+      algorithm_id: strategy.algorithm_id,
+    }))
+    api.getBacktest.mockResolvedValue({
+      run_id: 'run-restored', run_signature: `sha256:${'3'.repeat(64)}`, status: 'completed', progress: 1,
+      manifest: {
+        dataset: { dataset_id: dataset.dataset_id, data_revision: dataset.data_revision },
+        strategy: { strategy_id: strategy.algorithm_id },
+        execution: { semantic_version: '1.0.0', contract_multiplier: 20, contract_multiplier_source: 'instrument_config', commission: { amount_i64: 300 }, slippage: { mode: 'ticks', value: 1 } },
+      },
+    })
+
+    const wrapper = mount(BacktestPanel, { props: { dataset, view: 'backtest' } })
+    await flushPromises()
+
+    expect(api.createBacktest).not.toHaveBeenCalled()
+    expect(api.getBacktest).toHaveBeenCalledWith('run-restored')
+    expect(wrapper.text()).toContain('已恢复最近结果')
+    expect(wrapper.get('.summary-grid').text()).toContain('10.00%')
+    expect(wrapper.emitted('completed')?.[0]?.[0]).toMatchObject({ run_id: 'run-restored' })
+  })
+
+  it('labels an old run without execution semantic_version instead of treating it as current', async () => {
+    api.getBacktest.mockResolvedValue({
+      run_id: 'run-old', status: 'completed', progress: 1,
+      manifest: { execution: { signal_timing: 'bar_close', contract_multiplier: 20 } },
+    })
+    const wrapper = mount(BacktestPanel, { props: { dataset, view: 'backtest' } })
+    await flushPromises()
+    await wrapper.get('.backtest-controls button').trigger('click')
+    await flushPromises()
+    expect(wrapper.get('.execution-summary').text()).toContain('未版本化旧结果')
   })
 
   it('requires daily point-in-time ranking context and keeps foreign prices off the object tree', async () => {

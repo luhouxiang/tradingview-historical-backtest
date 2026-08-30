@@ -33,6 +33,26 @@ type testPython struct {
 	definition pythonclient.AlgorithmDefinition
 }
 
+type capturePython struct {
+	definition pythonclient.AlgorithmDefinition
+	payload    chan map[string]any
+}
+
+func (value capturePython) Algorithms(context.Context, string, string) ([]pythonclient.AlgorithmDefinition, error) {
+	return []pythonclient.AlgorithmDefinition{value.definition}, nil
+}
+func (capturePython) Health(context.Context) pythonclient.Health {
+	return pythonclient.Health{ContractVersion: "1.0.0"}
+}
+func (value capturePython) Submit(_ context.Context, _ string, _ string, _ string, payload any) (pythonclient.JobStatus, error) {
+	value.payload <- payload.(map[string]any)
+	return pythonclient.JobStatus{JobID: payload.(map[string]any)["job_id"].(string), Status: "queued"}, nil
+}
+func (capturePython) Job(context.Context, string, string, string) (pythonclient.JobStatus, error) {
+	return pythonclient.JobStatus{Status: "failed"}, nil
+}
+func (capturePython) Cancel(context.Context, string, string, string) error { return nil }
+
 func (value testPython) Algorithms(context.Context, string, string) ([]pythonclient.AlgorithmDefinition, error) {
 	return []pythonclient.AlgorithmDefinition{value.definition}, nil
 }
@@ -69,10 +89,15 @@ func (*resumePython) Job(context.Context, string, string, string) (pythonclient.
 func (*resumePython) Cancel(context.Context, string, string, string) error { return nil }
 
 func meta(id, timeframe, group, revision string) catalog.DatasetMeta {
+	multiplier := int64(20)
+	if strings.HasPrefix(group, "DCE.") {
+		multiplier = 10
+	}
 	return catalog.DatasetMeta{
 		DatasetID: id, DataRevision: revision, Timeframe: timeframe, IndependenceGroup: group,
-		Coverage: catalog.CoverageMeta{LastBarIndex: 100, TradingDayCount: 600},
-		Files:    []catalog.FileMeta{{Role: "bars", Path: "normalized/" + id + "/revision/bars.parquet"}},
+		Instrument: catalog.InstrumentMeta{ContractMultiplier: multiplier},
+		Coverage:   catalog.CoverageMeta{LastBarIndex: 100, TradingDayCount: 600},
+		Files:      []catalog.FileMeta{{Role: "bars", Path: "normalized/" + id + "/revision/bars.parquet"}},
 	}
 }
 
@@ -81,7 +106,7 @@ func request(definition pythonclient.AlgorithmDefinition, revision string) Reque
 	return Request{
 		Datasets: []DatasetRequest{{DatasetID: "A.5m", DataRevision: revision, Range: rangeValue}, {DatasetID: "B.5m", DataRevision: revision, Range: rangeValue}},
 		Strategy: definition.AlgorithmRef, Parameters: map[string]any{},
-		Execution: map[string]any{"signal_timing": "bar_close", "fill_timing": "next_bar_open", "commission": map[string]any{"mode": "fixed_per_contract"}, "slippage": map[string]any{"mode": "ticks", "value": 0}},
+		Execution: map[string]any{"semantic_version": backtest.ExecutionSemanticVersion, "signal_timing": "bar_close", "fill_timing": "next_bar_open", "commission": map[string]any{"mode": "fixed_per_contract", "amount_i64": 300, "money_scale": 100}, "slippage": map[string]any{"mode": "ticks", "value": 0}, "margin_ratio": .12, "intrabar_conflict_rule": "worst_case"},
 		Capital:   map[string]any{"initial_cash_i64": 1000, "currency": "CNY", "money_scale": 100}, RandomSeed: 7,
 	}
 }
@@ -157,6 +182,41 @@ func TestSubmitAllowsOneDatasetAsExploratoryStudy(t *testing.T) {
 	}
 	if submission.StudyID == "" || submission.Job.Kind != "research" {
 		t.Fatalf("unexpected submission: %#v", submission)
+	}
+}
+
+func TestSubmitResolvesPerDatasetExecutionMultipliers(t *testing.T) {
+	guard, err := storage.NewPathGuard(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	revision := "sha256:" + strings.Repeat("1", 64)
+	definition := pythonclient.AlgorithmDefinition{
+		AlgorithmRef:       pythonclient.AlgorithmRef{Kind: "strategy", AlgorithmID: "formal", AlgorithmVersion: "1", SourceHash: "sha256:" + strings.Repeat("2", 64)},
+		ComparisonEligible: true, ResearchRole: "formal_strategy",
+		ParameterSchema: map[string]any{"type": "object", "additionalProperties": false, "properties": map[string]any{}},
+	}
+	payloads := make(chan map[string]any, 1)
+	service := NewService(
+		guard,
+		testCatalog{"A.5m": meta("A.5m", "5m", "SHFE.AO", revision), "B.5m": meta("B.5m", "5m", "DCE.Y", revision)},
+		capturePython{definition: definition, payload: payloads}, jobs.NewManager(), "1.0.0", time.Millisecond,
+	)
+	if _, err := service.Submit(context.Background(), "request", "trace", request(definition, revision)); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case payload := <-payloads:
+		datasets := payload["datasets"].([]preparedDataset)
+		if datasets[0].Execution["contract_multiplier"] != int64(20) || datasets[1].Execution["contract_multiplier"] != int64(10) {
+			t.Fatalf("unexpected per-dataset execution: %#v", datasets)
+		}
+		policy := payload["execution"].(map[string]any)
+		if _, exists := policy["contract_multiplier"]; exists || policy["contract_multiplier_source"] != "per_dataset_instrument_config" {
+			t.Fatalf("unexpected research execution policy: %#v", policy)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("python payload was not submitted")
 	}
 }
 

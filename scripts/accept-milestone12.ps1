@@ -126,12 +126,12 @@ $request = @{
         weakest_quantity = 1
     }
     execution = @{
+        semantic_version = '1.0.0'
         signal_timing = 'bar_close'
         fill_timing = 'next_bar_open'
         commission = @{ mode = 'fixed_per_contract'; amount_i64 = 300; money_scale = 100 }
         slippage = @{ mode = 'ticks'; value = 1 }
-        contract_multiplier = 1
-        margin_ratio = 0.1
+        margin_ratio = 0.12
         intrabar_conflict_rule = 'worst_case'
     }
     capital = @{ initial_cash_i64 = 100000000; currency = 'CNY'; money_scale = 100 }

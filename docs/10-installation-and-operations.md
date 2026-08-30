@@ -39,6 +39,8 @@ Pop-Location
 ./scripts/start-tvbt.ps1
 ~~~
 
+重复启动会校验 `trading-data/config/demo-data-state.json` 中的行情/日历 SHA-256；身份未变化时不再全量解析连续合约或重写交易日历。已有 `bin/chartd.exe` 且 Go 输入未变化时直接复用；需要排除本地二进制缓存时使用 `./scripts/start-tvbt.ps1 -ForceBuild`。13A 快路径门禁可单独执行 `./scripts/accept-milestone13a.ps1`。
+
 该入口会检查固定版本与 Python 依赖，确认 `trading-data/history` 中存在初始标的行情并准备交易日历，
 构建 Go，启动 Python/Go/Vue，扫描并导入该唯一数据源中的行情，然后打开 `http://127.0.0.1:5173/`。前端自动选择第一个
 就绪数据集并显示 K 线；打开底部“回测”页签，点击“开始正式回测”即可执行。运行窗口中按
@@ -60,6 +62,25 @@ Go 的统一健康检查确认 Go/Python 均为 `ok` 后检查 catalog。若尚�
 `start-web-checked.ps1`。Python 内部 API 仅监听 127.0.0.1；浏览器只访问 Go 的
 `/api/v1`，不得直接访问 Python 或数据文件。
 
+### 发布 ZIP
+
+从源码构建并验证 Windows 发布物：
+
+~~~powershell
+$release = (./scripts/build-release.ps1 | Select-Object -Last 1) | ConvertFrom-Json
+./scripts/smoke-release.ps1 -Archive $release.archive
+~~~
+
+ZIP 包含 Go 可执行文件、Python 源码和锁文件、生产 Vue 静态文件、配置示例及
+`scripts/start-release.ps1`，不包含 history、Parquet、catalog、run、日志或任何用户数据。
+解压后安装 `python/requirements.lock`，把 `30#AOL9.txt` 放到
+`trading-data/history`，再执行 `./scripts/start-release.ps1`。发布模式只启动 Python 和 Go，
+由 Go 在 `http://127.0.0.1:8080/` 提供生产 Web UI；不要求 Node 或 Go 工具链。
+
+页面完成正式回测后会保存最近 `run_id` 指针。刷新并重新打开“回测”页签时，会向 Go 校验
+同一 dataset revision、run signature 和策略身份后恢复结果；浏览器本地记录不保存 summary、
+交易或权益，也不是备份。
+
 ## 4. 数据目录与备份
 
 建议备份：
@@ -76,12 +97,25 @@ Go 的统一健康检查确认 Go/Python 均为 `ok` 后检查 catalog。若尚�
 快照的文件系统；恢复时保持目录层级和 `_SUCCESS` 文件。不要只恢复 Parquet 而丢失其
 manifest、meta 或 revision 身份。
 
-## 5. 中断与重启
+恢复演练至少应执行一次：停止服务，将整套备份恢复到新的专用目录，把
+`storage.data_root` 指向该目录后启动；确认 `/api/v1/health` 为 `ok`、catalog 中的
+`dataset_id/data_revision` 与备份前一致、至少一个带 `_SUCCESS` 的正式 run 可读取 summary、
+工作区布局可打开。演练失败时不得在原目录上继续写入，应保留恢复副本和日志排查。
+
+## 5. 升级
+
+1. 停止当前服务并备份 `data_root`，记录当前发布 ZIP 与 SHA-256。
+2. 解压新版本到新目录，不覆盖旧程序目录；用户数据目录保持独立。
+3. 对源码版本执行 `./scripts/test-all.ps1`；对发布版校验 `release-manifest.json` 中的 SHA-256。
+4. 保持原 `storage.data_root`，先执行 `./scripts/start-release.ps1 -NoBrowser -HoldSeconds 5` 做健康检查，再正式启动。
+5. 确认 catalog revision、正式 run 和工作区可读后再把旧程序目录归档。不要修改或迁移旧 run；未版本化执行结果继续按旧 manifest 只读显示。
+
+## 6. 中断与重启
 
 Go 在每次任务状态变化时原子更新 `tasks/jobs/{job_id}.json`。进程重启后：
 
 - queued、running、cancelling 转为 `interrupted`，错误码为 `PROCESS_RESTARTED`；
-- completed、failed、cancelled 保持原终态；
+- completed、failed、cancelled、interrupted 保持原终态，启动过程不重写这些历史文件；
 - 超过 `storage.tmp_retention_hours` 的 `tmp/import-*` 及指标、缠论、回放、run 的已知
   `.tmp-` 目录，以及 studies 下的优化临时目录被移入 `trash/interrupted`；
 - 未带 `_SUCCESS` 的 normalized、cache、run 或 study 仍不可见、不可当作完成结果。
@@ -90,7 +124,7 @@ Go 在每次任务状态变化时原子更新 `tasks/jobs/{job_id}.json`。进�
 cache_key 或 run_signature，使专用状态接口在重启后仍可返回身份信息。中断任务不会自动
 续跑；用户应在确认输入仍有效后重新提交，新任务拥有新 job_id 或 run_id。
 
-## 6. 缓存清理
+## 7. 缓存清理
 
 先预览：
 
@@ -108,7 +142,7 @@ go run ./cmd/cachectl -config config/app.yaml -kind all -older-than 720h -dry-ru
 history、workspaces 或未知名称，也不跟随符号链接。移动结果位于 `trash/cache/<UTC时间>/`；
 需要恢复时应先停止服务，再把目标目录原子移回原 source，且不得覆盖已有目录。
 
-## 7. 日志与诊断
+## 8. 日志与诊断
 
 三端固定文本日志位于 `data_root/logs`，活动文件最大 50 MiB，最多 9 个压缩备份。正式回测的
 `runs/{run_id}/log.ndjson` 另行保留状态变化、阶段信号、交易信号、订单、成交及其关联 ID，
@@ -127,21 +161,39 @@ Go 读取基准约 1.91–2.01 ms/op，结构化日志写入 discard 约 4.60–
 HTTP 热读取 p95 由 smoke 脚本强制不超过 200 ms。10,000 个缠论语义对象和 25,000 个
 因果事件由 Vue 性能测试覆盖。
 
-## 8. 完整验收
+常见故障：
+
+| 现象 | 检查与处理 |
+|---|---|
+| 启动立即报告端口占用 | 用 `Get-NetTCPConnection -State Listen` 确认 5173/8080/8091（发布版为 8080/8091）的 PID；先正常停止对应实例，不要让脚本终止未知进程。 |
+| 页面打开但没有 K 线 | 查看右侧数据集的源文件状态，再检查 `data_root/logs/go/app.log` 中扫描/导入错误；确认原始文件仍在 `history`、品种配置和交易日历覆盖源数据。 |
+| Python 健康检查失败 | 确认 `TVBT_PYTHON` 指向 Python 3.14，并用该解释器安装 `python/requirements.lock`；查看 `bin/runtime/python.stderr.log`。 |
+| 回测停在 queued/running | 查询 `/api/v1/backtests/{run_id}` 和对应 `tasks/jobs`；若进程重启，终态应为 `interrupted/PROCESS_RESTARTED`，重新提交会生成新 run。 |
+| 刷新后没有恢复最近结果 | 确认仍选择同一 dataset revision；清理站点数据、切换 revision 或策略身份不匹配都会拒绝恢复，但正式 run 仍保留在 `runs`。 |
+| 发布 ZIP 无法启动 | 先执行 `smoke-release.ps1` 校验 manifest、打包二进制和生产 UI，再确认包外提供了 history 数据且依赖已按锁文件安装。 |
+
+## 9. 完整验收
 
 ~~~powershell
 ./scripts/accept-milestone9.ps1
+./scripts/accept-milestone13a.ps1
+./scripts/accept-milestone13b.ps1
+./scripts/accept-milestone13c.ps1
+./scripts/test-all.ps1
 ~~~
 
-该入口依次运行全部 Go/Python/Vue/契约门禁、17,017 根样例跨进程 E2E、重启恢复、可恢复
-缓存清理、正式优化 Study 和性能基准。smoke 使用隔离的临时 data_root，结束时只删除已解析并确认位于系统
-临时目录下的测试目录。
+基础入口覆盖 Go/Python/Vue/契约、跨进程 E2E、重启恢复、可恢复缓存清理、正式 Study 和性能基准。
+13C 另用 1,350 根脚本生成的 AOL9 数据在隔离端口运行真实 Chromium E2E，并验证正式回测刷新恢复；
+发布 smoke 从 ZIP 解压目录实际启动 Python、Go API 和生产 Web UI。所有验收运行目录都限制在
+`bin` 或已确认的临时目录，不接触正式 `trading-data`。
 
-## 9. 已知限制
+## 10. 已知限制
 
 - 首期仅支持文件存储、轮询任务；没有数据库、Redis、消息队列或 WebSocket。
 - 中断任务不能跨进程续算，只能被明确标记后重新提交。
 - 缠论计算分型、笔、段和笔中枢；详细参考算法见 `docs/13-chan-bi-center-segment-algorithm.md`。
 - 回测为单向净持仓模型；示例策略不产生止损/止盈同根冲突。
-- 优化首版只提供 grid 与 seeded random；尚未提供 walk-forward、成本敏感性或 AI 选参。
+- 优化候选仍只提供 grid 与 seeded random；可靠性研究已提供固定规则 walk-forward、成本/延迟压力、bootstrap 和参数邻域，但没有贝叶斯或 AI 自动选参，也不构成未来收益保证。
+- 最近结果恢复依赖同一浏览器的本地 run 指针；清理站点数据后没有服务端“最近运行列表”，需从已知 run_id 或运行目录重新定位。
+- Windows 发布 ZIP 不捆绑 Python 解释器或行情数据；使用前仍需安装固定 Python 3.14 及锁定依赖，并自行提供只读历史文件。
 - 服务面向本机单用户，不应把 Go 或 Python 监听地址暴露到公网。

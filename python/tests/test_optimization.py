@@ -85,6 +85,7 @@ def test_study_runs_standard_train_and_validation_backtests(tmp_path: Path) -> N
             },
         },
         "execution": {
+            "semantic_version": "1.0.0",
             "signal_timing": "bar_close",
             "fill_timing": "next_bar_open",
             "commission": {
@@ -94,8 +95,14 @@ def test_study_runs_standard_train_and_validation_backtests(tmp_path: Path) -> N
             },
             "slippage": {"mode": "ticks", "value": 0},
             "contract_multiplier": 1,
+            "contract_multiplier_source": "instrument_config",
             "margin_ratio": 0.1,
             "intrabar_conflict_rule": "worst_case",
+            "stress_scenario_id": "baseline",
+            "cost_multiplier": 1.0,
+            "additional_slippage_ticks": 0.0,
+            "additional_delay_bars": 0,
+            "fill_mode": "unlimited",
         },
         "capital": {"initial_cash_i64": 1_000_000, "currency": "CNY", "money_scale": 100},
         "output_path": "studies/study-1",

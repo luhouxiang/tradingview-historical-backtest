@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { createStudy, getStudy, getStudyEvaluations, listAlgorithms } from '../api/client'
+import { capitalConfig, executionRequest } from '../execution/config'
 import type { AlgorithmDefinition, DatasetMeta, StudyEvaluation, StudyMetric } from '../types/api'
 
 const props = defineProps<{ dataset: DatasetMeta | null }>()
@@ -95,13 +96,8 @@ async function run(): Promise<void> {
         train: { warmup_from_bar_index: windowStart, from_bar_index: windowStart, to_bar_index: trainEnd },
         validation: { warmup_from_bar_index: windowStart, from_bar_index: trainEnd + 1, to_bar_index: dataset.coverage.last_bar_index },
       },
-      execution: {
-        signal_timing: 'bar_close', fill_timing: 'next_bar_open',
-        commission: { mode: 'fixed_per_contract', amount_i64: 300, money_scale: 100 },
-        slippage: { mode: 'ticks', value: 1 }, contract_multiplier: 20,
-        margin_ratio: .12, intrabar_conflict_rule: 'worst_case',
-      },
-      capital: { initial_cash_i64: 100_000_000, currency: 'CNY', money_scale: 100 },
+      execution: executionRequest({ contractMultiplier: dataset.instrument.contract_multiplier }),
+      capital: capitalConfig(),
     })
     studyId.value = accepted.study_id
     let current = await getStudy(accepted.study_id)

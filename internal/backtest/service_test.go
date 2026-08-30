@@ -1,6 +1,7 @@
 package backtest
 
 import (
+	"encoding/json"
 	"errors"
 	"testing"
 
@@ -27,7 +28,7 @@ func TestRunSignatureIsReproducibleAndCoversExecutionFacts(t *testing.T) {
 		Strategy:     pythonclient.AlgorithmRef{Kind: "strategy", AlgorithmID: "example", AlgorithmVersion: "1", SourceHash: "sha256:" + repeat("2", 64)},
 		Parameters:   map[string]any{"period": int64(20)},
 		Range:        Range{WarmupFromBarIndex: 0, FromBarIndex: 100, ToBarIndex: 200},
-		Execution:    map[string]any{"signal_timing": "bar_close", "fill_timing": "next_bar_open", "commission": map[string]any{"mode": "fixed_per_contract", "amount_i64": 3}, "slippage": map[string]any{"mode": "ticks", "value": 1}, "contract_multiplier": 20, "margin_ratio": .1},
+		Execution:    map[string]any{"semantic_version": ExecutionSemanticVersion, "signal_timing": "bar_close", "fill_timing": "next_bar_open", "commission": map[string]any{"mode": "fixed_per_contract", "amount_i64": 3, "money_scale": 100}, "slippage": map[string]any{"mode": "ticks", "value": 1}, "contract_multiplier": 20, "margin_ratio": .1, "intrabar_conflict_rule": "worst_case"},
 		Capital:      map[string]any{"initial_cash_i64": int64(1000), "currency": "CNY", "money_scale": int64(100)}, RandomSeed: 7,
 	}
 	base, err := Signature(request, "engine-1")
@@ -45,21 +46,64 @@ func TestRunSignatureIsReproducibleAndCoversExecutionFacts(t *testing.T) {
 	}
 }
 
-func TestValidExecutionAcceptsReproducibleStressFacts(t *testing.T) {
+func TestNormalizeExecutionAcceptsReproducibleStressFacts(t *testing.T) {
 	execution := map[string]any{
-		"signal_timing": "bar_close", "fill_timing": "next_bar_open",
-		"commission":      map[string]any{"mode": "fixed_per_contract"},
+		"semantic_version": ExecutionSemanticVersion, "signal_timing": "bar_close", "fill_timing": "next_bar_open",
+		"commission":      map[string]any{"mode": "fixed_per_contract", "amount_i64": 300, "money_scale": 100},
 		"slippage":        map[string]any{"mode": "ticks", "value": 1},
 		"cost_multiplier": 2.0, "additional_slippage_ticks": 1.0,
 		"additional_delay_bars": 1.0, "max_volume_participation_rate": 0.1,
-		"fill_mode": "volume_cap_ioc",
+		"fill_mode": "volume_cap_ioc", "margin_ratio": .12, "intrabar_conflict_rule": "worst_case",
 	}
-	if !ValidExecution(execution) {
-		t.Fatal("valid stress execution was rejected")
+	capital := map[string]any{"initial_cash_i64": 1000, "currency": "CNY", "money_scale": 100}
+	if normalized, err := NormalizeExecution(execution, capital, 20); err != nil || normalized["contract_multiplier"] != int64(20) || normalized["contract_multiplier_source"] != "instrument_config" {
+		t.Fatalf("valid stress execution was not normalized: %#v %v", normalized, err)
 	}
 	delete(execution, "max_volume_participation_rate")
-	if ValidExecution(execution) {
+	if _, err := NormalizeExecution(execution, capital, 20); err == nil {
 		t.Fatal("volume-cap fill mode without a participation rate was accepted")
+	}
+}
+
+func TestNormalizeExecutionCanonicalDefaultsAndAuthoritativeMultiplier(t *testing.T) {
+	capital := map[string]any{"initial_cash_i64": 1000, "currency": "CNY", "money_scale": 100}
+	minimal := map[string]any{
+		"semantic_version": ExecutionSemanticVersion, "signal_timing": "bar_close", "fill_timing": "next_bar_open",
+		"commission": map[string]any{"mode": "fixed_per_contract", "amount_i64": 300, "money_scale": 100},
+		"slippage":   map[string]any{"mode": "ticks", "value": 1}, "margin_ratio": .12, "intrabar_conflict_rule": "worst_case",
+	}
+	got, err := NormalizeExecution(minimal, capital, 20)
+	if err != nil {
+		t.Fatal(err)
+	}
+	explicit := make(map[string]any, len(minimal)+7)
+	for key, value := range minimal {
+		explicit[key] = value
+	}
+	explicit["contract_multiplier"] = 20
+	explicit["contract_multiplier_source"] = "instrument_config"
+	explicit["stress_scenario_id"] = "baseline"
+	explicit["cost_multiplier"] = 1
+	explicit["additional_slippage_ticks"] = 0
+	explicit["additional_delay_bars"] = 0
+	explicit["fill_mode"] = "unlimited"
+	want, err := NormalizeExecution(explicit, capital, 20)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gotJSON, _ := json.Marshal(got)
+	wantJSON, _ := json.Marshal(want)
+	if string(gotJSON) != string(wantJSON) {
+		t.Fatalf("implicit and explicit defaults differ: %s != %s", gotJSON, wantJSON)
+	}
+	explicit["contract_multiplier"] = 10
+	if _, err := NormalizeExecution(explicit, capital, 20); err == nil {
+		t.Fatal("browser-supplied multiplier that disagrees with instrument config was accepted")
+	}
+	explicit["contract_multiplier"] = 20
+	explicit["semantic_version"] = "2.0.0"
+	if _, err := NormalizeExecution(explicit, capital, 20); err == nil {
+		t.Fatal("unsupported execution semantic version was accepted")
 	}
 }
 

@@ -61,13 +61,21 @@
       "additionalProperties": false,
       "required": ["signal_timing", "fill_timing", "commission", "slippage", "contract_multiplier", "margin_ratio", "intrabar_conflict_rule"],
       "properties": {
+        "semantic_version": {"const": "1.0.0"},
         "signal_timing": {"const": "bar_close"},
         "fill_timing": {"enum": ["next_bar_open", "bar_close"]},
         "commission": {"type": "object", "additionalProperties": true},
         "slippage": {"type": "object", "additionalProperties": true},
         "contract_multiplier": {"type": "number", "exclusiveMinimum": 0},
+        "contract_multiplier_source": {"const": "instrument_config"},
         "margin_ratio": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
-        "intrabar_conflict_rule": {"enum": ["stop_first", "target_first", "worst_case"]}
+        "intrabar_conflict_rule": {"enum": ["stop_first", "target_first", "worst_case"]},
+        "stress_scenario_id": {"type": "string", "minLength": 1},
+        "cost_multiplier": {"type": "number", "minimum": 0},
+        "additional_slippage_ticks": {"type": "number", "minimum": 0},
+        "additional_delay_bars": {"type": "integer", "minimum": 0},
+        "max_volume_participation_rate": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+        "fill_mode": {"enum": ["unlimited", "volume_cap_ioc"]}
       }
     },
     "capital": {

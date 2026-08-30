@@ -24,7 +24,16 @@ describe('MultiDatasetResearchPanel', () => {
     api.listResearchStudies.mockResolvedValue([])
     api.getDataset.mockImplementation((id: string) => Promise.resolve({ dataset_id: id, data_revision: revision, timeframe: '5m', coverage: { first_bar_index: 0, last_bar_index: 99 } }))
     api.createResearchStudy.mockResolvedValue({ research_study_id: 'research-1', status: 'queued' })
-    api.getResearchStudy.mockResolvedValue({ research_study_id: 'research-1', status: 'completed', progress: 1 })
+    api.getResearchStudy.mockResolvedValue({
+      research_study_id: 'research-1', status: 'completed', progress: 1,
+      manifest: {
+        execution: { semantic_version: '1.0.0', contract_multiplier_source: 'per_dataset_instrument_config' },
+        datasets: [
+          { execution: { contract_multiplier: 20 } },
+          { execution: { contract_multiplier: 100 } },
+        ],
+      },
+    })
     api.getResearchStudyResults.mockResolvedValue({
       items: [{ dataset_id: 'AO2609.5m', data_revision: revision, independence_group: 'SHFE.AO', trading_day_count: 600, status: 'completed', folds: [{ dataset_id: 'AO2609.5m', independence_group: 'SHFE.AO', fold_index: 0, status: 'completed', train_trading_day_from: '2024-01-01', train_trading_day_to: '2024-12-31', validation_trading_day_from: '2025-01-01', validation_trading_day_to: '2025-03-31', train_range: { warmup_from_bar_index: 0, from_bar_index: 0, to_bar_index: 251 }, validation_range: { warmup_from_bar_index: 0, from_bar_index: 252, to_bar_index: 314 }, selected_parameters: { threshold: 1 }, validation_metrics: { total_return: .03, max_drawdown: .02, trade_count: 5 }, parameter_changed: false, changed_parameter_names: [] }] }],
       aggregate: {
@@ -52,6 +61,8 @@ describe('MultiDatasetResearchPanel', () => {
     }))
     expect(wrapper.text()).toContain('独立组 2/3')
     expect(wrapper.text()).toContain('探索性证据')
+    expect(wrapper.text()).toContain('执行语义 v1.0.0')
+    expect(wrapper.text()).toContain('20/100')
     expect(wrapper.text()).toContain('样本外折 1/1')
     expect(wrapper.text()).toContain('AO2609.5m #1')
     expect(wrapper.text()).toContain('cost_2x')

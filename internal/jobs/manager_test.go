@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -82,6 +83,39 @@ func TestPersistentManagerPersistsCompletion(t *testing.T) {
 	job, ok := restored.Get("run-1")
 	if !ok || job.Status != Completed || job.ResultRef != "runs/run-1" || job.Metadata["run_signature"] != "sha256:abc" {
 		t.Fatalf("unexpected restored completion: %#v", job)
+	}
+}
+
+func TestPersistentManagerDoesNotRewriteTerminalHistory(t *testing.T) {
+	guard, _ := storage.NewPathGuard(t.TempDir())
+	directory, _ := guard.Resolve("tasks/jobs")
+	if err := os.MkdirAll(directory, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	oldTime := time.Date(2025, 1, 2, 3, 4, 5, 0, time.UTC)
+	for index, status := range []Status{Completed, Failed, Cancelled, Interrupted} {
+		job := Job{ID: fmt.Sprintf("job-terminal-%d", index), Kind: "test", Status: status, CreatedAt: oldTime, UpdatedAt: oldTime}
+		data, _ := json.Marshal(job)
+		path := filepath.Join(directory, job.ID+".json")
+		if err := os.WriteFile(path, data, 0o640); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Chtimes(path, oldTime, oldTime); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := NewPersistentManager(guard); err != nil {
+		t.Fatal(err)
+	}
+	entries, _ := os.ReadDir(directory)
+	for _, entry := range entries {
+		info, err := entry.Info()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !info.ModTime().Equal(oldTime) {
+			t.Fatalf("terminal job %s was rewritten during restore: %s", entry.Name(), info.ModTime())
+		}
 	}
 }
 

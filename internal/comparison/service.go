@@ -130,9 +130,19 @@ func (s *Service) Submit(ctx context.Context, requestID, traceID string, request
 	if _, err := s.guard.Resolve(metaPath); err != nil {
 		return Submission{}, ErrInvalidRequest
 	}
-	if len(request.Strategies) == 0 || len(request.Strategies) > 32 || request.MinimumTradeCount < 1 || !backtest.ValidExecution(request.Execution) || !backtest.ValidCapital(request.Capital) {
+	if len(request.Strategies) == 0 || len(request.Strategies) > 32 || request.MinimumTradeCount < 1 {
 		return Submission{}, ErrInvalidRequest
 	}
+	capital, err := backtest.NormalizeCapital(request.Capital)
+	if err != nil {
+		return Submission{}, ErrInvalidRequest
+	}
+	execution, err := backtest.NormalizeExecution(request.Execution, capital, meta.Instrument.ContractMultiplier)
+	if err != nil {
+		return Submission{}, ErrInvalidRequest
+	}
+	request.Capital = capital
+	request.Execution = execution
 	definitions, err := s.python.Algorithms(ctx, requestID, traceID)
 	if err != nil {
 		return Submission{}, err

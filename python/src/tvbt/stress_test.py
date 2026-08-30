@@ -118,10 +118,10 @@ def run_stress_suite(
     total_runs = len(scenarios) * fold_count
     completed_runs = 0
     for scenario_index, scenario in enumerate(scenarios):
-        execution = _execution(payload["execution"], scenario)
         runs: list[dict[str, Any]] = []
         for dataset_index, result in enumerate(results):
             dataset = datasets[str(result["dataset_id"])]
+            execution = _execution(dataset["execution"], scenario)
             for fold in result.get("folds", []):
                 if fold.get("status") != "completed":
                     continue

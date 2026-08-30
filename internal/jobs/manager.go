@@ -101,14 +101,18 @@ func NewPersistentManager(guard *storage.PathGuard) (*Manager, error) {
 		if err := json.Unmarshal(data, &job); err != nil || !validID(job.ID) {
 			return nil, fmt.Errorf("invalid persisted job %s", entry.Name())
 		}
+		interrupted := false
 		if job.Status == Queued || job.Status == Running || job.Status == Cancelling {
 			job.Status = Interrupted
 			job.UpdatedAt = time.Now().UTC()
 			job.Error = &Error{Code: "PROCESS_RESTARTED", Message: "Job was interrupted by a process restart"}
+			interrupted = true
 		}
 		manager.jobs[job.ID] = &job
-		if err := manager.persist(&job); err != nil {
-			return nil, err
+		if interrupted {
+			if err := manager.persist(&job); err != nil {
+				return nil, err
+			}
 		}
 	}
 	return manager, nil

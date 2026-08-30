@@ -574,6 +574,54 @@ def _attribute_trades(
         )
 
 
+def _validated_execution(value: dict[str, Any], money_scale: int) -> dict[str, Any]:
+    required = {
+        "semantic_version",
+        "signal_timing",
+        "fill_timing",
+        "commission",
+        "slippage",
+        "contract_multiplier",
+        "contract_multiplier_source",
+        "margin_ratio",
+        "intrabar_conflict_rule",
+        "stress_scenario_id",
+        "cost_multiplier",
+        "additional_slippage_ticks",
+        "additional_delay_bars",
+        "fill_mode",
+    }
+    if not required.issubset(value):
+        raise ValueError("resolved execution facts are incomplete")
+    if value["semantic_version"] != "1.0.0":
+        raise ValueError("unsupported execution semantic_version")
+    if value["contract_multiplier_source"] != "instrument_config":
+        raise ValueError("execution contract multiplier is not authoritative")
+    if value["signal_timing"] != "bar_close" or value["fill_timing"] not in {
+        "next_bar_open",
+        "bar_close",
+    }:
+        raise ValueError("invalid execution timing")
+    if int(value["contract_multiplier"]) <= 0 or float(value["margin_ratio"]) <= 0:
+        raise ValueError("invalid execution sizing facts")
+    commission = value["commission"]
+    slippage = value["slippage"]
+    if not isinstance(commission, dict) or not isinstance(slippage, dict):
+        raise ValueError("invalid execution cost facts")
+    if (
+        commission.get("mode") == "fixed_per_contract"
+        and int(commission.get("money_scale", -1)) != money_scale
+    ):
+        raise ValueError("commission money_scale does not match capital")
+    if value["fill_mode"] == "volume_cap_ioc":
+        rate = float(value.get("max_volume_participation_rate", 0))
+        if not 0 < rate <= 1:
+            raise ValueError("invalid volume participation rate")
+    elif value["fill_mode"] != "unlimited" or "max_volume_participation_rate" in value:
+        raise ValueError("invalid execution fill mode")
+    return {**value, "money_scale": money_scale}
+
+
 def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading.Event) -> str:
     dataset = payload.get("dataset")
     algorithm = payload.get("algorithm")
@@ -600,7 +648,7 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
     price_scale = int(meta["price"]["price_scale"])
     tick_size = int(meta["price"].get("tick_size_i64") or 1)
     money_scale = int(capital["money_scale"])
-    execution = {**execution_input, "money_scale": money_scale}
+    execution = _validated_execution(execution_input, money_scale)
     strategy = run_strategy(payload, guard, cancelled, last_bar_index=end)
     if not strategy.bars or end > strategy.bars[-1].bar_index:
         raise ValueError("backtest range exceeds dataset")

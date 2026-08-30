@@ -13,6 +13,32 @@ from tvbt.research import _aggregate, _aggregate_walk_forward, run_research_stud
 from tvbt.storage.path_guard import PathGuard
 
 
+def _execution(multiplier: int) -> dict[str, Any]:
+    return {
+        "semantic_version": "1.0.0",
+        "signal_timing": "bar_close",
+        "fill_timing": "next_bar_open",
+        "commission": {"mode": "fixed_per_contract", "amount_i64": 300, "money_scale": 100},
+        "slippage": {"mode": "ticks", "value": 1},
+        "contract_multiplier": multiplier,
+        "contract_multiplier_source": "instrument_config",
+        "margin_ratio": 0.12,
+        "intrabar_conflict_rule": "worst_case",
+        "stress_scenario_id": "baseline",
+        "cost_multiplier": 1.0,
+        "additional_slippage_ticks": 0.0,
+        "additional_delay_bars": 0,
+        "fill_mode": "unlimited",
+    }
+
+
+def _execution_policy() -> dict[str, Any]:
+    value = _execution(1)
+    value.pop("contract_multiplier")
+    value["contract_multiplier_source"] = "per_dataset_instrument_config"
+    return value
+
+
 def _result(dataset_id: str, group: str, returns: list[float]) -> dict[str, Any]:
     return {
         "dataset_id": dataset_id,
@@ -176,6 +202,7 @@ def test_research_study_is_versioned_resumable_and_immutable(
                 "range": {"warmup_from_bar_index": 0, "from_bar_index": 0, "to_bar_index": 10},
                 "run_id": f"run-{index}",
                 "run_signature": "sha256:" + f"{index + 2:064x}",
+                "execution": _execution(20 if index == 0 else 100),
             }
         )
     payload = {
@@ -188,8 +215,8 @@ def test_research_study_is_versioned_resumable_and_immutable(
         "datasets": datasets,
         "strategy": {"kind": "strategy", "algorithm_id": "formal"},
         "parameters": {},
-        "execution": {},
-        "capital": {},
+        "execution": _execution_policy(),
+        "capital": {"initial_cash_i64": 100_000_000, "currency": "CNY", "money_scale": 100},
         "random_seed": 7,
         "output_path": "research-studies/research-1",
     }
@@ -198,6 +225,10 @@ def test_research_study_is_versioned_resumable_and_immutable(
     manifest = json.loads((output / "research-study.json").read_text(encoding="utf-8"))
     assert manifest["datasets"][0]["data_revision"] == revision
     assert manifest["datasets"][0]["run_id"] == "run-0"
+    assert [item["execution"]["contract_multiplier"] for item in manifest["datasets"]] == [
+        20,
+        100,
+    ]
     assert manifest["study_mode"] == "fixed_parameters"
     assert len(manifest["child_runs"]) == 2
     assert manifest["aggregate"]["independence_group_count"] == 2
@@ -306,6 +337,7 @@ def test_walk_forward_research_persists_oos_daily_artifact_and_child_runs(
             "range": {"warmup_from_bar_index": 0, "from_bar_index": 0, "to_bar_index": 600},
             "run_id": f"unused-{index}",
             "run_signature": "sha256:" + "2" * 64,
+            "execution": _execution(20 if index == 0 else 100),
         }
         for index, group in enumerate(("SHFE.AO", "DCE.I"))
     ]
@@ -319,8 +351,8 @@ def test_walk_forward_research_persists_oos_daily_artifact_and_child_runs(
         "datasets": datasets,
         "strategy": {"kind": "strategy"},
         "parameters": {},
-        "execution": {},
-        "capital": {},
+        "execution": _execution_policy(),
+        "capital": {"initial_cash_i64": 100_000_000, "currency": "CNY", "money_scale": 100},
         "random_seed": 7,
         "walk_forward": {
             "train_trading_days": 252,
@@ -336,6 +368,10 @@ def test_walk_forward_research_persists_oos_daily_artifact_and_child_runs(
     output = guard.resolve(run_research_study(payload, guard, threading.Event()))
     manifest = json.loads((output / "research-study.json").read_text(encoding="utf-8"))
     assert manifest["study_mode"] == "walk_forward"
+    assert [item["execution"]["contract_multiplier"] for item in manifest["datasets"]] == [
+        20,
+        100,
+    ]
     assert len(manifest["child_runs"]) == 4
     assert (output / "out_of_sample_daily_returns.parquet").is_file()
     daily = pq.read_table(output / "out_of_sample_daily_returns.parquet").to_pylist()

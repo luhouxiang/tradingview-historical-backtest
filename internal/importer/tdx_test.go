@@ -45,13 +45,13 @@ func (r *stubInstrumentResolver) PreviousTradingDay(ctx context.Context, day str
 }
 
 func TestDetectFullSample(t *testing.T) {
-	// 测试唯一历史数据源中的完整 AO2609 文件识别；期望标题、周期和编码全部正确。
-	data := readCanonicalHistory(t, "30#AO2609.txt")
+	// 测试一键启动历史数据源中的完整 AOL9 文件识别；期望标题、周期和编码全部正确。
+	data := readCanonicalHistory(t, "30#AOL9.txt")
 	detection, err := DetectTdx(data)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if detection.Symbol != "AO2609" || detection.Timeframe != "5m" || detection.Encoding != "GB18030" {
+	if detection.Symbol != "AOL9" || detection.Timeframe != "5m" || detection.Encoding != "GB18030" {
 		t.Fatalf("unexpected detection: %#v", detection)
 	}
 }
@@ -145,8 +145,8 @@ func TestDetectZhengzhouThreeDigitContract(t *testing.T) {
 }
 
 func TestFullSampleImportsToParquetWithinTarget(t *testing.T) {
-	// 测试唯一历史数据源中的完整 AO2609 导入；期望行数、质量统计和性能满足验收值。
-	data := readCanonicalHistory(t, "30#AO2609.txt")
+	// 测试一键启动历史数据源中的完整 AOL9 导入；期望行数、质量统计和性能满足验收值。
+	data := readCanonicalHistory(t, "30#AOL9.txt")
 	instrument := InstrumentConfig{
 		Exchange: "SHFE", Product: "AO", Timezone: "Asia/Shanghai", PriceDecimals: 0, PriceScale: 1,
 		TickSizeI64: 1, SessionTemplateID: "sample",
@@ -161,25 +161,25 @@ func TestFullSampleImportsToParquetWithinTarget(t *testing.T) {
 			{Name: "day_3", Start: "13:30", End: "15:00"},
 		},
 	}
-	calendar := calendarFromSample(t, data)
+	calendar := canonicalCalendar(t)
 	started := time.Now()
-	result, err := ParseTdx(data, "history/30#AO2609.txt", hashBytes(data), instrument, session, calendar, ImportOptions{
+	result, err := ParseTdx(data, "history/30#AOL9.txt", hashBytes(data), instrument, session, calendar, ImportOptions{
 		DateSemantics: "trading_day", TimestampSemantics: "bar_end", Timezone: "Asia/Shanghai",
 		FailOnDuplicate: true, KeepZeroVolumeBars: true,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(result.Bars) != 17017 || result.Quality.Counts["zero_volume_count"] != 1224 {
+	if len(result.Bars) < 69289 || result.Quality.Counts["error_count"] != 0 {
 		t.Fatalf("full sample counts: bars=%d quality=%#v", len(result.Bars), result.Quality.Counts)
 	}
 	path := filepath.Join(t.TempDir(), "bars.parquet")
 	revision := hashBytes(data)
-	if err := writeBars(path, result.Bars, "SHFE.AO2609.5m", revision, ImportRequest{Timezone: "Asia/Shanghai", TimestampSemantics: "bar_end"}, instrument, 32768); err != nil {
+	if err := writeBars(path, result.Bars, "SHFE.AOL9.5m", revision, ImportRequest{Timezone: "Asia/Shanghai", TimestampSemantics: "bar_end"}, instrument, 32768); err != nil {
 		t.Fatal(err)
 	}
 	elapsed := time.Since(started)
-	t.Logf("17,017-bar parse and Parquet write: %s", elapsed)
+	t.Logf("%d-bar parse and Parquet write: %s", len(result.Bars), elapsed)
 	if elapsed > 5*time.Second {
 		t.Fatalf("full sample import exceeded 5s target: %s", elapsed)
 	}
@@ -198,30 +198,15 @@ func readCanonicalHistory(t *testing.T, name string) []byte {
 	return data
 }
 
-func calendarFromSample(t *testing.T, data []byte) map[string]CalendarEntry {
+func canonicalCalendar(t *testing.T) map[string]CalendarEntry {
 	t.Helper()
-	decoded, err := simplifiedchinese.GB18030.NewDecoder().Bytes(data)
+	data, err := os.ReadFile(filepath.Join("..", "..", "trading-data", "config", "trading_calendar.csv"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	days := make([]string, 0)
-	seen := map[string]bool{}
-	for _, line := range splitLines(decoded)[2:] {
-		fields := strings.Split(line, ",")
-		if len(fields) != 9 {
-			continue
-		}
-		_, day, err := parseSourceDate(fields[0])
-		if err == nil && !seen[day] {
-			seen[day] = true
-			days = append(days, day)
-		}
-	}
-	calendar := make(map[string]CalendarEntry, len(days))
-	previous := "2025-09-15"
-	for _, day := range days {
-		calendar[day] = CalendarEntry{TradingDay: day, NightSessionDate: previous, IsOpen: true}
-		previous = day
+	calendar, err := parseCalendar(data)
+	if err != nil {
+		t.Fatal(err)
 	}
 	return calendar
 }
@@ -337,6 +322,10 @@ func TestImportIsImmutableAndRevisionAware(t *testing.T) {
 	}
 	if meta.Coverage.BarCount != 5 || meta.Coverage.TradingDayCount != 1 || meta.IndependenceGroup != "SHFE.AO" || meta.Quality.ZeroVolumeCount != 1 {
 		t.Fatalf("unexpected metadata: %#v", meta)
+	}
+	apiMeta, err := service.GetDataset(meta.DatasetID, meta.DataRevision)
+	if err != nil || apiMeta.Instrument.ContractMultiplier != 20 {
+		t.Fatalf("dataset API did not expose authoritative contract multiplier: %#v err=%v", apiMeta.Instrument, err)
 	}
 	sourceAfter, _ := os.ReadFile(sourcePath)
 	if !bytes.Equal(sourceBefore, sourceAfter) {

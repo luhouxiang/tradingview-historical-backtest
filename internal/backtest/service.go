@@ -154,10 +154,20 @@ func (s *Service) Submit(ctx context.Context, requestID, traceID, idempotencyKey
 		return Submission{}, ErrInvalidRequest
 	}
 	parameters, err := calculation.NormalizeParameters(definition.ParameterSchema, request.Parameters)
-	if err != nil || !validExecution(request.Execution) || !validCapital(request.Capital) {
+	if err != nil {
+		return Submission{}, ErrInvalidRequest
+	}
+	capital, err := NormalizeCapital(request.Capital)
+	if err != nil {
+		return Submission{}, ErrInvalidRequest
+	}
+	execution, err := NormalizeExecution(request.Execution, capital, meta.Instrument.ContractMultiplier)
+	if err != nil {
 		return Submission{}, ErrInvalidRequest
 	}
 	request.Parameters = parameters
+	request.Capital = capital
+	request.Execution = execution
 	riskOverlay, err := NormalizeRiskOverlay(definitions, request.RiskOverlay, request.DataRevision, meta.Coverage.FirstBarIndex, meta.Coverage.LastBarIndex)
 	if err != nil {
 		return Submission{}, ErrInvalidRequest
@@ -498,34 +508,6 @@ func validRankingContext(context RankingContext, anchorDatasetID, anchorRevision
 	return true
 }
 
-func validExecution(value map[string]any) bool {
-	if value["signal_timing"] != "bar_close" || (value["fill_timing"] != "next_bar_open" && value["fill_timing"] != "bar_close") || value["commission"] == nil || value["slippage"] == nil {
-		return false
-	}
-	if raw, ok := value["cost_multiplier"]; ok && (!nonnegativeNumber(raw)) {
-		return false
-	}
-	if raw, ok := value["additional_slippage_ticks"]; ok && !nonnegativeNumber(raw) {
-		return false
-	}
-	if raw, ok := value["additional_delay_bars"]; ok && !nonnegativeInteger(raw) {
-		return false
-	}
-	if raw, ok := value["max_volume_participation_rate"]; ok {
-		number, valid := numberValue(raw)
-		if !valid || number <= 0 || number > 1 || value["fill_mode"] != "volume_cap_ioc" {
-			return false
-		}
-	}
-	if mode, ok := value["fill_mode"]; ok && mode != "unlimited" && mode != "volume_cap_ioc" {
-		return false
-	}
-	if value["fill_mode"] == "volume_cap_ioc" && value["max_volume_participation_rate"] == nil {
-		return false
-	}
-	return true
-}
-
 func numberValue(value any) (float64, bool) {
 	switch number := value.(type) {
 	case float64:
@@ -542,26 +524,6 @@ func numberValue(value any) (float64, bool) {
 		return 0, false
 	}
 }
-
-func nonnegativeNumber(value any) bool {
-	number, ok := numberValue(value)
-	return ok && number >= 0
-}
-
-func nonnegativeInteger(value any) bool {
-	number, ok := numberValue(value)
-	return ok && number >= 0 && number == float64(int64(number))
-}
-
-func validCapital(value map[string]any) bool {
-	return value["initial_cash_i64"] != nil && value["money_scale"] != nil && value["currency"] != nil
-}
-
-// ValidExecution and ValidCapital expose the canonical backtest validation to
-// higher-level task orchestrators without duplicating execution semantics.
-func ValidExecution(value map[string]any) bool { return validExecution(value) }
-
-func ValidCapital(value map[string]any) bool { return validCapital(value) }
 
 func findDefinition(values []pythonclient.AlgorithmDefinition, ref pythonclient.AlgorithmRef) (pythonclient.AlgorithmDefinition, bool) {
 	for _, value := range values {

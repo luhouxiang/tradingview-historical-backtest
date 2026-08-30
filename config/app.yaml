@@ -29,7 +29,7 @@ import:
   fill_missing_bars: false
 
 chart:
-  initial_instrument: AO2609
+  initial_instrument: AOL9
   begin_dt: "2026-04-27 11:30:00"
   end_dt: "2026-07-24 21:50:00"
   initial_bars: 3000

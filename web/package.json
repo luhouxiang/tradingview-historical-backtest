@@ -13,6 +13,7 @@
     "contracts:generate": "openapi-typescript ../contracts/openapi.yaml -o src/types/generated/api.d.ts",
     "contracts:bundle": "node scripts/bundle-openapi.mjs",
     "contracts:validate": "node scripts/validate-contracts.mjs",
+    "e2e": "playwright test",
     "preview": "vite preview --host 127.0.0.1",
     "test": "vitest run",
     "typecheck": "vue-tsc --noEmit"
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@apidevtools/swagger-parser": "12.1.0",
+    "@playwright/test": "1.62.1",
     "@types/node": "24.10.2",
     "@vitejs/plugin-vue": "6.0.8",
     "@vue/test-utils": "2.4.11",

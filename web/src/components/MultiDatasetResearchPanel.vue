@@ -5,6 +5,7 @@ import {
   getResearchStudyResults, listAlgorithms, listDatasets, listResearchStudies,
   resumeResearchStudy,
 } from '../api/client'
+import { capitalConfig, executionRequest } from '../execution/config'
 import type {
   AlgorithmDefinition, DatasetMeta, DatasetSummary, ResearchDatasetResult,
   ResearchStudyAggregate, ResearchStudyManifest, ResearchStudyProgressDetail,
@@ -25,6 +26,7 @@ const progressDetail = ref<ResearchStudyProgressDetail | null>(null)
 const error = ref('')
 const results = ref<ResearchDatasetResult[]>([])
 const aggregate = ref<ResearchStudyAggregate | null>(null)
+const executionManifest = ref<ResearchStudyManifest | null>(null)
 const walkForward = ref(true)
 const stressTest = ref(true)
 const statisticalValidation = ref(true)
@@ -46,6 +48,13 @@ const foldLine = computed(() => {
   if (!values.length) return ''
   const low = Math.min(0, ...values); const high = Math.max(0, ...values); const span = high - low || 1
   return values.map((value, index) => `${values.length === 1 ? 50 : index * 100 / (values.length - 1)},${90 - (value - low) / span * 80}`).join(' ')
+})
+const executionSummary = computed(() => {
+  const manifest = executionManifest.value
+  if (!manifest) return ''
+  if (manifest.execution.semantic_version !== '1.0.0') return '执行语义：未版本化旧研究（保留原始 manifest）'
+  const multipliers = manifest.datasets.map((item) => item.execution?.contract_multiplier).filter((value) => value != null)
+  return `执行语义 v1.0.0 · 每数据集品种配置乘数 ${multipliers.length ? multipliers.join('/') : '旧清单未记录'} · ${String(manifest.execution.contract_multiplier_source ?? '来源未知')}`
 })
 
 function defaults(definition: AlgorithmDefinition | null): Record<string, string | number | boolean> {
@@ -149,6 +158,7 @@ async function poll(id: string): Promise<void> {
   }
   status.value = current.status; progress.value = current.progress; progressDetail.value = current.progress_detail ?? null
   if (current.status === 'completed') {
+    executionManifest.value = current.manifest ?? null
     const value = await getResearchStudyResults(id)
     results.value = value.items; aggregate.value = value.aggregate
     history.value = await listResearchStudies()
@@ -158,7 +168,7 @@ async function poll(id: string): Promise<void> {
 async function start(): Promise<void> {
   const strategy = currentStrategy.value
   if (!strategy || chosen.value.length < 1) { error.value = '请选择至少一个数据集和一个正式策略。'; return }
-  error.value = ''; results.value = []; aggregate.value = null; progressDetail.value = null
+  error.value = ''; results.value = []; aggregate.value = null; executionManifest.value = null; progressDetail.value = null
   try {
     const metas = await Promise.all(chosen.value.map((item) => getDataset(item.dataset_id, item.active_revision)))
     const spaces = searchSpace()
@@ -166,8 +176,8 @@ async function start(): Promise<void> {
       datasets: metas.map((item) => ({ dataset_id: item.dataset_id, data_revision: item.data_revision, range: { warmup_from_bar_index: item.coverage.first_bar_index, from_bar_index: item.coverage.first_bar_index, to_bar_index: item.coverage.last_bar_index } })),
       strategy: { kind: 'strategy', algorithm_id: strategy.algorithm_id, algorithm_version: strategy.algorithm_version, source_hash: strategy.source_hash },
       parameters: parameters.value,
-      execution: { signal_timing: 'bar_close', fill_timing: 'next_bar_open', commission: { mode: 'fixed_per_contract', amount_i64: 0, money_scale: 100 }, slippage: { mode: 'ticks', value: 1 }, contract_multiplier: 1, margin_ratio: 0.1, intrabar_conflict_rule: 'worst_case' },
-      capital: { initial_cash_i64: 100_000_000, currency: 'CNY', money_scale: 100 }, random_seed: 20260824,
+      execution: executionRequest(),
+      capital: capitalConfig(), random_seed: 20260824,
     }
     if (walkForward.value) request.walk_forward = {
       train_trading_days: trainDays.value, validation_trading_days: validationDays.value,
@@ -190,6 +200,7 @@ async function start(): Promise<void> {
 
 async function restore(item: ResearchStudyManifest): Promise<void> {
   studyId.value = item.research_study_id; status.value = 'completed'; progress.value = 1; progressDetail.value = null
+  executionManifest.value = item
   const value = await getResearchStudyResults(studyId.value)
   results.value = value.items; aggregate.value = value.aggregate
 }
@@ -234,6 +245,7 @@ onMounted(load)
     </div>
     <p v-if="error" role="alert">{{ error }}</p>
     <p v-if="chosen.length === 1" class="warning" role="note">单数据集研究可以执行走步、压力和统计验证，但独立组不足，只能形成探索性证据。</p>
+    <p v-if="executionSummary" class="execution-summary">{{ executionSummary }}</p>
     <div v-if="aggregate" class="evidence">
       <strong>{{ aggregate.data_status === 'certification_ready' ? '数据达到认证基础' : '探索性证据' }}</strong>
       <span>独立组 {{ aggregate.eligible_independence_group_count }}/3</span><span>等权收益 {{ percent(aggregate.total_return) }}</span>

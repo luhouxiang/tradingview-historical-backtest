@@ -58,7 +58,7 @@
         "statistical_evidence": {"type": "string", "pattern": "^research-studies/[A-Za-z0-9_-]+/statistical_evidence\\.json$"}
       }
     },
-    "execution": {"type": "object"},
+    "execution": {"type": "object", "description": "Versioned execution policy; contract_multiplier is resolved per dataset."},
     "capital": {"type": "object"},
     "random_seed": {"type": "integer"},
     "aggregate": {"type": "object", "additionalProperties": true},
@@ -93,6 +93,7 @@
         "independence_group": {"type": "string", "minLength": 1},
         "trading_day_count": {"type": "integer", "minimum": 0},
         "range": {"$ref": "#/$defs/range"},
+        "execution": {"type": "object"},
         "run_id": {"type": "string", "minLength": 1},
         "run_signature": {"$ref": "#/$defs/sha256"}
       }
