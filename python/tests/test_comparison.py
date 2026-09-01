@@ -15,10 +15,10 @@ from tvbt.storage.path_guard import PathGuard
 from tvbt.strategy import _run_strategy_chan, definitions
 
 
-def test_algorithm_catalog_marks_only_formal_108_strategies_eligible() -> None:
+def test_algorithm_catalog_marks_structural_and_macd_composite_strategies_eligible() -> None:
     values = definitions()
     eligible = [value for value in values if value.get("comparison_eligible")]
-    assert len(eligible) == 13
+    assert len(eligible) == 15
     assert all(value["research_role"] == "formal_strategy" for value in eligible)
     assert all(value["strategy_family"] for value in eligible)
     assert not next(value for value in values if value["algorithm_id"] == "ma20_retest_short")[
@@ -81,7 +81,8 @@ def test_all_formal_strategies_finish_one_batch_with_one_chan_calculation(
         dataset / "bars.parquet",
     )
     (dataset / "meta.json").write_text(
-        '{"price":{"price_scale":1,"tick_size_i64":1}}', encoding="utf-8"
+        '{"timeframe":"5m","price":{"price_scale":1,"tick_size_i64":1}}',
+        encoding="utf-8",
     )
     formal = [value for value in definitions() if value.get("comparison_eligible")]
     source_run_chan = __import__("tvbt.strategy", fromlist=["run_chan"]).run_chan
@@ -100,6 +101,8 @@ def test_all_formal_strategies_finish_one_batch_with_one_chan_calculation(
             for name, rule in definition["parameter_schema"]["properties"].items()
             if "default" in rule
         }
+        if "minimum_timeframe_minutes" in parameters:
+            parameters["minimum_timeframe_minutes"] = 5
         strategies.append(
             {
                 "strategy": {
@@ -152,7 +155,7 @@ def test_all_formal_strategies_finish_one_batch_with_one_chan_calculation(
         threading.Event(),
     )
     results = json.loads((guard.resolve(result_ref) / "results.json").read_text(encoding="utf-8"))
-    assert len(results) == 13
+    assert len(results) == 15
     assert all(value["status"] == "completed" for value in results)
     assert chan_calls == 1
 

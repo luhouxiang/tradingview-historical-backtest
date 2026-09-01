@@ -20,7 +20,7 @@ describe('MultiDatasetResearchPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     api.listDatasets.mockResolvedValue({ catalog_revision: 1, datasets: summaries })
-    api.listAlgorithms.mockResolvedValue([{ kind: 'strategy', algorithm_id: 'formal', algorithm_version: '1', source_hash: revision, name: 'Formal', input_schema: 'bars.v1', parameter_schema: { type: 'object', properties: { threshold: { type: 'integer', minimum: 0, maximum: 10, default: 1 } }, required: ['threshold'], additionalProperties: false }, outputs: [], warmup: { kind: 'fixed_bars', bars: 0 }, causal: true, comparison_eligible: true, research_role: 'formal_strategy' }])
+    api.listAlgorithms.mockResolvedValue([{ kind: 'strategy', algorithm_id: 'formal', algorithm_version: '1', source_hash: revision, name: 'Formal', input_schema: 'bars.v1', parameter_schema: { type: 'object', properties: { threshold: { type: 'integer', minimum: 0, maximum: 10, default: 1 }, minimum_timeframe_minutes: { type: 'integer', minimum: 1, maximum: 43_200, default: 60 } }, required: ['threshold', 'minimum_timeframe_minutes'], additionalProperties: false }, outputs: [], warmup: { kind: 'fixed_bars', bars: 0 }, causal: true, comparison_eligible: true, research_role: 'formal_strategy' }])
     api.listResearchStudies.mockResolvedValue([])
     api.getDataset.mockImplementation((id: string) => Promise.resolve({ dataset_id: id, data_revision: revision, timeframe: '5m', coverage: { first_bar_index: 0, last_bar_index: 99 } }))
     api.createResearchStudy.mockResolvedValue({ research_study_id: 'research-1', status: 'queued' })
@@ -55,6 +55,7 @@ describe('MultiDatasetResearchPanel', () => {
     expect(api.createResearchStudy).toHaveBeenCalledWith(expect.objectContaining({
       datasets: expect.arrayContaining([expect.objectContaining({ dataset_id: 'AO2609.5m', data_revision: revision }), expect.objectContaining({ dataset_id: 'AOL9.5m' })]),
       strategy: expect.objectContaining({ algorithm_id: 'formal' }),
+      parameters: expect.objectContaining({ minimum_timeframe_minutes: 5 }),
       walk_forward: expect.objectContaining({ train_trading_days: 252, validation_trading_days: 63, step_trading_days: 63, search_space: [expect.objectContaining({ name: 'threshold' })] }),
       stress_test: { suite_version: '1.0.0', volume_participation_rate: 0.1 },
       statistical_validation: { method_version: '1.0.0', block_size_trading_days: 5, iterations: 2000, confidence_level: .95, random_seed: 20260824, holm_alpha: .05 },

@@ -198,6 +198,55 @@ def compute_macd_zero_axis_series(
 
 
 @dataclass(frozen=True)
+class MacdDirectionalRegime:
+    direction: str
+    bullish_count: int
+    bearish_count: int
+
+
+def classify_macd_directional_regimes(
+    series: MacdZeroAxisSeries,
+    config: MacdZeroAxisConfig,
+) -> list[MacdDirectionalRegime]:
+    """Classify a causal, non-structural MACD direction at every input bar.
+
+    A bullish regime requires DIFF and DEA to remain strictly above the positive
+    buffer for ``reclaim_confirm_bars`` consecutive bars. A bearish regime is the
+    exact mirror using ``risk_off_confirm_bars``. Equality, a missing value, or
+    only one line crossing the boundary resets that direction's counter.
+
+    The returned regime is auxiliary evidence only. Callers must still obtain an
+    independently confirmed structural signal before they may trade.
+    """
+    if len(series.diff) != len(series.dea):
+        raise ValueError("MACD DIFF and DEA series must have the same length")
+    bullish_count = 0
+    bearish_count = 0
+    buffer = float(config.zero_axis_buffer_i64)
+    regimes: list[MacdDirectionalRegime] = []
+    for diff, dea in zip(series.diff, series.dea, strict=True):
+        if diff is None or dea is None:
+            bullish_count = 0
+            bearish_count = 0
+        else:
+            bullish_count = bullish_count + 1 if diff > buffer and dea > buffer else 0
+            bearish_count = bearish_count + 1 if diff < -buffer and dea < -buffer else 0
+        direction = "neutral"
+        if bullish_count >= config.reclaim_confirm_bars:
+            direction = "bullish"
+        elif bearish_count >= config.risk_off_confirm_bars:
+            direction = "bearish"
+        regimes.append(
+            MacdDirectionalRegime(
+                direction=direction,
+                bullish_count=bullish_count,
+                bearish_count=bearish_count,
+            )
+        )
+    return regimes
+
+
+@dataclass(frozen=True)
 class MacdRiskEvent:
     event_id: str
     event_type: str

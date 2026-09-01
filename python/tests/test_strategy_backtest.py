@@ -2,24 +2,29 @@ from __future__ import annotations
 
 import json
 import threading
+from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
+from tvbt.auxiliary.macd_zero_axis import MacdZeroAxisSeries
 from tvbt.backtest import _daily_returns, _summary, _trade_signal_quantity, run_backtest
 from tvbt.replay import generate_replay
 from tvbt.storage.path_guard import PathGuard
 from tvbt.strategy import (
     MA20RetestShort,
     StrategyBar,
+    StrategyRun,
     bottom_top_construction_definition,
     centre_oscillation_spread_definition,
     consolidation_reversion_definition,
     definition,
     downtrend_reversal_definition,
+    first_centre_b3_macd_definition,
     first_centre_rotation_definition,
     fixed_level_centre_definition,
     run_strategy,
@@ -28,6 +33,7 @@ from tvbt.strategy import (
     target_level_rebound_segmented_operation_definition,
     third_buy_only_definition,
     third_point_migration_definition,
+    third_point_migration_macd_definition,
     three_level_complete_classification_definition,
     trend_divergence_reversal_definition,
 )
@@ -662,6 +668,171 @@ def test_first_centre_rotation_filters_later_same_direction_third_points(
     assert len(result.chart_events) == len(result.trade_signals)
     prefix = run_strategy(strategy_payload, guard, threading.Event(), last_bar_index=5)
     assert prefix.events == [event for event in result.events if event["known_at_bar_index"] <= 5]
+
+
+def _run_macd_third_point_fixture(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    algorithm: dict[str, Any],
+    series: MacdZeroAxisSeries,
+    zero_axis_buffer_ticks: int = 0,
+) -> tuple[StrategyRun, dict[str, Any], PathGuard]:
+    guard = PathGuard(tmp_path)
+    dataset_id = "TEST.MACD.COMPOSITE.5m"
+    dataset = tmp_path / "normalized" / dataset_id / "revision"
+    dataset.mkdir(parents=True, exist_ok=True)
+    closes = [100, 104, 108, 107, 101, 96, 99]
+    pq.write_table(
+        pa.table(
+            {
+                "bar_index": pa.array(range(len(closes)), type=pa.int64()),
+                "timestamp_utc": pa.array(
+                    [index * 300_000 for index in range(len(closes))], type=pa.int64()
+                ),
+                "trading_day": pa.array(["2026-01-05"] * len(closes), type=pa.string()),
+                "open_i64": pa.array(closes, type=pa.int64()),
+                "high_i64": pa.array([value + 2 for value in closes], type=pa.int64()),
+                "low_i64": pa.array([value - 2 for value in closes], type=pa.int64()),
+                "close_i64": pa.array(closes, type=pa.int64()),
+            }
+        ),
+        dataset / "bars.parquet",
+    )
+    (dataset / "meta.json").write_text(
+        json.dumps({"timeframe": "5m", "price": {"price_scale": 1, "tick_size_i64": 1}}),
+        encoding="utf-8",
+    )
+
+    def event(bar_index: int, object_type: str, object_id: str, value: dict[str, object]) -> object:
+        return SimpleNamespace(
+            known_at_bar_index=bar_index,
+            object_type=object_type,
+            object_id=object_id,
+            operation="upsert",
+            payload_json=json.dumps({"object_id": object_id, **value}),
+        )
+
+    fake_events = [
+        event(0, "segment_zhongshu", "center-one", {"confirmed": True}),
+        event(
+            2,
+            "trade_point",
+            "strict-buy-three",
+            {
+                "signal_type": "buy_3",
+                "signal_class": "standard",
+                "reference_object_id": "center-one",
+            },
+        ),
+        event(3, "segment_zhongshu", "center-two", {"confirmed": True}),
+        event(
+            5,
+            "trade_point",
+            "strict-sell-three",
+            {
+                "signal_type": "sell_3",
+                "signal_class": "standard",
+                "reference_object_id": "center-two",
+            },
+        ),
+        event(
+            6,
+            "trade_point",
+            "standard-buy-one",
+            {"signal_type": "buy_1", "signal_class": "standard"},
+        ),
+    ]
+    monkeypatch.setattr(
+        "tvbt.strategy.run_chan",
+        lambda *args, **kwargs: (
+            SimpleNamespace(emitter=SimpleNamespace(events=fake_events)),
+            [],
+            {},
+        ),
+    )
+    monkeypatch.setattr(
+        "tvbt.strategy.compute_macd_zero_axis_series",
+        lambda closes_i64, config: MacdZeroAxisSeries(
+            diff=series.diff[: len(closes_i64)], dea=series.dea[: len(closes_i64)]
+        ),
+    )
+    payload: dict[str, Any] = {
+        "dataset": {
+            "dataset_id": dataset_id,
+            "data_revision": "sha256:" + "6" * 64,
+            "bars_path": f"normalized/{dataset_id}/revision/bars.parquet",
+            "meta_path": f"normalized/{dataset_id}/revision/meta.json",
+        },
+        "algorithm": {
+            key: algorithm[key]
+            for key in ("kind", "algorithm_id", "algorithm_version", "source_hash")
+        },
+        "parameters": {
+            "checkpoint_interval": 1024,
+            "minimum_timeframe_minutes": 5,
+            "fast_period": 2,
+            "slow_period": 3,
+            "signal_period": 2,
+            "zero_axis_buffer_ticks": zero_axis_buffer_ticks,
+            "risk_off_confirm_bars": 2,
+            "reclaim_confirm_bars": 2,
+        },
+    }
+    return run_strategy(payload, guard, threading.Event()), payload, guard
+
+
+@pytest.mark.parametrize(
+    "definition_factory",
+    [third_point_migration_macd_definition, first_centre_b3_macd_definition],
+)
+def test_macd_composites_trade_only_when_structural_third_point_and_direction_agree(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    definition_factory: Callable[[], dict[str, Any]],
+) -> None:
+    algorithm = definition_factory()
+    result, payload, guard = _run_macd_third_point_fixture(
+        tmp_path,
+        monkeypatch,
+        algorithm=algorithm,
+        series=MacdZeroAxisSeries(
+            diff=[None, 2, 2, -2, -2, -2, 2],
+            dea=[None, 2, 2, -2, -2, -2, 2],
+        ),
+    )
+    assert [value["action"] for value in result.trade_signals] == [
+        "open_long",
+        "close_long",
+        "open_short",
+        "close_short",
+    ]
+    assert result.trade_signals[0]["reason_code"] == ("CONFIRMED_B3_AND_MACD_BULL_REGIME_ENTRY")
+    assert result.trade_signals[2]["reason_code"] == ("CONFIRMED_S3_AND_MACD_BEAR_REGIME_ENTRY")
+    assert result.trade_signals[0]["macd_role"] == "entry_filter_only"
+    prefix = run_strategy(payload, guard, threading.Event(), last_bar_index=5)
+    assert prefix.events == [value for value in result.events if value["known_at_bar_index"] <= 5]
+
+
+def test_macd_composite_filters_boundary_equality_without_creating_a_trade(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    result, _, _ = _run_macd_third_point_fixture(
+        tmp_path,
+        monkeypatch,
+        algorithm=third_point_migration_macd_definition(),
+        series=MacdZeroAxisSeries(
+            diff=[None, 1, 1, -1, -1, -1, 0],
+            dea=[None, 1, 1, -1, -1, -1, 0],
+        ),
+        zero_axis_buffer_ticks=1,
+    )
+    assert result.trade_signals == []
+    assert [value["reason_code"] for value in result.strategy_states] == [
+        "B3_MACD_BULL_REGIME_NOT_CONFIRMED",
+        "S3_MACD_BEAR_REGIME_NOT_CONFIRMED",
+    ]
+    assert all(value["execution_allowed"] is False for value in result.strategy_states)
 
 
 def test_second_buy_only_hands_strongest_B2_to_B3_and_backtests_two_contracts(

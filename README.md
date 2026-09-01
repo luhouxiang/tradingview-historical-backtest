@@ -2,7 +2,7 @@
 
 版本：1.0  
 整理日期：2026-08-01  
-状态：里程碑 0–9 已实现；里程碑 10 已完成至 10AA；里程碑 11A-H、11B、11C、11D 已实现；里程碑 12A–12E（单周期可靠性研究证据链）已实现
+状态：里程碑 0–9 已实现；里程碑 10 已完成至 10AB；里程碑 11A-H、11B、11C、11D 已实现；里程碑 12A–12E（单周期可靠性研究证据链）已实现
 
 ## 1. 项目一句话定义
 
@@ -29,17 +29,17 @@
 
 ## 2. 固定技术边界
 
-| 层 | 固定选择 |
-|---|---|
-| Go | go1.25.7 |
-| Python | Python 3.14 |
-| Web | Vue 3、Composition API、TypeScript、Vite |
-| 图表 | TradingView Lightweight Charts 5.x 系列；生成项目时锁定一个已验证的精确版本 |
-| 浏览器到 Go | HTTP/JSON；长任务轮询 |
-| Go 到 Python | 仅本机回环地址上的内部 HTTP/JSON |
-| 大数据交换 | 共享 Parquet 文件；调用消息只传数据集引用、参数和任务 ID |
-| 文件格式 | 原始 TXT、Parquet、JSON、NDJSON |
-| 数据库 | 不使用 |
+| 层           | 固定选择                                                    |
+| ----------- | ------------------------------------------------------- |
+| Go          | go1.25.7                                                |
+| Python      | Python 3.14                                             |
+| Web         | Vue 3、Composition API、TypeScript、Vite                   |
+| 图表          | TradingView Lightweight Charts 5.x 系列；生成项目时锁定一个已验证的精确版本 |
+| 浏览器到 Go     | HTTP/JSON；长任务轮询                                         |
+| Go 到 Python | 仅本机回环地址上的内部 HTTP/JSON                                   |
+| 大数据交换       | 共享 Parquet 文件；调用消息只传数据集引用、参数和任务 ID                      |
+| 文件格式        | 原始 TXT、Parquet、JSON、NDJSON                              |
+| 数据库         | 不使用                                                     |
 
 任何依赖都必须写入锁文件。不得使用未锁定的 latest 作为可重复构建依据。
 
@@ -62,7 +62,7 @@ Codex 开工前必须按以下顺序阅读：
 
 ## 4. 规范包内容
 
-~~~text
+```text
 .
 ├── AGENTS.md
 ├── CODEX_BOOTSTRAP.md
@@ -75,11 +75,11 @@ Codex 开工前必须按以下顺序阅读：
 │   └── schemas/
 ├── docs/
 └── examples/
-~~~
+```
 
 本包是规范，不含业务实现代码。实际项目建议采用：
 
-~~~text
+```text
 project/
 ├── cmd/chartd/                  # Go 主程序
 ├── internal/                    # Go 业务模块
@@ -90,7 +90,7 @@ project/
 ├── scripts/
 ├── tests/
 └── AGENTS.md
-~~~
+```
 
 运行数据放在可配置的 data_root 中，不提交到源码仓库。
 
@@ -110,18 +110,18 @@ project/
 
 里程碑 0 锁定以下非业务版本：
 
-| 工具或依赖 | 精确版本 |
-|---|---:|
-| Go | 1.25.7 |
-| Python | 3.14.x（当前配置为 Anaconda 环境 Python 3.14.4） |
-| Node.js / npm | 22.23.2 / 10.9.8 |
-| Vue / Vue Router | 3.5.40 / 5.2.0 |
-| Vite / TypeScript / vue-tsc | 8.2.0 / 5.9.3 / 3.3.9 |
-| Vitest / Vue Test Utils / jsdom | 4.1.10 / 2.4.11 / 30.0.1 |
-| Go YAML / lumberjack | 3.0.1 / 2.2.1 |
-| Parquet Go / Go text encoding | 0.30.1 / 0.40.0 |
-| PyArrow | 25.0.0 |
-| Lightweight Charts | 5.2.0 |
+| 工具或依赖                           | 精确版本                                    |
+| ------------------------------- | ---------------------------------------:|
+| Go                              | 1.25.7                                  |
+| Python                          | 3.14.x（当前配置为 Anaconda 环境 Python 3.14.4） |
+| Node.js / npm                   | 22.23.2 / 10.9.8                        |
+| Vue / Vue Router                | 3.5.40 / 5.2.0                          |
+| Vite / TypeScript / vue-tsc     | 8.2.0 / 5.9.3 / 3.3.9                   |
+| Vitest / Vue Test Utils / jsdom | 4.1.10 / 2.4.11 / 30.0.1                |
+| Go YAML / lumberjack            | 3.0.1 / 2.2.1                           |
+| Parquet Go / Go text encoding   | 0.30.1 / 0.40.0                         |
+| PyArrow                         | 25.0.0                                  |
+| Lightweight Charts              | 5.2.0                                   |
 
 Go 依赖由 `go.mod` 和 `go.sum` 锁定；Python 运行时与开发依赖分别由
 `python/requirements.lock` 和 `python/requirements-dev.lock` 锁定；前端依赖由
@@ -132,15 +132,15 @@ Go 依赖由 `go.mod` 和 `go.sum` 锁定；Python 运行时与开发依赖分�
 当前固定 Python 解释器为
 `D:\ProgramData\anaconda3\envs\pydev3.14\python.exe`。首次准备环境：
 
-~~~powershell
+```powershell
 D:\ProgramData\anaconda3\envs\pydev3.14\python.exe -m pip install -r python/requirements-dev.lock
 cd web
 npm ci
-~~~
+```
 
 从仓库根目录运行：
 
-~~~powershell
+```powershell
 # 使用唯一历史数据源启动三端、导入行情并打开浏览器
 ./scripts/start-tvbt.ps1
 # 也可直接双击仓库根目录的“启动程序.cmd”
@@ -164,7 +164,7 @@ npm ci
 
 # 实际启动三端并检查 Go → Python 健康链路与 Vue 日志上传
 ./scripts/smoke-milestone0.ps1
-~~~
+```
 
 一键入口只使用 `trading-data/history/30#AOL9.txt` 这一持久行情源，并以原子合并方式补充该数据所需的品种与交易日历配置，不覆盖已有历史文件；随后扫描、
 导入并让前端优先选择 AOL9 数据集，因此页面打开后直接显示 K 线。底部选择“回测”并点击
@@ -199,9 +199,9 @@ Go、Python、Vite 的调试输出进入 Debug Console；构建门禁任务使�
 
 从仓库根目录执行里程碑 1 的真实 API 验收：
 
-~~~powershell
+```powershell
 ./scripts/smoke-milestone1.ps1
-~~~
+```
 
 该脚本使用完整的 17,017 根样例，验证扫描、异步任务轮询、交易日历映射、
 Parquet 写入、元数据 Schema、重复导入幂等性与原始文件哈希不变，并在结束后清理隔离的临时 data_root。
@@ -221,9 +221,9 @@ K 线接口为 `GET /api/v1/datasets/{dataset_id}/bars`。`revision` 与
 
 执行完整样例的范围与性能验收：
 
-~~~powershell
+```powershell
 ./scripts/smoke-milestone2.ps1
-~~~
+```
 
 该脚本验证尾部 3000、前取 1500、revision 冲突和热缓存 HTTP p95 小于 200 ms。
 
@@ -245,9 +245,9 @@ Vue 的指标面板创建、编辑和删除独立 `SeriesSource`。MA 叠加主�
 
 执行完整 17,017 根样例的跨进程验收：
 
-~~~powershell
+```powershell
 ./scripts/smoke-milestone3.ps1
-~~~
+```
 
 该脚本验证三种指标均完成计算、范围结果与校验和有效、缓存目录符合 Schema，且等价 MA 请求立即命中缓存。
 
@@ -270,9 +270,9 @@ PUT 必须携带 `If-Match` 当前 revision；首次创建使用 0。Go 在 `dat
 
 执行完整的跨进程验收：
 
-~~~powershell
+```powershell
 ./scripts/smoke-milestone4.ps1
-~~~
+```
 
 该脚本同时验证导入、普通指标、工作区 Schema、定点绘图锚点、原子持久化、恢复与
 乐观并发冲突。
@@ -294,9 +294,9 @@ Python 缠论引擎按 `E:\work\py\algo-ui\common\chanlun\c_bi.py` 的规则实�
 
 执行完整 17,017 根样例的跨进程和因果缓存验收：
 
-~~~powershell
+```powershell
 ./scripts/smoke-milestone5.ps1
-~~~
+```
 
 该脚本验证缠论任务、范围对象查询、事件序号和对象修订、检查点版本、缓存命中、
 StrategySource 工作区恢复，并校验 `segments.parquet` 段产物。前缀不变性、检查点
@@ -317,9 +317,9 @@ Vue 首次载入事件后在浏览器内维护递增事件索引。单步、后�
 
 执行完整 17,017 根样例验收：
 
-~~~powershell
+```powershell
 ./scripts/smoke-milestone6.ps1
-~~~
+```
 
 该脚本验证事件缓存 Schema 与校验和、游标前无未来事件、后续事件按游标出现、等价请求
 立即命中缓存，以及回放目录不混入分型、笔、中枢或线段终态文件。
@@ -342,9 +342,9 @@ Vue 底部面板提供回测参数、汇总、交易表和权益曲线；策略�
 
 执行完整样例验收：
 
-~~~powershell
+```powershell
 ./scripts/smoke-milestone7.ps1
-~~~
+```
 
 该脚本验证下一根开盘成交、run manifest、全部正式事实文件、幂等重试、等价新 run 的
 相同 signature 与事实哈希、成功目录不可覆盖，以及回放/回测交易信号逐条一致。
@@ -360,21 +360,21 @@ cancelling 的任务会在对外服务前原子更新为 `interrupted`，并保�
 缓存清理工具默认 dry-run，只识别 indicators、chan 和 replay 下以 64 位小写十六进制
 SHA-256 命名、带 `_SUCCESS` 的直接子目录；执行时移入 trash，支持恢复：
 
-~~~powershell
+```powershell
 # 预览 30 天前的全部正式缓存
 go run ./cmd/cachectl -config config/app.yaml -kind all -older-than 720h
 
 # 确认后实际移入 data_root/trash/cache
 go run ./cmd/cachectl -config config/app.yaml -kind all -older-than 720h -dry-run=false
-~~~
+```
 
 完整门禁、跨进程样例、恢复/清理和可重复性能基准分别执行：
 
-~~~powershell
+```powershell
 ./scripts/accept-milestone8.ps1
 # 可选生成 bin/marketdata.cpu.pprof
 ./scripts/benchmark-milestone8.ps1 -CpuProfile
-~~~
+```
 
 安装、启动、备份、故障恢复和安全边界详见
 `docs/10-installation-and-operations.md`。
@@ -422,17 +422,19 @@ Vue 底部“优化”面板提供搜索空间、方法、预算、目标和最�
 
 10W 已把源算法目录的 27 个 ID、全部 `emits`、实现文件、测试和图表证据固化为 `docs/chanlun-algorithm-coverage.json`。10X 完成在线几何生命周期，10Y 完成独立结构级别图，10Z 完成 B1/S1 候选—确认—失效生命周期。10AA 完成 `ALG-STR-005 promote_level`：九组件兼容中心只发布候选且不交易，只有已确认 `level_center` 才平掉小级别仓位、把策略操作级别从 L0 迁移到 L1 并等待新的同级序列；确认来源修订会在当时重置。当前审计为 14 项完整实现、11 项固定级别投影、0 项部分实现、2 项延期。按当前“忽略多周期/递归多级别”范围，固定级别主链已收口；`ALG-STR-006` 区间套和 `ALG-STR-010` 核心仓/机动仓双账本明确延期，不用多个 K 线周期冒充结构级别。
 
+10AB 新增 `third_point_migration_macd_regime` 和 `first_centre_B3_macd_regime` 两个独立组合策略：标准 B3/S3 仍是唯一触发源，MACD 只按严格零轴方向和连续根数过滤入场，不创建结构、不补发机会、不触发退出。原 13 个策略不改语义，逐策略 108 课出处、算法、优缺点、命中条件和最近实测结果见 `docs/strategies/chanlun-108/README.md`。默认可比较策略现为 15 个；同口径 AOL9 补跑中，迁移 MACD 版 20 笔、+1.9320%、最大回撤 0.4095%，值得跨数据验证，首中枢 MACD 版 5 笔、-0.0910%，仅作负对照。
+
 ## 19. 里程碑 11A：缠论策略一键比较回测
 
-底部“策略研究”工作台从算法目录读取研究元数据，默认勾选 13 个已发布的 108 课正式可交易策略，并允许增删策略、覆盖参数以及统一设置资金、手续费、滑点、乘数、保证金、风险覆盖和最少交易数。创建 comparison 后，Go 逐项校验数据 revision、算法版本和参数，Python 默认顺序执行并在批次内共享一次权威缠论因果计算；某个策略失败不会阻断其他策略，每个成功策略仍生成标准、不可覆盖的 `runs/{run_id}`。
+底部“策略研究”工作台从算法目录读取研究元数据，默认勾选 15 个已发布的正式可执行研究策略（13 个基础策略和 2 个结构+MACD 组合策略），并允许增删策略、覆盖参数以及统一设置资金、手续费、滑点、乘数、保证金、风险覆盖和最少交易数。创建 comparison 后，Go 逐项校验数据 revision、算法版本和参数，Python 默认顺序执行并在批次内共享一次权威缠论因果计算；某个策略失败不会阻断其他策略，每个成功策略仍生成标准、不可覆盖的 `runs/{run_id}`。
 
 公共接口为 `POST/GET /api/v1/strategy-comparisons`、`GET /api/v1/strategy-comparisons/{comparison_id}`、取消接口和结果接口。批次在 `comparisons/{comparison_id}` 保存固定执行口径的 `comparison.json`、逐策略 `results.json` 和 `_SUCCESS`，页面显示总数、已处理数、当前策略和失败数，并可打开成功子 run。11B 的排行榜/Pareto 与历史研究恢复增强、11C 的单策略拆解和 2–5 策略叠加、11D 的开仓时点行情条件归因尚未在 11A 中实现。
 
 执行全仓门禁与完整样例验收：
 
-~~~powershell
+```powershell
 ./scripts/accept-milestone9.ps1
-~~~
+```
 
 验收覆盖 3 个候选、6 个正式训练/验证 run、固定种子可复现、Study Schema/原子提交、结果排名、
-硬约束与稳定性报告。详情见 `docs/12-milestone9-acceptance-report.md`。
+硬约束与稳定性报告。详情见 `docs/12-milestone9-acceptance-report.md`。 

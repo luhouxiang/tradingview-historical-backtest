@@ -40,6 +40,7 @@ from tvbt.auxiliary.ma_sector_rotation import (
 from tvbt.auxiliary.ma_sector_rotation import definition as ma_sector_rotation_definition
 from tvbt.auxiliary.macd_zero_axis import (
     MacdZeroAxisConfig,
+    classify_macd_directional_regimes,
     classify_macd_zero_axis,
     compute_macd_zero_axis_series,
 )
@@ -189,11 +190,14 @@ def _chan_strategy_definition(
     output_prefix: str,
     *,
     algorithm_version: str = "1.0.0",
+    dependency_source_hashes: tuple[str, ...] = (),
 ) -> dict[str, Any]:
     digest = hashlib.sha256()
     digest.update(Path(__file__).read_bytes())
     digest.update(chan_definition()["source_hash"].encode())
     digest.update(algorithm_id.encode())
+    for source_hash in dependency_source_hashes:
+        digest.update(source_hash.encode())
     return {
         "kind": "strategy",
         "algorithm_id": algorithm_id,
@@ -276,6 +280,56 @@ def first_centre_rotation_definition() -> dict[str, Any]:
         "首中枢三买三卖轮动",
         "首中枢轮动",
         algorithm_version="1.3.0",
+    )
+
+
+def _macd_third_point_definition(
+    algorithm_id: str,
+    name: str,
+    output_prefix: str,
+) -> dict[str, Any]:
+    result = _chan_strategy_definition(
+        algorithm_id,
+        name,
+        output_prefix,
+        algorithm_version="1.0.0",
+        dependency_source_hashes=(macd_zero_axis_definition()["source_hash"],),
+    )
+    macd_properties = macd_zero_axis_definition()["parameter_schema"]["properties"]
+    result["parameter_schema"] = {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "checkpoint_interval": {
+                "type": "integer",
+                "minimum": 64,
+                "maximum": 100_000,
+                "default": 1024,
+            },
+            **macd_properties,
+        },
+        "required": ["checkpoint_interval", *macd_properties.keys()],
+    }
+    result["warmup"] = {
+        "kind": "formula",
+        "expression": "full-history causal Chan state; MACD slow_period + signal_period - 2",
+    }
+    return result
+
+
+def third_point_migration_macd_definition() -> dict[str, Any]:
+    return _macd_third_point_definition(
+        "third_point_migration_macd_regime",
+        "三买三卖中枢迁移·MACD方向确认",
+        "中枢迁移·MACD",
+    )
+
+
+def first_centre_b3_macd_definition() -> dict[str, Any]:
+    return _macd_third_point_definition(
+        "first_centre_B3_macd_regime",
+        "首中枢三买三卖轮动·MACD方向确认",
+        "首中枢轮动·MACD",
     )
 
 
@@ -639,6 +693,8 @@ def definitions() -> list[dict[str, Any]]:
         consolidation_reversion_definition(),
         third_point_migration_definition(),
         first_centre_rotation_definition(),
+        third_point_migration_macd_definition(),
+        first_centre_b3_macd_definition(),
         second_buy_only_definition(),
         third_buy_only_definition(),
         centre_oscillation_spread_definition(),
@@ -660,6 +716,14 @@ def definitions() -> list[dict[str, Any]]:
         "consolidation_divergence_centre_reversion": ("centre_reversion", ["ALG-SIG-002"]),
         "third_buy_centre_migration_hold": ("third_point", ["ALG-STR-003"]),
         "first_centre_B3_rotation": ("third_point", ["ALG-STR-003"]),
+        "third_point_migration_macd_regime": (
+            "third_point_macd_composite",
+            ["ALG-STR-003", "ALG-AUX-002"],
+        ),
+        "first_centre_B3_macd_regime": (
+            "third_point_macd_composite",
+            ["ALG-STR-003", "ALG-AUX-002"],
+        ),
         "second_buy_only": ("second_point", ["ALG-STR-002"]),
         "third_buy_only": ("third_point", ["ALG-STR-003"]),
         "centre_oscillation_spread": ("centre_oscillation", ["ALG-STR-004"]),
@@ -948,6 +1012,23 @@ def run_strategy(
             cancelled,
             last_bar_index=last_bar_index,
             first_only=True,
+        )
+    if algorithm["algorithm_id"] == "third_point_migration_macd_regime":
+        return _run_third_point_migration_hold(
+            payload,
+            guard,
+            cancelled,
+            last_bar_index=last_bar_index,
+            macd_gate=True,
+        )
+    if algorithm["algorithm_id"] == "first_centre_B3_macd_regime":
+        return _run_third_point_migration_hold(
+            payload,
+            guard,
+            cancelled,
+            last_bar_index=last_bar_index,
+            first_only=True,
+            macd_gate=True,
         )
     if algorithm["algorithm_id"] == "second_buy_only":
         return _run_second_buy_only(payload, guard, cancelled, last_bar_index=last_bar_index)
@@ -1723,6 +1804,7 @@ def _run_third_point_migration_hold(
     *,
     last_bar_index: int | None,
     first_only: bool = False,
+    macd_gate: bool = False,
 ) -> StrategyRun:
     dataset = payload["dataset"]
     parameters = payload["parameters"]
@@ -1753,6 +1835,26 @@ def _run_third_point_migration_hold(
         for row_position, value in enumerate(table["bar_index"])
         if last_bar_index is None or int(value) <= last_bar_index
     ]
+    macd_series = None
+    macd_regimes_by_bar: dict[int, Any] = {}
+    bar_positions = {bar.bar_index: position for position, bar in enumerate(bars)}
+    macd_config: MacdZeroAxisConfig | None = None
+    if macd_gate:
+        meta = json.loads(guard.resolve(str(dataset["meta_path"])).read_text(encoding="utf-8"))
+        tick_size_i64 = int(meta["price"].get("tick_size_i64") or 1)
+        dataset_timeframe = str(meta.get("timeframe") or "")
+        macd_config = MacdZeroAxisConfig.from_parameters(
+            parameters, tick_size_i64, dataset_timeframe
+        )
+        macd_series = compute_macd_zero_axis_series([bar.close_i64 for bar in bars], macd_config)
+        macd_regimes_by_bar = {
+            bar.bar_index: regime
+            for bar, regime in zip(
+                bars,
+                classify_macd_directional_regimes(macd_series, macd_config),
+                strict=True,
+            )
+        }
     events_by_bar: dict[int, list[Any]] = {}
     for event in runtime.emitter.events:
         if event.object_type in {"segment_zhongshu", "trade_point"}:
@@ -1762,7 +1864,15 @@ def _run_third_point_migration_hold(
     current_state = "waiting_strict_third_point"
     origin_center_id: str | None = None
     cycle_used = {"buy": False, "sell": False}
-    strategy_tag = "ROTATE" if first_only else "MIGHOLD"
+    strategy_tag = (
+        "ROTATEMACD"
+        if first_only and macd_gate
+        else "MIGHOLDMACD"
+        if macd_gate
+        else "ROTATE"
+        if first_only
+        else "MIGHOLD"
+    )
     states: list[dict[str, Any]] = []
     stages: list[dict[str, Any]] = []
     signals: list[dict[str, Any]] = []
@@ -1796,7 +1906,11 @@ def _run_third_point_migration_hold(
         )
 
     def transition(
-        bar: StrategyBar, next_state: str, reason: str, reference_object_id: str
+        bar: StrategyBar,
+        next_state: str,
+        reason: str,
+        reference_object_id: str,
+        details: dict[str, Any] | None = None,
     ) -> None:
         nonlocal current_state
         previous_state = current_state
@@ -1808,6 +1922,7 @@ def _run_third_point_migration_hold(
             "price_i64": bar.close_i64,
             "reason_code": reason,
             "reference_object_id": reference_object_id,
+            **(details or {}),
         }
         state_id = f"strategy_state-{strategy_tag}-{bar.bar_index}-{suffix}"
         publish(
@@ -1824,7 +1939,13 @@ def _run_third_point_migration_hold(
             bar.bar_index,
         )
 
-    def trade(bar: StrategyBar, action: str, reason: str, source_id: str) -> None:
+    def trade(
+        bar: StrategyBar,
+        action: str,
+        reason: str,
+        source_id: str,
+        details: dict[str, Any] | None = None,
+    ) -> None:
         nonlocal position_side
         signal_id = f"CHAN-{strategy_tag}-{bar.bar_index}-{action}-{source_id[-8:]}"
         side = "long" if action in {"open_long", "close_short"} else "short"
@@ -1834,6 +1955,7 @@ def _run_third_point_migration_hold(
             "price_i64": bar.close_i64,
             "reason_code": reason,
             "reference_object_id": source_id,
+            **(details or {}),
         }
         publish(
             "trade_signal",
@@ -1945,20 +2067,57 @@ def _run_third_point_migration_hold(
             )
             continue
         cycle_used[direction] = True
+        macd_details: dict[str, Any] = {}
+        if macd_gate:
+            assert macd_config is not None and macd_series is not None
+            regime = macd_regimes_by_bar[bar.bar_index]
+            position = bar_positions[bar.bar_index]
+            expected_regime = "bullish" if signal_type == "buy_3" else "bearish"
+            macd_details = {
+                "catalog_algorithm_ids": ["ALG-STR-003", "ALG-AUX-002"],
+                "structural_signal_type": signal_type,
+                "structural_signal_class": "standard",
+                "macd_role": "entry_filter_only",
+                "macd_regime": regime.direction,
+                "macd_diff": macd_series.diff[position],
+                "macd_dea": macd_series.dea[position],
+                "macd_bullish_count": regime.bullish_count,
+                "macd_bearish_count": regime.bearish_count,
+                "macd_zero_axis_buffer_i64": macd_config.zero_axis_buffer_i64,
+            }
+            if regime.direction != expected_regime:
+                reason = (
+                    "B3_MACD_BULL_REGIME_NOT_CONFIRMED"
+                    if signal_type == "buy_3"
+                    else "S3_MACD_BEAR_REGIME_NOT_CONFIRMED"
+                )
+                transition(
+                    bar,
+                    f"macd_regime_{signal_type}_filtered",
+                    reason,
+                    event.object_id,
+                    {**macd_details, "execution_allowed": False},
+                )
+                continue
         next_state = (
             "holding_upward_migration" if signal_type == "buy_3" else "holding_downward_migration"
         )
         reason = (
-            "CONFIRMED_B3_MIGRATION_ENTRY"
+            "CONFIRMED_B3_AND_MACD_BULL_REGIME_ENTRY"
+            if macd_gate and signal_type == "buy_3"
+            else "CONFIRMED_S3_AND_MACD_BEAR_REGIME_ENTRY"
+            if macd_gate
+            else "CONFIRMED_B3_MIGRATION_ENTRY"
             if signal_type == "buy_3"
             else "CONFIRMED_S3_MIGRATION_ENTRY"
         )
-        transition(bar, next_state, reason, event.object_id)
+        transition(bar, next_state, reason, event.object_id, macd_details)
         trade(
             bar,
             "open_long" if signal_type == "buy_3" else "open_short",
             reason,
             event.object_id,
+            macd_details,
         )
         origin_center_id = str(point.get("reference_object_id") or "")
 

@@ -1205,7 +1205,11 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
         (temporary / "status.json").write_text(
             '{"status":"completed","progress":1}', encoding="utf-8"
         )
-        if algorithm["algorithm_id"] == "aux_macd_zero_axis_defense":
+        if algorithm["algorithm_id"] in {
+            "aux_macd_zero_axis_defense",
+            "third_point_migration_macd_regime",
+            "first_centre_B3_macd_regime",
+        }:
             dependency_ids = ["macd"]
         elif algorithm["algorithm_id"] == "aux_boll_bardo_warning":
             dependency_ids = ["boll"]

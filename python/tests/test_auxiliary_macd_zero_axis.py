@@ -12,6 +12,7 @@ from tvbt.algorithms import definitions as algorithm_definitions
 from tvbt.auxiliary.macd_zero_axis import (
     MacdZeroAxisConfig,
     MacdZeroAxisSeries,
+    classify_macd_directional_regimes,
     classify_macd_zero_axis,
     definition,
     timeframe_minutes,
@@ -94,6 +95,31 @@ def test_one_line_or_zero_buffer_equality_never_counts_as_axis_confirmation() ->
         bars([100] * 4), buffered, config(buffer=1, risk_off_bars=1, reclaim_bars=1)
     )
     assert [event.known_at_bar_index for event in events] == [1, 3]
+
+
+def test_directional_regime_is_strict_consecutive_and_prefix_invariant() -> None:
+    values = MacdZeroAxisSeries(
+        diff=[None, 2, 2, 1, -2, -2, 2, 2],
+        dea=[None, 2, 2, 2, -2, -2, 2, 2],
+    )
+    configured = config(buffer=1, risk_off_bars=2, reclaim_bars=2)
+    complete = classify_macd_directional_regimes(values, configured)
+    assert [value.direction for value in complete] == [
+        "neutral",
+        "neutral",
+        "bullish",
+        "neutral",
+        "neutral",
+        "bearish",
+        "neutral",
+        "bullish",
+    ]
+    assert complete[3].bullish_count == 0  # DIFF equals the boundary.
+    for length in range(1, len(values.diff) + 1):
+        prefix = classify_macd_directional_regimes(
+            MacdZeroAxisSeries(values.diff[:length], values.dea[:length]), configured
+        )
+        assert prefix == complete[:length]
 
 
 def test_every_prefix_has_exactly_the_events_known_in_that_prefix() -> None:

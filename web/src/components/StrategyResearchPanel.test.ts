@@ -99,6 +99,25 @@ describe('StrategyResearchPanel', () => {
     expect(wrapper.text()).toContain('run-1')
   })
 
+  it('pins MACD composite observation time to the selected dataset timeframe', async () => {
+    const composite = strategy('third_point_migration_macd_regime')
+    composite.parameter_schema = {
+      type: 'object', additionalProperties: false,
+      properties: {
+        checkpoint_interval: { type: 'integer', minimum: 64, default: 1024 },
+        minimum_timeframe_minutes: { type: 'integer', minimum: 1, default: 60 },
+      },
+      required: ['checkpoint_interval', 'minimum_timeframe_minutes'],
+    }
+    api.listAlgorithms.mockResolvedValue([composite, risk])
+    const wrapper = mount(StrategyResearchPanel, { props: { dataset } })
+    await flushPromises()
+    await wrapper.get('.research-toolbar button:nth-last-of-type(1)').trigger('click')
+    await flushPromises()
+    expect(api.createStrategyComparison.mock.calls[0]?.[0].strategies[0].parameters)
+      .toEqual({ checkpoint_interval: 1024, minimum_timeframe_minutes: 5 })
+  })
+
   it('restores history and limits simultaneous comparison to five runs', async () => {
     const manifest = {
       schema_version: 2, comparison_id: 'comparison-old', comparison_signature: `sha256:${'3'.repeat(64)}`,

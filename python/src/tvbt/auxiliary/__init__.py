@@ -36,9 +36,11 @@ from tvbt.auxiliary.ma_sector_rotation import (
 )
 from tvbt.auxiliary.ma_sector_rotation import definition as ma_sector_rotation_definition
 from tvbt.auxiliary.macd_zero_axis import (
+    MacdDirectionalRegime,
     MacdRiskEvent,
     MacdZeroAxisConfig,
     MacdZeroAxisSeries,
+    classify_macd_directional_regimes,
     classify_macd_zero_axis,
     compute_macd_zero_axis_series,
 )
@@ -59,6 +61,7 @@ __all__ = [
     "MaKissConfig",
     "MaSectorRotationConfig",
     "MaSectorRotationEvent",
+    "MacdDirectionalRegime",
     "MacdRiskEvent",
     "MacdZeroAxisConfig",
     "MacdZeroAxisSeries",
@@ -71,6 +74,7 @@ __all__ = [
     "classify_daily_30m_sessions",
     "classify_ma_kisses",
     "classify_ma_sector_rotation",
+    "classify_macd_directional_regimes",
     "classify_macd_zero_axis",
     "compute_boll_series",
     "compute_ma_kiss_series",

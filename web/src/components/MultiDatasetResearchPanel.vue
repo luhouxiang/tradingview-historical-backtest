@@ -58,7 +58,12 @@ const executionSummary = computed(() => {
 })
 
 function defaults(definition: AlgorithmDefinition | null): Record<string, string | number | boolean> {
-  return Object.fromEntries(Object.entries(definition?.parameter_schema.properties ?? {}).map(([name, rule]) => [name, rule.default ?? '']))
+  const result = Object.fromEntries(Object.entries(definition?.parameter_schema.properties ?? {}).map(([name, rule]) => [name, rule.default ?? '']))
+  const match = /^(\d+)(m|h|d)$/.exec(timeframe.value)
+  const minutes = match ? Number(match[1]) * ({ m: 1, h: 60, d: 1440 }[match[2] as 'm' | 'h' | 'd']) : null
+  if (minutes != null && 'minimum_timeframe_minutes' in result) result.minimum_timeframe_minutes = minutes
+  if (minutes != null && 'observation_timeframe_minutes' in result) result.observation_timeframe_minutes = minutes
+  return result
 }
 
 function chooseStrategy(): void {
@@ -69,7 +74,11 @@ function chooseStrategy(): void {
   for (const [name, rule] of Object.entries(currentStrategy.value?.parameter_schema.properties ?? {})) {
     const value = parameters.value[name]
     const numeric = rule.type === 'integer' || rule.type === 'number'
-    const eligible = numeric && name !== 'checkpoint_interval'
+    const eligible = numeric && ![
+      'checkpoint_interval',
+      'minimum_timeframe_minutes',
+      'observation_timeframe_minutes',
+    ].includes(name)
     tunable.value[name] = eligible && !selectedFirst
     if (eligible) selectedFirst = true
     if (numeric && typeof value === 'number') {
@@ -144,8 +153,8 @@ async function load(): Promise<void> {
     strategies.value = algorithms
     history.value = studies
     strategyId.value ||= formal.value[0]?.algorithm_id ?? ''
-    chooseStrategy()
     for (const item of compatible.value) selected.value[item.dataset_id] = true
+    chooseStrategy()
   } catch (cause) { error.value = cause instanceof Error ? cause.message : String(cause) }
 }
 

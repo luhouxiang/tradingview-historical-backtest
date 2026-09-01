@@ -410,10 +410,10 @@ watch([strategy, () => props.dataset], ([definition, dataset]) => {
     Object.entries(definition.parameter_schema.properties)
       .map(([name, rule]) => [name, rule.default ?? '']),
   )
-  if (definition.algorithm_id === 'aux_macd_zero_axis_defense') {
+  if ('minimum_timeframe_minutes' in parameters) {
     parameters.minimum_timeframe_minutes = timeframeMinutes(dataset?.timeframe) ?? parameters.minimum_timeframe_minutes
   }
-  if (definition.algorithm_id === 'aux_boll_bardo_warning') {
+  if ('observation_timeframe_minutes' in parameters) {
     parameters.observation_timeframe_minutes = timeframeMinutes(dataset?.timeframe) ?? parameters.observation_timeframe_minutes
   }
   if (definition.algorithm_id === 'aux_ma_sector_rotation' && dataset) {

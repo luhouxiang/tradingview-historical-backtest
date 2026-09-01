@@ -78,8 +78,18 @@ const families = computed(() => [...new Set(results.value.map((item) => item.str
 const compared = computed(() => results.value.filter((item) => item.run_id && compareIds.value.includes(item.run_id)))
 const normalizedCurves = ref<Record<string, Array<{ bar_index: number; equity: number; drawdown: number }>>>({})
 
+function timeframeMinutes(value: string | undefined): number | null {
+  const match = /^(\d+)(m|h|d)$/.exec(value ?? '')
+  if (!match) return null
+  return Number(match[1]) * ({ m: 1, h: 60, d: 1440 }[match[2] as 'm' | 'h' | 'd'])
+}
+
 function defaults(definition: AlgorithmDefinition): Record<string, string | number | boolean> {
-  return Object.fromEntries(Object.entries(definition.parameter_schema.properties).map(([name, rule]) => [name, rule.default ?? '']))
+  const result = Object.fromEntries(Object.entries(definition.parameter_schema.properties).map(([name, rule]) => [name, rule.default ?? '']))
+  const currentMinutes = timeframeMinutes(props.dataset?.timeframe)
+  if (currentMinutes != null && 'minimum_timeframe_minutes' in result) result.minimum_timeframe_minutes = currentMinutes
+  if (currentMinutes != null && 'observation_timeframe_minutes' in result) result.observation_timeframe_minutes = currentMinutes
+  return result
 }
 
 function initializeSelections(): void {
@@ -242,6 +252,7 @@ watch(() => props.dataset?.dataset_id, () => {
   error.value = ''
   detail.value = null
   compareIds.value = []
+  if (definitions.value.length) initializeSelections()
   void refreshHistory()
 })
 
