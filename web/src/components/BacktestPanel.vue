@@ -29,6 +29,7 @@ const rankingContextText = ref('')
 const restored = ref(false)
 const restoreAttemptKey = ref('')
 const LAST_RUN_STORAGE_KEY = 'tvbt:last-backtest:v1'
+const executing = computed(() => ['queued', 'running'].includes(status.value))
 
 interface StoredBacktestRun {
   dataset_id: string
@@ -36,6 +37,30 @@ interface StoredBacktestRun {
   run_id: string
   run_signature: string
   algorithm_id: string
+}
+
+function tradeExecutionMarkers(rows: BacktestTrade[]): Array<Record<string, unknown> & { object_type: string; object_id: string }> {
+  return rows.flatMap((trade) => {
+    const openAction = trade.side === 'long' ? 'open_long' : 'open_short'
+    const closeAction = trade.side === 'long' ? 'close_long' : 'close_short'
+    const detail = `${trade.quantity} 手 · ${trade.trade_id}`
+    return [
+      {
+        object_type: 'chart_event', object_id: `${trade.trade_id}:entry`, event_type: openAction, action: openAction,
+        bar_index: trade.entry_bar_index, known_at_bar_index: trade.entry_bar_index,
+        timestamp_utc: trade.entry_time, price_i64: trade.entry_price_i64,
+        display_label: trade.side === 'long' ? '成交·开多' : '成交·开空', classification_detail: detail,
+        execution_fact: true,
+      },
+      {
+        object_type: 'chart_event', object_id: `${trade.trade_id}:exit`, event_type: closeAction, action: closeAction,
+        bar_index: trade.exit_bar_index, known_at_bar_index: trade.exit_bar_index,
+        timestamp_utc: trade.exit_time, price_i64: trade.exit_price_i64,
+        display_label: trade.side === 'long' ? '成交·平多' : '成交·平空', classification_detail: detail,
+        execution_fact: true,
+      },
+    ]
+  })
 }
 const auxiliaryOnly = computed(() => strategy.value?.algorithm_id.startsWith('aux_') ?? false)
 const executionSummary = computed(() => {
@@ -356,6 +381,11 @@ async function execute(resume: StoredBacktestRun | null = null): Promise<void> {
         detail: String(payload.classification_detail ?? payload.reason_code ?? event.object_type),
       })
     }
+    if (!auxiliaryOnly.value) {
+      for (const marker of tradeExecutionMarkers(trades.value)) {
+        currentSignals.set(`${marker.object_type}:${marker.object_id}`, marker)
+      }
+    }
     emit('completed', {
       source_type: 'StrategyRunSource', source_id: `run-source-${runId.value}`, run_id: runId.value,
       definition, status: 'completed', visible: true, objects: [...currentObjects.values()],
@@ -495,7 +525,10 @@ watch([riskFilter, () => props.dataset], ([definition, dataset]) => {
       <label>每手手续费 <input v-model.number="commission" type="number" min="0" /></label>
       <label>合约乘数 <output>{{ dataset?.instrument.contract_multiplier ?? '—' }}</output></label>
       <label>保证金 <input v-model.number="marginRatio" type="number" min="0.01" max="1" step="0.01" /></label>
-      <button :disabled="!dataset || !strategy || Boolean(algorithmContextIssue) || ['queued', 'running'].includes(status)" @click="run">{{ auxiliaryOnly ? '生成辅助事件（不交易）' : '开始正式回测' }}</button>
+      <button
+        class="backtest-run-button" :class="{ 'is-running': executing }" :aria-busy="executing"
+        :disabled="!dataset || !strategy || Boolean(algorithmContextIssue) || executing" @click="run"
+      >{{ auxiliaryOnly ? '生成辅助事件（不交易）' : '开始正式回测' }}</button>
       <span>{{ status }} <small v-if="restored">· 已恢复最近结果</small> <small v-if="runId">{{ runId }} · {{ signature.slice(0, 18) }}</small></span>
       <span v-if="algorithmContextIssue" class="issue">{{ algorithmContextIssue }}</span>
       <span v-if="error" class="issue">{{ error }}</span>
@@ -513,11 +546,15 @@ watch([riskFilter, () => props.dataset], ([definition, dataset]) => {
         <span>风控降仓 {{ summary.risk_reduced_count }}</span>
         <span>风控阻断 {{ summary.risk_blocked_count }}</span>
         <span>风险熔断 {{ summary.risk_kill_switch_count }}</span>
+        <span v-if="summary.trade_count === 0" class="issue">本次没有成交，因此图上没有开平仓标记。</span>
       </template>
     </div>
     <table v-else-if="view === 'trades'" class="trade-table">
       <thead><tr><th>ID</th><th>方向</th><th>入场</th><th>出场</th><th>净盈亏</th></tr></thead>
-      <tbody><tr v-for="trade in trades" :key="trade.trade_id"><td>{{ trade.trade_id }}</td><td>{{ trade.side }}</td><td>{{ trade.entry_bar_index }} @ {{ trade.entry_price_i64 }}</td><td>{{ trade.exit_bar_index }} @ {{ trade.exit_price_i64 }}</td><td>{{ trade.net_pnl_i64 }}</td></tr></tbody>
+      <tbody>
+        <tr v-if="trades.length === 0"><td colspan="5">本次没有成交，主图不会显示开平仓标记。</td></tr>
+        <tr v-for="trade in trades" :key="trade.trade_id"><td>{{ trade.trade_id }}</td><td>{{ trade.side }}</td><td>{{ trade.entry_bar_index }} @ {{ trade.entry_price_i64 }}</td><td>{{ trade.exit_bar_index }} @ {{ trade.exit_price_i64 }}</td><td>{{ trade.net_pnl_i64 }}</td></tr>
+      </tbody>
     </table>
     <svg v-else class="equity-chart" viewBox="0 0 600 110" preserveAspectRatio="none" aria-label="权益曲线"><polyline :points="points" /></svg>
   </section>

@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0.0",
+  "scope": {
+    "dataset_count": 1,
+    "k_timeframe_count": 1,
+    "allows_same_timeframe_indicators": true,
+    "forbids": [
+      "recursive_multi_level",
+      "multiple_k_timeframes",
+      "cross_instrument",
+      "interval_nesting",
+      "core_swing_double_book"
+    ]
+  },
+  "profiles": [
+    {
+      "profile_id": "chan108_single_scope_v1",
+      "status": "enabled",
+      "execution_eligible": true,
+      "sources": [20, 67, 71, 78],
+      "third_point": {
+        "profile_id": "lesson20_inclusive_v1",
+        "buy_rule": "return_range_low_i64 >= center_zg_i64",
+        "sell_rule": "return_range_high_i64 <= center_zd_i64",
+        "touch_is_third_point": true,
+        "first_completed_return_only": true
+      },
+      "segment_range": {
+        "profile_id": "constituent_bi_union_v1",
+        "member_boundary": "segment_start_bi_through_segment_end_bi_inclusive",
+        "low_rule": "minimum constituent bi range_low_i64",
+        "high_rule": "maximum constituent bi range_high_i64",
+        "adjacent_segment_members_excluded": true,
+        "structural_endpoints_preserved": true
+      },
+      "causal_time": {
+        "profile_id": "endpoint_confirmed_known_v1",
+        "ordering": "endpoint_bar_index <= confirmed_at_bar_index <= known_at_bar_index",
+        "execution_rule": "signal_after_close_then_next_tradable_bar_open",
+        "extreme_source_is_separate_from_structural_endpoint": true
+      }
+    },
+    {
+      "profile_id": "chan108_lesson54_strict_touch_research_v1",
+      "status": "research_only",
+      "execution_eligible": false,
+      "sources": [54],
+      "third_point": {
+        "profile_id": "lesson54_strict_departure_v1",
+        "buy_rule": "return_range_low_i64 > center_zg_i64",
+        "sell_rule": "return_range_high_i64 < center_zd_i64",
+        "touch_is_third_point": false,
+        "first_completed_return_only": true
+      },
+      "activation": "requires a separately versioned research comparison; never selected by omission"
+    }
+  ],
+  "undefined_rules": [
+    {
+      "rule_id": "gap_strength_prediction",
+      "enabled": false,
+      "reason": "lesson text does not define a deterministic threshold"
+    },
+    {
+      "rule_id": "fractal_composite_score",
+      "enabled": false,
+      "reason": "lesson text does not define weights or a unique score"
+    },
+    {
+      "rule_id": "ma_pressure_confirmation_horizon",
+      "enabled": false,
+      "reason": "confirmation horizon must be an explicit observation parameter"
+    }
+  ]
+}

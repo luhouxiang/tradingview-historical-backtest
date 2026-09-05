@@ -45,6 +45,14 @@ from tvbt.auxiliary.macd_zero_axis import (
     compute_macd_zero_axis_series,
 )
 from tvbt.auxiliary.macd_zero_axis import definition as macd_zero_axis_definition
+from tvbt.auxiliary.price_gap import classify_price_gaps
+from tvbt.auxiliary.price_gap import definition as price_gap_definition
+from tvbt.auxiliary.single_instrument_ma import (
+    SingleMaConfig,
+    classify_single_instrument_ma,
+    compute_ma_ladder,
+)
+from tvbt.auxiliary.single_instrument_ma import definition as single_instrument_ma_definition
 from tvbt.chan.algorithm import definition as chan_definition
 from tvbt.chan.algorithm import run_chan
 from tvbt.risk import unified_risk_overlay_definition
@@ -707,6 +715,8 @@ def definitions() -> list[dict[str, Any]]:
         boll_bardo_definition(),
         daily_30m_definition(),
         ma_sector_rotation_definition(),
+        price_gap_definition(),
+        single_instrument_ma_definition(),
         unified_risk_overlay_definition(),
     ]
     formal: dict[str, tuple[str, list[str]]] = {
@@ -1066,6 +1076,12 @@ def run_strategy(
         return _run_auxiliary_daily_30m(payload, guard, cancelled, last_bar_index=last_bar_index)
     if algorithm["algorithm_id"] == "aux_ma_sector_rotation":
         return _run_auxiliary_ma_sector_rotation(
+            payload, guard, cancelled, last_bar_index=last_bar_index
+        )
+    if algorithm["algorithm_id"] == "aux_price_gap_lifecycle":
+        return _run_auxiliary_price_gap(payload, guard, cancelled, last_bar_index=last_bar_index)
+    if algorithm["algorithm_id"] == "aux_single_instrument_ma_observation":
+        return _run_auxiliary_single_instrument_ma(
             payload, guard, cancelled, last_bar_index=last_bar_index
         )
     meta = json.loads(guard.resolve(str(dataset["meta_path"])).read_text(encoding="utf-8"))
@@ -3740,6 +3756,88 @@ def _run_auxiliary_ma_kiss(
     result.indicator_values = [
         {"bar_index": bar.bar_index, "ma": series.short_ma[position]}
         for position, bar in enumerate(bars)
+    ]
+    return result
+
+
+def _run_auxiliary_price_gap(
+    payload: dict[str, Any],
+    guard: PathGuard,
+    cancelled: threading.Event,
+    *,
+    last_bar_index: int | None,
+) -> StrategyRun:
+    dataset = payload["dataset"]
+    bars = _load_auxiliary_bars(
+        dataset,
+        guard,
+        cancelled,
+        last_bar_index=last_bar_index,
+        cancel_message="auxiliary price gap execution cancelled",
+    )
+    classified = classify_price_gaps(bars)
+    output = _CausalStrategyOutput("AUX-GAP", "AUX_GAP_OBSERVING")
+    for event in classified:
+        output.publish(
+            "chart_event",
+            event.event_id,
+            {
+                "event_id": event.event_id,
+                "event_type": event.event_type,
+                "bar_index": event.bar_index,
+                "timestamp_utc": event.timestamp_utc,
+                "known_at_bar_index": event.known_at_bar_index,
+                "price_i64": event.price_i64,
+                "reason_code": event.reason_code,
+                "reference_object_id": event.gap_id,
+                **event.details(),
+            },
+            event.known_at_bar_index,
+        )
+    result = output.result(bars)
+    result.indicator_values = [{"bar_index": bar.bar_index, "ma": None} for bar in bars]
+    return result
+
+
+def _run_auxiliary_single_instrument_ma(
+    payload: dict[str, Any],
+    guard: PathGuard,
+    cancelled: threading.Event,
+    *,
+    last_bar_index: int | None,
+) -> StrategyRun:
+    dataset = payload["dataset"]
+    config = SingleMaConfig.from_parameters(payload["parameters"])
+    bars = _load_auxiliary_bars(
+        dataset,
+        guard,
+        cancelled,
+        last_bar_index=last_bar_index,
+        cancel_message="single-instrument MA observation cancelled",
+    )
+    ladder = compute_ma_ladder([bar.close_i64 for bar in bars], config.ma_periods)
+    classified = classify_single_instrument_ma(bars, ladder, config)
+    output = _CausalStrategyOutput("AUX-MA-SINGLE", "AUX_MA_OBSERVING")
+    for event in classified:
+        output.publish(
+            "chart_event",
+            event.event_id,
+            {
+                "event_id": event.event_id,
+                "event_type": event.event_type,
+                "bar_index": event.bar_index,
+                "timestamp_utc": event.timestamp_utc,
+                "known_at_bar_index": event.known_at_bar_index,
+                "price_i64": event.price_i64,
+                "reason_code": event.event_type.upper(),
+                "reference_object_id": None,
+                **event.details,
+            },
+            event.known_at_bar_index,
+        )
+    result = output.result(bars)
+    result.indicator_values = [
+        {"bar_index": bar.bar_index, "ma": ladder[0][position]} for position, bar in enumerate(bars)
     ]
     return result
 

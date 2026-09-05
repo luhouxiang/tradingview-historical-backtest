@@ -1593,6 +1593,12 @@ components:
         - invalidation_reason
         - aux_strength
         - strength_reason
+        - body_i64
+        - upper_shadow_i64
+        - lower_shadow_i64
+        - range_i64
+        - close_position_milli
+        - feature_profile
         - catalog_algorithm_id
         - strength_semantic_namespace
         - standard_signal
@@ -1614,6 +1620,12 @@ components:
         invalidation_reason: {type: [string, "null"]}
         aux_strength: {enum: [strong_reversal, unclassified]}
         strength_reason: {type: string, minLength: 1}
+        body_i64: {type: [integer, "null"], minimum: 0}
+        upper_shadow_i64: {type: [integer, "null"], minimum: 0}
+        lower_shadow_i64: {type: [integer, "null"], minimum: 0}
+        range_i64: {type: [integer, "null"], minimum: 0}
+        close_position_milli: {type: [integer, "null"], minimum: 0, maximum: 1000}
+        feature_profile: {type: string, const: processed_bar_ohlc_v1}
         catalog_algorithm_id: {const: ALG-GEO-002}
         strength_semantic_namespace: {const: auxiliary}
         standard_signal: {const: false}
@@ -1636,6 +1648,11 @@ components:
         - end_time
         - end_price_i64
         - end_extreme_source_bar_index
+        - range_low_i64
+        - range_high_i64
+        - range_low_source_bar_index
+        - range_high_source_bar_index
+        - range_profile
         - direction
         - status
         - invalidation_reason
@@ -1654,6 +1671,11 @@ components:
         end_time: {type: integer}
         end_price_i64: {type: integer}
         end_extreme_source_bar_index: {type: integer, minimum: 0}
+        range_low_i64: {type: integer}
+        range_high_i64: {type: integer}
+        range_low_source_bar_index: {type: integer, minimum: 0}
+        range_high_source_bar_index: {type: integer, minimum: 0}
+        range_profile: {type: string, enum: [endpoint_extrema_v1, constituent_bi_union_v1]}
         direction: {enum: [up, down]}
         status: {enum: [candidate, confirmed, invalidated]}
         invalidation_reason: {type: [string, "null"]}
@@ -1831,7 +1853,7 @@ components:
     ChanSignalPoint:
       type: object
       additionalProperties: false
-      required: [object_id, bar_index, time, price_i64, signal_type, divergence_kind, signal_class, strength, reference_object_id, macd_area_reference, macd_area_current, status, invalidation_reason, level_id, lower_level_turn_object_id, catalog_event, catalog_algorithm_id, confirmed, confirmed_at_bar_index, known_at_bar_index, object_revision]
+      required: [object_id, bar_index, time, price_i64, signal_type, divergence_kind, signal_class, strength, reference_object_id, macd_area_reference, macd_area_current, status, invalidation_reason, level_id, lower_level_turn_object_id, catalog_event, catalog_algorithm_id, evidence_profile, comparison_reference_object_id, comparison_current_object_id, comparison_rule, new_extreme_satisfied, departure_object_id, return_object_id, return_ordinal, boundary_profile, boundary_relation, return_depth_to_core_i64, return_depth_to_outer_i64, follow_through_object_id, follow_through_status, confirmation_latency_bars, reference_center_ordinal, older_center_count, center_chain_profile, confirmed, confirmed_at_bar_index, known_at_bar_index, object_revision]
       properties:
         object_id: {type: string, minLength: 1}
         bar_index: {type: integer, minimum: 0}
@@ -1850,6 +1872,24 @@ components:
         lower_level_turn_object_id: {type: [string, "null"]}
         catalog_event: {type: [string, "null"], enum: [B1_candidate, B1_confirmed, B1_invalidated, S1_candidate, S1_confirmed, S1_invalidated, null]}
         catalog_algorithm_id: {type: [string, "null"], enum: [ALG-SIG-001, null]}
+        evidence_profile: {type: string, const: chan108_single_scope_v1}
+        comparison_reference_object_id: {type: [string, "null"]}
+        comparison_current_object_id: {type: [string, "null"]}
+        comparison_rule: {type: [string, "null"]}
+        new_extreme_satisfied: {type: [boolean, "null"]}
+        departure_object_id: {type: [string, "null"]}
+        return_object_id: {type: [string, "null"]}
+        return_ordinal: {type: [integer, "null"], minimum: 1}
+        boundary_profile: {type: [string, "null"], enum: [lesson20_inclusive_v1, null]}
+        boundary_relation: {type: [string, "null"], enum: [outside_outer, touch_outer, outside_core, touch_core, null]}
+        return_depth_to_core_i64: {type: [integer, "null"], minimum: 0}
+        return_depth_to_outer_i64: {type: [integer, "null"]}
+        follow_through_object_id: {type: [string, "null"]}
+        follow_through_status: {type: string, enum: [pending, observed, not_applicable]}
+        confirmation_latency_bars: {type: integer, minimum: 0}
+        reference_center_ordinal: {type: [integer, "null"], minimum: 1}
+        older_center_count: {type: [integer, "null"], minimum: 0}
+        center_chain_profile: {type: [string, "null"], enum: [confirmed_same_level_centers_known_at_signal_v1, null]}
         confirmed: {type: boolean}
         confirmed_at_bar_index: {type: [integer, "null"], minimum: 0}
         known_at_bar_index: {type: integer, minimum: 0}

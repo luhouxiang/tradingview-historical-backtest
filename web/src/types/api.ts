@@ -197,6 +197,12 @@ export interface ChanFractal {
   invalidation_reason: string | null
   aux_strength: 'strong_reversal' | 'unclassified'
   strength_reason: string
+  body_i64: number | null
+  upper_shadow_i64: number | null
+  lower_shadow_i64: number | null
+  range_i64: number | null
+  close_position_milli: number | null
+  feature_profile: 'processed_bar_ohlc_v1'
   catalog_algorithm_id: 'ALG-GEO-002'
   strength_semantic_namespace: 'auxiliary'
   standard_signal: false
@@ -217,6 +223,11 @@ export interface ChanLineObject {
   end_time: number
   end_price_i64: number
   end_extreme_source_bar_index: number
+  range_low_i64: number
+  range_high_i64: number
+  range_low_source_bar_index: number
+  range_high_source_bar_index: number
+  range_profile: 'endpoint_extrema_v1' | 'constituent_bi_union_v1'
   direction: 'up' | 'down'
   status: 'candidate' | 'confirmed' | 'invalidated'
   invalidation_reason: string | null
@@ -267,6 +278,24 @@ export interface ChanSignalPoint {
   lower_level_turn_object_id: string | null
   catalog_event: 'B1_candidate' | 'B1_confirmed' | 'B1_invalidated' | 'S1_candidate' | 'S1_confirmed' | 'S1_invalidated' | null
   catalog_algorithm_id: 'ALG-SIG-001' | null
+  evidence_profile: 'chan108_single_scope_v1'
+  comparison_reference_object_id: string | null
+  comparison_current_object_id: string | null
+  comparison_rule: string | null
+  new_extreme_satisfied: boolean | null
+  departure_object_id: string | null
+  return_object_id: string | null
+  return_ordinal: number | null
+  boundary_profile: 'lesson20_inclusive_v1' | null
+  boundary_relation: 'outside_outer' | 'touch_outer' | 'outside_core' | 'touch_core' | null
+  return_depth_to_core_i64: number | null
+  return_depth_to_outer_i64: number | null
+  follow_through_object_id: string | null
+  follow_through_status: 'pending' | 'observed' | 'not_applicable'
+  confirmation_latency_bars: number
+  reference_center_ordinal: number | null
+  older_center_count: number | null
+  center_chain_profile: 'confirmed_same_level_centers_known_at_signal_v1' | null
   confirmed: boolean
   confirmed_at_bar_index: number | null
   known_at_bar_index: number

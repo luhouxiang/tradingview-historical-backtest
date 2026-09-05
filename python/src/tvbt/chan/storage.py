@@ -59,6 +59,12 @@ FRACTAL_SCHEMA = pa.schema(
         ("invalidation_reason", pa.string()),
         ("aux_strength", pa.string()),
         ("strength_reason", pa.string()),
+        ("body_i64", pa.int64()),
+        ("upper_shadow_i64", pa.int64()),
+        ("lower_shadow_i64", pa.int64()),
+        ("range_i64", pa.int64()),
+        ("close_position_milli", pa.int64()),
+        ("feature_profile", pa.string()),
         ("catalog_algorithm_id", pa.string()),
         ("strength_semantic_namespace", pa.string()),
         ("standard_signal", pa.bool_()),
@@ -69,8 +75,8 @@ FRACTAL_SCHEMA = pa.schema(
         ("object_revision", pa.int64()),
     ]
 )
-# 线性对象 schema，当前复用于“笔”和“线段”。二者都只保存时间/价格锚点，
-# 不保存屏幕像素或数组下标。
+# 线性对象 schema，当前复用于“笔”和“线段”。结构端点供绘图；独立 range 字段
+# 是上层结构计算的权威价格区间，不保存屏幕像素或当前数组下标。
 LINE_SCHEMA = pa.schema(
     [
         ("object_id", pa.string()),
@@ -82,6 +88,11 @@ LINE_SCHEMA = pa.schema(
         ("end_time", pa.int64()),
         ("end_price_i64", pa.int64()),
         ("end_extreme_source_bar_index", pa.int64()),
+        ("range_low_i64", pa.int64()),
+        ("range_high_i64", pa.int64()),
+        ("range_low_source_bar_index", pa.int64()),
+        ("range_high_source_bar_index", pa.int64()),
+        ("range_profile", pa.string()),
         ("direction", pa.string()),
         ("status", pa.string()),
         ("invalidation_reason", pa.string()),
@@ -259,6 +270,24 @@ SIGNAL_SCHEMA = pa.schema(
         ("lower_level_turn_object_id", pa.string()),
         ("catalog_event", pa.string()),
         ("catalog_algorithm_id", pa.string()),
+        ("evidence_profile", pa.string()),
+        ("comparison_reference_object_id", pa.string()),
+        ("comparison_current_object_id", pa.string()),
+        ("comparison_rule", pa.string()),
+        ("new_extreme_satisfied", pa.bool_()),
+        ("departure_object_id", pa.string()),
+        ("return_object_id", pa.string()),
+        ("return_ordinal", pa.int64()),
+        ("boundary_profile", pa.string()),
+        ("boundary_relation", pa.string()),
+        ("return_depth_to_core_i64", pa.int64()),
+        ("return_depth_to_outer_i64", pa.int64()),
+        ("follow_through_object_id", pa.string()),
+        ("follow_through_status", pa.string()),
+        ("confirmation_latency_bars", pa.int64()),
+        ("reference_center_ordinal", pa.int64()),
+        ("older_center_count", pa.int64()),
+        ("center_chain_profile", pa.string()),
         ("confirmed", pa.bool_()),
         ("confirmed_at_bar_index", pa.int64()),
         ("known_at_bar_index", pa.int64()),
@@ -367,7 +396,7 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
             (checkpoint_directory / f"{bar_index}.bin").write_bytes(data)
         checkpoint_indices = sorted(result.checkpoints)
         manifest = {
-            "schema_version": 3,
+            "schema_version": 4,
             "cache_key": payload["cache_key"],
             "dataset_id": dataset["dataset_id"],
             "data_revision": dataset["data_revision"],

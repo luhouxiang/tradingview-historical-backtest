@@ -153,6 +153,12 @@ type ChanFractal struct {
 	InvalidationReason        *string `json:"invalidation_reason" parquet:"invalidation_reason,optional"`
 	AuxStrength               string  `json:"aux_strength" parquet:"aux_strength"`
 	StrengthReason            string  `json:"strength_reason" parquet:"strength_reason"`
+	BodyI64                   *int64  `json:"body_i64" parquet:"body_i64,optional"`
+	UpperShadowI64            *int64  `json:"upper_shadow_i64" parquet:"upper_shadow_i64,optional"`
+	LowerShadowI64            *int64  `json:"lower_shadow_i64" parquet:"lower_shadow_i64,optional"`
+	RangeI64                  *int64  `json:"range_i64" parquet:"range_i64,optional"`
+	ClosePositionMilli        *int64  `json:"close_position_milli" parquet:"close_position_milli,optional"`
+	FeatureProfile            string  `json:"feature_profile" parquet:"feature_profile"`
 	CatalogAlgorithmID        string  `json:"catalog_algorithm_id" parquet:"catalog_algorithm_id"`
 	StrengthSemanticNamespace string  `json:"strength_semantic_namespace" parquet:"strength_semantic_namespace"`
 	StandardSignal            bool    `json:"standard_signal" parquet:"standard_signal"`
@@ -173,6 +179,11 @@ type ChanLineObject struct {
 	EndTime                    int64   `json:"end_time" parquet:"end_time"`
 	EndPriceI64                int64   `json:"end_price_i64" parquet:"end_price_i64"`
 	EndExtremeSourceBarIndex   int64   `json:"end_extreme_source_bar_index" parquet:"end_extreme_source_bar_index"`
+	RangeLowI64                int64   `json:"range_low_i64" parquet:"range_low_i64"`
+	RangeHighI64               int64   `json:"range_high_i64" parquet:"range_high_i64"`
+	RangeLowSourceBarIndex     int64   `json:"range_low_source_bar_index" parquet:"range_low_source_bar_index"`
+	RangeHighSourceBarIndex    int64   `json:"range_high_source_bar_index" parquet:"range_high_source_bar_index"`
+	RangeProfile               string  `json:"range_profile" parquet:"range_profile"`
 	Direction                  string  `json:"direction" parquet:"direction"`
 	Status                     string  `json:"status" parquet:"status"`
 	InvalidationReason         *string `json:"invalidation_reason" parquet:"invalidation_reason,optional"`
@@ -342,27 +353,45 @@ type ChanCenterMonitor struct {
 }
 
 type ChanSignalPoint struct {
-	ObjectID               string   `json:"object_id" parquet:"object_id"`
-	BarIndex               int64    `json:"bar_index" parquet:"bar_index"`
-	Time                   int64    `json:"time" parquet:"time"`
-	PriceI64               int64    `json:"price_i64" parquet:"price_i64"`
-	SignalType             string   `json:"signal_type" parquet:"signal_type"`
-	DivergenceKind         *string  `json:"divergence_kind" parquet:"divergence_kind,optional"`
-	SignalClass            *string  `json:"signal_class" parquet:"signal_class,optional"`
-	Strength               *string  `json:"strength" parquet:"strength,optional"`
-	ReferenceObjectID      *string  `json:"reference_object_id" parquet:"reference_object_id,optional"`
-	MACDAreaReference      *float64 `json:"macd_area_reference" parquet:"macd_area_reference,optional"`
-	MACDAreaCurrent        *float64 `json:"macd_area_current" parquet:"macd_area_current,optional"`
-	Status                 string   `json:"status" parquet:"status"`
-	InvalidationReason     *string  `json:"invalidation_reason" parquet:"invalidation_reason,optional"`
-	LevelID                *string  `json:"level_id" parquet:"level_id,optional"`
-	LowerLevelTurnObjectID *string  `json:"lower_level_turn_object_id" parquet:"lower_level_turn_object_id,optional"`
-	CatalogEvent           *string  `json:"catalog_event" parquet:"catalog_event,optional"`
-	CatalogAlgorithmID     *string  `json:"catalog_algorithm_id" parquet:"catalog_algorithm_id,optional"`
-	Confirmed              bool     `json:"confirmed" parquet:"confirmed"`
-	ConfirmedAtBarIndex    *int64   `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index,optional"`
-	KnownAtBarIndex        int64    `json:"known_at_bar_index" parquet:"known_at_bar_index"`
-	ObjectRevision         int64    `json:"object_revision" parquet:"object_revision"`
+	ObjectID                    string   `json:"object_id" parquet:"object_id"`
+	BarIndex                    int64    `json:"bar_index" parquet:"bar_index"`
+	Time                        int64    `json:"time" parquet:"time"`
+	PriceI64                    int64    `json:"price_i64" parquet:"price_i64"`
+	SignalType                  string   `json:"signal_type" parquet:"signal_type"`
+	DivergenceKind              *string  `json:"divergence_kind" parquet:"divergence_kind,optional"`
+	SignalClass                 *string  `json:"signal_class" parquet:"signal_class,optional"`
+	Strength                    *string  `json:"strength" parquet:"strength,optional"`
+	ReferenceObjectID           *string  `json:"reference_object_id" parquet:"reference_object_id,optional"`
+	MACDAreaReference           *float64 `json:"macd_area_reference" parquet:"macd_area_reference,optional"`
+	MACDAreaCurrent             *float64 `json:"macd_area_current" parquet:"macd_area_current,optional"`
+	Status                      string   `json:"status" parquet:"status"`
+	InvalidationReason          *string  `json:"invalidation_reason" parquet:"invalidation_reason,optional"`
+	LevelID                     *string  `json:"level_id" parquet:"level_id,optional"`
+	LowerLevelTurnObjectID      *string  `json:"lower_level_turn_object_id" parquet:"lower_level_turn_object_id,optional"`
+	CatalogEvent                *string  `json:"catalog_event" parquet:"catalog_event,optional"`
+	CatalogAlgorithmID          *string  `json:"catalog_algorithm_id" parquet:"catalog_algorithm_id,optional"`
+	EvidenceProfile             string   `json:"evidence_profile" parquet:"evidence_profile"`
+	ComparisonReferenceObjectID *string  `json:"comparison_reference_object_id" parquet:"comparison_reference_object_id,optional"`
+	ComparisonCurrentObjectID   *string  `json:"comparison_current_object_id" parquet:"comparison_current_object_id,optional"`
+	ComparisonRule              *string  `json:"comparison_rule" parquet:"comparison_rule,optional"`
+	NewExtremeSatisfied         *bool    `json:"new_extreme_satisfied" parquet:"new_extreme_satisfied,optional"`
+	DepartureObjectID           *string  `json:"departure_object_id" parquet:"departure_object_id,optional"`
+	ReturnObjectID              *string  `json:"return_object_id" parquet:"return_object_id,optional"`
+	ReturnOrdinal               *int64   `json:"return_ordinal" parquet:"return_ordinal,optional"`
+	BoundaryProfile             *string  `json:"boundary_profile" parquet:"boundary_profile,optional"`
+	BoundaryRelation            *string  `json:"boundary_relation" parquet:"boundary_relation,optional"`
+	ReturnDepthToCoreI64        *int64   `json:"return_depth_to_core_i64" parquet:"return_depth_to_core_i64,optional"`
+	ReturnDepthToOuterI64       *int64   `json:"return_depth_to_outer_i64" parquet:"return_depth_to_outer_i64,optional"`
+	FollowThroughObjectID       *string  `json:"follow_through_object_id" parquet:"follow_through_object_id,optional"`
+	FollowThroughStatus         string   `json:"follow_through_status" parquet:"follow_through_status"`
+	ConfirmationLatencyBars     int64    `json:"confirmation_latency_bars" parquet:"confirmation_latency_bars"`
+	ReferenceCenterOrdinal      *int64   `json:"reference_center_ordinal" parquet:"reference_center_ordinal,optional"`
+	OlderCenterCount            *int64   `json:"older_center_count" parquet:"older_center_count,optional"`
+	CenterChainProfile          *string  `json:"center_chain_profile" parquet:"center_chain_profile,optional"`
+	Confirmed                   bool     `json:"confirmed" parquet:"confirmed"`
+	ConfirmedAtBarIndex         *int64   `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index,optional"`
+	KnownAtBarIndex             int64    `json:"known_at_bar_index" parquet:"known_at_bar_index"`
+	ObjectRevision              int64    `json:"object_revision" parquet:"object_revision"`
 }
 
 type ChanObjects struct {

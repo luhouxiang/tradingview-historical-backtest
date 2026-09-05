@@ -41,6 +41,12 @@ class ComponentLike(Protocol):
     @property
     def known_at_bar_index(self) -> int: ...
 
+    @property
+    def range_low_i64(self) -> int | None: ...
+
+    @property
+    def range_high_i64(self) -> int | None: ...
+
 
 @dataclass(frozen=True)
 class ZnObservation:
@@ -109,8 +115,12 @@ def classify_zn_components(
         if component.direction not in {"up", "down"}:
             raise ValueError("center component direction must be up or down")
         direction = cast(Literal["up", "down"], component.direction)
-        range_low_i64 = min(component.start.price_i64, component.end.price_i64)
-        range_high_i64 = max(component.start.price_i64, component.end.price_i64)
+        range_low_i64: int | None = getattr(component, "range_low_i64", None)
+        if range_low_i64 is None:
+            range_low_i64 = min(component.start.price_i64, component.end.price_i64)
+        range_high_i64: int | None = getattr(component, "range_high_i64", None)
+        if range_high_i64 is None:
+            range_high_i64 = max(component.start.price_i64, component.end.price_i64)
         zn_twice_i64 = range_low_i64 + range_high_i64
         zn_twice_values.append(zn_twice_i64)
         relative_position: RelativePosition = (

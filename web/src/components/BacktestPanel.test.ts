@@ -236,7 +236,12 @@ describe('BacktestPanel', () => {
       total_return: .1, max_drawdown: .02, trade_count: 2, win_rate: .5, sharpe: 1.2, total_commission_i64: 600,
       risk_approved_count: 1, risk_reduced_count: 0, risk_blocked_count: 0, risk_kill_switch_count: 0,
     })
-    api.getBacktestTrades.mockResolvedValue({ rows: [{ trade_id: 'trade-1', side: 'short', entry_bar_index: 10, entry_price_i64: 100, exit_bar_index: 20, exit_price_i64: 90, net_pnl_i64: 10 }], next_cursor: null })
+    api.getBacktestTrades.mockResolvedValue({ rows: [{
+      trade_id: 'trade-1', side: 'short', entry_bar_index: 10, entry_time: 1_700_000_000_000,
+      entry_price_i64: 100, entry_signal_id: 'signal-entry', entry_signal_known_at_bar_index: 9, entry_order_id: 'order-entry',
+      exit_bar_index: 20, exit_time: 1_700_003_000_000, exit_price_i64: 90, exit_signal_id: 'signal-exit', exit_order_id: 'order-exit',
+      quantity: 1, gross_pnl_i64: 20, net_pnl_i64: 10, commission_i64: 6, slippage_i64: 4,
+    }], next_cursor: null })
     api.getBacktestEquity.mockResolvedValue([{ bar_index: 0, equity_i64: 100 }, { bar_index: 1, equity_i64: 110 }])
     api.getBacktestChartEvents.mockResolvedValue([])
   })
@@ -274,11 +279,53 @@ describe('BacktestPanel', () => {
         expect.objectContaining({ object_id: 'risk-approved-81', label: '风控·订单意图批准', bar_index: 81 }),
       ],
     })
+    expect(wrapper.emitted('completed')?.[0]?.[0]).toMatchObject({ signals: expect.arrayContaining([
+      expect.objectContaining({ object_id: 'trade-1:entry', event_type: 'open_short', execution_fact: true }),
+      expect.objectContaining({ object_id: 'trade-1:exit', event_type: 'close_short', execution_fact: true }),
+    ]) })
     expect(wrapper.get('.summary-grid').text()).toContain('风控批准 1')
     await wrapper.setProps({ view: 'trades' })
     expect(wrapper.get('.trade-table').text()).toContain('trade-1')
     await wrapper.setProps({ view: 'equity' })
     expect(wrapper.get('.equity-chart polyline').attributes('points')).not.toBe('')
+  })
+
+  it('highlights the run button before and after execution and greys it while running', async () => {
+    let acceptRun!: (value: Awaited<ReturnType<typeof api.createBacktest>>) => void
+    api.createBacktest.mockImplementationOnce(() => new Promise((resolve) => { acceptRun = resolve }))
+    const wrapper = mount(BacktestPanel, { props: { dataset, view: 'backtest' } })
+    await flushPromises()
+    const button = wrapper.get('.backtest-run-button')
+    expect(button.attributes('disabled')).toBeUndefined()
+    expect(button.attributes('aria-busy')).toBe('false')
+
+    await button.trigger('click')
+    expect(button.attributes('disabled')).toBeDefined()
+    expect(button.classes()).toContain('is-running')
+    expect(button.attributes('aria-busy')).toBe('true')
+
+    acceptRun({ run_id: 'run-1', run_signature: `sha256:${'3'.repeat(64)}`, status: 'queued' })
+    await flushPromises()
+    expect(button.attributes('disabled')).toBeUndefined()
+    expect(button.classes()).not.toContain('is-running')
+    expect(button.attributes('aria-busy')).toBe('false')
+  })
+
+  it('accepts a completed zero-trade run and explains why no execution markers exist', async () => {
+    api.getBacktestSummary.mockResolvedValue({
+      total_return: 0, max_drawdown: 0, trade_count: 0, win_rate: null, sharpe: null,
+      total_commission_i64: 0, risk_approved_count: 0, risk_reduced_count: 0,
+      risk_blocked_count: 0, risk_kill_switch_count: 0,
+    })
+    api.getBacktestTrades.mockResolvedValue({ rows: [], next_cursor: null })
+    const wrapper = mount(BacktestPanel, { props: { dataset, view: 'backtest' } })
+    await flushPromises()
+    await wrapper.get('.backtest-controls button').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('本次没有成交，因此图上没有开平仓标记。')
+    expect(wrapper.find('.backtest-controls .issue').exists()).toBe(false)
+    expect(wrapper.emitted('completed')?.[0]?.[0]).toMatchObject({ run_id: 'run-1' })
   })
 
   it('restores the latest completed run for the same dataset revision after remount', async () => {

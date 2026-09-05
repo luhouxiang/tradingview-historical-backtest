@@ -56,6 +56,12 @@ def test_chan_cache_writes_typed_tables_checkpoints_and_success_last(tmp_path: P
                 "invalidation_reason": None,
                 "aux_strength": "unclassified",
                 "strength_reason": "lesson82_strong_reversal_condition_not_met",
+                "body_i64": 5,
+                "upper_shadow_i64": 0,
+                "lower_shadow_i64": 5,
+                "range_i64": 10,
+                "close_position_milli": 500,
+                "feature_profile": "processed_bar_ohlc_v1",
                 "catalog_algorithm_id": "ALG-GEO-002",
                 "strength_semantic_namespace": "auxiliary",
                 "standard_signal": False,
@@ -96,6 +102,11 @@ def test_chan_cache_writes_typed_tables_checkpoints_and_success_last(tmp_path: P
         "end_time",
         "end_price_i64",
         "end_extreme_source_bar_index",
+        "range_low_i64",
+        "range_high_i64",
+        "range_low_source_bar_index",
+        "range_high_source_bar_index",
+        "range_profile",
         "direction",
         "status",
         "invalidation_reason",
@@ -110,7 +121,7 @@ def test_chan_cache_writes_typed_tables_checkpoints_and_success_last(tmp_path: P
         == pq.read_table(directory / "bi.parquet").schema.names
     )
     manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["schema_version"] == 3
+    assert manifest["schema_version"] == 4
     assert manifest["counts"]["events"] == 1
     assert manifest["files"]["processed_bars"]["path"] == "processed_bars.parquet"
     assert manifest["files"]["bi_states"]["path"] == "bi_states.parquet"
@@ -128,6 +139,10 @@ def test_chan_cache_writes_typed_tables_checkpoints_and_success_last(tmp_path: P
         "lower_level_turn_object_id"
         in pq.read_table(directory / "trade_points.parquet").schema.names
     )
+    signal_columns = pq.read_table(directory / "trade_points.parquet").schema.names
+    assert "comparison_reference_object_id" in signal_columns
+    assert "return_depth_to_core_i64" in signal_columns
+    assert "confirmation_latency_bars" in signal_columns
     assert manifest["checkpoint"]["last_bar_index"] == 4
     assert all(value["sha256"].startswith("sha256:") for value in manifest["files"].values())
 

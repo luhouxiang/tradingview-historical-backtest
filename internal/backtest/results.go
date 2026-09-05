@@ -3,6 +3,7 @@ package backtest
 import (
 	"encoding/base64"
 	"encoding/json"
+	"os"
 	"path/filepath"
 	"strconv"
 
@@ -67,7 +68,7 @@ func (s *Service) Trades(runID, cursor string) ([]Trade, *string, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	rows, err := parquet.ReadFile[Trade](filepath.Join(directory, "trades.parquet"))
+	rows, err := readParquetRows[Trade](filepath.Join(directory, "trades.parquet"))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -93,7 +94,7 @@ func (s *Service) Equity(runID string) ([]Equity, error) {
 	if err != nil {
 		return nil, err
 	}
-	return parquet.ReadFile[Equity](filepath.Join(directory, "equity.parquet"))
+	return readParquetRows[Equity](filepath.Join(directory, "equity.parquet"))
 }
 
 func (s *Service) ChartEvents(runID string) ([]map[string]any, error) {
@@ -105,7 +106,7 @@ func (s *Service) ChartEvents(runID string) ([]map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
-	rows, err := parquet.ReadFile[eventRow](filepath.Join(directory, "chart_events.parquet"))
+	rows, err := readParquetRows[eventRow](filepath.Join(directory, "chart_events.parquet"))
 	if err != nil {
 		return nil, err
 	}
@@ -118,6 +119,30 @@ func (s *Service) ChartEvents(runID string) ([]map[string]any, error) {
 		result = append(result, map[string]any{"event_seq": row.EventSeq, "known_at_bar_index": row.KnownAtBarIndex, "object_type": row.ObjectType, "object_id": row.ObjectID, "operation": row.Operation, "object_revision": row.ObjectRevision, "payload": payload})
 	}
 	return result, nil
+}
+
+// readParquetRows avoids parquet-go's typed reader failure on a valid Arrow
+// Parquet file whose only row group has zero rows ("Seek: invalid offset").
+// Python deliberately writes these schema-bearing empty files for completed
+// runs with no trades or events, so an empty slice is the authoritative result.
+func readParquetRows[T any](path string) ([]T, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	info, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+	parquetFile, err := parquet.OpenFile(file, info.Size())
+	if err != nil {
+		return nil, err
+	}
+	if parquetFile.NumRows() == 0 {
+		return []T{}, nil
+	}
+	return parquet.ReadFile[T](path)
 }
 
 func decodeCursor(value string) int {

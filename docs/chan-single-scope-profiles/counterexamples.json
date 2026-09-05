@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "profile_id": "chan108_single_scope_v1",
+  "cases": [
+    {
+      "case_id": "third_buy_touch",
+      "kind": "third_point_boundary",
+      "input": {"center_zd_i64": 100, "center_zg_i64": 110, "direction": "up", "return_range_low_i64": 110, "return_completed": true, "return_ordinal": 1},
+      "expected": {"inclusive": "B3", "strict_research": "touching_oscillation"}
+    },
+    {
+      "case_id": "third_sell_touch",
+      "kind": "third_point_boundary",
+      "input": {"center_zd_i64": 100, "center_zg_i64": 110, "direction": "down", "return_range_high_i64": 100, "return_completed": true, "return_ordinal": 1},
+      "expected": {"inclusive": "S3", "strict_research": "touching_oscillation"}
+    },
+    {
+      "case_id": "unfinished_return",
+      "kind": "causal_completion",
+      "input": {"center_zg_i64": 110, "direction": "up", "running_return_low_i64": 111, "return_completed": false, "return_ordinal": 1},
+      "expected": {"published_signal": null, "observation": "candidate_only"}
+    },
+    {
+      "case_id": "lost_first_return_eligibility",
+      "kind": "first_return",
+      "input": {"center_zg_i64": 110, "direction": "up", "completed_return_lows_i64": [109, 111]},
+      "expected": {"published_signal": null, "consumed_return_ordinal": 1}
+    },
+    {
+      "case_id": "segment_internal_extreme",
+      "kind": "segment_range",
+      "input": {"start_price_i64": 120, "end_price_i64": 100, "constituent_bi_ranges_i64": [[120, 140], [105, 140], [100, 125]]},
+      "expected": {"range_low_i64": 100, "range_high_i64": 140, "drawing_endpoints_i64": [120, 100]}
+    },
+    {
+      "case_id": "causal_time_separation",
+      "kind": "causal_time",
+      "input": {"endpoint_bar_index": 20, "confirmed_at_bar_index": 24, "known_at_bar_index": 24, "next_tradable_bar_index": 25},
+      "expected": {"visible_before_bar_index": 24, "first_execution_bar_index": 25}
+    }
+  ]
+}

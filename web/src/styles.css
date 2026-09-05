@@ -192,6 +192,9 @@ button:disabled { color: #787b86; }
 .backtest-controls .ranking-context-field { width: 100%; align-items: flex-start; flex-direction: column; }
 .backtest-controls .ranking-context-field textarea { width: min(100%, 960px); box-sizing: border-box; resize: vertical; padding: 6px; border: 1px solid #363a45; background: #131722; color: #d1d4dc; font: 11px/1.35 ui-monospace, monospace; }
 .backtest-controls button { border: 1px solid #363a45; background: #2a2e39; cursor: pointer; }
+.backtest-controls .backtest-run-button { min-height: 34px; padding: 0 14px; border-color: #2962ff; border-radius: 4px; background: #2962ff; color: #fff; font-weight: 700; box-shadow: 0 0 0 1px #2962ff55; }
+.backtest-controls .backtest-run-button:hover:not(:disabled) { border-color: #4f7cff; background: #1e53d7; }
+.backtest-controls .backtest-run-button:disabled { border-color: #434651; background: #2a2e39; color: #787b86; box-shadow: none; cursor: not-allowed; opacity: 1; }
 .backtest-panel .issue { color: #f23645; }
 .summary-grid { display: grid; grid-template-columns: repeat(3, minmax(120px, 1fr)); gap: 8px; }
 .summary-grid span { padding: 8px; border: 1px solid #2a2e39; background: #181c27; }

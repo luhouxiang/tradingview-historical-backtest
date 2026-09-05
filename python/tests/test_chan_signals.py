@@ -124,6 +124,15 @@ def test_trend_divergence_compares_b_and_c_and_creates_standard_points() -> None
     assert trend[0].signal_type == "top_divergence"
     assert trend[0].segment_index == 11
     assert trend[0].macd_area_current < trend[0].macd_area_reference
+    assert trend[0].comparison_reference_object_id == "segment-5"
+    assert trend[0].comparison_current_object_id == "segment-11"
+    assert trend[0].comparison_rule == "macd_same_direction_area_contraction_with_new_extreme"
+    assert trend[0].new_extreme_satisfied is True
+    assert trend[0].follow_through_object_id == "segment-12"
+    assert trend[0].follow_through_status == "observed"
+    assert trend[0].reference_center_ordinal == 2
+    assert trend[0].older_center_count == 1
+    assert trend[0].center_chain_profile == "confirmed_same_level_centers_known_at_signal_v1"
 
     points = chan_trade_points(
         segments, centers, ["center-1", "center-2"], [("trend-div", trend[0])]
@@ -410,6 +419,14 @@ def test_third_buy_accepts_equal_zg_and_preserves_confirmation_time() -> None:
     assert points[0].bar_index == 7
     assert points[0].known_at_bar_index == 11
     assert points[0].known_at_bar_index >= points[0].bar_index
+    assert points[0].confirmation_latency_bars == 4
+    assert points[0].departure_object_id == "segment-5"
+    assert points[0].return_object_id == "segment-6"
+    assert points[0].return_ordinal == 1
+    assert points[0].boundary_profile == "lesson20_inclusive_v1"
+    assert points[0].boundary_relation == "touch_core"
+    assert points[0].return_depth_to_core_i64 == 0
+    assert points[0].follow_through_status == "pending"
 
 
 def test_third_sell_accepts_equal_zd() -> None:

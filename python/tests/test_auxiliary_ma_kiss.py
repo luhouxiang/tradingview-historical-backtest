@@ -14,6 +14,7 @@ from tvbt.auxiliary.ma_kiss import (
     MaKissConfig,
     classify_ma_kisses,
     definition,
+    measure_ma_force,
 )
 from tvbt.backtest import run_backtest
 from tvbt.storage.path_guard import PathGuard
@@ -53,13 +54,14 @@ def test_definition_is_an_explicit_non_trading_auxiliary_catalog_adapter() -> No
     value = definition()
     assert any(item["algorithm_id"] == "aux_ma_kiss_legacy" for item in algorithm_definitions())
     assert value["algorithm_id"] == "aux_ma_kiss_legacy"
-    assert value["algorithm_version"] == "1.0.0"
+    assert value["algorithm_version"] == "2.0.0"
     assert value["kind"] == "strategy"
     assert value["name"] == "辅助·均线“吻”旧系统（候选不交易）"
     assert {output["name"] for output in value["outputs"]} == {
         "aux_flying_kiss",
         "aux_lip_kiss",
         "aux_wet_kiss",
+        "aux_ma_force_completed",
         "aux_legacy_B1_candidate",
         "aux_legacy_B2_candidate",
     }
@@ -78,12 +80,20 @@ def test_flying_lip_and_wet_kisses_are_causally_confirmed_and_only_first_bullish
     assert [event.event_type for event in events] == [
         "aux_flying_kiss",
         "aux_legacy_B2_candidate",
+        "aux_ma_force_completed",
         "aux_lip_kiss",
+        "aux_ma_force_completed",
         "aux_wet_kiss",
     ]
     kisses = [event for event in events if event.details.get("kiss_type")]
     assert [event.known_at_bar_index for event in kisses] == [2, 2, 4, 7]
     assert [event.details["kiss_order"] for event in kisses] == [1, 1, 2, 3]
+    force = [event for event in events if event.event_type == "aux_ma_force_completed"]
+    assert [event.details["duration_bars"] for event in force] == [1, 1]
+    assert [event.details["area"] for event in force] == [0.5, 0.5]
+    assert [event.details["average_force"] for event in force] == [0.5, 0.5]
+    assert force[1].details["area_ratio_to_previous"] == 1.0
+    assert force[1].details["average_ratio_to_previous"] == 1.0
     candidate = next(event for event in events if event.event_type.endswith("B2_candidate"))
     assert candidate.details == {
         "catalog_algorithm_id": "ALG-AUX-001",
@@ -98,6 +108,17 @@ def test_flying_lip_and_wet_kisses_are_causally_confirmed_and_only_first_bullish
         "kiss_order": 1,
         "kiss_type": "flying",
     }
+
+
+def test_ma_force_uses_right_rectangles_and_bar_time_units() -> None:
+    area, duration, average = measure_ma_force(
+        [0.0, 1.0, 3.0, 2.0, 0.0],
+        [0.0] * 5,
+        0,
+        4,
+    )
+    assert (area, duration, average) == (6.0, 4, 1.5)
+    assert measure_ma_force([0.0], [0.0], 0, 0) == (0, 0, None)
 
 
 def test_legacy_b1_requires_lower_low_and_weaker_macd_after_latest_bearish_kiss() -> None:

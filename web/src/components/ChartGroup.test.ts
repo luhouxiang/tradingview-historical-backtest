@@ -197,7 +197,7 @@ describe('ChartGroup', () => {
     wrapper.unmount()
   })
 
-  it('projects causal risk decisions onto the price chart', async () => {
+  it('projects causal risk decisions and actual execution markers onto the price chart', async () => {
     const wrapper = mount(ChartGroup, { props: { dataset: dataset() } })
     await flushPromises()
     await wrapper.setProps({ replaySignals: [
@@ -211,10 +211,16 @@ describe('ChartGroup', () => {
         event_type: 'kill_switch', display_label: '风控·熔断',
         timestamp_utc: 1_700_000_300_000, price_i64: 10, known_at_bar_index: 1,
       },
+      {
+        object_type: 'chart_event', object_id: 'trade-1:entry', event_type: 'open_long',
+        display_label: '成交·开多', timestamp_utc: 1_700_000_000_000, price_i64: 11,
+        known_at_bar_index: 0, execution_fact: true,
+      },
     ] })
     await wrapper.vm.$nextTick()
     expect(wrapper.get('.replay-signal.approved_order_intent').text()).toBe('风控·订单意图批准')
     expect(wrapper.get('.replay-signal.kill_switch').text()).toBe('风控·熔断')
+    expect(wrapper.get('.replay-signal.open_long').text()).toBe('成交·开多')
     wrapper.unmount()
   })
 

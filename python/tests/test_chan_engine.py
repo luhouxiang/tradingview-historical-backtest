@@ -207,6 +207,12 @@ def test_fractal_candidate_confirmation_invalidation_and_aux_strength_are_causal
     assert resolved["status"] == "confirmed"
     assert resolved["confirmed_at_bar_index"] == 2
     assert resolved["aux_strength"] == "strong_reversal"
+    assert resolved["body_i64"] == 2
+    assert resolved["upper_shadow_i64"] == 2
+    assert resolved["lower_shadow_i64"] == 1
+    assert resolved["range_i64"] == 5
+    assert resolved["close_position_milli"] == 600
+    assert resolved["feature_profile"] == "processed_bar_ohlc_v1"
     assert resolved["strength_semantic_namespace"] == "auxiliary"
     assert resolved["standard_signal"] is False
     assert resolved["execution_allowed"] is False
@@ -536,11 +542,18 @@ def test_standard_segment_centers_and_third_points_are_causal_on_aol9() -> None:
         }
         for value in result["center_monitors"]
     )
+    # 15.0.0 使用线段全部组成笔的实际区间；旧版只看端点时产生的 4689 三买
+    # 在新范围下首次回试进入核心，因此不能继续发布。
+    assert any(
+        value["range_low_i64"] < min(value["start_price_i64"], value["end_price_i64"])
+        or value["range_high_i64"] > max(value["start_price_i64"], value["end_price_i64"])
+        for value in result["segments"]
+    )
     assert [
         (value["signal_type"], value["bar_index"])
         for value in result["trade_points"]
         if value["signal_class"] == "standard"
-    ] == [("buy_3", 4689)]
+    ] == []
     assert any(
         value["signal_class"] == "class_like"
         and value["signal_type"] in {"class_buy_1", "class_sell_1"}

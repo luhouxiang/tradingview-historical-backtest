@@ -43,6 +43,7 @@ def definition() -> dict[str, Any]:
         ("aux_flying_kiss", "辅助·飞吻"),
         ("aux_lip_kiss", "辅助·唇吻"),
         ("aux_wet_kiss", "辅助·湿吻"),
+        ("aux_ma_force_completed", "辅助·均线面积力度"),
         ("aux_legacy_B1_candidate", "辅助·旧一买候选"),
         ("aux_legacy_B2_candidate", "辅助·旧二买候选"),
     )
@@ -51,7 +52,7 @@ def definition() -> dict[str, Any]:
         # adapter uses it without publishing any standard or executable signal.
         "kind": "strategy",
         "algorithm_id": "aux_ma_kiss_legacy",
-        "algorithm_version": "1.0.0",
+        "algorithm_version": "2.0.0",
         "source_hash": _source_hash(),
         "name": "辅助·均线“吻”旧系统（候选不交易）",
         "input_schema": "bars.v1",
@@ -228,6 +229,28 @@ class AuxMaKissEvent:
     details: dict[str, Any]
 
 
+def measure_ma_force(
+    short_ma: Sequence[float | None],
+    long_ma: Sequence[float | None],
+    start_position: int,
+    end_position: int,
+) -> tuple[float, int, float | None]:
+    """Measure lesson-15 MA force in bar units over ``(start, end]``."""
+    if len(short_ma) != len(long_ma):
+        raise ValueError("short_ma and long_ma must have the same length")
+    if start_position < 0 or end_position < start_position or end_position >= len(short_ma):
+        raise ValueError("MA force interval is outside the series")
+    duration = end_position - start_position
+    values: list[float] = []
+    for position in range(start_position + 1, end_position + 1):
+        short_value = short_ma[position]
+        long_value = long_ma[position]
+        if short_value is not None and long_value is not None:
+            values.append(abs(float(short_value) - float(long_value)))
+    area = sum(values)
+    return area, duration, area / duration if duration > 0 else None
+
+
 @dataclass
 class _TangleEpisode:
     start_position: int
@@ -266,6 +289,10 @@ def classify_ma_kisses(
     flying_start: int | None = None
     previous_short: float | None = None
     last_nonzero_relation: Relation | None = None
+    previous_kiss_end_position: int | None = None
+    previous_force_event_id: str | None = None
+    previous_force_area: float | None = None
+    previous_force_average: float | None = None
 
     latest_bearish_kiss_id: str | None = None
     latest_bearish_kiss_end_bar_index: int | None = None
@@ -298,12 +325,18 @@ def classify_ma_kisses(
 
     def set_regime(value: Relation) -> None:
         nonlocal regime, regime_id, kiss_count, flying_start
+        nonlocal previous_kiss_end_position, previous_force_event_id
+        nonlocal previous_force_area, previous_force_average
         if regime == value:
             return
         regime = value
         regime_id += 1
         kiss_count = 0
         flying_start = None
+        previous_kiss_end_position = None
+        previous_force_event_id = None
+        previous_force_area = None
+        previous_force_average = None
         reset_b1_context()
 
     def append_event(
@@ -343,6 +376,8 @@ def classify_ma_kisses(
         nonlocal latest_bearish_kiss_end_bar_index, latest_bearish_kiss_end_low_i64
         nonlocal b1_reference_bar_index, b1_reference_low_i64
         nonlocal b1_reference_histogram, b1_emitted
+        nonlocal previous_kiss_end_position, previous_force_event_id
+        nonlocal previous_force_area, previous_force_average
         continues_regime = origin_regime == result_regime and regime == result_regime
         if not continues_regime:
             set_regime(result_regime)
@@ -369,6 +404,57 @@ def classify_ma_kisses(
         short_ma = series.short_ma[known_position]
         long_ma = series.long_ma[known_position]
         assert short_ma is not None and long_ma is not None
+        force_event_id: str | None = None
+        force_area: float | None = None
+        force_duration_bars: int | None = None
+        force_average: float | None = None
+        area_ratio: float | None = None
+        average_ratio: float | None = None
+        if origin_regime == result_regime and previous_kiss_end_position is not None:
+            force_area, force_duration_bars, force_average = measure_ma_force(
+                series.short_ma,
+                series.long_ma,
+                previous_kiss_end_position,
+                start_position,
+            )
+            area_ratio = (
+                force_area / previous_force_area
+                if previous_force_area is not None and previous_force_area > 0
+                else None
+            )
+            average_ratio = (
+                force_average / previous_force_average
+                if force_average is not None
+                and previous_force_average is not None
+                and previous_force_average > 0
+                else None
+            )
+            force_event_id = (
+                f"AUX-MA-FORCE-{bars[previous_kiss_end_position].bar_index}-{start_bar.bar_index}"
+            )
+            append_event(
+                force_event_id,
+                "aux_ma_force_completed",
+                known_position,
+                start_position,
+                bars[start_position].close_i64,
+                "AUX_MA_FORCE_INTERVAL_COMPLETED",
+                previous_force_event_id,
+                {
+                    "force_profile": "ma_abs_spread_right_rectangle_bar_units_v1",
+                    "force_status": "completed",
+                    "direction": origin_regime,
+                    "start_bar_index": bars[previous_kiss_end_position].bar_index,
+                    "end_bar_index": start_bar.bar_index,
+                    "duration_bars": force_duration_bars,
+                    "area": force_area,
+                    "average_force": force_average,
+                    "previous_comparable_force_event_id": previous_force_event_id,
+                    "area_ratio_to_previous": area_ratio,
+                    "average_ratio_to_previous": average_ratio,
+                    "time_unit": "bar",
+                },
+            )
         append_event(
             event_id,
             f"aux_{kind}_kiss",
@@ -391,8 +477,19 @@ def classify_ma_kisses(
                 "ma_spread": short_ma - long_ma,
                 "proximity_i64": config.proximity_i64,
                 "flat_slope_i64": config.flat_slope_i64,
+                "force_profile": "ma_abs_spread_right_rectangle_bar_units_v1",
+                "force_event_id": force_event_id,
+                "force_area": force_area,
+                "force_duration_bars": force_duration_bars,
+                "force_average": force_average,
             },
         )
+        if origin_regime == result_regime:
+            previous_kiss_end_position = known_position
+            if force_event_id is not None:
+                previous_force_event_id = force_event_id
+                previous_force_area = force_area
+                previous_force_average = force_average
         if origin_regime == result_regime == "bearish":
             latest_bearish_kiss_id = event_id
             latest_bearish_kiss_end_bar_index = end_bar.bar_index

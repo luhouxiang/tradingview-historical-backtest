@@ -24,6 +24,24 @@ func (e BacktestSummarySharpeAnnualizationFactor) Valid() bool {
 	}
 }
 
+// Defines values for CalculationResultsObjectsBiRangeProfile.
+const (
+	CalculationResultsObjectsBiRangeProfileConstituentBiUnionV1 CalculationResultsObjectsBiRangeProfile = "constituent_bi_union_v1"
+	CalculationResultsObjectsBiRangeProfileEndpointExtremaV1    CalculationResultsObjectsBiRangeProfile = "endpoint_extrema_v1"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsBiRangeProfile enum.
+func (e CalculationResultsObjectsBiRangeProfile) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsBiRangeProfileConstituentBiUnionV1:
+		return true
+	case CalculationResultsObjectsBiRangeProfileEndpointExtremaV1:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CalculationResultsObjectsBiStatesDirection.
 const (
 	CalculationResultsObjectsBiStatesDirectionDown        CalculationResultsObjectsBiStatesDirection = "down"
@@ -132,6 +150,51 @@ func (e CalculationResultsObjectsCenterMonitorsRelativePosition) Valid() bool {
 	}
 }
 
+// Defines values for CalculationResultsObjectsDivergencesBoundaryProfile.
+const (
+	CalculationResultsObjectsDivergencesBoundaryProfileLessThannil         CalculationResultsObjectsDivergencesBoundaryProfile = "<nil>"
+	CalculationResultsObjectsDivergencesBoundaryProfileLesson20InclusiveV1 CalculationResultsObjectsDivergencesBoundaryProfile = "lesson20_inclusive_v1"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsDivergencesBoundaryProfile enum.
+func (e CalculationResultsObjectsDivergencesBoundaryProfile) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsDivergencesBoundaryProfileLessThannil:
+		return true
+	case CalculationResultsObjectsDivergencesBoundaryProfileLesson20InclusiveV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsDivergencesBoundaryRelation.
+const (
+	CalculationResultsObjectsDivergencesBoundaryRelationLessThannil  CalculationResultsObjectsDivergencesBoundaryRelation = "<nil>"
+	CalculationResultsObjectsDivergencesBoundaryRelationOutsideCore  CalculationResultsObjectsDivergencesBoundaryRelation = "outside_core"
+	CalculationResultsObjectsDivergencesBoundaryRelationOutsideOuter CalculationResultsObjectsDivergencesBoundaryRelation = "outside_outer"
+	CalculationResultsObjectsDivergencesBoundaryRelationTouchCore    CalculationResultsObjectsDivergencesBoundaryRelation = "touch_core"
+	CalculationResultsObjectsDivergencesBoundaryRelationTouchOuter   CalculationResultsObjectsDivergencesBoundaryRelation = "touch_outer"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsDivergencesBoundaryRelation enum.
+func (e CalculationResultsObjectsDivergencesBoundaryRelation) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsDivergencesBoundaryRelationLessThannil:
+		return true
+	case CalculationResultsObjectsDivergencesBoundaryRelationOutsideCore:
+		return true
+	case CalculationResultsObjectsDivergencesBoundaryRelationOutsideOuter:
+		return true
+	case CalculationResultsObjectsDivergencesBoundaryRelationTouchCore:
+		return true
+	case CalculationResultsObjectsDivergencesBoundaryRelationTouchOuter:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CalculationResultsObjectsDivergencesCatalogAlgorithmId.
 const (
 	CalculationResultsObjectsDivergencesCatalogAlgorithmIdALGSIG001   CalculationResultsObjectsDivergencesCatalogAlgorithmId = "ALG-SIG-001"
@@ -183,6 +246,24 @@ func (e CalculationResultsObjectsDivergencesCatalogEvent) Valid() bool {
 	}
 }
 
+// Defines values for CalculationResultsObjectsDivergencesCenterChainProfile.
+const (
+	CalculationResultsObjectsDivergencesCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1 CalculationResultsObjectsDivergencesCenterChainProfile = "confirmed_same_level_centers_known_at_signal_v1"
+	CalculationResultsObjectsDivergencesCenterChainProfileLessThannil                              CalculationResultsObjectsDivergencesCenterChainProfile = "<nil>"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsDivergencesCenterChainProfile enum.
+func (e CalculationResultsObjectsDivergencesCenterChainProfile) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsDivergencesCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1:
+		return true
+	case CalculationResultsObjectsDivergencesCenterChainProfileLessThannil:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CalculationResultsObjectsDivergencesDivergenceKind.
 const (
 	CalculationResultsObjectsDivergencesDivergenceKindConsolidation CalculationResultsObjectsDivergencesDivergenceKind = "consolidation"
@@ -198,6 +279,42 @@ func (e CalculationResultsObjectsDivergencesDivergenceKind) Valid() bool {
 	case CalculationResultsObjectsDivergencesDivergenceKindLessThannil:
 		return true
 	case CalculationResultsObjectsDivergencesDivergenceKindTrend:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsDivergencesEvidenceProfile.
+const (
+	CalculationResultsObjectsDivergencesEvidenceProfileChan108SingleScopeV1 CalculationResultsObjectsDivergencesEvidenceProfile = "chan108_single_scope_v1"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsDivergencesEvidenceProfile enum.
+func (e CalculationResultsObjectsDivergencesEvidenceProfile) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsDivergencesEvidenceProfileChan108SingleScopeV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsDivergencesFollowThroughStatus.
+const (
+	CalculationResultsObjectsDivergencesFollowThroughStatusNotApplicable CalculationResultsObjectsDivergencesFollowThroughStatus = "not_applicable"
+	CalculationResultsObjectsDivergencesFollowThroughStatusObserved      CalculationResultsObjectsDivergencesFollowThroughStatus = "observed"
+	CalculationResultsObjectsDivergencesFollowThroughStatusPending       CalculationResultsObjectsDivergencesFollowThroughStatus = "pending"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsDivergencesFollowThroughStatus enum.
+func (e CalculationResultsObjectsDivergencesFollowThroughStatus) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsDivergencesFollowThroughStatusNotApplicable:
+		return true
+	case CalculationResultsObjectsDivergencesFollowThroughStatusObserved:
+		return true
+	case CalculationResultsObjectsDivergencesFollowThroughStatusPending:
 		return true
 	default:
 		return false
@@ -297,6 +414,21 @@ func (e CalculationResultsObjectsDivergencesStrength) Valid() bool {
 	case CalculationResultsObjectsDivergencesStrengthStrongest:
 		return true
 	case CalculationResultsObjectsDivergencesStrengthWeakest:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsFractalsFeatureProfile.
+const (
+	CalculationResultsObjectsFractalsFeatureProfileProcessedBarOhlcV1 CalculationResultsObjectsFractalsFeatureProfile = "processed_bar_ohlc_v1"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsFractalsFeatureProfile enum.
+func (e CalculationResultsObjectsFractalsFeatureProfile) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsFractalsFeatureProfileProcessedBarOhlcV1:
 		return true
 	default:
 		return false
@@ -456,6 +588,69 @@ func (e CalculationResultsObjectsSegmentZhongshuStatus) Valid() bool {
 	}
 }
 
+// Defines values for CalculationResultsObjectsSegmentsRangeProfile.
+const (
+	CalculationResultsObjectsSegmentsRangeProfileConstituentBiUnionV1 CalculationResultsObjectsSegmentsRangeProfile = "constituent_bi_union_v1"
+	CalculationResultsObjectsSegmentsRangeProfileEndpointExtremaV1    CalculationResultsObjectsSegmentsRangeProfile = "endpoint_extrema_v1"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsSegmentsRangeProfile enum.
+func (e CalculationResultsObjectsSegmentsRangeProfile) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsSegmentsRangeProfileConstituentBiUnionV1:
+		return true
+	case CalculationResultsObjectsSegmentsRangeProfileEndpointExtremaV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsTradePointsBoundaryProfile.
+const (
+	CalculationResultsObjectsTradePointsBoundaryProfileLessThannil         CalculationResultsObjectsTradePointsBoundaryProfile = "<nil>"
+	CalculationResultsObjectsTradePointsBoundaryProfileLesson20InclusiveV1 CalculationResultsObjectsTradePointsBoundaryProfile = "lesson20_inclusive_v1"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsTradePointsBoundaryProfile enum.
+func (e CalculationResultsObjectsTradePointsBoundaryProfile) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsTradePointsBoundaryProfileLessThannil:
+		return true
+	case CalculationResultsObjectsTradePointsBoundaryProfileLesson20InclusiveV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsTradePointsBoundaryRelation.
+const (
+	CalculationResultsObjectsTradePointsBoundaryRelationLessThannil  CalculationResultsObjectsTradePointsBoundaryRelation = "<nil>"
+	CalculationResultsObjectsTradePointsBoundaryRelationOutsideCore  CalculationResultsObjectsTradePointsBoundaryRelation = "outside_core"
+	CalculationResultsObjectsTradePointsBoundaryRelationOutsideOuter CalculationResultsObjectsTradePointsBoundaryRelation = "outside_outer"
+	CalculationResultsObjectsTradePointsBoundaryRelationTouchCore    CalculationResultsObjectsTradePointsBoundaryRelation = "touch_core"
+	CalculationResultsObjectsTradePointsBoundaryRelationTouchOuter   CalculationResultsObjectsTradePointsBoundaryRelation = "touch_outer"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsTradePointsBoundaryRelation enum.
+func (e CalculationResultsObjectsTradePointsBoundaryRelation) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsTradePointsBoundaryRelationLessThannil:
+		return true
+	case CalculationResultsObjectsTradePointsBoundaryRelationOutsideCore:
+		return true
+	case CalculationResultsObjectsTradePointsBoundaryRelationOutsideOuter:
+		return true
+	case CalculationResultsObjectsTradePointsBoundaryRelationTouchCore:
+		return true
+	case CalculationResultsObjectsTradePointsBoundaryRelationTouchOuter:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CalculationResultsObjectsTradePointsCatalogAlgorithmId.
 const (
 	CalculationResultsObjectsTradePointsCatalogAlgorithmIdALGSIG001   CalculationResultsObjectsTradePointsCatalogAlgorithmId = "ALG-SIG-001"
@@ -507,6 +702,24 @@ func (e CalculationResultsObjectsTradePointsCatalogEvent) Valid() bool {
 	}
 }
 
+// Defines values for CalculationResultsObjectsTradePointsCenterChainProfile.
+const (
+	CalculationResultsObjectsTradePointsCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1 CalculationResultsObjectsTradePointsCenterChainProfile = "confirmed_same_level_centers_known_at_signal_v1"
+	CalculationResultsObjectsTradePointsCenterChainProfileLessThannil                              CalculationResultsObjectsTradePointsCenterChainProfile = "<nil>"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsTradePointsCenterChainProfile enum.
+func (e CalculationResultsObjectsTradePointsCenterChainProfile) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsTradePointsCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1:
+		return true
+	case CalculationResultsObjectsTradePointsCenterChainProfileLessThannil:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CalculationResultsObjectsTradePointsDivergenceKind.
 const (
 	CalculationResultsObjectsTradePointsDivergenceKindConsolidation CalculationResultsObjectsTradePointsDivergenceKind = "consolidation"
@@ -522,6 +735,42 @@ func (e CalculationResultsObjectsTradePointsDivergenceKind) Valid() bool {
 	case CalculationResultsObjectsTradePointsDivergenceKindLessThannil:
 		return true
 	case CalculationResultsObjectsTradePointsDivergenceKindTrend:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsTradePointsEvidenceProfile.
+const (
+	CalculationResultsObjectsTradePointsEvidenceProfileChan108SingleScopeV1 CalculationResultsObjectsTradePointsEvidenceProfile = "chan108_single_scope_v1"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsTradePointsEvidenceProfile enum.
+func (e CalculationResultsObjectsTradePointsEvidenceProfile) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsTradePointsEvidenceProfileChan108SingleScopeV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsTradePointsFollowThroughStatus.
+const (
+	CalculationResultsObjectsTradePointsFollowThroughStatusNotApplicable CalculationResultsObjectsTradePointsFollowThroughStatus = "not_applicable"
+	CalculationResultsObjectsTradePointsFollowThroughStatusObserved      CalculationResultsObjectsTradePointsFollowThroughStatus = "observed"
+	CalculationResultsObjectsTradePointsFollowThroughStatusPending       CalculationResultsObjectsTradePointsFollowThroughStatus = "pending"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsTradePointsFollowThroughStatus enum.
+func (e CalculationResultsObjectsTradePointsFollowThroughStatus) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsTradePointsFollowThroughStatusNotApplicable:
+		return true
+	case CalculationResultsObjectsTradePointsFollowThroughStatusObserved:
+		return true
+	case CalculationResultsObjectsTradePointsFollowThroughStatusPending:
 		return true
 	default:
 		return false
@@ -795,6 +1044,21 @@ func (e ChanCenterMonitorRelativePosition) Valid() bool {
 	}
 }
 
+// Defines values for ChanFractalFeatureProfile.
+const (
+	ChanFractalFeatureProfileProcessedBarOhlcV1 ChanFractalFeatureProfile = "processed_bar_ohlc_v1"
+)
+
+// Valid indicates whether the value is a known member of the ChanFractalFeatureProfile enum.
+func (e ChanFractalFeatureProfile) Valid() bool {
+	switch e {
+	case ChanFractalFeatureProfileProcessedBarOhlcV1:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ChanLevelMovementDirection.
 const (
 	ChanLevelMovementDirectionDown        ChanLevelMovementDirection = "down"
@@ -843,6 +1107,24 @@ func (e ChanLevelMovementPreviousClassification) Valid() bool {
 	}
 }
 
+// Defines values for ChanLineObjectRangeProfile.
+const (
+	ChanLineObjectRangeProfileConstituentBiUnionV1 ChanLineObjectRangeProfile = "constituent_bi_union_v1"
+	ChanLineObjectRangeProfileEndpointExtremaV1    ChanLineObjectRangeProfile = "endpoint_extrema_v1"
+)
+
+// Valid indicates whether the value is a known member of the ChanLineObjectRangeProfile enum.
+func (e ChanLineObjectRangeProfile) Valid() bool {
+	switch e {
+	case ChanLineObjectRangeProfileConstituentBiUnionV1:
+		return true
+	case ChanLineObjectRangeProfileEndpointExtremaV1:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ChanMovementStateDirection.
 const (
 	ChanMovementStateDirectionDown        ChanMovementStateDirection = "down"
@@ -882,6 +1164,24 @@ func (e ChanMovementStateStateType) Valid() bool {
 	case ChanMovementStateStateTypeCentreOscillation:
 		return true
 	case ChanMovementStateStateTypeConsolidation:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsBiRangeProfile.
+const (
+	ChanObjectsBiRangeProfileConstituentBiUnionV1 ChanObjectsBiRangeProfile = "constituent_bi_union_v1"
+	ChanObjectsBiRangeProfileEndpointExtremaV1    ChanObjectsBiRangeProfile = "endpoint_extrema_v1"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsBiRangeProfile enum.
+func (e ChanObjectsBiRangeProfile) Valid() bool {
+	switch e {
+	case ChanObjectsBiRangeProfileConstituentBiUnionV1:
+		return true
+	case ChanObjectsBiRangeProfileEndpointExtremaV1:
 		return true
 	default:
 		return false
@@ -996,6 +1296,51 @@ func (e ChanObjectsCenterMonitorsRelativePosition) Valid() bool {
 	}
 }
 
+// Defines values for ChanObjectsDivergencesBoundaryProfile.
+const (
+	ChanObjectsDivergencesBoundaryProfileLessThannil         ChanObjectsDivergencesBoundaryProfile = "<nil>"
+	ChanObjectsDivergencesBoundaryProfileLesson20InclusiveV1 ChanObjectsDivergencesBoundaryProfile = "lesson20_inclusive_v1"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsDivergencesBoundaryProfile enum.
+func (e ChanObjectsDivergencesBoundaryProfile) Valid() bool {
+	switch e {
+	case ChanObjectsDivergencesBoundaryProfileLessThannil:
+		return true
+	case ChanObjectsDivergencesBoundaryProfileLesson20InclusiveV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsDivergencesBoundaryRelation.
+const (
+	ChanObjectsDivergencesBoundaryRelationLessThannil  ChanObjectsDivergencesBoundaryRelation = "<nil>"
+	ChanObjectsDivergencesBoundaryRelationOutsideCore  ChanObjectsDivergencesBoundaryRelation = "outside_core"
+	ChanObjectsDivergencesBoundaryRelationOutsideOuter ChanObjectsDivergencesBoundaryRelation = "outside_outer"
+	ChanObjectsDivergencesBoundaryRelationTouchCore    ChanObjectsDivergencesBoundaryRelation = "touch_core"
+	ChanObjectsDivergencesBoundaryRelationTouchOuter   ChanObjectsDivergencesBoundaryRelation = "touch_outer"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsDivergencesBoundaryRelation enum.
+func (e ChanObjectsDivergencesBoundaryRelation) Valid() bool {
+	switch e {
+	case ChanObjectsDivergencesBoundaryRelationLessThannil:
+		return true
+	case ChanObjectsDivergencesBoundaryRelationOutsideCore:
+		return true
+	case ChanObjectsDivergencesBoundaryRelationOutsideOuter:
+		return true
+	case ChanObjectsDivergencesBoundaryRelationTouchCore:
+		return true
+	case ChanObjectsDivergencesBoundaryRelationTouchOuter:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ChanObjectsDivergencesCatalogAlgorithmId.
 const (
 	ChanObjectsDivergencesCatalogAlgorithmIdALGSIG001   ChanObjectsDivergencesCatalogAlgorithmId = "ALG-SIG-001"
@@ -1047,6 +1392,24 @@ func (e ChanObjectsDivergencesCatalogEvent) Valid() bool {
 	}
 }
 
+// Defines values for ChanObjectsDivergencesCenterChainProfile.
+const (
+	ChanObjectsDivergencesCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1 ChanObjectsDivergencesCenterChainProfile = "confirmed_same_level_centers_known_at_signal_v1"
+	ChanObjectsDivergencesCenterChainProfileLessThannil                              ChanObjectsDivergencesCenterChainProfile = "<nil>"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsDivergencesCenterChainProfile enum.
+func (e ChanObjectsDivergencesCenterChainProfile) Valid() bool {
+	switch e {
+	case ChanObjectsDivergencesCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1:
+		return true
+	case ChanObjectsDivergencesCenterChainProfileLessThannil:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ChanObjectsDivergencesDivergenceKind.
 const (
 	ChanObjectsDivergencesDivergenceKindConsolidation ChanObjectsDivergencesDivergenceKind = "consolidation"
@@ -1062,6 +1425,42 @@ func (e ChanObjectsDivergencesDivergenceKind) Valid() bool {
 	case ChanObjectsDivergencesDivergenceKindLessThannil:
 		return true
 	case ChanObjectsDivergencesDivergenceKindTrend:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsDivergencesEvidenceProfile.
+const (
+	ChanObjectsDivergencesEvidenceProfileChan108SingleScopeV1 ChanObjectsDivergencesEvidenceProfile = "chan108_single_scope_v1"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsDivergencesEvidenceProfile enum.
+func (e ChanObjectsDivergencesEvidenceProfile) Valid() bool {
+	switch e {
+	case ChanObjectsDivergencesEvidenceProfileChan108SingleScopeV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsDivergencesFollowThroughStatus.
+const (
+	ChanObjectsDivergencesFollowThroughStatusNotApplicable ChanObjectsDivergencesFollowThroughStatus = "not_applicable"
+	ChanObjectsDivergencesFollowThroughStatusObserved      ChanObjectsDivergencesFollowThroughStatus = "observed"
+	ChanObjectsDivergencesFollowThroughStatusPending       ChanObjectsDivergencesFollowThroughStatus = "pending"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsDivergencesFollowThroughStatus enum.
+func (e ChanObjectsDivergencesFollowThroughStatus) Valid() bool {
+	switch e {
+	case ChanObjectsDivergencesFollowThroughStatusNotApplicable:
+		return true
+	case ChanObjectsDivergencesFollowThroughStatusObserved:
+		return true
+	case ChanObjectsDivergencesFollowThroughStatusPending:
 		return true
 	default:
 		return false
@@ -1161,6 +1560,21 @@ func (e ChanObjectsDivergencesStrength) Valid() bool {
 	case ChanObjectsDivergencesStrengthStrongest:
 		return true
 	case ChanObjectsDivergencesStrengthWeakest:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsFractalsFeatureProfile.
+const (
+	ChanObjectsFractalsFeatureProfileProcessedBarOhlcV1 ChanObjectsFractalsFeatureProfile = "processed_bar_ohlc_v1"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsFractalsFeatureProfile enum.
+func (e ChanObjectsFractalsFeatureProfile) Valid() bool {
+	switch e {
+	case ChanObjectsFractalsFeatureProfileProcessedBarOhlcV1:
 		return true
 	default:
 		return false
@@ -1320,6 +1734,69 @@ func (e ChanObjectsSegmentZhongshuStatus) Valid() bool {
 	}
 }
 
+// Defines values for ChanObjectsSegmentsRangeProfile.
+const (
+	ChanObjectsSegmentsRangeProfileConstituentBiUnionV1 ChanObjectsSegmentsRangeProfile = "constituent_bi_union_v1"
+	ChanObjectsSegmentsRangeProfileEndpointExtremaV1    ChanObjectsSegmentsRangeProfile = "endpoint_extrema_v1"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsSegmentsRangeProfile enum.
+func (e ChanObjectsSegmentsRangeProfile) Valid() bool {
+	switch e {
+	case ChanObjectsSegmentsRangeProfileConstituentBiUnionV1:
+		return true
+	case ChanObjectsSegmentsRangeProfileEndpointExtremaV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsTradePointsBoundaryProfile.
+const (
+	ChanObjectsTradePointsBoundaryProfileLessThannil         ChanObjectsTradePointsBoundaryProfile = "<nil>"
+	ChanObjectsTradePointsBoundaryProfileLesson20InclusiveV1 ChanObjectsTradePointsBoundaryProfile = "lesson20_inclusive_v1"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsTradePointsBoundaryProfile enum.
+func (e ChanObjectsTradePointsBoundaryProfile) Valid() bool {
+	switch e {
+	case ChanObjectsTradePointsBoundaryProfileLessThannil:
+		return true
+	case ChanObjectsTradePointsBoundaryProfileLesson20InclusiveV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsTradePointsBoundaryRelation.
+const (
+	ChanObjectsTradePointsBoundaryRelationLessThannil  ChanObjectsTradePointsBoundaryRelation = "<nil>"
+	ChanObjectsTradePointsBoundaryRelationOutsideCore  ChanObjectsTradePointsBoundaryRelation = "outside_core"
+	ChanObjectsTradePointsBoundaryRelationOutsideOuter ChanObjectsTradePointsBoundaryRelation = "outside_outer"
+	ChanObjectsTradePointsBoundaryRelationTouchCore    ChanObjectsTradePointsBoundaryRelation = "touch_core"
+	ChanObjectsTradePointsBoundaryRelationTouchOuter   ChanObjectsTradePointsBoundaryRelation = "touch_outer"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsTradePointsBoundaryRelation enum.
+func (e ChanObjectsTradePointsBoundaryRelation) Valid() bool {
+	switch e {
+	case ChanObjectsTradePointsBoundaryRelationLessThannil:
+		return true
+	case ChanObjectsTradePointsBoundaryRelationOutsideCore:
+		return true
+	case ChanObjectsTradePointsBoundaryRelationOutsideOuter:
+		return true
+	case ChanObjectsTradePointsBoundaryRelationTouchCore:
+		return true
+	case ChanObjectsTradePointsBoundaryRelationTouchOuter:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ChanObjectsTradePointsCatalogAlgorithmId.
 const (
 	ChanObjectsTradePointsCatalogAlgorithmIdALGSIG001   ChanObjectsTradePointsCatalogAlgorithmId = "ALG-SIG-001"
@@ -1371,6 +1848,24 @@ func (e ChanObjectsTradePointsCatalogEvent) Valid() bool {
 	}
 }
 
+// Defines values for ChanObjectsTradePointsCenterChainProfile.
+const (
+	ChanObjectsTradePointsCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1 ChanObjectsTradePointsCenterChainProfile = "confirmed_same_level_centers_known_at_signal_v1"
+	ChanObjectsTradePointsCenterChainProfileLessThannil                              ChanObjectsTradePointsCenterChainProfile = "<nil>"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsTradePointsCenterChainProfile enum.
+func (e ChanObjectsTradePointsCenterChainProfile) Valid() bool {
+	switch e {
+	case ChanObjectsTradePointsCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1:
+		return true
+	case ChanObjectsTradePointsCenterChainProfileLessThannil:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ChanObjectsTradePointsDivergenceKind.
 const (
 	ChanObjectsTradePointsDivergenceKindConsolidation ChanObjectsTradePointsDivergenceKind = "consolidation"
@@ -1386,6 +1881,42 @@ func (e ChanObjectsTradePointsDivergenceKind) Valid() bool {
 	case ChanObjectsTradePointsDivergenceKindLessThannil:
 		return true
 	case ChanObjectsTradePointsDivergenceKindTrend:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsTradePointsEvidenceProfile.
+const (
+	ChanObjectsTradePointsEvidenceProfileChan108SingleScopeV1 ChanObjectsTradePointsEvidenceProfile = "chan108_single_scope_v1"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsTradePointsEvidenceProfile enum.
+func (e ChanObjectsTradePointsEvidenceProfile) Valid() bool {
+	switch e {
+	case ChanObjectsTradePointsEvidenceProfileChan108SingleScopeV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsTradePointsFollowThroughStatus.
+const (
+	ChanObjectsTradePointsFollowThroughStatusNotApplicable ChanObjectsTradePointsFollowThroughStatus = "not_applicable"
+	ChanObjectsTradePointsFollowThroughStatusObserved      ChanObjectsTradePointsFollowThroughStatus = "observed"
+	ChanObjectsTradePointsFollowThroughStatusPending       ChanObjectsTradePointsFollowThroughStatus = "pending"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsTradePointsFollowThroughStatus enum.
+func (e ChanObjectsTradePointsFollowThroughStatus) Valid() bool {
+	switch e {
+	case ChanObjectsTradePointsFollowThroughStatusNotApplicable:
+		return true
+	case ChanObjectsTradePointsFollowThroughStatusObserved:
+		return true
+	case ChanObjectsTradePointsFollowThroughStatusPending:
 		return true
 	default:
 		return false
@@ -1551,6 +2082,51 @@ func (e ChanObjectsZhongshuStatus) Valid() bool {
 	}
 }
 
+// Defines values for ChanSignalPointBoundaryProfile.
+const (
+	ChanSignalPointBoundaryProfileLessThannil         ChanSignalPointBoundaryProfile = "<nil>"
+	ChanSignalPointBoundaryProfileLesson20InclusiveV1 ChanSignalPointBoundaryProfile = "lesson20_inclusive_v1"
+)
+
+// Valid indicates whether the value is a known member of the ChanSignalPointBoundaryProfile enum.
+func (e ChanSignalPointBoundaryProfile) Valid() bool {
+	switch e {
+	case ChanSignalPointBoundaryProfileLessThannil:
+		return true
+	case ChanSignalPointBoundaryProfileLesson20InclusiveV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanSignalPointBoundaryRelation.
+const (
+	ChanSignalPointBoundaryRelationLessThannil  ChanSignalPointBoundaryRelation = "<nil>"
+	ChanSignalPointBoundaryRelationOutsideCore  ChanSignalPointBoundaryRelation = "outside_core"
+	ChanSignalPointBoundaryRelationOutsideOuter ChanSignalPointBoundaryRelation = "outside_outer"
+	ChanSignalPointBoundaryRelationTouchCore    ChanSignalPointBoundaryRelation = "touch_core"
+	ChanSignalPointBoundaryRelationTouchOuter   ChanSignalPointBoundaryRelation = "touch_outer"
+)
+
+// Valid indicates whether the value is a known member of the ChanSignalPointBoundaryRelation enum.
+func (e ChanSignalPointBoundaryRelation) Valid() bool {
+	switch e {
+	case ChanSignalPointBoundaryRelationLessThannil:
+		return true
+	case ChanSignalPointBoundaryRelationOutsideCore:
+		return true
+	case ChanSignalPointBoundaryRelationOutsideOuter:
+		return true
+	case ChanSignalPointBoundaryRelationTouchCore:
+		return true
+	case ChanSignalPointBoundaryRelationTouchOuter:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ChanSignalPointCatalogAlgorithmId.
 const (
 	ChanSignalPointCatalogAlgorithmIdALGSIG001   ChanSignalPointCatalogAlgorithmId = "ALG-SIG-001"
@@ -1602,6 +2178,24 @@ func (e ChanSignalPointCatalogEvent) Valid() bool {
 	}
 }
 
+// Defines values for ChanSignalPointCenterChainProfile.
+const (
+	ChanSignalPointCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1 ChanSignalPointCenterChainProfile = "confirmed_same_level_centers_known_at_signal_v1"
+	ChanSignalPointCenterChainProfileLessThannil                              ChanSignalPointCenterChainProfile = "<nil>"
+)
+
+// Valid indicates whether the value is a known member of the ChanSignalPointCenterChainProfile enum.
+func (e ChanSignalPointCenterChainProfile) Valid() bool {
+	switch e {
+	case ChanSignalPointCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1:
+		return true
+	case ChanSignalPointCenterChainProfileLessThannil:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ChanSignalPointDivergenceKind.
 const (
 	ChanSignalPointDivergenceKindConsolidation ChanSignalPointDivergenceKind = "consolidation"
@@ -1617,6 +2211,42 @@ func (e ChanSignalPointDivergenceKind) Valid() bool {
 	case ChanSignalPointDivergenceKindLessThannil:
 		return true
 	case ChanSignalPointDivergenceKindTrend:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanSignalPointEvidenceProfile.
+const (
+	ChanSignalPointEvidenceProfileChan108SingleScopeV1 ChanSignalPointEvidenceProfile = "chan108_single_scope_v1"
+)
+
+// Valid indicates whether the value is a known member of the ChanSignalPointEvidenceProfile enum.
+func (e ChanSignalPointEvidenceProfile) Valid() bool {
+	switch e {
+	case ChanSignalPointEvidenceProfileChan108SingleScopeV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanSignalPointFollowThroughStatus.
+const (
+	ChanSignalPointFollowThroughStatusNotApplicable ChanSignalPointFollowThroughStatus = "not_applicable"
+	ChanSignalPointFollowThroughStatusObserved      ChanSignalPointFollowThroughStatus = "observed"
+	ChanSignalPointFollowThroughStatusPending       ChanSignalPointFollowThroughStatus = "pending"
+)
+
+// Valid indicates whether the value is a known member of the ChanSignalPointFollowThroughStatus enum.
+func (e ChanSignalPointFollowThroughStatus) Valid() bool {
+	switch e {
+	case ChanSignalPointFollowThroughStatusNotApplicable:
+		return true
+	case ChanSignalPointFollowThroughStatusObserved:
+		return true
+	case ChanSignalPointFollowThroughStatusPending:
 		return true
 	default:
 		return false
@@ -2172,6 +2802,24 @@ func (e GetBacktestSummary200JSONResponseBodySharpeAnnualizationFactor) Valid() 
 	}
 }
 
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsBiRangeProfile.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsBiRangeProfileConstituentBiUnionV1 GetCalculationResults200JSONResponseBodyObjectsBiRangeProfile = "constituent_bi_union_v1"
+	GetCalculationResults200JSONResponseBodyObjectsBiRangeProfileEndpointExtremaV1    GetCalculationResults200JSONResponseBodyObjectsBiRangeProfile = "endpoint_extrema_v1"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsBiRangeProfile enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsBiRangeProfile) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsBiRangeProfileConstituentBiUnionV1:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsBiRangeProfileEndpointExtremaV1:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetCalculationResults200JSONResponseBodyObjectsBiStatesDirection.
 const (
 	GetCalculationResults200JSONResponseBodyObjectsBiStatesDirectionDown        GetCalculationResults200JSONResponseBodyObjectsBiStatesDirection = "down"
@@ -2280,6 +2928,51 @@ func (e GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePos
 	}
 }
 
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryProfile.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryProfileLessThannil         GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryProfile = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryProfileLesson20InclusiveV1 GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryProfile = "lesson20_inclusive_v1"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryProfile enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryProfile) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryProfileLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryProfileLesson20InclusiveV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryRelation.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryRelationLessThannil  GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryRelation = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryRelationOutsideCore  GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryRelation = "outside_core"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryRelationOutsideOuter GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryRelation = "outside_outer"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryRelationTouchCore    GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryRelation = "touch_core"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryRelationTouchOuter   GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryRelation = "touch_outer"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryRelation enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryRelation) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryRelationLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryRelationOutsideCore:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryRelationOutsideOuter:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryRelationTouchCore:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryRelationTouchOuter:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogAlgorithmId.
 const (
 	GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogAlgorithmIdALGSIG001   GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogAlgorithmId = "ALG-SIG-001"
@@ -2331,6 +3024,24 @@ func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEvent) 
 	}
 }
 
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfile.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1 GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfile = "confirmed_same_level_centers_known_at_signal_v1"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfileLessThannil                              GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfile = "<nil>"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfile enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfile) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfileLessThannil:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKind.
 const (
 	GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKindConsolidation GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKind = "consolidation"
@@ -2346,6 +3057,42 @@ func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKind
 	case GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKindLessThannil:
 		return true
 	case GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKindTrend:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsDivergencesEvidenceProfile.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesEvidenceProfileChan108SingleScopeV1 GetCalculationResults200JSONResponseBodyObjectsDivergencesEvidenceProfile = "chan108_single_scope_v1"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsDivergencesEvidenceProfile enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesEvidenceProfile) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesEvidenceProfileChan108SingleScopeV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsDivergencesFollowThroughStatus.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesFollowThroughStatusNotApplicable GetCalculationResults200JSONResponseBodyObjectsDivergencesFollowThroughStatus = "not_applicable"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesFollowThroughStatusObserved      GetCalculationResults200JSONResponseBodyObjectsDivergencesFollowThroughStatus = "observed"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesFollowThroughStatusPending       GetCalculationResults200JSONResponseBodyObjectsDivergencesFollowThroughStatus = "pending"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsDivergencesFollowThroughStatus enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesFollowThroughStatus) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesFollowThroughStatusNotApplicable:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesFollowThroughStatusObserved:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesFollowThroughStatusPending:
 		return true
 	default:
 		return false
@@ -2445,6 +3192,21 @@ func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesStrength) Vali
 	case GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthStrongest:
 		return true
 	case GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthWeakest:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsFractalsFeatureProfile.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsFractalsFeatureProfileProcessedBarOhlcV1 GetCalculationResults200JSONResponseBodyObjectsFractalsFeatureProfile = "processed_bar_ohlc_v1"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsFractalsFeatureProfile enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsFractalsFeatureProfile) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsFractalsFeatureProfileProcessedBarOhlcV1:
 		return true
 	default:
 		return false
@@ -2604,6 +3366,69 @@ func (e GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatus) Va
 	}
 }
 
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsSegmentsRangeProfile.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsSegmentsRangeProfileConstituentBiUnionV1 GetCalculationResults200JSONResponseBodyObjectsSegmentsRangeProfile = "constituent_bi_union_v1"
+	GetCalculationResults200JSONResponseBodyObjectsSegmentsRangeProfileEndpointExtremaV1    GetCalculationResults200JSONResponseBodyObjectsSegmentsRangeProfile = "endpoint_extrema_v1"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsSegmentsRangeProfile enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsSegmentsRangeProfile) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsSegmentsRangeProfileConstituentBiUnionV1:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsSegmentsRangeProfileEndpointExtremaV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryProfile.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryProfileLessThannil         GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryProfile = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryProfileLesson20InclusiveV1 GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryProfile = "lesson20_inclusive_v1"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryProfile enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryProfile) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryProfileLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryProfileLesson20InclusiveV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryRelation.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryRelationLessThannil  GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryRelation = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryRelationOutsideCore  GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryRelation = "outside_core"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryRelationOutsideOuter GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryRelation = "outside_outer"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryRelationTouchCore    GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryRelation = "touch_core"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryRelationTouchOuter   GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryRelation = "touch_outer"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryRelation enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryRelation) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryRelationLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryRelationOutsideCore:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryRelationOutsideOuter:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryRelationTouchCore:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryRelationTouchOuter:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogAlgorithmId.
 const (
 	GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogAlgorithmIdALGSIG001   GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogAlgorithmId = "ALG-SIG-001"
@@ -2655,6 +3480,24 @@ func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEvent) 
 	}
 }
 
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfile.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1 GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfile = "confirmed_same_level_centers_known_at_signal_v1"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfileLessThannil                              GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfile = "<nil>"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfile enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfile) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfileLessThannil:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKind.
 const (
 	GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKindConsolidation GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKind = "consolidation"
@@ -2670,6 +3513,42 @@ func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKind
 	case GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKindLessThannil:
 		return true
 	case GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKindTrend:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsTradePointsEvidenceProfile.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsEvidenceProfileChan108SingleScopeV1 GetCalculationResults200JSONResponseBodyObjectsTradePointsEvidenceProfile = "chan108_single_scope_v1"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsTradePointsEvidenceProfile enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsEvidenceProfile) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsEvidenceProfileChan108SingleScopeV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsTradePointsFollowThroughStatus.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsFollowThroughStatusNotApplicable GetCalculationResults200JSONResponseBodyObjectsTradePointsFollowThroughStatus = "not_applicable"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsFollowThroughStatusObserved      GetCalculationResults200JSONResponseBodyObjectsTradePointsFollowThroughStatus = "observed"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsFollowThroughStatusPending       GetCalculationResults200JSONResponseBodyObjectsTradePointsFollowThroughStatus = "pending"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsTradePointsFollowThroughStatus enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsFollowThroughStatus) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsFollowThroughStatusNotApplicable:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsFollowThroughStatusObserved:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsFollowThroughStatusPending:
 		return true
 	default:
 		return false
@@ -3367,23 +4246,28 @@ type CalculationResults struct {
 	JobId        string `json:"job_id"`
 	Objects      *struct {
 		Bi []struct {
-			CatalogAlgorithmId         interface{} `json:"catalog_algorithm_id"`
-			Confirmed                  bool        `json:"confirmed"`
-			ConfirmedAtBarIndex        *int        `json:"confirmed_at_bar_index"`
-			Direction                  interface{} `json:"direction"`
-			EndBarIndex                int         `json:"end_bar_index"`
-			EndExtremeSourceBarIndex   int         `json:"end_extreme_source_bar_index"`
-			EndPriceI64                int         `json:"end_price_i64"`
-			EndTime                    int         `json:"end_time"`
-			InvalidationReason         *string     `json:"invalidation_reason"`
-			KnownAtBarIndex            int         `json:"known_at_bar_index"`
-			ObjectId                   string      `json:"object_id"`
-			ObjectRevision             int         `json:"object_revision"`
-			StartBarIndex              int         `json:"start_bar_index"`
-			StartExtremeSourceBarIndex int         `json:"start_extreme_source_bar_index"`
-			StartPriceI64              int         `json:"start_price_i64"`
-			StartTime                  int         `json:"start_time"`
-			Status                     interface{} `json:"status"`
+			CatalogAlgorithmId         interface{}                             `json:"catalog_algorithm_id"`
+			Confirmed                  bool                                    `json:"confirmed"`
+			ConfirmedAtBarIndex        *int                                    `json:"confirmed_at_bar_index"`
+			Direction                  interface{}                             `json:"direction"`
+			EndBarIndex                int                                     `json:"end_bar_index"`
+			EndExtremeSourceBarIndex   int                                     `json:"end_extreme_source_bar_index"`
+			EndPriceI64                int                                     `json:"end_price_i64"`
+			EndTime                    int                                     `json:"end_time"`
+			InvalidationReason         *string                                 `json:"invalidation_reason"`
+			KnownAtBarIndex            int                                     `json:"known_at_bar_index"`
+			ObjectId                   string                                  `json:"object_id"`
+			ObjectRevision             int                                     `json:"object_revision"`
+			RangeHighI64               int                                     `json:"range_high_i64"`
+			RangeHighSourceBarIndex    int                                     `json:"range_high_source_bar_index"`
+			RangeLowI64                int                                     `json:"range_low_i64"`
+			RangeLowSourceBarIndex     int                                     `json:"range_low_source_bar_index"`
+			RangeProfile               CalculationResultsObjectsBiRangeProfile `json:"range_profile"`
+			StartBarIndex              int                                     `json:"start_bar_index"`
+			StartExtremeSourceBarIndex int                                     `json:"start_extreme_source_bar_index"`
+			StartPriceI64              int                                     `json:"start_price_i64"`
+			StartTime                  int                                     `json:"start_time"`
+			Status                     interface{}                             `json:"status"`
 		} `json:"bi"`
 		BiStates []struct {
 			AnchorFractalId    *string                                     `json:"anchor_fractal_id"`
@@ -3431,49 +4315,73 @@ type CalculationResults struct {
 			ZnTwiceI64          int                                                       `json:"zn_twice_i64"`
 		} `json:"center_monitors"`
 		Divergences []struct {
-			BarIndex               int                                                     `json:"bar_index"`
-			CatalogAlgorithmId     *CalculationResultsObjectsDivergencesCatalogAlgorithmId `json:"catalog_algorithm_id"`
-			CatalogEvent           *CalculationResultsObjectsDivergencesCatalogEvent       `json:"catalog_event"`
-			Confirmed              bool                                                    `json:"confirmed"`
-			ConfirmedAtBarIndex    *int                                                    `json:"confirmed_at_bar_index"`
-			DivergenceKind         *CalculationResultsObjectsDivergencesDivergenceKind     `json:"divergence_kind"`
-			InvalidationReason     *string                                                 `json:"invalidation_reason"`
-			KnownAtBarIndex        int                                                     `json:"known_at_bar_index"`
-			LevelId                *string                                                 `json:"level_id"`
-			LowerLevelTurnObjectId *string                                                 `json:"lower_level_turn_object_id"`
-			MacdAreaCurrent        *float32                                                `json:"macd_area_current"`
-			MacdAreaReference      *float32                                                `json:"macd_area_reference"`
-			ObjectId               string                                                  `json:"object_id"`
-			ObjectRevision         int                                                     `json:"object_revision"`
-			PriceI64               int                                                     `json:"price_i64"`
-			ReferenceObjectId      *string                                                 `json:"reference_object_id"`
-			SignalClass            *CalculationResultsObjectsDivergencesSignalClass        `json:"signal_class"`
-			SignalType             CalculationResultsObjectsDivergencesSignalType          `json:"signal_type"`
-			Status                 interface{}                                             `json:"status"`
-			Strength               *CalculationResultsObjectsDivergencesStrength           `json:"strength"`
-			Time                   int                                                     `json:"time"`
+			BarIndex                    int                                                     `json:"bar_index"`
+			BoundaryProfile             *CalculationResultsObjectsDivergencesBoundaryProfile    `json:"boundary_profile"`
+			BoundaryRelation            *CalculationResultsObjectsDivergencesBoundaryRelation   `json:"boundary_relation"`
+			CatalogAlgorithmId          *CalculationResultsObjectsDivergencesCatalogAlgorithmId `json:"catalog_algorithm_id"`
+			CatalogEvent                *CalculationResultsObjectsDivergencesCatalogEvent       `json:"catalog_event"`
+			CenterChainProfile          *CalculationResultsObjectsDivergencesCenterChainProfile `json:"center_chain_profile"`
+			ComparisonCurrentObjectId   *string                                                 `json:"comparison_current_object_id"`
+			ComparisonReferenceObjectId *string                                                 `json:"comparison_reference_object_id"`
+			ComparisonRule              *string                                                 `json:"comparison_rule"`
+			ConfirmationLatencyBars     int                                                     `json:"confirmation_latency_bars"`
+			Confirmed                   bool                                                    `json:"confirmed"`
+			ConfirmedAtBarIndex         *int                                                    `json:"confirmed_at_bar_index"`
+			DepartureObjectId           *string                                                 `json:"departure_object_id"`
+			DivergenceKind              *CalculationResultsObjectsDivergencesDivergenceKind     `json:"divergence_kind"`
+			EvidenceProfile             CalculationResultsObjectsDivergencesEvidenceProfile     `json:"evidence_profile"`
+			FollowThroughObjectId       *string                                                 `json:"follow_through_object_id"`
+			FollowThroughStatus         CalculationResultsObjectsDivergencesFollowThroughStatus `json:"follow_through_status"`
+			InvalidationReason          *string                                                 `json:"invalidation_reason"`
+			KnownAtBarIndex             int                                                     `json:"known_at_bar_index"`
+			LevelId                     *string                                                 `json:"level_id"`
+			LowerLevelTurnObjectId      *string                                                 `json:"lower_level_turn_object_id"`
+			MacdAreaCurrent             *float32                                                `json:"macd_area_current"`
+			MacdAreaReference           *float32                                                `json:"macd_area_reference"`
+			NewExtremeSatisfied         *bool                                                   `json:"new_extreme_satisfied"`
+			ObjectId                    string                                                  `json:"object_id"`
+			ObjectRevision              int                                                     `json:"object_revision"`
+			OlderCenterCount            *int                                                    `json:"older_center_count"`
+			PriceI64                    int                                                     `json:"price_i64"`
+			ReferenceCenterOrdinal      *int                                                    `json:"reference_center_ordinal"`
+			ReferenceObjectId           *string                                                 `json:"reference_object_id"`
+			ReturnDepthToCoreI64        *int                                                    `json:"return_depth_to_core_i64"`
+			ReturnDepthToOuterI64       *int                                                    `json:"return_depth_to_outer_i64"`
+			ReturnObjectId              *string                                                 `json:"return_object_id"`
+			ReturnOrdinal               *int                                                    `json:"return_ordinal"`
+			SignalClass                 *CalculationResultsObjectsDivergencesSignalClass        `json:"signal_class"`
+			SignalType                  CalculationResultsObjectsDivergencesSignalType          `json:"signal_type"`
+			Status                      interface{}                                             `json:"status"`
+			Strength                    *CalculationResultsObjectsDivergencesStrength           `json:"strength"`
+			Time                        int                                                     `json:"time"`
 		} `json:"divergences"`
 		Fractals []struct {
-			AuxStrength               interface{} `json:"aux_strength"`
-			BarIndex                  int         `json:"bar_index"`
-			CatalogAlgorithmId        interface{} `json:"catalog_algorithm_id"`
-			Confirmed                 bool        `json:"confirmed"`
-			ConfirmedAtBarIndex       *int        `json:"confirmed_at_bar_index"`
-			ExecutionAllowed          interface{} `json:"execution_allowed"`
-			ExtremeSourceBarIndex     int         `json:"extreme_source_bar_index"`
-			FractalType               interface{} `json:"fractal_type"`
-			InvalidationReason        *string     `json:"invalidation_reason"`
-			KnownAtBarIndex           int         `json:"known_at_bar_index"`
-			ObjectId                  string      `json:"object_id"`
-			ObjectRevision            int         `json:"object_revision"`
-			PriceI64                  int         `json:"price_i64"`
-			StandardSignal            interface{} `json:"standard_signal"`
-			Status                    interface{} `json:"status"`
-			StrengthReason            string      `json:"strength_reason"`
-			StrengthSemanticNamespace interface{} `json:"strength_semantic_namespace"`
-			Time                      int         `json:"time"`
-			ZoneHighI64               int         `json:"zone_high_i64"`
-			ZoneLowI64                int         `json:"zone_low_i64"`
+			AuxStrength               interface{}                                     `json:"aux_strength"`
+			BarIndex                  int                                             `json:"bar_index"`
+			BodyI64                   *int                                            `json:"body_i64"`
+			CatalogAlgorithmId        interface{}                                     `json:"catalog_algorithm_id"`
+			ClosePositionMilli        *int                                            `json:"close_position_milli"`
+			Confirmed                 bool                                            `json:"confirmed"`
+			ConfirmedAtBarIndex       *int                                            `json:"confirmed_at_bar_index"`
+			ExecutionAllowed          interface{}                                     `json:"execution_allowed"`
+			ExtremeSourceBarIndex     int                                             `json:"extreme_source_bar_index"`
+			FeatureProfile            CalculationResultsObjectsFractalsFeatureProfile `json:"feature_profile"`
+			FractalType               interface{}                                     `json:"fractal_type"`
+			InvalidationReason        *string                                         `json:"invalidation_reason"`
+			KnownAtBarIndex           int                                             `json:"known_at_bar_index"`
+			LowerShadowI64            *int                                            `json:"lower_shadow_i64"`
+			ObjectId                  string                                          `json:"object_id"`
+			ObjectRevision            int                                             `json:"object_revision"`
+			PriceI64                  int                                             `json:"price_i64"`
+			RangeI64                  *int                                            `json:"range_i64"`
+			StandardSignal            interface{}                                     `json:"standard_signal"`
+			Status                    interface{}                                     `json:"status"`
+			StrengthReason            string                                          `json:"strength_reason"`
+			StrengthSemanticNamespace interface{}                                     `json:"strength_semantic_namespace"`
+			Time                      int                                             `json:"time"`
+			UpperShadowI64            *int                                            `json:"upper_shadow_i64"`
+			ZoneHighI64               int                                             `json:"zone_high_i64"`
+			ZoneLowI64                int                                             `json:"zone_low_i64"`
 		} `json:"fractals"`
 		LevelCenters []struct {
 			CatalogAlgorithmId   interface{} `json:"catalog_algorithm_id"`
@@ -3582,46 +4490,69 @@ type CalculationResults struct {
 			ZgI64               int                                                     `json:"zg_i64"`
 		} `json:"segment_zhongshu"`
 		Segments []struct {
-			CatalogAlgorithmId         interface{} `json:"catalog_algorithm_id"`
-			Confirmed                  bool        `json:"confirmed"`
-			ConfirmedAtBarIndex        *int        `json:"confirmed_at_bar_index"`
-			Direction                  interface{} `json:"direction"`
-			EndBarIndex                int         `json:"end_bar_index"`
-			EndExtremeSourceBarIndex   int         `json:"end_extreme_source_bar_index"`
-			EndPriceI64                int         `json:"end_price_i64"`
-			EndTime                    int         `json:"end_time"`
-			InvalidationReason         *string     `json:"invalidation_reason"`
-			KnownAtBarIndex            int         `json:"known_at_bar_index"`
-			ObjectId                   string      `json:"object_id"`
-			ObjectRevision             int         `json:"object_revision"`
-			StartBarIndex              int         `json:"start_bar_index"`
-			StartExtremeSourceBarIndex int         `json:"start_extreme_source_bar_index"`
-			StartPriceI64              int         `json:"start_price_i64"`
-			StartTime                  int         `json:"start_time"`
-			Status                     interface{} `json:"status"`
+			CatalogAlgorithmId         interface{}                                   `json:"catalog_algorithm_id"`
+			Confirmed                  bool                                          `json:"confirmed"`
+			ConfirmedAtBarIndex        *int                                          `json:"confirmed_at_bar_index"`
+			Direction                  interface{}                                   `json:"direction"`
+			EndBarIndex                int                                           `json:"end_bar_index"`
+			EndExtremeSourceBarIndex   int                                           `json:"end_extreme_source_bar_index"`
+			EndPriceI64                int                                           `json:"end_price_i64"`
+			EndTime                    int                                           `json:"end_time"`
+			InvalidationReason         *string                                       `json:"invalidation_reason"`
+			KnownAtBarIndex            int                                           `json:"known_at_bar_index"`
+			ObjectId                   string                                        `json:"object_id"`
+			ObjectRevision             int                                           `json:"object_revision"`
+			RangeHighI64               int                                           `json:"range_high_i64"`
+			RangeHighSourceBarIndex    int                                           `json:"range_high_source_bar_index"`
+			RangeLowI64                int                                           `json:"range_low_i64"`
+			RangeLowSourceBarIndex     int                                           `json:"range_low_source_bar_index"`
+			RangeProfile               CalculationResultsObjectsSegmentsRangeProfile `json:"range_profile"`
+			StartBarIndex              int                                           `json:"start_bar_index"`
+			StartExtremeSourceBarIndex int                                           `json:"start_extreme_source_bar_index"`
+			StartPriceI64              int                                           `json:"start_price_i64"`
+			StartTime                  int                                           `json:"start_time"`
+			Status                     interface{}                                   `json:"status"`
 		} `json:"segments"`
 		TradePoints []struct {
-			BarIndex               int                                                     `json:"bar_index"`
-			CatalogAlgorithmId     *CalculationResultsObjectsTradePointsCatalogAlgorithmId `json:"catalog_algorithm_id"`
-			CatalogEvent           *CalculationResultsObjectsTradePointsCatalogEvent       `json:"catalog_event"`
-			Confirmed              bool                                                    `json:"confirmed"`
-			ConfirmedAtBarIndex    *int                                                    `json:"confirmed_at_bar_index"`
-			DivergenceKind         *CalculationResultsObjectsTradePointsDivergenceKind     `json:"divergence_kind"`
-			InvalidationReason     *string                                                 `json:"invalidation_reason"`
-			KnownAtBarIndex        int                                                     `json:"known_at_bar_index"`
-			LevelId                *string                                                 `json:"level_id"`
-			LowerLevelTurnObjectId *string                                                 `json:"lower_level_turn_object_id"`
-			MacdAreaCurrent        *float32                                                `json:"macd_area_current"`
-			MacdAreaReference      *float32                                                `json:"macd_area_reference"`
-			ObjectId               string                                                  `json:"object_id"`
-			ObjectRevision         int                                                     `json:"object_revision"`
-			PriceI64               int                                                     `json:"price_i64"`
-			ReferenceObjectId      *string                                                 `json:"reference_object_id"`
-			SignalClass            *CalculationResultsObjectsTradePointsSignalClass        `json:"signal_class"`
-			SignalType             CalculationResultsObjectsTradePointsSignalType          `json:"signal_type"`
-			Status                 interface{}                                             `json:"status"`
-			Strength               *CalculationResultsObjectsTradePointsStrength           `json:"strength"`
-			Time                   int                                                     `json:"time"`
+			BarIndex                    int                                                     `json:"bar_index"`
+			BoundaryProfile             *CalculationResultsObjectsTradePointsBoundaryProfile    `json:"boundary_profile"`
+			BoundaryRelation            *CalculationResultsObjectsTradePointsBoundaryRelation   `json:"boundary_relation"`
+			CatalogAlgorithmId          *CalculationResultsObjectsTradePointsCatalogAlgorithmId `json:"catalog_algorithm_id"`
+			CatalogEvent                *CalculationResultsObjectsTradePointsCatalogEvent       `json:"catalog_event"`
+			CenterChainProfile          *CalculationResultsObjectsTradePointsCenterChainProfile `json:"center_chain_profile"`
+			ComparisonCurrentObjectId   *string                                                 `json:"comparison_current_object_id"`
+			ComparisonReferenceObjectId *string                                                 `json:"comparison_reference_object_id"`
+			ComparisonRule              *string                                                 `json:"comparison_rule"`
+			ConfirmationLatencyBars     int                                                     `json:"confirmation_latency_bars"`
+			Confirmed                   bool                                                    `json:"confirmed"`
+			ConfirmedAtBarIndex         *int                                                    `json:"confirmed_at_bar_index"`
+			DepartureObjectId           *string                                                 `json:"departure_object_id"`
+			DivergenceKind              *CalculationResultsObjectsTradePointsDivergenceKind     `json:"divergence_kind"`
+			EvidenceProfile             CalculationResultsObjectsTradePointsEvidenceProfile     `json:"evidence_profile"`
+			FollowThroughObjectId       *string                                                 `json:"follow_through_object_id"`
+			FollowThroughStatus         CalculationResultsObjectsTradePointsFollowThroughStatus `json:"follow_through_status"`
+			InvalidationReason          *string                                                 `json:"invalidation_reason"`
+			KnownAtBarIndex             int                                                     `json:"known_at_bar_index"`
+			LevelId                     *string                                                 `json:"level_id"`
+			LowerLevelTurnObjectId      *string                                                 `json:"lower_level_turn_object_id"`
+			MacdAreaCurrent             *float32                                                `json:"macd_area_current"`
+			MacdAreaReference           *float32                                                `json:"macd_area_reference"`
+			NewExtremeSatisfied         *bool                                                   `json:"new_extreme_satisfied"`
+			ObjectId                    string                                                  `json:"object_id"`
+			ObjectRevision              int                                                     `json:"object_revision"`
+			OlderCenterCount            *int                                                    `json:"older_center_count"`
+			PriceI64                    int                                                     `json:"price_i64"`
+			ReferenceCenterOrdinal      *int                                                    `json:"reference_center_ordinal"`
+			ReferenceObjectId           *string                                                 `json:"reference_object_id"`
+			ReturnDepthToCoreI64        *int                                                    `json:"return_depth_to_core_i64"`
+			ReturnDepthToOuterI64       *int                                                    `json:"return_depth_to_outer_i64"`
+			ReturnObjectId              *string                                                 `json:"return_object_id"`
+			ReturnOrdinal               *int                                                    `json:"return_ordinal"`
+			SignalClass                 *CalculationResultsObjectsTradePointsSignalClass        `json:"signal_class"`
+			SignalType                  CalculationResultsObjectsTradePointsSignalType          `json:"signal_type"`
+			Status                      interface{}                                             `json:"status"`
+			Strength                    *CalculationResultsObjectsTradePointsStrength           `json:"strength"`
+			Time                        int                                                     `json:"time"`
 		} `json:"trade_points"`
 		Zhongshu []struct {
 			AnalysisLevel       string                                           `json:"analysis_level"`
@@ -3650,6 +4581,9 @@ type CalculationResults struct {
 	Values     *map[string][]*float32 `json:"values,omitempty"`
 }
 
+// CalculationResultsObjectsBiRangeProfile defines model for CalculationResults.Objects.Bi.RangeProfile.
+type CalculationResultsObjectsBiRangeProfile string
+
 // CalculationResultsObjectsBiStatesDirection defines model for CalculationResults.Objects.BiStates.Direction.
 type CalculationResultsObjectsBiStatesDirection string
 
@@ -3665,14 +4599,29 @@ type CalculationResultsObjectsCenterMonitorsOscillationBias string
 // CalculationResultsObjectsCenterMonitorsRelativePosition defines model for CalculationResults.Objects.CenterMonitors.RelativePosition.
 type CalculationResultsObjectsCenterMonitorsRelativePosition string
 
+// CalculationResultsObjectsDivergencesBoundaryProfile defines model for CalculationResults.Objects.Divergences.BoundaryProfile.
+type CalculationResultsObjectsDivergencesBoundaryProfile string
+
+// CalculationResultsObjectsDivergencesBoundaryRelation defines model for CalculationResults.Objects.Divergences.BoundaryRelation.
+type CalculationResultsObjectsDivergencesBoundaryRelation string
+
 // CalculationResultsObjectsDivergencesCatalogAlgorithmId defines model for CalculationResults.Objects.Divergences.CatalogAlgorithmId.
 type CalculationResultsObjectsDivergencesCatalogAlgorithmId string
 
 // CalculationResultsObjectsDivergencesCatalogEvent defines model for CalculationResults.Objects.Divergences.CatalogEvent.
 type CalculationResultsObjectsDivergencesCatalogEvent string
 
+// CalculationResultsObjectsDivergencesCenterChainProfile defines model for CalculationResults.Objects.Divergences.CenterChainProfile.
+type CalculationResultsObjectsDivergencesCenterChainProfile string
+
 // CalculationResultsObjectsDivergencesDivergenceKind defines model for CalculationResults.Objects.Divergences.DivergenceKind.
 type CalculationResultsObjectsDivergencesDivergenceKind string
+
+// CalculationResultsObjectsDivergencesEvidenceProfile defines model for CalculationResults.Objects.Divergences.EvidenceProfile.
+type CalculationResultsObjectsDivergencesEvidenceProfile string
+
+// CalculationResultsObjectsDivergencesFollowThroughStatus defines model for CalculationResults.Objects.Divergences.FollowThroughStatus.
+type CalculationResultsObjectsDivergencesFollowThroughStatus string
 
 // CalculationResultsObjectsDivergencesSignalClass defines model for CalculationResults.Objects.Divergences.SignalClass.
 type CalculationResultsObjectsDivergencesSignalClass string
@@ -3682,6 +4631,9 @@ type CalculationResultsObjectsDivergencesSignalType string
 
 // CalculationResultsObjectsDivergencesStrength defines model for CalculationResults.Objects.Divergences.Strength.
 type CalculationResultsObjectsDivergencesStrength string
+
+// CalculationResultsObjectsFractalsFeatureProfile defines model for CalculationResults.Objects.Fractals.FeatureProfile.
+type CalculationResultsObjectsFractalsFeatureProfile string
 
 // CalculationResultsObjectsLevelMovementsDirection defines model for CalculationResults.Objects.LevelMovements.Direction.
 type CalculationResultsObjectsLevelMovementsDirection string
@@ -3704,14 +4656,32 @@ type CalculationResultsObjectsSegmentZhongshuLeaveDirection string
 // CalculationResultsObjectsSegmentZhongshuStatus defines model for CalculationResults.Objects.SegmentZhongshu.Status.
 type CalculationResultsObjectsSegmentZhongshuStatus string
 
+// CalculationResultsObjectsSegmentsRangeProfile defines model for CalculationResults.Objects.Segments.RangeProfile.
+type CalculationResultsObjectsSegmentsRangeProfile string
+
+// CalculationResultsObjectsTradePointsBoundaryProfile defines model for CalculationResults.Objects.TradePoints.BoundaryProfile.
+type CalculationResultsObjectsTradePointsBoundaryProfile string
+
+// CalculationResultsObjectsTradePointsBoundaryRelation defines model for CalculationResults.Objects.TradePoints.BoundaryRelation.
+type CalculationResultsObjectsTradePointsBoundaryRelation string
+
 // CalculationResultsObjectsTradePointsCatalogAlgorithmId defines model for CalculationResults.Objects.TradePoints.CatalogAlgorithmId.
 type CalculationResultsObjectsTradePointsCatalogAlgorithmId string
 
 // CalculationResultsObjectsTradePointsCatalogEvent defines model for CalculationResults.Objects.TradePoints.CatalogEvent.
 type CalculationResultsObjectsTradePointsCatalogEvent string
 
+// CalculationResultsObjectsTradePointsCenterChainProfile defines model for CalculationResults.Objects.TradePoints.CenterChainProfile.
+type CalculationResultsObjectsTradePointsCenterChainProfile string
+
 // CalculationResultsObjectsTradePointsDivergenceKind defines model for CalculationResults.Objects.TradePoints.DivergenceKind.
 type CalculationResultsObjectsTradePointsDivergenceKind string
+
+// CalculationResultsObjectsTradePointsEvidenceProfile defines model for CalculationResults.Objects.TradePoints.EvidenceProfile.
+type CalculationResultsObjectsTradePointsEvidenceProfile string
+
+// CalculationResultsObjectsTradePointsFollowThroughStatus defines model for CalculationResults.Objects.TradePoints.FollowThroughStatus.
+type CalculationResultsObjectsTradePointsFollowThroughStatus string
 
 // CalculationResultsObjectsTradePointsSignalClass defines model for CalculationResults.Objects.TradePoints.SignalClass.
 type CalculationResultsObjectsTradePointsSignalClass string
@@ -3815,27 +4785,36 @@ type ChanCenterMonitorRelativePosition string
 
 // ChanFractal defines model for ChanFractal.
 type ChanFractal struct {
-	AuxStrength               interface{} `json:"aux_strength"`
-	BarIndex                  int         `json:"bar_index"`
-	CatalogAlgorithmId        interface{} `json:"catalog_algorithm_id"`
-	Confirmed                 bool        `json:"confirmed"`
-	ConfirmedAtBarIndex       *int        `json:"confirmed_at_bar_index"`
-	ExecutionAllowed          interface{} `json:"execution_allowed"`
-	ExtremeSourceBarIndex     int         `json:"extreme_source_bar_index"`
-	FractalType               interface{} `json:"fractal_type"`
-	InvalidationReason        *string     `json:"invalidation_reason"`
-	KnownAtBarIndex           int         `json:"known_at_bar_index"`
-	ObjectId                  string      `json:"object_id"`
-	ObjectRevision            int         `json:"object_revision"`
-	PriceI64                  int         `json:"price_i64"`
-	StandardSignal            interface{} `json:"standard_signal"`
-	Status                    interface{} `json:"status"`
-	StrengthReason            string      `json:"strength_reason"`
-	StrengthSemanticNamespace interface{} `json:"strength_semantic_namespace"`
-	Time                      int         `json:"time"`
-	ZoneHighI64               int         `json:"zone_high_i64"`
-	ZoneLowI64                int         `json:"zone_low_i64"`
+	AuxStrength               interface{}               `json:"aux_strength"`
+	BarIndex                  int                       `json:"bar_index"`
+	BodyI64                   *int                      `json:"body_i64"`
+	CatalogAlgorithmId        interface{}               `json:"catalog_algorithm_id"`
+	ClosePositionMilli        *int                      `json:"close_position_milli"`
+	Confirmed                 bool                      `json:"confirmed"`
+	ConfirmedAtBarIndex       *int                      `json:"confirmed_at_bar_index"`
+	ExecutionAllowed          interface{}               `json:"execution_allowed"`
+	ExtremeSourceBarIndex     int                       `json:"extreme_source_bar_index"`
+	FeatureProfile            ChanFractalFeatureProfile `json:"feature_profile"`
+	FractalType               interface{}               `json:"fractal_type"`
+	InvalidationReason        *string                   `json:"invalidation_reason"`
+	KnownAtBarIndex           int                       `json:"known_at_bar_index"`
+	LowerShadowI64            *int                      `json:"lower_shadow_i64"`
+	ObjectId                  string                    `json:"object_id"`
+	ObjectRevision            int                       `json:"object_revision"`
+	PriceI64                  int                       `json:"price_i64"`
+	RangeI64                  *int                      `json:"range_i64"`
+	StandardSignal            interface{}               `json:"standard_signal"`
+	Status                    interface{}               `json:"status"`
+	StrengthReason            string                    `json:"strength_reason"`
+	StrengthSemanticNamespace interface{}               `json:"strength_semantic_namespace"`
+	Time                      int                       `json:"time"`
+	UpperShadowI64            *int                      `json:"upper_shadow_i64"`
+	ZoneHighI64               int                       `json:"zone_high_i64"`
+	ZoneLowI64                int                       `json:"zone_low_i64"`
 }
+
+// ChanFractalFeatureProfile defines model for ChanFractal.FeatureProfile.
+type ChanFractalFeatureProfile string
 
 // ChanLevelCenter defines model for ChanLevelCenter.
 type ChanLevelCenter struct {
@@ -3897,24 +4876,32 @@ type ChanLevelMovementPreviousClassification string
 
 // ChanLineObject defines model for ChanLineObject.
 type ChanLineObject struct {
-	CatalogAlgorithmId         interface{} `json:"catalog_algorithm_id"`
-	Confirmed                  bool        `json:"confirmed"`
-	ConfirmedAtBarIndex        *int        `json:"confirmed_at_bar_index"`
-	Direction                  interface{} `json:"direction"`
-	EndBarIndex                int         `json:"end_bar_index"`
-	EndExtremeSourceBarIndex   int         `json:"end_extreme_source_bar_index"`
-	EndPriceI64                int         `json:"end_price_i64"`
-	EndTime                    int         `json:"end_time"`
-	InvalidationReason         *string     `json:"invalidation_reason"`
-	KnownAtBarIndex            int         `json:"known_at_bar_index"`
-	ObjectId                   string      `json:"object_id"`
-	ObjectRevision             int         `json:"object_revision"`
-	StartBarIndex              int         `json:"start_bar_index"`
-	StartExtremeSourceBarIndex int         `json:"start_extreme_source_bar_index"`
-	StartPriceI64              int         `json:"start_price_i64"`
-	StartTime                  int         `json:"start_time"`
-	Status                     interface{} `json:"status"`
+	CatalogAlgorithmId         interface{}                `json:"catalog_algorithm_id"`
+	Confirmed                  bool                       `json:"confirmed"`
+	ConfirmedAtBarIndex        *int                       `json:"confirmed_at_bar_index"`
+	Direction                  interface{}                `json:"direction"`
+	EndBarIndex                int                        `json:"end_bar_index"`
+	EndExtremeSourceBarIndex   int                        `json:"end_extreme_source_bar_index"`
+	EndPriceI64                int                        `json:"end_price_i64"`
+	EndTime                    int                        `json:"end_time"`
+	InvalidationReason         *string                    `json:"invalidation_reason"`
+	KnownAtBarIndex            int                        `json:"known_at_bar_index"`
+	ObjectId                   string                     `json:"object_id"`
+	ObjectRevision             int                        `json:"object_revision"`
+	RangeHighI64               int                        `json:"range_high_i64"`
+	RangeHighSourceBarIndex    int                        `json:"range_high_source_bar_index"`
+	RangeLowI64                int                        `json:"range_low_i64"`
+	RangeLowSourceBarIndex     int                        `json:"range_low_source_bar_index"`
+	RangeProfile               ChanLineObjectRangeProfile `json:"range_profile"`
+	StartBarIndex              int                        `json:"start_bar_index"`
+	StartExtremeSourceBarIndex int                        `json:"start_extreme_source_bar_index"`
+	StartPriceI64              int                        `json:"start_price_i64"`
+	StartTime                  int                        `json:"start_time"`
+	Status                     interface{}                `json:"status"`
 }
+
+// ChanLineObjectRangeProfile defines model for ChanLineObject.RangeProfile.
+type ChanLineObjectRangeProfile string
 
 // ChanMovementState defines model for ChanMovementState.
 type ChanMovementState struct {
@@ -3943,23 +4930,28 @@ type ChanMovementStateStateType string
 // ChanObjects defines model for ChanObjects.
 type ChanObjects struct {
 	Bi []struct {
-		CatalogAlgorithmId         interface{} `json:"catalog_algorithm_id"`
-		Confirmed                  bool        `json:"confirmed"`
-		ConfirmedAtBarIndex        *int        `json:"confirmed_at_bar_index"`
-		Direction                  interface{} `json:"direction"`
-		EndBarIndex                int         `json:"end_bar_index"`
-		EndExtremeSourceBarIndex   int         `json:"end_extreme_source_bar_index"`
-		EndPriceI64                int         `json:"end_price_i64"`
-		EndTime                    int         `json:"end_time"`
-		InvalidationReason         *string     `json:"invalidation_reason"`
-		KnownAtBarIndex            int         `json:"known_at_bar_index"`
-		ObjectId                   string      `json:"object_id"`
-		ObjectRevision             int         `json:"object_revision"`
-		StartBarIndex              int         `json:"start_bar_index"`
-		StartExtremeSourceBarIndex int         `json:"start_extreme_source_bar_index"`
-		StartPriceI64              int         `json:"start_price_i64"`
-		StartTime                  int         `json:"start_time"`
-		Status                     interface{} `json:"status"`
+		CatalogAlgorithmId         interface{}               `json:"catalog_algorithm_id"`
+		Confirmed                  bool                      `json:"confirmed"`
+		ConfirmedAtBarIndex        *int                      `json:"confirmed_at_bar_index"`
+		Direction                  interface{}               `json:"direction"`
+		EndBarIndex                int                       `json:"end_bar_index"`
+		EndExtremeSourceBarIndex   int                       `json:"end_extreme_source_bar_index"`
+		EndPriceI64                int                       `json:"end_price_i64"`
+		EndTime                    int                       `json:"end_time"`
+		InvalidationReason         *string                   `json:"invalidation_reason"`
+		KnownAtBarIndex            int                       `json:"known_at_bar_index"`
+		ObjectId                   string                    `json:"object_id"`
+		ObjectRevision             int                       `json:"object_revision"`
+		RangeHighI64               int                       `json:"range_high_i64"`
+		RangeHighSourceBarIndex    int                       `json:"range_high_source_bar_index"`
+		RangeLowI64                int                       `json:"range_low_i64"`
+		RangeLowSourceBarIndex     int                       `json:"range_low_source_bar_index"`
+		RangeProfile               ChanObjectsBiRangeProfile `json:"range_profile"`
+		StartBarIndex              int                       `json:"start_bar_index"`
+		StartExtremeSourceBarIndex int                       `json:"start_extreme_source_bar_index"`
+		StartPriceI64              int                       `json:"start_price_i64"`
+		StartTime                  int                       `json:"start_time"`
+		Status                     interface{}               `json:"status"`
 	} `json:"bi"`
 	BiStates []struct {
 		AnchorFractalId    *string                       `json:"anchor_fractal_id"`
@@ -4007,49 +4999,73 @@ type ChanObjects struct {
 		ZnTwiceI64          int                                         `json:"zn_twice_i64"`
 	} `json:"center_monitors"`
 	Divergences []struct {
-		BarIndex               int                                       `json:"bar_index"`
-		CatalogAlgorithmId     *ChanObjectsDivergencesCatalogAlgorithmId `json:"catalog_algorithm_id"`
-		CatalogEvent           *ChanObjectsDivergencesCatalogEvent       `json:"catalog_event"`
-		Confirmed              bool                                      `json:"confirmed"`
-		ConfirmedAtBarIndex    *int                                      `json:"confirmed_at_bar_index"`
-		DivergenceKind         *ChanObjectsDivergencesDivergenceKind     `json:"divergence_kind"`
-		InvalidationReason     *string                                   `json:"invalidation_reason"`
-		KnownAtBarIndex        int                                       `json:"known_at_bar_index"`
-		LevelId                *string                                   `json:"level_id"`
-		LowerLevelTurnObjectId *string                                   `json:"lower_level_turn_object_id"`
-		MacdAreaCurrent        *float32                                  `json:"macd_area_current"`
-		MacdAreaReference      *float32                                  `json:"macd_area_reference"`
-		ObjectId               string                                    `json:"object_id"`
-		ObjectRevision         int                                       `json:"object_revision"`
-		PriceI64               int                                       `json:"price_i64"`
-		ReferenceObjectId      *string                                   `json:"reference_object_id"`
-		SignalClass            *ChanObjectsDivergencesSignalClass        `json:"signal_class"`
-		SignalType             ChanObjectsDivergencesSignalType          `json:"signal_type"`
-		Status                 interface{}                               `json:"status"`
-		Strength               *ChanObjectsDivergencesStrength           `json:"strength"`
-		Time                   int                                       `json:"time"`
+		BarIndex                    int                                       `json:"bar_index"`
+		BoundaryProfile             *ChanObjectsDivergencesBoundaryProfile    `json:"boundary_profile"`
+		BoundaryRelation            *ChanObjectsDivergencesBoundaryRelation   `json:"boundary_relation"`
+		CatalogAlgorithmId          *ChanObjectsDivergencesCatalogAlgorithmId `json:"catalog_algorithm_id"`
+		CatalogEvent                *ChanObjectsDivergencesCatalogEvent       `json:"catalog_event"`
+		CenterChainProfile          *ChanObjectsDivergencesCenterChainProfile `json:"center_chain_profile"`
+		ComparisonCurrentObjectId   *string                                   `json:"comparison_current_object_id"`
+		ComparisonReferenceObjectId *string                                   `json:"comparison_reference_object_id"`
+		ComparisonRule              *string                                   `json:"comparison_rule"`
+		ConfirmationLatencyBars     int                                       `json:"confirmation_latency_bars"`
+		Confirmed                   bool                                      `json:"confirmed"`
+		ConfirmedAtBarIndex         *int                                      `json:"confirmed_at_bar_index"`
+		DepartureObjectId           *string                                   `json:"departure_object_id"`
+		DivergenceKind              *ChanObjectsDivergencesDivergenceKind     `json:"divergence_kind"`
+		EvidenceProfile             ChanObjectsDivergencesEvidenceProfile     `json:"evidence_profile"`
+		FollowThroughObjectId       *string                                   `json:"follow_through_object_id"`
+		FollowThroughStatus         ChanObjectsDivergencesFollowThroughStatus `json:"follow_through_status"`
+		InvalidationReason          *string                                   `json:"invalidation_reason"`
+		KnownAtBarIndex             int                                       `json:"known_at_bar_index"`
+		LevelId                     *string                                   `json:"level_id"`
+		LowerLevelTurnObjectId      *string                                   `json:"lower_level_turn_object_id"`
+		MacdAreaCurrent             *float32                                  `json:"macd_area_current"`
+		MacdAreaReference           *float32                                  `json:"macd_area_reference"`
+		NewExtremeSatisfied         *bool                                     `json:"new_extreme_satisfied"`
+		ObjectId                    string                                    `json:"object_id"`
+		ObjectRevision              int                                       `json:"object_revision"`
+		OlderCenterCount            *int                                      `json:"older_center_count"`
+		PriceI64                    int                                       `json:"price_i64"`
+		ReferenceCenterOrdinal      *int                                      `json:"reference_center_ordinal"`
+		ReferenceObjectId           *string                                   `json:"reference_object_id"`
+		ReturnDepthToCoreI64        *int                                      `json:"return_depth_to_core_i64"`
+		ReturnDepthToOuterI64       *int                                      `json:"return_depth_to_outer_i64"`
+		ReturnObjectId              *string                                   `json:"return_object_id"`
+		ReturnOrdinal               *int                                      `json:"return_ordinal"`
+		SignalClass                 *ChanObjectsDivergencesSignalClass        `json:"signal_class"`
+		SignalType                  ChanObjectsDivergencesSignalType          `json:"signal_type"`
+		Status                      interface{}                               `json:"status"`
+		Strength                    *ChanObjectsDivergencesStrength           `json:"strength"`
+		Time                        int                                       `json:"time"`
 	} `json:"divergences"`
 	Fractals []struct {
-		AuxStrength               interface{} `json:"aux_strength"`
-		BarIndex                  int         `json:"bar_index"`
-		CatalogAlgorithmId        interface{} `json:"catalog_algorithm_id"`
-		Confirmed                 bool        `json:"confirmed"`
-		ConfirmedAtBarIndex       *int        `json:"confirmed_at_bar_index"`
-		ExecutionAllowed          interface{} `json:"execution_allowed"`
-		ExtremeSourceBarIndex     int         `json:"extreme_source_bar_index"`
-		FractalType               interface{} `json:"fractal_type"`
-		InvalidationReason        *string     `json:"invalidation_reason"`
-		KnownAtBarIndex           int         `json:"known_at_bar_index"`
-		ObjectId                  string      `json:"object_id"`
-		ObjectRevision            int         `json:"object_revision"`
-		PriceI64                  int         `json:"price_i64"`
-		StandardSignal            interface{} `json:"standard_signal"`
-		Status                    interface{} `json:"status"`
-		StrengthReason            string      `json:"strength_reason"`
-		StrengthSemanticNamespace interface{} `json:"strength_semantic_namespace"`
-		Time                      int         `json:"time"`
-		ZoneHighI64               int         `json:"zone_high_i64"`
-		ZoneLowI64                int         `json:"zone_low_i64"`
+		AuxStrength               interface{}                       `json:"aux_strength"`
+		BarIndex                  int                               `json:"bar_index"`
+		BodyI64                   *int                              `json:"body_i64"`
+		CatalogAlgorithmId        interface{}                       `json:"catalog_algorithm_id"`
+		ClosePositionMilli        *int                              `json:"close_position_milli"`
+		Confirmed                 bool                              `json:"confirmed"`
+		ConfirmedAtBarIndex       *int                              `json:"confirmed_at_bar_index"`
+		ExecutionAllowed          interface{}                       `json:"execution_allowed"`
+		ExtremeSourceBarIndex     int                               `json:"extreme_source_bar_index"`
+		FeatureProfile            ChanObjectsFractalsFeatureProfile `json:"feature_profile"`
+		FractalType               interface{}                       `json:"fractal_type"`
+		InvalidationReason        *string                           `json:"invalidation_reason"`
+		KnownAtBarIndex           int                               `json:"known_at_bar_index"`
+		LowerShadowI64            *int                              `json:"lower_shadow_i64"`
+		ObjectId                  string                            `json:"object_id"`
+		ObjectRevision            int                               `json:"object_revision"`
+		PriceI64                  int                               `json:"price_i64"`
+		RangeI64                  *int                              `json:"range_i64"`
+		StandardSignal            interface{}                       `json:"standard_signal"`
+		Status                    interface{}                       `json:"status"`
+		StrengthReason            string                            `json:"strength_reason"`
+		StrengthSemanticNamespace interface{}                       `json:"strength_semantic_namespace"`
+		Time                      int                               `json:"time"`
+		UpperShadowI64            *int                              `json:"upper_shadow_i64"`
+		ZoneHighI64               int                               `json:"zone_high_i64"`
+		ZoneLowI64                int                               `json:"zone_low_i64"`
 	} `json:"fractals"`
 	LevelCenters []struct {
 		CatalogAlgorithmId   interface{} `json:"catalog_algorithm_id"`
@@ -4158,46 +5174,69 @@ type ChanObjects struct {
 		ZgI64               int                                       `json:"zg_i64"`
 	} `json:"segment_zhongshu"`
 	Segments []struct {
-		CatalogAlgorithmId         interface{} `json:"catalog_algorithm_id"`
-		Confirmed                  bool        `json:"confirmed"`
-		ConfirmedAtBarIndex        *int        `json:"confirmed_at_bar_index"`
-		Direction                  interface{} `json:"direction"`
-		EndBarIndex                int         `json:"end_bar_index"`
-		EndExtremeSourceBarIndex   int         `json:"end_extreme_source_bar_index"`
-		EndPriceI64                int         `json:"end_price_i64"`
-		EndTime                    int         `json:"end_time"`
-		InvalidationReason         *string     `json:"invalidation_reason"`
-		KnownAtBarIndex            int         `json:"known_at_bar_index"`
-		ObjectId                   string      `json:"object_id"`
-		ObjectRevision             int         `json:"object_revision"`
-		StartBarIndex              int         `json:"start_bar_index"`
-		StartExtremeSourceBarIndex int         `json:"start_extreme_source_bar_index"`
-		StartPriceI64              int         `json:"start_price_i64"`
-		StartTime                  int         `json:"start_time"`
-		Status                     interface{} `json:"status"`
+		CatalogAlgorithmId         interface{}                     `json:"catalog_algorithm_id"`
+		Confirmed                  bool                            `json:"confirmed"`
+		ConfirmedAtBarIndex        *int                            `json:"confirmed_at_bar_index"`
+		Direction                  interface{}                     `json:"direction"`
+		EndBarIndex                int                             `json:"end_bar_index"`
+		EndExtremeSourceBarIndex   int                             `json:"end_extreme_source_bar_index"`
+		EndPriceI64                int                             `json:"end_price_i64"`
+		EndTime                    int                             `json:"end_time"`
+		InvalidationReason         *string                         `json:"invalidation_reason"`
+		KnownAtBarIndex            int                             `json:"known_at_bar_index"`
+		ObjectId                   string                          `json:"object_id"`
+		ObjectRevision             int                             `json:"object_revision"`
+		RangeHighI64               int                             `json:"range_high_i64"`
+		RangeHighSourceBarIndex    int                             `json:"range_high_source_bar_index"`
+		RangeLowI64                int                             `json:"range_low_i64"`
+		RangeLowSourceBarIndex     int                             `json:"range_low_source_bar_index"`
+		RangeProfile               ChanObjectsSegmentsRangeProfile `json:"range_profile"`
+		StartBarIndex              int                             `json:"start_bar_index"`
+		StartExtremeSourceBarIndex int                             `json:"start_extreme_source_bar_index"`
+		StartPriceI64              int                             `json:"start_price_i64"`
+		StartTime                  int                             `json:"start_time"`
+		Status                     interface{}                     `json:"status"`
 	} `json:"segments"`
 	TradePoints []struct {
-		BarIndex               int                                       `json:"bar_index"`
-		CatalogAlgorithmId     *ChanObjectsTradePointsCatalogAlgorithmId `json:"catalog_algorithm_id"`
-		CatalogEvent           *ChanObjectsTradePointsCatalogEvent       `json:"catalog_event"`
-		Confirmed              bool                                      `json:"confirmed"`
-		ConfirmedAtBarIndex    *int                                      `json:"confirmed_at_bar_index"`
-		DivergenceKind         *ChanObjectsTradePointsDivergenceKind     `json:"divergence_kind"`
-		InvalidationReason     *string                                   `json:"invalidation_reason"`
-		KnownAtBarIndex        int                                       `json:"known_at_bar_index"`
-		LevelId                *string                                   `json:"level_id"`
-		LowerLevelTurnObjectId *string                                   `json:"lower_level_turn_object_id"`
-		MacdAreaCurrent        *float32                                  `json:"macd_area_current"`
-		MacdAreaReference      *float32                                  `json:"macd_area_reference"`
-		ObjectId               string                                    `json:"object_id"`
-		ObjectRevision         int                                       `json:"object_revision"`
-		PriceI64               int                                       `json:"price_i64"`
-		ReferenceObjectId      *string                                   `json:"reference_object_id"`
-		SignalClass            *ChanObjectsTradePointsSignalClass        `json:"signal_class"`
-		SignalType             ChanObjectsTradePointsSignalType          `json:"signal_type"`
-		Status                 interface{}                               `json:"status"`
-		Strength               *ChanObjectsTradePointsStrength           `json:"strength"`
-		Time                   int                                       `json:"time"`
+		BarIndex                    int                                       `json:"bar_index"`
+		BoundaryProfile             *ChanObjectsTradePointsBoundaryProfile    `json:"boundary_profile"`
+		BoundaryRelation            *ChanObjectsTradePointsBoundaryRelation   `json:"boundary_relation"`
+		CatalogAlgorithmId          *ChanObjectsTradePointsCatalogAlgorithmId `json:"catalog_algorithm_id"`
+		CatalogEvent                *ChanObjectsTradePointsCatalogEvent       `json:"catalog_event"`
+		CenterChainProfile          *ChanObjectsTradePointsCenterChainProfile `json:"center_chain_profile"`
+		ComparisonCurrentObjectId   *string                                   `json:"comparison_current_object_id"`
+		ComparisonReferenceObjectId *string                                   `json:"comparison_reference_object_id"`
+		ComparisonRule              *string                                   `json:"comparison_rule"`
+		ConfirmationLatencyBars     int                                       `json:"confirmation_latency_bars"`
+		Confirmed                   bool                                      `json:"confirmed"`
+		ConfirmedAtBarIndex         *int                                      `json:"confirmed_at_bar_index"`
+		DepartureObjectId           *string                                   `json:"departure_object_id"`
+		DivergenceKind              *ChanObjectsTradePointsDivergenceKind     `json:"divergence_kind"`
+		EvidenceProfile             ChanObjectsTradePointsEvidenceProfile     `json:"evidence_profile"`
+		FollowThroughObjectId       *string                                   `json:"follow_through_object_id"`
+		FollowThroughStatus         ChanObjectsTradePointsFollowThroughStatus `json:"follow_through_status"`
+		InvalidationReason          *string                                   `json:"invalidation_reason"`
+		KnownAtBarIndex             int                                       `json:"known_at_bar_index"`
+		LevelId                     *string                                   `json:"level_id"`
+		LowerLevelTurnObjectId      *string                                   `json:"lower_level_turn_object_id"`
+		MacdAreaCurrent             *float32                                  `json:"macd_area_current"`
+		MacdAreaReference           *float32                                  `json:"macd_area_reference"`
+		NewExtremeSatisfied         *bool                                     `json:"new_extreme_satisfied"`
+		ObjectId                    string                                    `json:"object_id"`
+		ObjectRevision              int                                       `json:"object_revision"`
+		OlderCenterCount            *int                                      `json:"older_center_count"`
+		PriceI64                    int                                       `json:"price_i64"`
+		ReferenceCenterOrdinal      *int                                      `json:"reference_center_ordinal"`
+		ReferenceObjectId           *string                                   `json:"reference_object_id"`
+		ReturnDepthToCoreI64        *int                                      `json:"return_depth_to_core_i64"`
+		ReturnDepthToOuterI64       *int                                      `json:"return_depth_to_outer_i64"`
+		ReturnObjectId              *string                                   `json:"return_object_id"`
+		ReturnOrdinal               *int                                      `json:"return_ordinal"`
+		SignalClass                 *ChanObjectsTradePointsSignalClass        `json:"signal_class"`
+		SignalType                  ChanObjectsTradePointsSignalType          `json:"signal_type"`
+		Status                      interface{}                               `json:"status"`
+		Strength                    *ChanObjectsTradePointsStrength           `json:"strength"`
+		Time                        int                                       `json:"time"`
 	} `json:"trade_points"`
 	Zhongshu []struct {
 		AnalysisLevel       string                             `json:"analysis_level"`
@@ -4222,6 +5261,9 @@ type ChanObjects struct {
 	} `json:"zhongshu"`
 }
 
+// ChanObjectsBiRangeProfile defines model for ChanObjects.Bi.RangeProfile.
+type ChanObjectsBiRangeProfile string
+
 // ChanObjectsBiStatesDirection defines model for ChanObjects.BiStates.Direction.
 type ChanObjectsBiStatesDirection string
 
@@ -4237,14 +5279,29 @@ type ChanObjectsCenterMonitorsOscillationBias string
 // ChanObjectsCenterMonitorsRelativePosition defines model for ChanObjects.CenterMonitors.RelativePosition.
 type ChanObjectsCenterMonitorsRelativePosition string
 
+// ChanObjectsDivergencesBoundaryProfile defines model for ChanObjects.Divergences.BoundaryProfile.
+type ChanObjectsDivergencesBoundaryProfile string
+
+// ChanObjectsDivergencesBoundaryRelation defines model for ChanObjects.Divergences.BoundaryRelation.
+type ChanObjectsDivergencesBoundaryRelation string
+
 // ChanObjectsDivergencesCatalogAlgorithmId defines model for ChanObjects.Divergences.CatalogAlgorithmId.
 type ChanObjectsDivergencesCatalogAlgorithmId string
 
 // ChanObjectsDivergencesCatalogEvent defines model for ChanObjects.Divergences.CatalogEvent.
 type ChanObjectsDivergencesCatalogEvent string
 
+// ChanObjectsDivergencesCenterChainProfile defines model for ChanObjects.Divergences.CenterChainProfile.
+type ChanObjectsDivergencesCenterChainProfile string
+
 // ChanObjectsDivergencesDivergenceKind defines model for ChanObjects.Divergences.DivergenceKind.
 type ChanObjectsDivergencesDivergenceKind string
+
+// ChanObjectsDivergencesEvidenceProfile defines model for ChanObjects.Divergences.EvidenceProfile.
+type ChanObjectsDivergencesEvidenceProfile string
+
+// ChanObjectsDivergencesFollowThroughStatus defines model for ChanObjects.Divergences.FollowThroughStatus.
+type ChanObjectsDivergencesFollowThroughStatus string
 
 // ChanObjectsDivergencesSignalClass defines model for ChanObjects.Divergences.SignalClass.
 type ChanObjectsDivergencesSignalClass string
@@ -4254,6 +5311,9 @@ type ChanObjectsDivergencesSignalType string
 
 // ChanObjectsDivergencesStrength defines model for ChanObjects.Divergences.Strength.
 type ChanObjectsDivergencesStrength string
+
+// ChanObjectsFractalsFeatureProfile defines model for ChanObjects.Fractals.FeatureProfile.
+type ChanObjectsFractalsFeatureProfile string
 
 // ChanObjectsLevelMovementsDirection defines model for ChanObjects.LevelMovements.Direction.
 type ChanObjectsLevelMovementsDirection string
@@ -4276,14 +5336,32 @@ type ChanObjectsSegmentZhongshuLeaveDirection string
 // ChanObjectsSegmentZhongshuStatus defines model for ChanObjects.SegmentZhongshu.Status.
 type ChanObjectsSegmentZhongshuStatus string
 
+// ChanObjectsSegmentsRangeProfile defines model for ChanObjects.Segments.RangeProfile.
+type ChanObjectsSegmentsRangeProfile string
+
+// ChanObjectsTradePointsBoundaryProfile defines model for ChanObjects.TradePoints.BoundaryProfile.
+type ChanObjectsTradePointsBoundaryProfile string
+
+// ChanObjectsTradePointsBoundaryRelation defines model for ChanObjects.TradePoints.BoundaryRelation.
+type ChanObjectsTradePointsBoundaryRelation string
+
 // ChanObjectsTradePointsCatalogAlgorithmId defines model for ChanObjects.TradePoints.CatalogAlgorithmId.
 type ChanObjectsTradePointsCatalogAlgorithmId string
 
 // ChanObjectsTradePointsCatalogEvent defines model for ChanObjects.TradePoints.CatalogEvent.
 type ChanObjectsTradePointsCatalogEvent string
 
+// ChanObjectsTradePointsCenterChainProfile defines model for ChanObjects.TradePoints.CenterChainProfile.
+type ChanObjectsTradePointsCenterChainProfile string
+
 // ChanObjectsTradePointsDivergenceKind defines model for ChanObjects.TradePoints.DivergenceKind.
 type ChanObjectsTradePointsDivergenceKind string
+
+// ChanObjectsTradePointsEvidenceProfile defines model for ChanObjects.TradePoints.EvidenceProfile.
+type ChanObjectsTradePointsEvidenceProfile string
+
+// ChanObjectsTradePointsFollowThroughStatus defines model for ChanObjects.TradePoints.FollowThroughStatus.
+type ChanObjectsTradePointsFollowThroughStatus string
 
 // ChanObjectsTradePointsSignalClass defines model for ChanObjects.TradePoints.SignalClass.
 type ChanObjectsTradePointsSignalClass string
@@ -4328,28 +5406,52 @@ type ChanProcessedBar struct {
 
 // ChanSignalPoint defines model for ChanSignalPoint.
 type ChanSignalPoint struct {
-	BarIndex               int                                `json:"bar_index"`
-	CatalogAlgorithmId     *ChanSignalPointCatalogAlgorithmId `json:"catalog_algorithm_id"`
-	CatalogEvent           *ChanSignalPointCatalogEvent       `json:"catalog_event"`
-	Confirmed              bool                               `json:"confirmed"`
-	ConfirmedAtBarIndex    *int                               `json:"confirmed_at_bar_index"`
-	DivergenceKind         *ChanSignalPointDivergenceKind     `json:"divergence_kind"`
-	InvalidationReason     *string                            `json:"invalidation_reason"`
-	KnownAtBarIndex        int                                `json:"known_at_bar_index"`
-	LevelId                *string                            `json:"level_id"`
-	LowerLevelTurnObjectId *string                            `json:"lower_level_turn_object_id"`
-	MacdAreaCurrent        *float32                           `json:"macd_area_current"`
-	MacdAreaReference      *float32                           `json:"macd_area_reference"`
-	ObjectId               string                             `json:"object_id"`
-	ObjectRevision         int                                `json:"object_revision"`
-	PriceI64               int                                `json:"price_i64"`
-	ReferenceObjectId      *string                            `json:"reference_object_id"`
-	SignalClass            *ChanSignalPointSignalClass        `json:"signal_class"`
-	SignalType             ChanSignalPointSignalType          `json:"signal_type"`
-	Status                 interface{}                        `json:"status"`
-	Strength               *ChanSignalPointStrength           `json:"strength"`
-	Time                   int                                `json:"time"`
+	BarIndex                    int                                `json:"bar_index"`
+	BoundaryProfile             *ChanSignalPointBoundaryProfile    `json:"boundary_profile"`
+	BoundaryRelation            *ChanSignalPointBoundaryRelation   `json:"boundary_relation"`
+	CatalogAlgorithmId          *ChanSignalPointCatalogAlgorithmId `json:"catalog_algorithm_id"`
+	CatalogEvent                *ChanSignalPointCatalogEvent       `json:"catalog_event"`
+	CenterChainProfile          *ChanSignalPointCenterChainProfile `json:"center_chain_profile"`
+	ComparisonCurrentObjectId   *string                            `json:"comparison_current_object_id"`
+	ComparisonReferenceObjectId *string                            `json:"comparison_reference_object_id"`
+	ComparisonRule              *string                            `json:"comparison_rule"`
+	ConfirmationLatencyBars     int                                `json:"confirmation_latency_bars"`
+	Confirmed                   bool                               `json:"confirmed"`
+	ConfirmedAtBarIndex         *int                               `json:"confirmed_at_bar_index"`
+	DepartureObjectId           *string                            `json:"departure_object_id"`
+	DivergenceKind              *ChanSignalPointDivergenceKind     `json:"divergence_kind"`
+	EvidenceProfile             ChanSignalPointEvidenceProfile     `json:"evidence_profile"`
+	FollowThroughObjectId       *string                            `json:"follow_through_object_id"`
+	FollowThroughStatus         ChanSignalPointFollowThroughStatus `json:"follow_through_status"`
+	InvalidationReason          *string                            `json:"invalidation_reason"`
+	KnownAtBarIndex             int                                `json:"known_at_bar_index"`
+	LevelId                     *string                            `json:"level_id"`
+	LowerLevelTurnObjectId      *string                            `json:"lower_level_turn_object_id"`
+	MacdAreaCurrent             *float32                           `json:"macd_area_current"`
+	MacdAreaReference           *float32                           `json:"macd_area_reference"`
+	NewExtremeSatisfied         *bool                              `json:"new_extreme_satisfied"`
+	ObjectId                    string                             `json:"object_id"`
+	ObjectRevision              int                                `json:"object_revision"`
+	OlderCenterCount            *int                               `json:"older_center_count"`
+	PriceI64                    int                                `json:"price_i64"`
+	ReferenceCenterOrdinal      *int                               `json:"reference_center_ordinal"`
+	ReferenceObjectId           *string                            `json:"reference_object_id"`
+	ReturnDepthToCoreI64        *int                               `json:"return_depth_to_core_i64"`
+	ReturnDepthToOuterI64       *int                               `json:"return_depth_to_outer_i64"`
+	ReturnObjectId              *string                            `json:"return_object_id"`
+	ReturnOrdinal               *int                               `json:"return_ordinal"`
+	SignalClass                 *ChanSignalPointSignalClass        `json:"signal_class"`
+	SignalType                  ChanSignalPointSignalType          `json:"signal_type"`
+	Status                      interface{}                        `json:"status"`
+	Strength                    *ChanSignalPointStrength           `json:"strength"`
+	Time                        int                                `json:"time"`
 }
+
+// ChanSignalPointBoundaryProfile defines model for ChanSignalPoint.BoundaryProfile.
+type ChanSignalPointBoundaryProfile string
+
+// ChanSignalPointBoundaryRelation defines model for ChanSignalPoint.BoundaryRelation.
+type ChanSignalPointBoundaryRelation string
 
 // ChanSignalPointCatalogAlgorithmId defines model for ChanSignalPoint.CatalogAlgorithmId.
 type ChanSignalPointCatalogAlgorithmId string
@@ -4357,8 +5459,17 @@ type ChanSignalPointCatalogAlgorithmId string
 // ChanSignalPointCatalogEvent defines model for ChanSignalPoint.CatalogEvent.
 type ChanSignalPointCatalogEvent string
 
+// ChanSignalPointCenterChainProfile defines model for ChanSignalPoint.CenterChainProfile.
+type ChanSignalPointCenterChainProfile string
+
 // ChanSignalPointDivergenceKind defines model for ChanSignalPoint.DivergenceKind.
 type ChanSignalPointDivergenceKind string
+
+// ChanSignalPointEvidenceProfile defines model for ChanSignalPoint.EvidenceProfile.
+type ChanSignalPointEvidenceProfile string
+
+// ChanSignalPointFollowThroughStatus defines model for ChanSignalPoint.FollowThroughStatus.
+type ChanSignalPointFollowThroughStatus string
 
 // ChanSignalPointSignalClass defines model for ChanSignalPoint.SignalClass.
 type ChanSignalPointSignalClass string
@@ -6703,6 +7814,9 @@ type GetCalculationResultsParams struct {
 	ToBarIndex   int `form:"to_bar_index" json:"to_bar_index"`
 }
 
+// GetCalculationResults200JSONResponseBodyObjectsBiRangeProfile defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsBiRangeProfile string
+
 // GetCalculationResults200JSONResponseBodyObjectsBiStatesDirection defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsBiStatesDirection string
 
@@ -6718,14 +7832,29 @@ type GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsOscillationBia
 // GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePosition defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsCenterMonitorsRelativePosition string
 
+// GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryProfile defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryProfile string
+
+// GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryRelation defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryRelation string
+
 // GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogAlgorithmId defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogAlgorithmId string
 
 // GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEvent defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEvent string
 
+// GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfile defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfile string
+
 // GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKind defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceKind string
+
+// GetCalculationResults200JSONResponseBodyObjectsDivergencesEvidenceProfile defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsDivergencesEvidenceProfile string
+
+// GetCalculationResults200JSONResponseBodyObjectsDivergencesFollowThroughStatus defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsDivergencesFollowThroughStatus string
 
 // GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalClass defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalClass string
@@ -6735,6 +7864,9 @@ type GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType string
 
 // GetCalculationResults200JSONResponseBodyObjectsDivergencesStrength defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsDivergencesStrength string
+
+// GetCalculationResults200JSONResponseBodyObjectsFractalsFeatureProfile defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsFractalsFeatureProfile string
 
 // GetCalculationResults200JSONResponseBodyObjectsLevelMovementsDirection defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsLevelMovementsDirection string
@@ -6757,14 +7889,32 @@ type GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuLeaveDirectio
 // GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatus defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsSegmentZhongshuStatus string
 
+// GetCalculationResults200JSONResponseBodyObjectsSegmentsRangeProfile defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsSegmentsRangeProfile string
+
+// GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryProfile defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryProfile string
+
+// GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryRelation defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryRelation string
+
 // GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogAlgorithmId defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogAlgorithmId string
 
 // GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEvent defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEvent string
 
+// GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfile defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfile string
+
 // GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKind defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceKind string
+
+// GetCalculationResults200JSONResponseBodyObjectsTradePointsEvidenceProfile defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsTradePointsEvidenceProfile string
+
+// GetCalculationResults200JSONResponseBodyObjectsTradePointsFollowThroughStatus defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsTradePointsFollowThroughStatus string
 
 // GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalClass defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalClass string

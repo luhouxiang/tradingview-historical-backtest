@@ -69,6 +69,12 @@ class LineLike(Protocol):
     @property
     def known_at_bar_index(self) -> int: ...
 
+    @property
+    def range_low_i64(self) -> int | None: ...
+
+    @property
+    def range_high_i64(self) -> int | None: ...
+
 
 @dataclass
 class ReferenceSegment:
@@ -128,10 +134,20 @@ class ReferenceCenter:
 
 
 def _low(line: LineLike) -> int:
-    return min(line.start.price_i64, line.end.price_i64)
+    value: int | None = getattr(line, "range_low_i64", None)
+    return value if value is not None else min(line.start.price_i64, line.end.price_i64)
 
 
 def _high(line: LineLike) -> int:
+    value: int | None = getattr(line, "range_high_i64", None)
+    return value if value is not None else max(line.start.price_i64, line.end.price_i64)
+
+
+def _endpoint_low(line: LineLike) -> int:
+    return min(line.start.price_i64, line.end.price_i64)
+
+
+def _endpoint_high(line: LineLike) -> int:
     return max(line.start.price_i64, line.end.price_i64)
 
 
@@ -313,11 +329,11 @@ def _anchor_segment(value: ReferenceSegment, lines: Sequence[LineLike]) -> None:
     value.start_time = start_line.start.time
     value.end_time = end_line.start.time
     if value.up:
-        value.start_price_i64 = _low(start_line)
-        value.end_price_i64 = _high(end_line)
+        value.start_price_i64 = _endpoint_low(start_line)
+        value.end_price_i64 = _endpoint_high(end_line)
     else:
-        value.start_price_i64 = _high(start_line)
-        value.end_price_i64 = _low(end_line)
+        value.start_price_i64 = _endpoint_high(start_line)
+        value.end_price_i64 = _endpoint_low(end_line)
 
 
 def _update_segment(

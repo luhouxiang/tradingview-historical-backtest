@@ -2,7 +2,7 @@
 
 版本：1.0  
 整理日期：2026-08-01  
-状态：里程碑 0–9 已实现；里程碑 10 已完成至 10AB；里程碑 11A-H、11B、11C、11D 已实现；里程碑 12A–12E（单周期可靠性研究证据链）已实现
+状态：里程碑 0–9 已实现；里程碑 10 已完成至 10AB；里程碑 11A-H、11B、11C、11D 已实现；里程碑 12A–12E、13A–13C、14A–14E 已实现
 
 ## 1. 项目一句话定义
 
@@ -59,6 +59,12 @@ Codex 开工前必须按以下顺序阅读：
 10. docs/08-testing-and-acceptance.md
 11. docs/09-implementation-roadmap.md
 12. contracts/openapi.yaml 和 contracts/schemas
+
+缠论算法研究补充（2026-09-05，只梳理、不改变运行语义）：
+[108 课校准报告](docs/17-chan-108-recalibration-20260905.md)、
+[62 项单标的单周期算法与场景](docs/18-chan-108-expanded-algorithm-catalog.md)、
+[分步详细方案](docs/19-chan-108-single-scope-plan.md)。
+多级别、多周期及跨标的联动不在本轮详细方案范围内。
 
 ## 4. 规范包内容
 
@@ -438,3 +444,9 @@ Vue 底部“优化”面板提供搜索空间、方法、预算、目标和最�
 
 验收覆盖 3 个候选、6 个正式训练/验证 run、固定种子可复现、Study Schema/原子提交、结果排名、
 硬约束与稳定性报告。详情见 `docs/12-milestone9-acceptance-report.md`。 
+
+## 20. 里程碑 14：108 课单周期语义校准
+
+2026-09-05 的 108 课复核已完成 A–E。生产 profile 固定为 `chan108_single_scope_v1`；缠论 15.0.0 在线段结构端点之外保存组成笔实际区间，并由标准中枢、外围、回试、背驰和 Zn 统一消费。背驰与买卖点增加来源比较、首次回试、边界深度、后继、确认延迟和旧中枢序位证据。
+
+新增的均线面积力度、价格缺口生命周期、分型数值特征和单标的 MA 等级/压制一致性均为零交易辅助输出。14 套单周期程序的入场、持有、失败退出和不适用场景见 `docs/strategies/chanlun-108/17-single-scope-program-alignment.md`。研究阶段 F 尚未执行，没有生成或覆盖正式回测 run。

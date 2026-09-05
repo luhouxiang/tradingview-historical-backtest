@@ -1213,6 +1213,8 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
             dependency_ids = ["macd"]
         elif algorithm["algorithm_id"] == "aux_boll_bardo_warning":
             dependency_ids = ["boll"]
+        elif algorithm["algorithm_id"] == "aux_price_gap_lifecycle":
+            dependency_ids = []
         else:
             dependency_ids = ["ma"]
         if (

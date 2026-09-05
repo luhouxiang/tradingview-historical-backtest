@@ -160,6 +160,12 @@ class Fractal:
     invalidation_reason: str | None = None
     aux_strength: Literal["strong_reversal", "unclassified"] = "unclassified"
     strength_reason: str = "lesson82_strong_reversal_condition_not_met"
+    body_i64: int | None = None
+    upper_shadow_i64: int | None = None
+    lower_shadow_i64: int | None = None
+    range_i64: int | None = None
+    close_position_milli: int | None = None
+    feature_profile: str = "processed_bar_ohlc_v1"
 
     def __post_init__(self) -> None:
         if self.extreme_source_bar_index < 0:
@@ -186,6 +192,12 @@ class Fractal:
             "invalidation_reason": self.invalidation_reason,
             "aux_strength": self.aux_strength,
             "strength_reason": self.strength_reason,
+            "body_i64": self.body_i64,
+            "upper_shadow_i64": self.upper_shadow_i64,
+            "lower_shadow_i64": self.lower_shadow_i64,
+            "range_i64": self.range_i64,
+            "close_position_milli": self.close_position_milli,
+            "feature_profile": self.feature_profile,
             "catalog_algorithm_id": "ALG-GEO-002",
             "strength_semantic_namespace": "auxiliary",
             "standard_signal": False,
@@ -209,6 +221,37 @@ class LineObject:
     # 对象确认与可知时间，所有下游事件必须遵守因果性。
     confirmed_at_bar_index: int
     known_at_bar_index: int
+    # 结构计算使用的完整价格区间。笔默认等于端点极值；线段由全部组成笔区间并集给出。
+    range_low_i64: int | None = None
+    range_high_i64: int | None = None
+    range_low_source_bar_index: int | None = None
+    range_high_source_bar_index: int | None = None
+    range_profile: Literal["endpoint_extrema_v1", "constituent_bi_union_v1"] = "endpoint_extrema_v1"
+
+    def __post_init__(self) -> None:
+        endpoint_low = min(self.start.price_i64, self.end.price_i64)
+        endpoint_high = max(self.start.price_i64, self.end.price_i64)
+        low_source = (
+            self.start.extreme_source_bar_index
+            if self.start.price_i64 <= self.end.price_i64
+            else self.end.extreme_source_bar_index
+        )
+        high_source = (
+            self.start.extreme_source_bar_index
+            if self.start.price_i64 >= self.end.price_i64
+            else self.end.extreme_source_bar_index
+        )
+        if self.range_low_i64 is None:
+            object.__setattr__(self, "range_low_i64", endpoint_low)
+        if self.range_high_i64 is None:
+            object.__setattr__(self, "range_high_i64", endpoint_high)
+        if self.range_low_source_bar_index is None:
+            object.__setattr__(self, "range_low_source_bar_index", low_source)
+        if self.range_high_source_bar_index is None:
+            object.__setattr__(self, "range_high_source_bar_index", high_source)
+        assert self.range_low_i64 is not None and self.range_high_i64 is not None
+        if self.range_low_i64 > endpoint_low or self.range_high_i64 < endpoint_high:
+            raise ValueError("line actual range must contain both structural endpoints")
 
     def payload(
         self,
@@ -228,6 +271,11 @@ class LineObject:
             "end_time": self.end.time,
             "end_price_i64": self.end.price_i64,
             "end_extreme_source_bar_index": self.end.extreme_source_bar_index,
+            "range_low_i64": self.range_low_i64,
+            "range_high_i64": self.range_high_i64,
+            "range_low_source_bar_index": self.range_low_source_bar_index,
+            "range_high_source_bar_index": self.range_high_source_bar_index,
+            "range_profile": self.range_profile,
             "direction": self.direction,
             "status": status or ("confirmed" if confirmed else "candidate"),
             "invalidation_reason": invalidation_reason,
@@ -253,7 +301,7 @@ class ChanEngine:
     """逐 K 线因果缠论引擎，负责分型、笔、线段、中枢和信号事件生成。"""
 
     # 算法版本参与缓存键；任何语义变化都必须升级版本，禁止复用旧缓存。
-    algorithm_version = "14.0.0"
+    algorithm_version = "15.0.0"
 
     def __init__(self, parameters: ChanParameters | None = None) -> None:
         # 运行参数。
@@ -487,6 +535,17 @@ class ChanEngine:
             invalidation_reason=invalidation_reason,
             aux_strength=aux_strength,
             strength_reason=strength_reason,
+            body_i64=abs(center.close_i64 - center.open_i64),
+            upper_shadow_i64=center.high_i64 - max(center.open_i64, center.close_i64),
+            lower_shadow_i64=min(center.open_i64, center.close_i64) - center.low_i64,
+            range_i64=center.high_i64 - center.low_i64,
+            close_position_milli=(
+                500
+                if center.high_i64 == center.low_i64
+                else (center.close_i64 - center.low_i64)
+                * 1000
+                // (center.high_i64 - center.low_i64)
+            ),
         )
 
     def _refresh_fractal_candidate(self, known_at_bar_index: int) -> bool:
@@ -909,8 +968,12 @@ class ChanEngine:
                 self.bi[center.seed_end_index].object_id,
             )
             components = self.bi[center.base_index : center.end_index + 1]
-            dd_i64 = min(min(line.start.price_i64, line.end.price_i64) for line in components)
-            gg_i64 = max(max(line.start.price_i64, line.end.price_i64) for line in components)
+            dd_i64 = min(
+                line.range_low_i64 for line in components if line.range_low_i64 is not None
+            )
+            gg_i64 = max(
+                line.range_high_i64 for line in components if line.range_high_i64 is not None
+            )
             centers.append(
                 (
                     object_id,
@@ -954,6 +1017,26 @@ class ChanEngine:
                 self.bi[segment.start_index].object_id,
                 "up" if segment.up else "down",
             )
+            component_bi = self.bi[segment.start_index : segment.end_index + 1]
+            range_low_line = min(
+                component_bi,
+                key=lambda line: (
+                    line.range_low_i64
+                    if line.range_low_i64 is not None
+                    else min(line.start.price_i64, line.end.price_i64)
+                ),
+            )
+            range_high_line = max(
+                component_bi,
+                key=lambda line: (
+                    line.range_high_i64
+                    if line.range_high_i64 is not None
+                    else max(line.start.price_i64, line.end.price_i64)
+                ),
+            )
+            range_low_i64 = range_low_line.range_low_i64
+            range_high_i64 = range_high_line.range_high_i64
+            assert range_low_i64 is not None and range_high_i64 is not None
             value = (
                 object_id,
                 {
@@ -965,6 +1048,11 @@ class ChanEngine:
                     "end_time": segment.end_time,
                     "end_price_i64": segment.end_price_i64,
                     "end_extreme_source_bar_index": segment.end_bar_index,
+                    "range_low_i64": range_low_i64,
+                    "range_high_i64": range_high_i64,
+                    "range_low_source_bar_index": range_low_line.range_low_source_bar_index,
+                    "range_high_source_bar_index": range_high_line.range_high_source_bar_index,
+                    "range_profile": "constituent_bi_union_v1",
                     "direction": "up" if segment.up else "down",
                     "status": "confirmed" if segment.confirmed else "candidate",
                     "invalidation_reason": None,
@@ -1006,6 +1094,11 @@ class ChanEngine:
                     direction,
                     segment.known_at_bar_index,
                     segment.known_at_bar_index,
+                    range_low_i64,
+                    range_high_i64,
+                    range_low_line.range_low_source_bar_index,
+                    range_high_line.range_high_source_bar_index,
+                    "constituent_bi_union_v1",
                 )
             segment_records.append((value, segment_line))
         self._segment_records = segment_records
@@ -1061,8 +1154,12 @@ class ChanEngine:
             )
             segment_center_ids.append(object_id)
             components = segment_lines[center.base_index : center.end_index + 1]
-            dd_i64 = min(min(line.start.price_i64, line.end.price_i64) for line in components)
-            gg_i64 = max(max(line.start.price_i64, line.end.price_i64) for line in components)
+            dd_i64 = min(
+                line.range_low_i64 for line in components if line.range_low_i64 is not None
+            )
+            gg_i64 = max(
+                line.range_high_i64 for line in components if line.range_high_i64 is not None
+            )
             z_i64 = (center.zd_i64 + center.zg_i64) // 2
             segment_center_values.append(
                 (
@@ -1504,6 +1601,24 @@ def _signal_payload(signal: ChanSignal) -> dict[str, Any]:
         "lower_level_turn_object_id": signal.lower_level_turn_object_id,
         "catalog_event": signal.catalog_event,
         "catalog_algorithm_id": signal.catalog_algorithm_id,
+        "evidence_profile": signal.evidence_profile,
+        "comparison_reference_object_id": signal.comparison_reference_object_id,
+        "comparison_current_object_id": signal.comparison_current_object_id,
+        "comparison_rule": signal.comparison_rule,
+        "new_extreme_satisfied": signal.new_extreme_satisfied,
+        "departure_object_id": signal.departure_object_id,
+        "return_object_id": signal.return_object_id,
+        "return_ordinal": signal.return_ordinal,
+        "boundary_profile": signal.boundary_profile,
+        "boundary_relation": signal.boundary_relation,
+        "return_depth_to_core_i64": signal.return_depth_to_core_i64,
+        "return_depth_to_outer_i64": signal.return_depth_to_outer_i64,
+        "follow_through_object_id": signal.follow_through_object_id,
+        "follow_through_status": signal.follow_through_status,
+        "confirmation_latency_bars": signal.confirmation_latency_bars,
+        "reference_center_ordinal": signal.reference_center_ordinal,
+        "older_center_count": signal.older_center_count,
+        "center_chain_profile": signal.center_chain_profile,
         "confirmed": signal.status == "confirmed",
         "confirmed_at_bar_index": (
             signal.known_at_bar_index if signal.status == "confirmed" else None
@@ -1520,6 +1635,11 @@ def _line_state(line: LineObject) -> dict[str, Any]:
         "direction": line.direction,
         "confirmed_at_bar_index": line.confirmed_at_bar_index,
         "known_at_bar_index": line.known_at_bar_index,
+        "range_low_i64": line.range_low_i64,
+        "range_high_i64": line.range_high_i64,
+        "range_low_source_bar_index": line.range_low_source_bar_index,
+        "range_high_source_bar_index": line.range_high_source_bar_index,
+        "range_profile": line.range_profile,
     }
 
 
@@ -1532,4 +1652,9 @@ def _line_from_state(value: dict[str, Any], fractals: dict[str, Fractal]) -> Lin
         direction=value["direction"],
         confirmed_at_bar_index=value["confirmed_at_bar_index"],
         known_at_bar_index=value["known_at_bar_index"],
+        range_low_i64=value.get("range_low_i64"),
+        range_high_i64=value.get("range_high_i64"),
+        range_low_source_bar_index=value.get("range_low_source_bar_index"),
+        range_high_source_bar_index=value.get("range_high_source_bar_index"),
+        range_profile=value.get("range_profile", "endpoint_extrema_v1"),
     )

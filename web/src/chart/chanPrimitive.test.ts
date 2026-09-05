@@ -12,6 +12,8 @@ function objects(count: number): ChanCalculationResults['objects'] {
       fractal_type: index % 2 ? 'top' as const : 'bottom' as const, confirmed: index % 3 !== 0,
       status: index % 3 !== 0 ? 'confirmed' as const : 'candidate' as const, invalidation_reason: null,
       aux_strength: 'unclassified' as const, strength_reason: 'lesson_82_numeric_profile_not_matched',
+      body_i64: 10, upper_shadow_i64: 5, lower_shadow_i64: 5, range_i64: 20,
+      close_position_milli: 500, feature_profile: 'processed_bar_ohlc_v1' as const,
       catalog_algorithm_id: 'ALG-GEO-002' as const, strength_semantic_namespace: 'auxiliary' as const,
       standard_signal: false as const, execution_allowed: false as const,
       confirmed_at_bar_index: index + 2, known_at_bar_index: index + 2, object_revision: 1,
@@ -73,6 +75,13 @@ describe('ChanPrimitive', () => {
       signal_type: 'bottom_divergence', divergence_kind: 'trend', signal_class: null, strength: null, reference_object_id: 'segment-center-1',
       macd_area_reference: 20, macd_area_current: 10, status: 'confirmed', invalidation_reason: null,
       level_id: 'L0', lower_level_turn_object_id: null, catalog_event: null, catalog_algorithm_id: null, confirmed: true,
+      evidence_profile: 'chan108_single_scope_v1', comparison_reference_object_id: 'segment-1',
+      comparison_current_object_id: 'segment-3', comparison_rule: 'macd_same_direction_area_contraction_with_new_extreme',
+      new_extreme_satisfied: true, departure_object_id: null, return_object_id: null, return_ordinal: null,
+      boundary_profile: null, boundary_relation: null, return_depth_to_core_i64: null, return_depth_to_outer_i64: null,
+      follow_through_object_id: 'segment-4', follow_through_status: 'observed', confirmation_latency_bars: 0,
+      reference_center_ordinal: 1, older_center_count: 0,
+      center_chain_profile: 'confirmed_same_level_centers_known_at_signal_v1',
       confirmed_at_bar_index: 4, known_at_bar_index: 4, object_revision: 1,
     })
     source.trade_points.push({

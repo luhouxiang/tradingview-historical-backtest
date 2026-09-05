@@ -87,14 +87,37 @@ class ChanSignal:
         | None
     ) = None
     catalog_algorithm_id: Literal["ALG-SIG-001"] | None = None
+    evidence_profile: str = "chan108_single_scope_v1"
+    comparison_reference_object_id: str | None = None
+    comparison_current_object_id: str | None = None
+    comparison_rule: str | None = None
+    new_extreme_satisfied: bool | None = None
+    departure_object_id: str | None = None
+    return_object_id: str | None = None
+    return_ordinal: int | None = None
+    boundary_profile: str | None = None
+    boundary_relation: str | None = None
+    return_depth_to_core_i64: int | None = None
+    return_depth_to_outer_i64: int | None = None
+    follow_through_object_id: str | None = None
+    follow_through_status: Literal["pending", "observed", "not_applicable"] = "not_applicable"
+    reference_center_ordinal: int | None = None
+    older_center_count: int | None = None
+    center_chain_profile: str | None = None
+
+    @property
+    def confirmation_latency_bars(self) -> int:
+        return self.known_at_bar_index - self.bar_index
 
 
 def _low(line: LineLike) -> int:
-    return min(line.start.price_i64, line.end.price_i64)
+    value: int | None = getattr(line, "range_low_i64", None)
+    return value if value is not None else min(line.start.price_i64, line.end.price_i64)
 
 
 def _high(line: LineLike) -> int:
-    return max(line.start.price_i64, line.end.price_i64)
+    value: int | None = getattr(line, "range_high_i64", None)
+    return value if value is not None else max(line.start.price_i64, line.end.price_i64)
 
 
 def _outer_range(center: ReferenceCenter, segments: Sequence[LineLike]) -> tuple[int, int]:
@@ -184,6 +207,7 @@ def _divergence(
     area_cache: MutableMapping[MacdAreaKey, float] | None = None,
     *,
     require_new_extreme: bool = True,
+    follow_through_object_id: str | None = None,
 ) -> ChanSignal | None:
     """比较参考段和当前段，若当前段力度收缩则生成背驰。"""
     if reference.direction != current.direction:
@@ -215,6 +239,18 @@ def _divergence(
         macd_area_reference=reference_area,
         macd_area_current=current_area,
         known_at_bar_index=known_at_bar_index,
+        comparison_reference_object_id=reference.object_id,
+        comparison_current_object_id=current.object_id,
+        comparison_rule=(
+            "macd_same_direction_area_contraction_with_new_extreme"
+            if require_new_extreme
+            else "macd_same_direction_area_contraction"
+        ),
+        new_extreme_satisfied=True if require_new_extreme else None,
+        follow_through_object_id=follow_through_object_id,
+        follow_through_status=(
+            "observed" if follow_through_object_id is not None else "not_applicable"
+        ),
     )
 
 
@@ -237,7 +273,7 @@ def chan_divergences(
     # immediately preceding component in the same direction and center.  This
     # is the confirmed lower-level exhaustion consumed by ALG-STR-004; Zn is
     # deliberately absent from the structural decision.
-    for center, center_id in zip(centers, center_ids, strict=True):
+    for center_position, (center, center_id) in enumerate(zip(centers, center_ids, strict=True)):
         previous_by_direction: dict[str, int] = {}
         for current_index in range(center.base_index, center.end_index + 1):
             current = segments[current_index]
@@ -257,11 +293,17 @@ def chan_divergences(
                 require_new_extreme=False,
             )
             if value is not None:
+                value = replace(
+                    value,
+                    reference_center_ordinal=center_position + 1,
+                    older_center_count=center_position,
+                    center_chain_profile="confirmed_same_level_centers_known_at_signal_v1",
+                )
                 result.append(value)
                 seen.add(("consolidation", current_index))
 
     # One center: a + Z + c.  A completed counter leg after c confirms c's endpoint.
-    for center, center_id in zip(centers, center_ids, strict=True):
+    for center_position, (center, center_id) in enumerate(zip(centers, center_ids, strict=True)):
         if center.status != "left" or center.exit_index is None or center.base_index < 1:
             continue
         current_index = center.exit_index
@@ -283,8 +325,15 @@ def chan_divergences(
             histogram,
             area_cache,
             require_new_extreme=False,
+            follow_through_object_id=segments[confirmation_index].object_id,
         )
         if value is not None:
+            value = replace(
+                value,
+                reference_center_ordinal=center_position + 1,
+                older_center_count=center_position,
+                center_chain_profile="confirmed_same_level_centers_known_at_signal_v1",
+            )
             result.append(value)
             seen.add(("consolidation", current_index))
 
@@ -322,8 +371,15 @@ def chan_divergences(
             segments[current_index + 1].known_at_bar_index,
             histogram,
             area_cache,
+            follow_through_object_id=segments[current_index + 1].object_id,
         )
         if value is not None and ("trend", current_index) not in seen:
+            value = replace(
+                value,
+                reference_center_ordinal=index + 1,
+                older_center_count=index,
+                center_chain_profile="confirmed_same_level_centers_known_at_signal_v1",
+            )
             result.append(value)
             seen.add(("trend", current_index))
     trend_segments = {value.segment_index for value in result if value.divergence_kind == "trend"}
@@ -419,6 +475,15 @@ def chan_first_point_candidates(
                 if confirmed
                 else ("B1_candidate" if buy_side else "S1_candidate"),
                 catalog_algorithm_id="ALG-SIG-001",
+                comparison_reference_object_id=divergence.comparison_reference_object_id,
+                comparison_current_object_id=divergence.comparison_current_object_id,
+                comparison_rule=divergence.comparison_rule,
+                new_extreme_satisfied=divergence.new_extreme_satisfied,
+                follow_through_object_id=turn.object_id if confirmed and turn is not None else None,
+                follow_through_status="observed" if confirmed else "pending",
+                reference_center_ordinal=index + 1,
+                older_center_count=index,
+                center_chain_profile="confirmed_same_level_centers_known_at_signal_v1",
             )
         )
     return result
@@ -446,6 +511,15 @@ def _point_from_divergence(
         if standard_first
         else None,
         catalog_algorithm_id="ALG-SIG-001" if standard_first else None,
+        comparison_reference_object_id=divergence.comparison_reference_object_id,
+        comparison_current_object_id=divergence.comparison_current_object_id,
+        comparison_rule=divergence.comparison_rule,
+        new_extreme_satisfied=divergence.new_extreme_satisfied,
+        follow_through_object_id=divergence.follow_through_object_id,
+        follow_through_status=divergence.follow_through_status,
+        reference_center_ordinal=divergence.reference_center_ordinal,
+        older_center_count=divergence.older_center_count,
+        center_chain_profile=divergence.center_chain_profile,
     )
 
 
@@ -458,7 +532,7 @@ def _third_points(
     三卖是镜像规则，回试高点不高于 `ZD`。边界接触按闭区间确认三类点。
     """
     result: list[ChanSignal] = []
-    for center, center_id in zip(centers, center_ids, strict=True):
+    for center_position, (center, center_id) in enumerate(zip(centers, center_ids, strict=True)):
         if center.status != "left" or center.exit_index is None:
             continue
         leave_index = center.exit_index
@@ -467,6 +541,7 @@ def _third_points(
             continue
         leaving = segments[leave_index]
         returning = segments[return_index]
+        outer_low, outer_high = _outer_range(center, segments)
         if center.leave_direction == "up":
             if (
                 leaving.direction != "up"
@@ -476,6 +551,17 @@ def _third_points(
                 continue
             signal_type: SignalType = "buy_3"
             price = _low(returning)
+            relation = (
+                "outside_outer"
+                if price > outer_high
+                else "touch_outer"
+                if price == outer_high
+                else "outside_core"
+                if price > center.zg_i64
+                else "touch_core"
+            )
+            depth_to_core = price - center.zg_i64
+            depth_to_outer = price - outer_high
         else:
             if (
                 leaving.direction != "down"
@@ -485,6 +571,19 @@ def _third_points(
                 continue
             signal_type = "sell_3"
             price = _high(returning)
+            relation = (
+                "outside_outer"
+                if price < outer_low
+                else "touch_outer"
+                if price == outer_low
+                else "outside_core"
+                if price < center.zd_i64
+                else "touch_core"
+            )
+            depth_to_core = center.zd_i64 - price
+            depth_to_outer = outer_low - price
+        follow_index = return_index + 1
+        follow = segments[follow_index] if follow_index < len(segments) else None
         result.append(
             ChanSignal(
                 signal_type=signal_type,
@@ -499,6 +598,18 @@ def _third_points(
                 macd_area_reference=None,
                 macd_area_current=None,
                 known_at_bar_index=returning.known_at_bar_index,
+                departure_object_id=leaving.object_id,
+                return_object_id=returning.object_id,
+                return_ordinal=1,
+                boundary_profile="lesson20_inclusive_v1",
+                boundary_relation=relation,
+                return_depth_to_core_i64=depth_to_core,
+                return_depth_to_outer_i64=depth_to_outer,
+                follow_through_object_id=follow.object_id if follow is not None else None,
+                follow_through_status="observed" if follow is not None else "pending",
+                reference_center_ordinal=center_position + 1,
+                older_center_count=center_position,
+                center_chain_profile="confirmed_same_level_centers_known_at_signal_v1",
             )
         )
     return result
@@ -592,6 +703,13 @@ def chan_trade_points(
                 macd_area_reference=None,
                 macd_area_current=None,
                 known_at_bar_index=second.known_at_bar_index,
+                comparison_reference_object_id=divergence_id,
+                comparison_current_object_id=second.object_id,
+                comparison_rule=f"second_point_{strength}",
+                follow_through_status="pending",
+                reference_center_ordinal=divergence.reference_center_ordinal,
+                older_center_count=divergence.older_center_count,
+                center_chain_profile=divergence.center_chain_profile,
             )
         )
 
