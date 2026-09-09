@@ -147,7 +147,9 @@ func (m *Manager) RecordCompleted(id, kind, resultRef string) *Job {
 
 func (m *Manager) run(ctx context.Context, id string, work Work) {
 	m.update(id, func(job *Job) {
-		job.Status = Running
+		if ctx.Err() == nil {
+			job.Status = Running
+		}
 		job.UpdatedAt = time.Now().UTC()
 	})
 	result, err := work(ctx, func(progress float64) {

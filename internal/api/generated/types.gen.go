@@ -5580,7 +5580,7 @@ type EquityRow struct {
 	TradingDay   *string `json:"trading_day,omitempty"`
 }
 
-// Error defines model for Error.
+// Error RESOURCE_MEMORY_LIMIT indicates cooperative engine memory protection; no partial calculation cache is committed and the task can be retried after freeing memory.
 type Error struct {
 	Code    string                  `json:"code"`
 	Details *map[string]interface{} `json:"details,omitempty"`
@@ -5684,6 +5684,7 @@ type JobAccepted struct {
 
 // JobStatus defines model for JobStatus.
 type JobStatus struct {
+	// Error RESOURCE_MEMORY_LIMIT indicates cooperative engine memory protection; no partial calculation cache is committed and the task can be retried after freeing memory.
 	Error *struct {
 		Code    string                  `json:"code"`
 		Details *map[string]interface{} `json:"details,omitempty"`
@@ -5812,7 +5813,9 @@ type ReplayRequest struct {
 // ReplayStatus defines model for ReplayStatus.
 type ReplayStatus struct {
 	CacheKey *string `json:"cache_key,omitempty"`
-	Error    *struct {
+
+	// Error RESOURCE_MEMORY_LIMIT indicates cooperative engine memory protection; no partial calculation cache is committed and the task can be retried after freeing memory.
+	Error *struct {
 		Code    string                  `json:"code"`
 		Details *map[string]interface{} `json:"details,omitempty"`
 		Message string                  `json:"message"`
@@ -6474,6 +6477,7 @@ type ResearchStudyResults_Items_Summary struct {
 
 // ResearchStudyStatus defines model for ResearchStudyStatus.
 type ResearchStudyStatus struct {
+	// Error RESOURCE_MEMORY_LIMIT indicates cooperative engine memory protection; no partial calculation cache is committed and the task can be retried after freeing memory.
 	Error *struct {
 		Code    string                  `json:"code"`
 		Details *map[string]interface{} `json:"details,omitempty"`
@@ -6659,6 +6663,7 @@ type RunAccepted struct {
 
 // RunStatus defines model for RunStatus.
 type RunStatus struct {
+	// Error RESOURCE_MEMORY_LIMIT indicates cooperative engine memory protection; no partial calculation cache is committed and the task can be retried after freeing memory.
 	Error *struct {
 		Code    string                  `json:"code"`
 		Details *map[string]interface{} `json:"details,omitempty"`
@@ -7047,7 +7052,9 @@ type StrategyComparisonStatus struct {
 	ComparisonId       string  `json:"comparison_id"`
 	CompletedCount     int     `json:"completed_count"`
 	CurrentAlgorithmId *string `json:"current_algorithm_id,omitempty"`
-	Error              *struct {
+
+	// Error RESOURCE_MEMORY_LIMIT indicates cooperative engine memory protection; no partial calculation cache is committed and the task can be retried after freeing memory.
+	Error *struct {
 		Code    string                  `json:"code"`
 		Details *map[string]interface{} `json:"details,omitempty"`
 		Message string                  `json:"message"`
@@ -7313,6 +7320,7 @@ type StudyRequest struct {
 
 // StudyStatus defines model for StudyStatus.
 type StudyStatus struct {
+	// Error RESOURCE_MEMORY_LIMIT indicates cooperative engine memory protection; no partial calculation cache is committed and the task can be retried after freeing memory.
 	Error *struct {
 		Code    string                  `json:"code"`
 		Details *map[string]interface{} `json:"details,omitempty"`

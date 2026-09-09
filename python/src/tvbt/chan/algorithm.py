@@ -4,15 +4,19 @@ import hashlib
 import json
 import threading
 import time
+from collections.abc import Callable
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any
 
+import pyarrow as pa
 import pyarrow.parquet as pq
 
-from tvbt.chan.checkpoint import dump_checkpoint
+from tvbt.chan.checkpoint import dump_checkpoint, write_checkpoint
 from tvbt.chan.engine import ChanEngine, ChanParameters, RawBar
-from tvbt.chan.storage import ChanResult, write_chan_cache
+from tvbt.chan.storage import EVENT_SCHEMA, ChanResult, write_chan_cache
 from tvbt.logging_proxy import logger
+from tvbt.storage.memory_guard import check_memory
 from tvbt.storage.path_guard import PathGuard
 
 """缠论计算入口。
@@ -124,56 +128,89 @@ def calculate_chan(payload: dict[str, Any], guard: PathGuard, cancelled: threadi
         "Chan calculation started",
         {**context, "calculation_mode": payload.get("calculation_mode")},
     )
+    staging_root = guard.resolve("tmp")
+    staging_root.mkdir(parents=True, exist_ok=True)
     try:
-        runtime, indices, checkpoints = run_chan(payload, guard, cancelled, write_checkpoints=True)
-        rows = runtime.result_rows()
-        result = ChanResult(
-            bar_count=len(indices),
-            first_bar_index=indices[0] if indices else 0,
-            last_bar_index=indices[-1] if indices else 0,
-            merged_bar_count=len(runtime.included),
-            processed_bars=rows["processed_bars"],
-            fractals=rows["fractals"],
-            bi=rows["bi"],
-            bi_states=rows["bi_states"],
-            segments=rows["segments"],
-            zhongshu=rows["zhongshu"],
-            segment_zhongshu=rows["segment_zhongshu"],
-            level_centers=rows["level_centers"],
-            level_movements=rows["level_movements"],
-            movement_states=rows["movement_states"],
-            center_monitors=rows["center_monitors"],
-            divergences=rows["divergences"],
-            trade_points=rows["trade_points"],
-            events=[event.row() for event in runtime.emitter.events],
-            checkpoints=checkpoints,
-        )
-        result_ref = write_chan_cache(payload, guard, result)
-        logger.info(
-            "calculation.completed",
-            "Chan calculation completed",
-            {
-                **context,
-                "duration_ms": round((time.perf_counter() - started) * 1000, 3),
-                "output_path": result_ref,
-                "bar_count": result.bar_count,
-                "merged_bar_count": result.merged_bar_count,
-                "processed_bars": len(result.processed_bars),
-                "fractals": len(result.fractals),
-                "bi": len(result.bi),
-                "bi_states": len(result.bi_states),
-                "segments": len(result.segments),
-                "zhongshu": len(result.zhongshu),
-                "segment_zhongshu": len(result.segment_zhongshu),
-                "level_centers": len(result.level_centers),
-                "level_movements": len(result.level_movements),
-                "divergences": len(result.divergences),
-                "trade_points": len(result.trade_points),
-                "events": len(result.events),
-                "checkpoint_count": len(result.checkpoints),
-            },
-        )
-        return result_ref
+        with TemporaryDirectory(prefix="chan-", dir=staging_root) as staging:
+            directory = Path(staging)
+            checkpoint_files: dict[int, Path] = {}
+            event_count = 0
+            events_file = directory / "events.parquet"
+
+            def save_checkpoint(index: int, engine: ChanEngine) -> None:
+                path = directory / f"{index}.bin"
+                write_checkpoint(path, engine.algorithm_version, index, engine.export_state())
+                checkpoint_files[index] = path
+
+            with pq.ParquetWriter(events_file, EVENT_SCHEMA, compression="zstd") as writer:
+
+                def drain_events(engine: ChanEngine) -> None:
+                    nonlocal event_count
+                    events = engine.emitter.events
+                    for start in range(0, len(events), 4096):
+                        rows = [event.row() for event in events[start : start + 4096]]
+                        writer.write_table(pa.Table.from_pylist(rows, schema=EVENT_SCHEMA))
+                    event_count += len(events)
+                    events.clear()
+
+                runtime, indices, checkpoints = run_chan(
+                    payload,
+                    guard,
+                    cancelled,
+                    write_checkpoints=True,
+                    checkpoint_sink=save_checkpoint,
+                    event_sink=drain_events,
+                )
+            rows = runtime.result_rows()
+            result = ChanResult(
+                bar_count=len(indices),
+                first_bar_index=indices[0] if indices else 0,
+                last_bar_index=indices[-1] if indices else 0,
+                merged_bar_count=len(runtime.included),
+                processed_bars=rows["processed_bars"],
+                fractals=rows["fractals"],
+                bi=rows["bi"],
+                bi_states=rows["bi_states"],
+                segments=rows["segments"],
+                zhongshu=rows["zhongshu"],
+                segment_zhongshu=rows["segment_zhongshu"],
+                level_centers=rows["level_centers"],
+                level_movements=rows["level_movements"],
+                movement_states=rows["movement_states"],
+                center_monitors=rows["center_monitors"],
+                divergences=rows["divergences"],
+                trade_points=rows["trade_points"],
+                events_file=events_file,
+                event_count=event_count,
+                checkpoint_files=checkpoint_files,
+                checkpoints=checkpoints,
+            )
+            result_ref = write_chan_cache(payload, guard, result)
+            logger.info(
+                "calculation.completed",
+                "Chan calculation completed",
+                {
+                    **context,
+                    "duration_ms": round((time.perf_counter() - started) * 1000, 3),
+                    "output_path": result_ref,
+                    "bar_count": result.bar_count,
+                    "merged_bar_count": result.merged_bar_count,
+                    "processed_bars": len(result.processed_bars),
+                    "fractals": len(result.fractals),
+                    "bi": len(result.bi),
+                    "bi_states": len(result.bi_states),
+                    "segments": len(result.segments),
+                    "zhongshu": len(result.zhongshu),
+                    "segment_zhongshu": len(result.segment_zhongshu),
+                    "level_centers": len(result.level_centers),
+                    "level_movements": len(result.level_movements),
+                    "divergences": len(result.divergences),
+                    "trade_points": len(result.trade_points),
+                    "events": event_count,
+                    "checkpoint_count": len(checkpoint_files),
+                },
+            )
+            return result_ref
     except InterruptedError:
         logger.warning(
             "calculation.cancelled",
@@ -205,6 +242,8 @@ def run_chan(
     *,
     last_bar_index: int | None = None,
     write_checkpoints: bool = False,
+    checkpoint_sink: Callable[[int, ChanEngine], None] | None = None,
+    event_sink: Callable[[ChanEngine], None] | None = None,
 ) -> tuple[ChanEngine, list[int], dict[int, bytes]]:
     """运行缠论引擎并返回内存态结果。
 
@@ -241,33 +280,9 @@ def run_chan(
             "last_bar_index": last_bar_index,
         },
     )
-    table = pq.read_table(
-        bars_path,
-        columns=[
-            "bar_index",
-            "timestamp_utc",
-            "open_i64",
-            "high_i64",
-            "low_i64",
-            "close_i64",
-        ],
-    ).to_pydict()
-    logger.debug(
-        "data.batch.transferred",
-        "Chan input Parquet loaded",
-        {
-            **_log_context(payload),
-            "bar_count": len(table["bar_index"]),
-            "input_columns": [
-                "bar_index",
-                "timestamp_utc",
-                "open_i64",
-                "high_i64",
-                "low_i64",
-                "close_i64",
-            ],
-        },
-    )
+    check_memory()
+    parquet = pq.ParquetFile(bars_path)
+    columns = ["bar_index", "timestamp_utc", "open_i64", "high_i64", "low_i64", "close_i64"]
     runtime = ChanEngine(
         ChanParameters(
             checkpoint_interval=int(parameters["checkpoint_interval"]),
@@ -276,32 +291,44 @@ def run_chan(
     checkpoints: dict[int, bytes] = {}
     indices: list[int] = []
     interval = runtime.parameters.checkpoint_interval
-    for position, bar_index in enumerate(table["bar_index"]):
-        raw_index = int(bar_index)
-        if last_bar_index is not None and raw_index > last_bar_index:
-            break
-        if position % 256 == 0 and cancelled.is_set():
-            raise InterruptedError("calculation cancelled")
-        runtime.update(
-            RawBar(
-                bar_index=raw_index,
-                time=int(table["timestamp_utc"][position]),
-                open_i64=int(table["open_i64"][position]),
-                high_i64=int(table["high_i64"][position]),
-                low_i64=int(table["low_i64"][position]),
-                close_i64=int(table["close_i64"][position]),
-            )
-        )
-        indices.append(raw_index)
-        if write_checkpoints and (position + 1) % interval == 0:
-            checkpoints[raw_index] = dump_checkpoint(
-                runtime.algorithm_version, raw_index, runtime.export_state()
-            )
-            logger.debug(
-                "checkpoint.saved",
-                "Chan checkpoint saved in memory",
-                {**_log_context(payload), "bar_index": raw_index, "sequence": len(checkpoints)},
-            )
+    stopped = False
+    with parquet:
+        for batch in parquet.iter_batches(batch_size=4096, columns=columns):
+            table = batch.to_pydict()
+            for position, bar_index in enumerate(table["bar_index"]):
+                raw_index = int(bar_index)
+                if last_bar_index is not None and raw_index > last_bar_index:
+                    stopped = True
+                    break
+                if len(indices) % 64 == 0:
+                    if cancelled.is_set():
+                        raise InterruptedError("calculation cancelled")
+                    check_memory()
+                runtime.update(
+                    RawBar(
+                        bar_index=raw_index,
+                        time=int(table["timestamp_utc"][position]),
+                        open_i64=int(table["open_i64"][position]),
+                        high_i64=int(table["high_i64"][position]),
+                        low_i64=int(table["low_i64"][position]),
+                        close_i64=int(table["close_i64"][position]),
+                    )
+                )
+                indices.append(raw_index)
+                if event_sink is not None and len(runtime.emitter.events) >= 4096:
+                    event_sink(runtime)
+                if write_checkpoints and len(indices) % interval == 0:
+                    check_memory()
+                    if checkpoint_sink is None:
+                        checkpoints[raw_index] = dump_checkpoint(
+                            runtime.algorithm_version, raw_index, runtime.export_state()
+                        )
+                    else:
+                        checkpoint_sink(raw_index, runtime)
+            if stopped:
+                break
+    if event_sink is not None:
+        event_sink(runtime)
     if cancelled.is_set():
         raise InterruptedError("calculation cancelled")
     logger.debug(

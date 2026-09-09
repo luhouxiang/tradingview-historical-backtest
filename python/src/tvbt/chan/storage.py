@@ -340,6 +340,9 @@ class ChanResult:
     events: list[dict[str, Any]] = field(default_factory=list)
     # 可选检查点，长任务恢复和一致性测试使用。
     checkpoints: dict[int, bytes] = field(default_factory=dict)
+    checkpoint_files: dict[int, Path] = field(default_factory=dict)
+    events_file: Path | None = None
+    event_count: int = 0
 
 
 def _sha256(path: Path) -> str:
@@ -387,14 +390,27 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
         files: dict[str, dict[str, int | str]] = {}
         for name, (rows, schema) in tables.items():
             path = temporary / f"{name}.parquet"
-            pq.write_table(pa.Table.from_pylist(rows, schema=schema), path, compression="zstd")
-            files[name] = {"path": path.name, "row_count": len(rows), "sha256": _sha256(path)}
+            count = len(rows)
+            if name == "events" and result.events_file is not None:
+                shutil.copyfile(guard.resolve(guard.relative(result.events_file)), path)
+                count = result.event_count
+            else:
+                with pq.ParquetWriter(path, schema, compression="zstd") as writer:
+                    for start in range(0, len(rows), 4096):
+                        writer.write_table(
+                            pa.Table.from_pylist(rows[start : start + 4096], schema=schema)
+                        )
+            files[name] = {"path": path.name, "row_count": count, "sha256": _sha256(path)}
 
         checkpoint_directory = temporary / "checkpoints"
         checkpoint_directory.mkdir()
         for bar_index, data in sorted(result.checkpoints.items()):
             (checkpoint_directory / f"{bar_index}.bin").write_bytes(data)
-        checkpoint_indices = sorted(result.checkpoints)
+        for bar_index, source in result.checkpoint_files.items():
+            shutil.copyfile(
+                guard.resolve(guard.relative(source)), checkpoint_directory / f"{bar_index}.bin"
+            )
+        checkpoint_indices = sorted(result.checkpoints.keys() | result.checkpoint_files.keys())
         manifest = {
             "schema_version": 4,
             "cache_key": payload["cache_key"],
@@ -424,7 +440,7 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
                 "center_monitors": len(result.center_monitors),
                 "divergences": len(result.divergences),
                 "trade_points": len(result.trade_points),
-                "events": len(result.events),
+                "events": files["events"]["row_count"],
             },
             "files": files,
             "checkpoint": {

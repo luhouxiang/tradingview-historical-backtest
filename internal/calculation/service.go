@@ -121,7 +121,7 @@ func (s *Service) Submit(ctx context.Context, requestID, traceID string, request
 	s.mu.Lock()
 	if jobID := s.flights[cacheKey]; jobID != "" {
 		job, exists := s.jobs.Get(jobID)
-		if exists {
+		if exists && (job.Status == jobs.Queued || job.Status == jobs.Running) {
 			s.mu.Unlock()
 			return submission{Job: job}, nil
 		}
@@ -139,7 +139,9 @@ func (s *Service) start(jobID, requestID, traceID string, request Request, meta 
 	work := func(ctx context.Context, progress func(float64)) (string, error) {
 		defer func() {
 			s.mu.Lock()
-			delete(s.flights, cacheKey)
+			if s.flights[cacheKey] == jobID {
+				delete(s.flights, cacheKey)
+			}
 			s.mu.Unlock()
 		}()
 		barsPath, metaPath := datasetPaths(meta)
@@ -175,6 +177,9 @@ func (s *Service) start(jobID, requestID, traceID string, request Request, meta 
 					}
 					return resultRef, nil
 				case "failed":
+					if status.Error["code"] == "RESOURCE_MEMORY_LIMIT" {
+						return "", jobs.Fail("RESOURCE_MEMORY_LIMIT", "缠论计算已达到内存保护阈值，请释放内存后重试；未生成不完整结果", nil)
+					}
 					return "", jobs.Fail("PYTHON_CALCULATION_FAILED", "Python calculation failed", nil)
 				case "cancelled", "interrupted":
 					return "", context.Canceled

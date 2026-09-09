@@ -35,6 +35,7 @@ func (f fakeCatalog) Get(datasetID, revision string) (catalog.DatasetMeta, error
 type fakePython struct {
 	mu      sync.Mutex
 	submits int
+	status  *pythonclient.JobStatus
 }
 
 func (f *fakePython) Algorithms(context.Context, string, string) ([]pythonclient.AlgorithmDefinition, error) {
@@ -60,6 +61,9 @@ func (f *fakePython) Submit(context.Context, string, string, string, any) (pytho
 	return pythonclient.JobStatus{Status: "queued"}, nil
 }
 func (f *fakePython) Job(context.Context, string, string, string) (pythonclient.JobStatus, error) {
+	if f.status != nil {
+		return *f.status, nil
+	}
 	return pythonclient.JobStatus{Status: "running", Progress: .5}, nil
 }
 func (f *fakePython) Cancel(context.Context, string, string, string) error { return nil }
@@ -331,4 +335,33 @@ func repeat(value string, count int) string {
 		result += value
 	}
 	return result
+}
+
+func TestCancelledFlightIsReplacedAndMemoryFailureIsExplained(t *testing.T) {
+	guard, _ := storage.NewPathGuard(t.TempDir())
+	python := &fakePython{status: &pythonclient.JobStatus{Status: "failed", Error: map[string]any{"code": "RESOURCE_MEMORY_LIMIT"}}}
+	meta := catalog.DatasetMeta{DatasetID: "TEST.A1.1m", DataRevision: "sha256:" + repeat("1", 64), Files: []catalog.FileMeta{{Role: "bars", Path: "normalized/test/bars.parquet"}}}
+	manager := jobs.NewManager()
+	service := NewService(guard, fakeCatalog{meta}, python, manager, "1.0.0", time.Millisecond)
+	request := Request{DatasetID: meta.DatasetID, DataRevision: meta.DataRevision, Algorithm: testAlgorithm, Parameters: map[string]any{}, CalculationMode: "full_history"}
+	key, _ := CacheKey(meta.DataRevision, testAlgorithm, map[string]any{"period": int64(20), "source": "close"}, "full_history", "0.1.0")
+	old := manager.Submit("calculation", func(ctx context.Context, _ func(float64)) (string, error) { <-ctx.Done(); return "", ctx.Err() })
+	manager.Cancel(old.ID)
+	service.flights[key] = old.ID
+	accepted, err := service.Submit(context.Background(), "request", "trace", request)
+	if err != nil || accepted.Job.ID == old.ID {
+		t.Fatalf("cancelled flight reused: %v", err)
+	}
+	deadline := time.Now().Add(time.Second)
+	for time.Now().Before(deadline) {
+		job, _ := service.Job(accepted.Job.ID)
+		if job.Status == jobs.Failed {
+			if job.Error.Code != "RESOURCE_MEMORY_LIMIT" {
+				t.Fatalf("memory protection hidden: %+v", job.Error)
+			}
+			return
+		}
+		time.Sleep(time.Millisecond)
+	}
+	t.Fatal("memory protection did not reach terminal status")
 }

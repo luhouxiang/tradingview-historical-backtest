@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import TopToolbar from './TopToolbar.vue'
 import DatasetPanel from './DatasetPanel.vue'
 import IndicatorManagerPanel from './IndicatorManagerPanel.vue'
@@ -11,12 +11,12 @@ import BacktestPanel from './BacktestPanel.vue'
 import OptimizationPanel from './OptimizationPanel.vue'
 import StrategyResearchPanel from './StrategyResearchPanel.vue'
 import KeyboardInstrumentPicker from './KeyboardInstrumentPicker.vue'
-import { ApiError, createCalculation, getCalculation, getCalculationResults, getDrawings, getLayout, getStrategySourceConfig, listAlgorithms, putDrawings, putLayout, putStrategySourceConfig } from '../api/client'
+import { ApiError, cancelCalculation, createCalculation, getCalculation, getCalculationResults, getDrawings, getLayout, getStrategySourceConfig, listAlgorithms, putDrawings, putLayout, putStrategySourceConfig } from '../api/client'
 import { DrawingHistory, LayerManager, type DrawingObject, type DrawingType } from '../drawing/model'
 import { defaultIndicatorSpecs } from '../indicators/defaults'
 import { defaultChanSpec } from '../chan/defaults'
 import type { ReplayObjects, ReplaySignal } from '../replay/eventIndex'
-import type { AlgorithmDefinition, ChanCenterMonitor, ChanSignalPoint, ChanTreeObject, DatasetMeta, SeriesSource, StrategyRunSource, StrategySource, StrategySourceDynamicConfig, StrategySourcePreference, WorkspaceLayout } from '../types/api'
+import type { AlgorithmDefinition, CalculationRequest, ChanCenterMonitor, ChanSignalPoint, ChanTreeObject, DatasetMeta, SeriesSource, StrategyRunSource, StrategySource, StrategySourceDynamicConfig, StrategySourcePreference, WorkspaceLayout } from '../types/api'
 
 defineProps<{ health: string }>()
 
@@ -114,24 +114,68 @@ function deleteAll(): void { commitDrawings([]); selectedDrawingId.value = null 
 function undo(): void { drawings.value = drawingHistory.undo() }
 function redo(): void { drawings.value = drawingHistory.redo() }
 
+const workspaceJobs = new Set<string>()
+const workspaceSubmissions = new Set<Promise<unknown>>()
+let cancellationQueue: Promise<unknown> = Promise.resolve()
+
+function cancelWorkspaceJobs(): void {
+  const jobs = [...workspaceJobs]
+  workspaceJobs.clear()
+  cancellationQueue = Promise.allSettled([cancellationQueue, ...workspaceSubmissions, ...jobs.map((id) => cancelCalculation(id))])
+}
+
+async function createWorkspaceCalculation(request: CalculationRequest, generation: number) {
+  await cancellationQueue
+  if (generation !== workspaceGeneration) return null
+  const submission = createCalculation(request).then(async (accepted) => {
+    if (generation !== workspaceGeneration) {
+      if (accepted.status !== 'completed') await cancelCalculation(accepted.job_id)
+      return null
+    }
+    if (accepted.status !== 'completed') workspaceJobs.add(accepted.job_id)
+    return accepted
+  })
+  workspaceSubmissions.add(submission)
+  try {
+    return await submission
+  } finally {
+    workspaceSubmissions.delete(submission)
+  }
+}
+
+onBeforeUnmount(() => {
+  workspaceGeneration += 1
+  cancelWorkspaceJobs()
+})
+
 async function trackCalculation(source: SeriesSource): Promise<void> {
-  for (;;) {
+  const generation = workspaceGeneration
+  while (generation === workspaceGeneration) {
     const status = await getCalculation(source.job_id)
+    if (generation !== workspaceGeneration) return
     indicatorSources.value = indicatorSources.value.map((item) => item.source_id === source.source_id
       ? { ...item, status: status.status, error: status.error?.message }
       : item)
-    if (status.status === 'completed' || ['failed', 'cancelled', 'interrupted'].includes(status.status)) return
+    if (status.status === 'completed' || ['failed', 'cancelled', 'interrupted'].includes(status.status)) {
+      workspaceJobs.delete(source.job_id)
+      return
+    }
     await new Promise((resolve) => window.setTimeout(resolve, 250))
   }
 }
 
 async function trackStrategyCalculation(source: StrategySource): Promise<void> {
-  for (;;) {
+  const generation = workspaceGeneration
+  while (generation === workspaceGeneration) {
     const status = await getCalculation(source.job_id)
+    if (generation !== workspaceGeneration) return
     strategySources.value = strategySources.value.map((item) => item.source_id === source.source_id
       ? { ...item, status: status.status, error: status.error?.message }
       : item)
-    if (status.status === 'completed' || ['failed', 'cancelled', 'interrupted'].includes(status.status)) return
+    if (status.status === 'completed' || ['failed', 'cancelled', 'interrupted'].includes(status.status)) {
+      workspaceJobs.delete(source.job_id)
+      return
+    }
     await new Promise((resolve) => window.setTimeout(resolve, 250))
   }
 }
@@ -152,6 +196,7 @@ async function loadSignalObjects(): Promise<void> {
       const signals: ChanTreeObject[] = []
       for (let from = dataset.coverage.first_bar_index; from <= dataset.coverage.last_bar_index; from += 5000) {
         const to = Math.min(dataset.coverage.last_bar_index, from + 4999)
+        if (generation !== signalLoadGeneration) return { source, signals: [] }
         const result = await getCalculationResults(source.job_id, from, to)
         if (result.result_kind === 'chan') {
           signals.push(
@@ -282,9 +327,10 @@ function focusResearchTrade(trade: { trade_id: string; entry_bar_index: number; 
 }
 
 async function installDefaultIndicators(dataset: DatasetMeta, definitions?: AlgorithmDefinition[]): Promise<void> {
+  const generation = workspaceGeneration
   const specs = defaultIndicatorSpecs(definitions ?? await listAlgorithms())
   const created = await Promise.all(specs.map(async (spec) => {
-    const accepted = await createCalculation({
+    const accepted = await createWorkspaceCalculation({
       dataset_id: dataset.dataset_id,
       data_revision: dataset.data_revision,
       algorithm: {
@@ -295,7 +341,8 @@ async function installDefaultIndicators(dataset: DatasetMeta, definitions?: Algo
       },
       parameters: spec.parameters,
       calculation_mode: 'full_history',
-    })
+    }, generation)
+    if (!accepted) return
     return {
       source_type: 'SeriesSource' as const,
       source_id: spec.sourceId,
@@ -306,8 +353,9 @@ async function installDefaultIndicators(dataset: DatasetMeta, definitions?: Algo
     }
   }))
   if (selectedDataset.value?.dataset_id !== dataset.dataset_id || selectedDataset.value.data_revision !== dataset.data_revision) return
-  indicatorSources.value = created
-  for (const source of created.filter((candidate) => candidate.status !== 'completed')) void trackCalculation(source)
+  if (generation !== workspaceGeneration) return
+  indicatorSources.value = created.filter((source) => source !== undefined)
+  for (const source of indicatorSources.value.filter((candidate) => candidate.status !== 'completed')) void trackCalculation(source)
 }
 
 function completeCategoryVisibility(value: StrategySource['category_visibility']): Required<StrategySource['category_visibility']> {
@@ -334,9 +382,10 @@ function applyDynamicStrategyConfig(source: StrategySource, dataset: DatasetMeta
 }
 
 async function installDefaultChan(dataset: DatasetMeta, definitions?: AlgorithmDefinition[]): Promise<void> {
+  const generation = workspaceGeneration
   const spec = defaultChanSpec(definitions ?? await listAlgorithms())
   if (!spec) return
-  const accepted = await createCalculation({
+  const accepted = await createWorkspaceCalculation({
     dataset_id: dataset.dataset_id,
     data_revision: dataset.data_revision,
     algorithm: {
@@ -347,7 +396,8 @@ async function installDefaultChan(dataset: DatasetMeta, definitions?: AlgorithmD
     },
     parameters: spec.parameters,
     calculation_mode: 'causal_events',
-  })
+  }, generation)
+  if (!accepted) return
   if (selectedDataset.value?.dataset_id !== dataset.dataset_id || selectedDataset.value.data_revision !== dataset.data_revision) return
   const source: StrategySource = {
     source_type: 'StrategySource', source_id: spec.sourceId, definition: spec.definition,
@@ -360,7 +410,9 @@ async function installDefaultChan(dataset: DatasetMeta, definitions?: AlgorithmD
 }
 
 async function restoreSources(layout: WorkspaceLayout, dataset: DatasetMeta): Promise<void> {
+  const generation = workspaceGeneration
   const definitions = await listAlgorithms()
+  if (generation !== workspaceGeneration) return
   const restored: SeriesSource[] = []
   const pending: SeriesSource[] = []
   const restoredStrategies: StrategySource[] = []
@@ -369,10 +421,11 @@ async function restoreSources(layout: WorkspaceLayout, dataset: DatasetMeta): Pr
   for (const saved of savedSeries) {
     const definition = definitions.find((item) => item.algorithm_id === saved.algorithm.algorithm_id && item.source_hash === saved.algorithm.source_hash)
     if (!definition) continue
-    const accepted = await createCalculation({
+    const accepted = await createWorkspaceCalculation({
       dataset_id: dataset.dataset_id, data_revision: dataset.data_revision,
       algorithm: saved.algorithm, parameters: saved.parameters, calculation_mode: 'full_history',
-    })
+    }, generation)
+    if (!accepted) return
     const source: SeriesSource = {
       source_type: 'SeriesSource', source_id: saved.source_id, definition,
       parameters: saved.parameters, job_id: accepted.job_id, status: accepted.status,
@@ -381,16 +434,19 @@ async function restoreSources(layout: WorkspaceLayout, dataset: DatasetMeta): Pr
     restored.push(source)
     if (accepted.status !== 'completed') pending.push(source)
   }
+  if (generation !== workspaceGeneration) return
   indicatorSources.value = restored
   for (const source of pending) void trackCalculation(source)
   if (restored.length === 0) await installDefaultIndicators(dataset, definitions)
+  if (generation !== workspaceGeneration) return
   for (const saved of (layout.strategy_sources ?? []).filter((item) => item.dataset_id === dataset.dataset_id && item.data_revision === dataset.data_revision)) {
     const definition = definitions.find((item) => item.kind === 'chan' && item.algorithm_id === saved.algorithm.algorithm_id && item.source_hash === saved.algorithm.source_hash)
     if (!definition) continue
-    const accepted = await createCalculation({
+    const accepted = await createWorkspaceCalculation({
       dataset_id: dataset.dataset_id, data_revision: dataset.data_revision,
       algorithm: saved.algorithm, parameters: saved.parameters, calculation_mode: 'causal_events',
-    })
+    }, generation)
+    if (!accepted) return
     const source: StrategySource = {
       source_type: 'StrategySource', source_id: saved.source_id, definition,
       parameters: saved.parameters, job_id: accepted.job_id, status: accepted.status,
@@ -415,6 +471,7 @@ async function restoreSources(layout: WorkspaceLayout, dataset: DatasetMeta): Pr
     restoredStrategies.push(configuredSource)
     if (accepted.status !== 'completed') pendingStrategies.push(configuredSource)
   }
+  if (generation !== workspaceGeneration) return
   strategySources.value = restoredStrategies
   for (const source of pendingStrategies) void trackStrategyCalculation(source)
   if (restoredStrategies.length === 0) await installDefaultChan(dataset, definitions)
@@ -422,6 +479,8 @@ async function restoreSources(layout: WorkspaceLayout, dataset: DatasetMeta): Pr
 
 async function selectDataset(dataset: DatasetMeta, origin: 'automatic' | 'user' = 'user'): Promise<void> {
   workspaceGeneration += 1
+  const generation = workspaceGeneration
+  cancelWorkspaceJobs()
   if (strategyConfigurationSaveTimer !== undefined) {
     window.clearTimeout(strategyConfigurationSaveTimer)
     strategyConfigurationSaveTimer = undefined
@@ -442,6 +501,7 @@ async function selectDataset(dataset: DatasetMeta, origin: 'automatic' | 'user' 
   const [layoutResult, drawingResult, strategyConfigResult] = await Promise.allSettled([
     getLayout(profileId, layoutId), getDrawings<DrawingObject>(profileId, layoutId, dataset.dataset_id), getStrategySourceConfig(profileId),
   ])
+  if (generation !== workspaceGeneration) return
   if (strategyConfigResult.status === 'fulfilled') {
     strategySourceConfigRevision.value = strategyConfigResult.value.revision
     strategySourcePreferences.value = strategyConfigResult.value.strategy_sources
@@ -464,6 +524,7 @@ async function selectDataset(dataset: DatasetMeta, origin: 'automatic' | 'user' 
       bottomTab.value = layout.bottom_panel.active_tab
       rightTab.value = layout.right_panel.active_tab === 'object_tree' ? 'objects' : layout.right_panel.active_tab === 'strategy_params' ? 'indicators' : 'datasets'
       await nextTick()
+      if (generation !== workspaceGeneration) return
       chartRef.value?.restoreLayout({ panes: layout.panes.map((pane) => ({ id: pane.id, kind: pane.role, weight: pane.weight, minHeight: pane.min_height, collapsed: pane.collapsed })) })
     }
     await restoreSources(layout, dataset)
@@ -473,11 +534,13 @@ async function selectDataset(dataset: DatasetMeta, origin: 'automatic' | 'user' 
     layoutRevision.value = 0
     try {
       const definitions = await listAlgorithms()
+      if (generation !== workspaceGeneration) return
       await Promise.all([installDefaultIndicators(dataset, definitions), installDefaultChan(dataset, definitions)])
     } catch (error) {
       workspaceStatus.value = error instanceof Error ? `默认指标创建失败：${error.message}` : '默认指标创建失败'
     }
   }
+  if (generation !== workspaceGeneration) return
   if (drawingResult.status === 'fulfilled' && drawingResult.value.data_revision === dataset.data_revision) {
     drawingRevision.value = drawingResult.value.revision
     drawings.value = drawingHistory.load(drawingResult.value.drawings)

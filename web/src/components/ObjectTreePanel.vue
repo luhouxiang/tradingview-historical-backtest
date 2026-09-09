@@ -84,6 +84,7 @@ function objectSide(value: ChanTreeObject): 'buy' | 'sell' | 'semantic' {
         <button title="显示/隐藏策略图层" @click="emit('patchStrategy', source.source_id, { visible: !source.visible })">{{ source.visible ? '◉' : '○' }}</button>
         <button title="删除策略" @click="emit('removeStrategy', source.source_id)">×</button>
       </header>
+      <p v-if="source.error" class="calculation-error" role="alert">{{ source.error }}</p>
       <div v-if="!collapsedStrategies.has(source.source_id)" class="strategy-children">
         <details class="strategy-categories">
           <summary>图层分类</summary>

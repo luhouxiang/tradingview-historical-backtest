@@ -1,9 +1,31 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any
 
 CHECKPOINT_FORMAT = "tvbt-chan-checkpoint-v1"
+
+
+def write_checkpoint(
+    path: Path, algorithm_version: str, bar_index: int, state: dict[str, Any]
+) -> None:
+    """Stream the same canonical envelope without allocating a full JSON string/bytes copy."""
+    if not algorithm_version or bar_index < 0:
+        raise ValueError("checkpoint algorithm version and bar index are required")
+    with path.open("w", encoding="utf-8", newline="") as stream:
+        json.dump(
+            {
+                "format": CHECKPOINT_FORMAT,
+                "algorithm_version": algorithm_version,
+                "bar_index": bar_index,
+                "state": state,
+            },
+            stream,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
 
 
 class CheckpointVersionError(ValueError):

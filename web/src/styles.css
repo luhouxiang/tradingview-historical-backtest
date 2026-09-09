@@ -156,6 +156,7 @@ button:disabled { color: #787b86; }
 .signal-branch-title { display: flex; justify-content: space-between; padding: 7px 9px 5px 18px; border-top: 1px solid #252936; color: #a2a6b3; font-size: 11px; }
 .signal-branch-title small { color: #787b86; }
 .signal-tree-empty { margin: 0; padding: 8px 10px 10px 32px; color: #787b86; font-size: 11px; }
+.calculation-error { color: #ff6b6b; overflow-wrap: anywhere; font-size: 12px; }
 .signal-object-node { display: grid; grid-template-columns: 16px minmax(0, 1fr) 29px; align-items: center; gap: 3px; min-height: 45px; padding: 4px 5px 4px 17px; border-top: 1px solid #252936; cursor: pointer; outline: none; }
 .signal-object-node:hover { background: #242936; }
 .signal-object-node.selected { background: #1f4f91; color: #fff; }

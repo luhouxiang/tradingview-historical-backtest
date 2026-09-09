@@ -214,3 +214,52 @@ def test_calculate_chan_writes_structured_runtime_logs(tmp_path: Path) -> None:
     payload["trace_id"] = "trace-chan-log"
     calculate_chan(payload, PathGuard(tmp_path), threading.Event())
     logger.info("Chan runtime log smoke completed")
+
+
+def test_spilled_cache_matches_all_in_memory_events_and_checkpoints(tmp_path: Path) -> None:
+    payload = _payload(tmp_path)
+    guard = PathGuard(tmp_path)
+    runtime, _, checkpoints = run_chan(payload, guard, threading.Event(), write_checkpoints=True)
+    expected_events = [event.row() for event in runtime.emitter.events]
+    output = tmp_path / calculate_chan(payload, guard, threading.Event())
+    assert pq.read_table(output / "events.parquet").to_pylist() == expected_events
+    for index, data in checkpoints.items():
+        assert (output / "checkpoints" / f"{index}.bin").read_bytes() == data
+    assert list((tmp_path / "tmp").iterdir()) == []
+
+
+def test_checkpoint_sink_does_not_retain_historical_bytes(tmp_path: Path) -> None:
+    payload = _payload(tmp_path)
+    seen = []
+    runtime, indices, retained = run_chan(
+        payload,
+        PathGuard(tmp_path),
+        threading.Event(),
+        write_checkpoints=True,
+        checkpoint_sink=lambda index, engine: seen.append((index, len(engine.raw_bars))),
+        event_sink=lambda engine: engine.emitter.events.clear(),
+    )
+    assert seen == [(index, index + 1) for index in range(3, 25, 4)]
+    assert len(indices) == 25
+    assert retained == {}
+    assert runtime.emitter.events == []
+
+
+def test_spilled_calculation_cancellation_cleans_staging(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from tvbt.chan import algorithm
+
+    payload = _payload(tmp_path)
+    cancelled = threading.Event()
+    original = algorithm.write_checkpoint
+
+    def cancel_after_checkpoint(*args: object, **kwargs: object) -> None:
+        original(*args, **kwargs)
+        cancelled.set()
+
+    monkeypatch.setattr(algorithm, "write_checkpoint", cancel_after_checkpoint)
+    with pytest.raises(InterruptedError):
+        calculate_chan(payload, PathGuard(tmp_path), cancelled)
+    assert list((tmp_path / "tmp").iterdir()) == []
+    assert not (tmp_path / "cache" / "chan" / "key").exists()

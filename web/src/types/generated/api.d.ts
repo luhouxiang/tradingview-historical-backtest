@@ -2027,6 +2027,7 @@ export interface components {
             }[];
             next_cursor?: string | null;
         };
+        /** @description RESOURCE_MEMORY_LIMIT indicates cooperative engine memory protection; no partial calculation cache is committed and the task can be retried after freeing memory. */
         Error: {
             code: string;
             message: string;

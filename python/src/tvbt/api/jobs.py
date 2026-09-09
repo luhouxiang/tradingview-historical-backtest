@@ -39,6 +39,8 @@ class JobStore:
     def __init__(self) -> None:
         self._jobs: dict[str, Job] = {}
         self._lock = threading.Lock()
+        # Internal engine admission guard: HTTP polling/cancel remain responsive.
+        self._compute_slot = threading.Semaphore(1)
 
     def submit(self, job: Job) -> bool:
         with self._lock:
@@ -68,6 +70,22 @@ class JobStore:
                     job.progress_detail = dict(detail)
 
     def run(self, job_id: str, work: Any) -> None:
+        job = self._jobs[job_id]
+        while not self._compute_slot.acquire(timeout=0.1):
+            if job.cancelled.is_set():
+                with self._lock:
+                    job.status = "cancelled"
+                return
+        try:
+            if job.cancelled.is_set():
+                with self._lock:
+                    job.status = "cancelled"
+                return
+            self._run_admitted(job_id, work)
+        finally:
+            self._compute_slot.release()
+
+    def _run_admitted(self, job_id: str, work: Any) -> None:
         with self._lock:
             job = self._jobs[job_id]
             job.status = "running"
@@ -84,6 +102,10 @@ class JobStore:
         except InterruptedError:
             with self._lock:
                 job.status = "cancelled"
+        except MemoryError as exc:
+            with self._lock:
+                job.status = "failed"
+                job.error = {"code": "RESOURCE_MEMORY_LIMIT", "message": str(exc)}
         except Exception as exc:
             with self._lock:
                 job.status = "failed"

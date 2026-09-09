@@ -2979,6 +2979,7 @@ components:
 
     Error:
       type: object
+      description: RESOURCE_MEMORY_LIMIT indicates cooperative engine memory protection; no partial calculation cache is committed and the task can be retried after freeing memory.
       required: [code, message]
       properties:
         code:

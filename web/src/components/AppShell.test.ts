@@ -8,7 +8,7 @@ import AppShell from './AppShell.vue'
 const api = vi.hoisted(() => ({
   getLayout: vi.fn(), getDrawings: vi.fn(), putLayout: vi.fn(), putDrawings: vi.fn(),
   getStrategySourceConfig: vi.fn(), putStrategySourceConfig: vi.fn(),
-  listAlgorithms: vi.fn(), createCalculation: vi.fn(), getCalculation: vi.fn(), getCalculationResults: vi.fn(),
+  cancelCalculation: vi.fn(), listAlgorithms: vi.fn(), createCalculation: vi.fn(), getCalculation: vi.fn(), getCalculationResults: vi.fn(),
   createReplay: vi.fn(), getReplay: vi.fn(), getReplayEvents: vi.fn(),
   createBacktest: vi.fn(), getBacktest: vi.fn(), getBacktestSummary: vi.fn(), getBacktestTrades: vi.fn(), getBacktestEquity: vi.fn(), getBacktestChartEvents: vi.fn(),
   createStudy: vi.fn(), getStudy: vi.fn(), getStudyEvaluations: vi.fn(),
@@ -65,8 +65,54 @@ function chanDefinition(): AlgorithmDefinition {
 }
 
 describe('AppShell', () => {
+  it('cancels the previous dataset calculation and ignores its late poll', async () => {
+    api.getLayout.mockRejectedValue(new ApiError('WORKSPACE_NOT_FOUND', 'missing', 'req-layout'))
+    api.getDrawings.mockRejectedValue(new ApiError('DRAWINGS_NOT_FOUND', 'missing', 'req-drawings'))
+    api.listAlgorithms.mockResolvedValue([chanDefinition()])
+    api.createCalculation.mockResolvedValueOnce({ job_id: 'old', status: 'running' })
+      .mockResolvedValueOnce({ job_id: 'new', status: 'completed' })
+    let resolvePoll!: (value: object) => void
+    api.getCalculation.mockImplementationOnce(() => new Promise((resolve) => { resolvePoll = resolve }))
+    const wrapper = mount(AppShell, { props: { health: 'ok' }, global: { stubs: { ChartGroup: ChartStub, DatasetPanel: true } } })
+    const panel = wrapper.findComponent({ name: 'DatasetPanel' })
+    panel.vm.$emit('selected', dataset)
+    await flushPromises()
+    panel.vm.$emit('selected', { ...dataset, dataset_id: 'SHFE.SSL9.5m' })
+    await flushPromises()
+    expect(api.cancelCalculation).toHaveBeenCalledWith('old')
+    resolvePoll({ status: 'failed', error: { message: 'stale failure' } })
+    await flushPromises()
+    expect(wrapper.findComponent(ChartStub).props('strategySources')).toEqual([
+      expect.objectContaining({ job_id: 'new', status: 'completed' }),
+    ])
+    wrapper.unmount()
+  })
+
+  it('cancels an accepted job arriving after its dataset was replaced', async () => {
+    api.getLayout.mockRejectedValue(new ApiError('WORKSPACE_NOT_FOUND', 'missing', 'req-layout'))
+    api.getDrawings.mockRejectedValue(new ApiError('DRAWINGS_NOT_FOUND', 'missing', 'req-drawings'))
+    api.listAlgorithms.mockResolvedValue([chanDefinition()])
+    let acceptOld!: (value: object) => void
+    api.createCalculation.mockImplementationOnce(() => new Promise((resolve) => { acceptOld = resolve }))
+      .mockResolvedValueOnce({ job_id: 'new', status: 'completed' })
+    const wrapper = mount(AppShell, { props: { health: 'ok' }, global: { stubs: { ChartGroup: ChartStub, DatasetPanel: true } } })
+    const panel = wrapper.findComponent({ name: 'DatasetPanel' })
+    panel.vm.$emit('selected', dataset)
+    await flushPromises()
+    panel.vm.$emit('selected', { ...dataset, dataset_id: 'SHFE.SSL9.5m' })
+    await flushPromises()
+    acceptOld({ job_id: 'late', status: 'queued' })
+    await flushPromises()
+    expect(api.cancelCalculation).toHaveBeenCalledWith('late')
+    expect(wrapper.findComponent(ChartStub).props('strategySources')).toEqual([
+      expect.objectContaining({ job_id: 'new', status: 'completed' }),
+    ])
+    wrapper.unmount()
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
+    api.cancelCalculation.mockResolvedValue({ status: 'cancelled' })
     api.getSourceFiles.mockResolvedValue([])
     api.listDatasets.mockResolvedValue({ catalog_revision: 0, datasets: [] })
     api.getStrategySourceConfig.mockRejectedValue(new ApiError('WORKSPACE_NOT_FOUND', 'missing', 'req-strategy-config'))

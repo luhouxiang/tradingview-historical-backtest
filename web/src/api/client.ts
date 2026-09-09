@@ -156,6 +156,10 @@ export function createCalculation(request: CalculationRequest): Promise<JobAccep
   return apiRequest('/api/v1/calculations', { method: 'POST', body: JSON.stringify(request) })
 }
 
+export function cancelCalculation(jobId: string): Promise<JobStatus> {
+  return apiRequest(`/api/v1/calculations/${encodeURIComponent(jobId)}/cancel`, { method: 'POST' })
+}
+
 export function getCalculation(jobId: string): Promise<JobStatus> {
   return apiRequest(`/api/v1/calculations/${encodeURIComponent(jobId)}`)
 }
