@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/tvbt/tradingview-historical-backtest/internal/catalog"
+	"github.com/tvbt/tradingview-historical-backtest/internal/jobs"
 	"github.com/tvbt/tradingview-historical-backtest/internal/pythonclient"
 	"github.com/tvbt/tradingview-historical-backtest/internal/storage"
 )
@@ -43,6 +44,27 @@ func TestRunSignatureIsReproducibleAndCoversExecutionFacts(t *testing.T) {
 	changed, _ := Signature(request, "engine-1")
 	if changed == base {
 		t.Fatal("execution timing did not change run signature")
+	}
+}
+
+func TestPythonBacktestFailurePreservesMemoryProtectionCause(t *testing.T) {
+	remoteMessage := "缠论计算已触发内存保护：系统可用 396 MiB；请释放内存后重试。未生成不完整结果。"
+	err := pythonBacktestFailure(pythonclient.JobStatus{Error: map[string]any{
+		"code": "RESOURCE_MEMORY_LIMIT", "message": remoteMessage,
+	}})
+	var workError *jobs.WorkError
+	if !errors.As(err, &workError) {
+		t.Fatalf("memory failure was not mapped to a job error: %v", err)
+	}
+	if workError.Code != "RESOURCE_MEMORY_LIMIT" || workError.Message != remoteMessage {
+		t.Fatalf("memory protection cause was hidden: %+v", workError)
+	}
+
+	generic := pythonBacktestFailure(pythonclient.JobStatus{Error: map[string]any{
+		"code": "INTERNAL_ERROR", "message": "private Python detail",
+	}})
+	if !errors.As(generic, &workError) || workError.Code != "PYTHON_BACKTEST_FAILED" || workError.Message != "Python backtest failed" {
+		t.Fatalf("unexpected generic failure mapping: %+v", workError)
 	}
 }
 

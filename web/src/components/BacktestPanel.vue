@@ -29,6 +29,8 @@ const rankingContextText = ref('')
 const restored = ref(false)
 const restoreAttemptKey = ref('')
 const LAST_RUN_STORAGE_KEY = 'tvbt:last-backtest:v1'
+const STATUS_POLL_INTERVAL_MS = 250
+const STATUS_POLL_RETRY_DELAYS_MS = [250, 500, 1_000, 2_000, 4_000]
 const executing = computed(() => ['queued', 'running'].includes(status.value))
 
 interface StoredBacktestRun {
@@ -157,6 +159,28 @@ function storeRun(value: StoredBacktestRun): void {
   catch { /* 浏览器禁用持久化时不影响正式回测。 */ }
 }
 
+function wait(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, milliseconds))
+}
+
+function isTransientNetworkError(cause: unknown): boolean {
+  return cause instanceof TypeError
+    && /fetch|network|load/i.test(cause.message)
+}
+
+async function getBacktestWithRetry(id: string): ReturnType<typeof getBacktest> {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await getBacktest(id)
+    }
+    catch (cause) {
+      const retryDelay = STATUS_POLL_RETRY_DELAYS_MS[attempt]
+      if (!isTransientNetworkError(cause) || retryDelay === undefined) throw cause
+      await wait(retryDelay)
+    }
+  }
+}
+
 async function execute(resume: StoredBacktestRun | null = null): Promise<void> {
   const dataset = props.dataset
   const definition = resume
@@ -185,7 +209,7 @@ async function execute(resume: StoredBacktestRun | null = null): Promise<void> {
     if (resume) {
       runId.value = resume.run_id
       signature.value = resume.run_signature
-      current = await getBacktest(resume.run_id)
+      current = await getBacktestWithRetry(resume.run_id)
       const manifestDataset = current.manifest?.dataset as Record<string, unknown> | undefined
       const manifestStrategy = current.manifest?.strategy as Record<string, unknown> | undefined
       if (current.run_signature !== resume.run_signature
@@ -222,12 +246,12 @@ async function execute(resume: StoredBacktestRun | null = null): Promise<void> {
         run_id: accepted.run_id, run_signature: accepted.run_signature,
         algorithm_id: definition.algorithm_id,
       })
-      current = await getBacktest(accepted.run_id)
+      current = await getBacktestWithRetry(accepted.run_id)
     }
     while (!['completed', 'failed', 'cancelled', 'interrupted'].includes(current.status)) {
       status.value = current.status
-      await new Promise((resolve) => window.setTimeout(resolve, 250))
-      current = await getBacktest(runId.value)
+      await wait(STATUS_POLL_INTERVAL_MS)
+      current = await getBacktestWithRetry(runId.value)
     }
     if (current.status !== 'completed') throw new Error(current.error?.message ?? `回测${current.status}`)
     status.value = 'completed'

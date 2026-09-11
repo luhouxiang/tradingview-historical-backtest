@@ -247,13 +247,24 @@ func (s *Service) start(runID, signature, requestID, traceID string, request Req
 					}
 					return ref, nil
 				case "failed":
-					return "", jobs.Fail("PYTHON_BACKTEST_FAILED", "Python backtest failed", nil)
+					return "", pythonBacktestFailure(status)
 				case "cancelled", "interrupted":
 					return "", context.Canceled
 				}
 			}
 		}
 	})
+}
+
+func pythonBacktestFailure(status pythonclient.JobStatus) error {
+	if status.Error["code"] == "RESOURCE_MEMORY_LIMIT" {
+		message := "缠论计算已达到内存保护阈值，请释放内存后重试；未生成不完整结果"
+		if remoteMessage, ok := status.Error["message"].(string); ok && strings.TrimSpace(remoteMessage) != "" {
+			message = remoteMessage
+		}
+		return jobs.Fail("RESOURCE_MEMORY_LIMIT", message, nil)
+	}
+	return jobs.Fail("PYTHON_BACKTEST_FAILED", "Python backtest failed", nil)
 }
 
 func (s *Service) Status(runID string) (*jobs.Job, string, map[string]any, bool) {

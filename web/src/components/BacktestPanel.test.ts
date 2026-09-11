@@ -311,6 +311,26 @@ describe('BacktestPanel', () => {
     expect(button.attributes('aria-busy')).toBe('false')
   })
 
+  it('continues polling a formal run after a transient fetch failure', async () => {
+    api.getBacktest
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce({
+        run_id: 'run-1', status: 'completed', progress: 1,
+        manifest: { execution: { semantic_version: '1.0.0', contract_multiplier: 20 } },
+      })
+    const wrapper = mount(BacktestPanel, { props: { dataset, view: 'backtest' } })
+    await flushPromises()
+
+    await wrapper.get('.backtest-run-button').trigger('click')
+    await new Promise((resolve) => window.setTimeout(resolve, 300))
+    await flushPromises()
+
+    expect(api.getBacktest).toHaveBeenCalledTimes(2)
+    expect(wrapper.text()).not.toContain('Failed to fetch')
+    expect(wrapper.get('.summary-grid').text()).toContain('10.00%')
+    expect(wrapper.emitted('completed')?.[0]?.[0]).toMatchObject({ run_id: 'run-1' })
+  })
+
   it('accepts a completed zero-trade run and explains why no execution markers exist', async () => {
     api.getBacktestSummary.mockResolvedValue({
       total_return: 0, max_drawdown: 0, trade_count: 0, win_rate: null, sharpe: null,
