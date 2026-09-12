@@ -23,6 +23,10 @@ test('opens a bound backtest workspace, completes a run, and locates a trade on 
 
   const panelBox = await panel.boundingBox()
   const tradePane = backtestPage.getByRole('region', { name: '交易明细', exact: true })
+  await expect(tradePane.getByRole('columnheader', { name: '成交时间' })).toBeVisible()
+  await expect(tradePane.getByRole('columnheader', { name: '成交原因' })).toBeVisible()
+  await expect(tradePane.locator('tbody tr[data-trade-leg="entry"]').first()).toContainText('-01')
+  await expect(tradePane.locator('tbody tr[data-trade-leg="exit"]').first()).toContainText('-02')
   const tradeBox = await tradePane.boundingBox()
   expect(panelBox).not.toBeNull()
   expect(tradeBox).not.toBeNull()
@@ -74,4 +78,9 @@ test('opens a bound backtest workspace, completes a run, and locates a trade on 
   await expect(backtestPage.getByLabel('回测结果')).toContainText('已恢复最近结果', { timeout: 30_000 })
   await expect(backtestPage.getByLabel('回测结果')).toContainText(storedRun!.run_id!)
   await expect(backtestPage.getByLabel('回测结果').locator('.summary-grid')).toContainText('总收益')
+
+  await backtestPage.getByLabel('选择回测策略').selectOption({ label: '只做第三类买点' })
+  const thirdBuyExplanation = backtestPage.getByLabel('算法原理与买卖条件')
+  await expect(thirdBuyExplanation).toContainText('中枢向上离开')
+  await expect(thirdBuyExplanation).toContainText('趋势顶背驰')
 })

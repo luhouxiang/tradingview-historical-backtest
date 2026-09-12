@@ -14,6 +14,7 @@ export type BacktestWorkspaceMessage =
     dataset_id: string
     data_revision: string
     trade: BacktestTrade
+    leg?: 'entry' | 'exit'
   }
 
 export function createBacktestWorkspaceUrl(dataset: DatasetMeta, origin: string): string {

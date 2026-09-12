@@ -30,11 +30,11 @@ function completed(source: StrategyRunSource): void {
   })
 }
 
-function focusTrade(trade: BacktestTrade): void {
+function focusTrade(trade: BacktestTrade, leg: 'entry' | 'exit'): void {
   if (!dataset.value) return
   publish({
     type: 'focus-trade', dataset_id: dataset.value.dataset_id,
-    data_revision: dataset.value.data_revision, trade,
+    data_revision: dataset.value.data_revision, trade, leg,
   })
 }
 

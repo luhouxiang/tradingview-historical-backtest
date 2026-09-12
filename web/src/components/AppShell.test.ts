@@ -170,7 +170,7 @@ describe('AppShell', () => {
     expect(popupFocus).toHaveBeenCalled()
 
     FakeBroadcastChannel.instances[0]?.onmessage?.({ data: {
-      type: 'focus-trade', dataset_id: dataset.dataset_id, data_revision: dataset.data_revision,
+      type: 'focus-trade', dataset_id: dataset.dataset_id, data_revision: dataset.data_revision, leg: 'exit',
       trade: {
         trade_id: 'trade-linked', side: 'long', entry_bar_index: 42, entry_time: 1_700_000_000_000,
         entry_price_i64: 2660, entry_signal_id: 'signal-entry', entry_signal_known_at_bar_index: 41,
@@ -181,9 +181,9 @@ describe('AppShell', () => {
     } } as MessageEvent)
     await flushPromises()
     expect(focusSignalMock).toHaveBeenCalledWith(expect.objectContaining({
-      object_id: 'trade-linked:entry', bar_index: 42, price_i64: 2660, label: '买入',
+      object_id: 'trade-linked:exit', bar_index: 50, price_i64: 2690, label: '卖出',
     }))
-    expect(wrapper.findComponent(ChartStub).props('selectedSignal')).toMatchObject({ object_id: 'trade-linked:entry' })
+    expect(wrapper.findComponent(ChartStub).props('selectedSignal')).toMatchObject({ object_id: 'trade-linked:exit' })
     wrapper.unmount()
     open.mockRestore()
   })

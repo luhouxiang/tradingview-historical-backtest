@@ -328,12 +328,13 @@ describe('BacktestPanel', () => {
     expect(api.getBacktestTrades).toHaveBeenNthCalledWith(1, 'run-1', undefined)
     expect(api.getBacktestTrades).toHaveBeenNthCalledWith(2, 'run-1', 'page-2')
     expect(wrapper.get('[aria-label="交易明细"]').attributes('style')).toContain('height: 50%')
-    expect(wrapper.findAll('.detailed-trade-table tbody tr')).toHaveLength(2)
+    expect(wrapper.findAll('.detailed-trade-table tbody tr')).toHaveLength(4)
 
-    const row = wrapper.get('[data-trade-id="trade-2"]')
+    const row = wrapper.get('[data-trade-id="trade-2-01"]')
     await row.trigger('dblclick')
     expect(row.classes()).toContain('selected')
     expect(wrapper.emitted('focus-trade')?.[0]?.[0]).toMatchObject({ trade_id: 'trade-2', entry_bar_index: 30 })
+    expect(wrapper.emitted('focus-trade')?.[0]?.[1]).toBe('entry')
 
     vi.spyOn(wrapper.get('.backtest-panel').element, 'getBoundingClientRect').mockReturnValue({ height: 800 } as DOMRect)
     vi.spyOn(wrapper.get('.backtest-trade-pane').element, 'getBoundingClientRect').mockReturnValue({ height: 400 } as DOMRect)
@@ -736,27 +737,67 @@ describe('BacktestPanel', () => {
   })
 
   it('selects the B3 strategy and labels a new-center hold on the object tree', async () => {
-    api.getBacktestChartEvents.mockResolvedValue([{
-      event_seq: 1, known_at_bar_index: 88, object_type: 'chart_event', object_id: 'B3-hold-88',
-      operation: 'upsert', object_revision: 1,
-      payload: { event_type: 'hold_new_center', bar_index: 85, timestamp_utc: 1_700_000_300_000, price_i64: 2680, reason_code: 'NEW_CENTER_WITHOUT_TREND_DIVERGENCE_HOLD' },
-    }])
-    const wrapper = mount(BacktestPanel, { props: { dataset, view: 'backtest' } })
+    api.getBacktestTrades.mockResolvedValue({ rows: [{
+      trade_id: 'trade-B3', side: 'long', entry_bar_index: 80, entry_time: 1_700_000_000_000,
+      entry_price_i64: 2650, entry_signal_id: 'signal-B3-entry', entry_signal_known_at_bar_index: 79, entry_order_id: 'order-B3-entry',
+      exit_bar_index: 90, exit_time: 1_700_003_000_000, exit_price_i64: 2670, exit_signal_id: 'signal-B3-exit', exit_order_id: 'order-B3-exit',
+      quantity: 2, gross_pnl_i64: 800, net_pnl_i64: 194, commission_i64: 600, slippage_i64: 6,
+      trigger_category: 'B3', attribution_reason_code: 'NO_VISIBLE_CONFIRMED_STRUCTURE',
+    }], next_cursor: null })
+    api.getBacktestChartEvents.mockResolvedValue([
+      {
+        event_seq: 1, known_at_bar_index: 79, object_type: 'trade_signal', object_id: 'signal-B3-entry',
+        operation: 'upsert', object_revision: 1,
+        payload: { signal_id: 'signal-B3-entry', action: 'open_long', reason_code: 'CONFIRMED_FIRST_CENTER_B3_ENTRY' },
+      },
+      {
+        event_seq: 2, known_at_bar_index: 89, object_type: 'trade_signal', object_id: 'signal-B3-exit',
+        operation: 'upsert', object_revision: 1,
+        payload: { signal_id: 'signal-B3-exit', action: 'close_long', reason_code: 'B3_HOLD_TREND_DIVERGENCE_CONFIRMED' },
+      },
+      {
+        event_seq: 3, known_at_bar_index: 88, object_type: 'chart_event', object_id: 'B3-hold-88',
+        operation: 'upsert', object_revision: 1,
+        payload: { event_type: 'hold_new_center', bar_index: 85, timestamp_utc: 1_700_000_300_000, price_i64: 2680, reason_code: 'NEW_CENTER_WITHOUT_TREND_DIVERGENCE_HOLD' },
+      },
+    ])
+    const wrapper = mount(BacktestPanel, { props: { dataset, view: 'workspace' } })
     await flushPromises()
     const select = wrapper.get('select[aria-label="选择回测策略"]')
     ;(select.findAll('option')[2].element as HTMLOptionElement).selected = true
     await select.trigger('change')
     await flushPromises()
     expect(wrapper.text()).toContain('最小入场成交量')
+    expect(wrapper.get('[aria-label="算法原理与买卖条件"]').text()).toContain('第一次已确认回试不重新进入中枢核心')
+    expect(wrapper.get('[aria-label="算法原理与买卖条件"]').text()).toContain('默认下一根 K 线开盘成交')
     await wrapper.get('.backtest-controls button').trigger('click')
     await flushPromises()
     expect(api.createBacktest).toHaveBeenCalledWith(expect.objectContaining({
       strategy: expect.objectContaining({ algorithm_id: 'third_buy_only' }),
       parameters: expect.objectContaining({ first_center_quantity: 2, late_center_quantity: 1, minimum_entry_volume: 0 }),
     }))
-    expect(wrapper.emitted('completed')?.[0]?.[0]).toMatchObject({
-      objects: [expect.objectContaining({ object_id: 'B3-hold-88', label: '新中枢无背驰·继续持有', bar_index: 85 })],
-    })
+    expect(wrapper.emitted('completed')?.[0]?.[0]).toMatchObject({ objects: expect.arrayContaining([
+      expect.objectContaining({ object_id: 'B3-hold-88', label: '新中枢无背驰·继续持有', bar_index: 85 }),
+    ]) })
+    expect(wrapper.emitted('completed')?.[0]?.[0]).toMatchObject({ signals: expect.arrayContaining([
+      expect.objectContaining({
+        object_id: 'trade-B3:entry',
+        classification_detail: expect.stringContaining('买入：首中枢标准三买已确认'),
+      }),
+    ]) })
+    const entryRow = wrapper.get('[data-trade-id="trade-B3-01"]')
+    const exitRow = wrapper.get('[data-trade-id="trade-B3-02"]')
+    expect(entryRow.text()).toContain('trade-B3-01')
+    expect(entryRow.text()).toContain('买入开仓')
+    expect(entryRow.text()).toContain('首中枢标准三买已确认')
+    expect(entryRow.text()).toContain('入场信号时未匹配到通用结构快照')
+    expect(entryRow.text()).not.toContain('800')
+    expect(exitRow.text()).toContain('trade-B3-02')
+    expect(exitRow.text()).toContain('卖出平仓')
+    expect(exitRow.text()).toContain('趋势持有期间确认顶背驰')
+    expect(exitRow.text()).toContain('800')
+    expect(exitRow.text()).toContain('194')
+    expect(exitRow.text()).not.toContain('NO_VISIBLE_CONFIRMED_STRUCTURE')
   })
 
   it('selects the center-oscillation strategy and labels its semantic swing event', async () => {

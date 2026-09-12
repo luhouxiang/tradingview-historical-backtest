@@ -5,9 +5,19 @@ import { capitalConfig, executionRequest } from '../execution/config'
 import type { AlgorithmDefinition, BacktestSummary, BacktestTrade, ChanTreeObject, DatasetMeta, EquityRow, RankingContext, RiskContext, StrategyRunSource } from '../types/api'
 
 const props = defineProps<{ dataset: DatasetMeta | null; view: 'backtest' | 'trades' | 'equity' | 'workspace' }>()
+type TradeLedgerLeg = 'entry' | 'exit'
+interface TradeLedgerRow {
+  recordId: string
+  trade: BacktestTrade
+  leg: TradeLedgerLeg
+  action: string
+  timestamp: number
+  barIndex: number
+  priceI64: number
+}
 const emit = defineEmits<{
   completed: [source: StrategyRunSource]
-  'focus-trade': [trade: BacktestTrade]
+  'focus-trade': [trade: BacktestTrade, leg: TradeLedgerLeg]
 }>()
 const strategies = ref<AlgorithmDefinition[]>([])
 const strategy = ref<AlgorithmDefinition | null>(null)
@@ -39,6 +49,22 @@ const panelRoot = ref<HTMLElement | null>(null)
 const tradePane = ref<HTMLElement | null>(null)
 const tradePaneHeight = ref<number | null>(null)
 const selectedTradeId = ref<string | null>(null)
+const tradeSignalReasonById = ref<Record<string, string>>({})
+
+const thirdBuyEntryReasonLabels: Record<string, string> = {
+  CONFIRMED_FIRST_CENTER_B3_ENTRY: '首中枢标准三买已确认：价格向上离开中枢后，首次回试守在中枢上沿 ZG 之上，对象链完整且成交量门槛通过。',
+  CONFIRMED_LATE_CENTER_B3_REDUCED_ENTRY: '后续中枢标准三买已确认：允许后续中枢入场，首次回试守在中枢上沿 ZG 之上，对象链与成交量门槛通过，并按较小手数买入。',
+}
+
+const thirdBuyExitReasonLabels: Record<string, string> = {
+  B3_FOLLOWTHROUGH_FAILED_NEW_HIGH: '三买后的首条已确认上升段未突破离开段高点，趋势跟随失败，卖出平仓。',
+  B3_FOLLOWTHROUGH_CONSOLIDATION_DIVERGENCE: '三买后的首条上升段出现盘整顶背驰，卖出平仓。',
+  B3_FOLLOWTHROUGH_TREND_DIVERGENCE: '三买后的首条上升段出现趋势顶背驰，卖出平仓。',
+  B3_HOLD_TREND_DIVERGENCE_CONFIRMED: '趋势持有期间确认顶背驰，卖出平仓。',
+  STANDARD_S3_INVALIDATED_B3_HOLD: '持仓期间确认标准三卖，原三买持有条件失效，卖出平仓。',
+  CONFIRMED_RETURN_ENTERED_SOURCE_CENTER: '后续已确认下跌段回到来源中枢核心；触及中枢上沿 ZG 即视为回中枢，卖出平仓。',
+  B3_SOURCE_REVISED: '三买、来源中枢、回试段或跟随段发生因果修订，原入场依据不再成立，卖出平仓。',
+}
 
 const parameterLabels: Record<string, string> = {
   allow_class_like_entries: '允许类二买入场', allow_normal: '允许普通强度', allow_strongest: '允许最强信号', allow_weakest: '允许最弱信号',
@@ -79,6 +105,32 @@ function parameterLabel(name: string): string {
   return parameterLabels[name] ?? '策略参数'
 }
 
+function tradeSignalReason(trade: BacktestTrade, leg: 'entry' | 'exit'): string {
+  const signalId = leg === 'entry' ? trade.entry_signal_id : trade.exit_signal_id
+  return signalId ? tradeSignalReasonById.value[signalId] ?? '' : ''
+}
+
+function tradeEntryCondition(trade: BacktestTrade): string {
+  const reason = tradeSignalReason(trade, 'entry')
+  if (thirdBuyEntryReasonLabels[reason]) return thirdBuyEntryReasonLabels[reason]
+  if (reason) return `买入信号：${reason}`
+  if (trade.trigger_category === 'B3') return '标准三买已确认；该旧结果未找到可关联的买入信号详情。'
+  return '未记录买入信号原因。'
+}
+
+function tradeExitCondition(trade: BacktestTrade): string {
+  const reason = tradeSignalReason(trade, 'exit')
+  if (thirdBuyExitReasonLabels[reason]) return thirdBuyExitReasonLabels[reason]
+  if (reason) return `卖出信号：${reason}`
+  return '该旧结果未找到可关联的卖出信号详情。'
+}
+
+function tradeStructureSnapshot(trade: BacktestTrade): string {
+  if (trade.attribution_reason_code === 'VISIBLE_AT_ENTRY_SIGNAL') return '入场信号时有可见的已确认结构'
+  if (trade.attribution_reason_code === 'NO_VISIBLE_CONFIRMED_STRUCTURE') return '入场信号时未匹配到通用结构快照'
+  return trade.attribution_reason_code ? `结构快照：${trade.attribution_reason_code}` : '未记录'
+}
+
 interface StoredBacktestRun {
   dataset_id: string
   data_revision: string
@@ -91,20 +143,22 @@ function tradeExecutionMarkers(rows: BacktestTrade[]): Array<Record<string, unkn
   return rows.flatMap((trade) => {
     const openAction = trade.side === 'long' ? 'open_long' : 'open_short'
     const closeAction = trade.side === 'long' ? 'close_long' : 'close_short'
-    const detail = `${trade.quantity} 手 · ${trade.trade_id}`
+    const identity = `${trade.quantity} 手 · ${trade.trade_id}`
+    const entryDetail = `买入：${tradeEntryCondition(trade)}；卖出：${tradeExitCondition(trade)} · ${identity}`
+    const exitDetail = `卖出：${tradeExitCondition(trade)}；买入：${tradeEntryCondition(trade)} · ${identity}`
     return [
       {
         object_type: 'chart_event', object_id: `${trade.trade_id}:entry`, event_type: openAction, action: openAction,
         bar_index: trade.entry_bar_index, known_at_bar_index: trade.entry_bar_index,
         timestamp_utc: trade.entry_time, price_i64: trade.entry_price_i64,
-        display_label: trade.side === 'long' ? '成交·开多' : '成交·开空', classification_detail: detail,
+        display_label: trade.side === 'long' ? '成交·开多' : '成交·开空', classification_detail: entryDetail,
         execution_fact: true,
       },
       {
         object_type: 'chart_event', object_id: `${trade.trade_id}:exit`, event_type: closeAction, action: closeAction,
         bar_index: trade.exit_bar_index, known_at_bar_index: trade.exit_bar_index,
         timestamp_utc: trade.exit_time, price_i64: trade.exit_price_i64,
-        display_label: trade.side === 'long' ? '成交·平多' : '成交·平空', classification_detail: detail,
+        display_label: trade.side === 'long' ? '成交·平多' : '成交·平空', classification_detail: exitDetail,
         execution_fact: true,
       },
     ]
@@ -190,6 +244,27 @@ const points = computed(() => {
   return values.map((value, index) => `${index / (values.length - 1) * 600},${100 - (value - low) / span * 90}`).join(' ')
 })
 
+const tradeLedgerRows = computed<TradeLedgerRow[]>(() => trades.value.flatMap((trade) => [
+  {
+    recordId: `${trade.trade_id}-01`, trade, leg: 'entry',
+    action: trade.side === 'long' ? '买入开仓' : '卖出开仓',
+    timestamp: trade.entry_time, barIndex: trade.entry_bar_index, priceI64: trade.entry_price_i64,
+  },
+  {
+    recordId: `${trade.trade_id}-02`, trade, leg: 'exit',
+    action: trade.side === 'long' ? '卖出平仓' : '买入平仓',
+    timestamp: trade.exit_time, barIndex: trade.exit_bar_index, priceI64: trade.exit_price_i64,
+  },
+]))
+
+function tradeLedgerReason(row: TradeLedgerRow): string {
+  return row.leg === 'entry' ? tradeEntryCondition(row.trade) : tradeExitCondition(row.trade)
+}
+
+function tradeLedgerReasonCode(row: TradeLedgerRow): string {
+  return tradeSignalReason(row.trade, row.leg)
+}
+
 function readStoredRun(dataset: DatasetMeta): StoredBacktestRun | null {
   try {
     const raw = window.localStorage.getItem(LAST_RUN_STORAGE_KEY)
@@ -254,6 +329,7 @@ async function execute(resume: StoredBacktestRun | null = null): Promise<void> {
   error.value = ''
   summary.value = null
   executionFacts.value = null
+  tradeSignalReasonById.value = {}
   restored.value = false
   try {
     const parameters = { ...strategyParameters.value }
@@ -327,14 +403,20 @@ async function execute(resume: StoredBacktestRun | null = null): Promise<void> {
     equity.value = equityValue
     const currentObjects = new Map<string, ChanTreeObject>()
     const currentSignals = new Map<string, Record<string, unknown> & { object_type: string; object_id: string }>()
+    const currentTradeSignalReasons: Record<string, string> = {}
     for (const event of causalEvents) {
       const key = `${event.object_type}:${event.object_id}`
       if (event.operation === 'delete') {
         currentObjects.delete(key)
         currentSignals.delete(key)
+        if (event.object_type === 'trade_signal') delete currentTradeSignalReasons[event.object_id]
         continue
       }
       const payload = event.payload
+      if (event.object_type === 'trade_signal' && typeof payload.reason_code === 'string') {
+        const signalId = typeof payload.signal_id === 'string' ? payload.signal_id : event.object_id
+        currentTradeSignalReasons[signalId] = payload.reason_code
+      }
       currentSignals.set(key, { ...payload, object_type: event.object_type, object_id: event.object_id })
       const state = String(payload.state_to ?? payload.stage ?? payload.action ?? payload.event_type ?? event.object_type)
       const labels: Record<string, string> = {
@@ -468,6 +550,7 @@ async function execute(resume: StoredBacktestRun | null = null): Promise<void> {
         detail: String(payload.classification_detail ?? payload.reason_code ?? event.object_type),
       })
     }
+    tradeSignalReasonById.value = currentTradeSignalReasons
     if (!auxiliaryOnly.value) {
       for (const marker of tradeExecutionMarkers(trades.value)) {
         currentSignals.set(`${marker.object_type}:${marker.object_id}`, marker)
@@ -495,9 +578,9 @@ function formatTradeTime(timestamp: number): string {
   }).format(new Date(timestamp))
 }
 
-function focusTrade(trade: BacktestTrade): void {
-  selectedTradeId.value = trade.trade_id
-  emit('focus-trade', trade)
+function focusTrade(row: TradeLedgerRow): void {
+  selectedTradeId.value = row.recordId
+  emit('focus-trade', row.trade, row.leg)
 }
 
 function resizeTradePane(event: PointerEvent): void {
@@ -623,6 +706,24 @@ watch([riskFilter, () => props.dataset], ([definition, dataset]) => {
         <input v-else v-model.number="strategyParameters[name]" type="number" :min="rule.minimum" :max="rule.maximum" />
       </label>
       <strong>{{ strategy?.name ?? '正在加载策略…' }}</strong>
+      <details v-if="strategy?.algorithm_id === 'third_buy_only'" class="strategy-explanation" aria-label="算法原理与买卖条件" open>
+        <summary>算法原理与买卖条件</summary>
+        <div class="strategy-explanation-grid">
+          <section>
+            <strong>基本原理</strong>
+            <p>策略基于缠论第三类买点：已确认中枢向上离开后，第一次已确认回试不重新进入中枢核心，即回试段的价格区间不低于中枢上沿 ZG。这表示原阻力区转为支撑，策略只参与多头趋势的延续段。</p>
+          </section>
+          <section>
+            <strong>买入条件</strong>
+            <p>必须是当前固定结构级别的“已确认、标准 B3”；关联中枢已确认且向上离开；离开段和首次向下回试段完整；回试守住 ZG（允许等于）；后续中枢开关和最小成交量门槛通过，且同一首次回试资格未被消费。信号在确认 K 线收盘后产生，默认下一根 K 线开盘成交。</p>
+          </section>
+          <section>
+            <strong>持有与卖出</strong>
+            <p>买入后首先检查第一条已确认上升段：不创离开段新高，或出现盘整/趋势顶背驰时卖出。若创新高且无背驰，转入趋势持有；之后在趋势顶背驰、标准三卖、回拉触及来源中枢 ZG，或来源结构被修订时卖出。新中枢形成但无趋势背驰时继续持有。</p>
+          </section>
+        </div>
+        <small>成交手数还会受“首中枢手数 / 后续中枢手数”和统一风控覆盖层影响；风控可减量或阻断交易，但不改写标准 B3 结构。</small>
+      </details>
       <label v-if="rankingOnly" class="ranking-context-field">
         点时宇宙与复权上下文 JSON
         <textarea v-model="rankingContextText" rows="10" spellcheck="false" />
@@ -680,33 +781,39 @@ watch([riskFilter, () => props.dataset], ([definition, dataset]) => {
       :style="{ height: tradePaneHeight === null ? '50%' : `${tradePaneHeight}px` }"
       aria-label="交易明细"
     >
-      <header><strong>交易明细</strong><span>{{ trades.length }} 笔</span><small>双击交易定位入场 K 线</small></header>
+      <header><strong>交易明细</strong><span>{{ tradeLedgerRows.length }} 条成交（{{ trades.length }} 笔完整交易）</span><small>双击成交记录定位对应 K 线</small></header>
       <div class="trade-table-scroll">
         <table class="trade-table detailed-trade-table">
-          <thead><tr><th>#</th><th>ID</th><th>方向</th><th>手数</th><th>入场时间</th><th>入场 K</th><th>入场价</th><th>出场时间</th><th>出场 K</th><th>出场价</th><th>毛盈亏</th><th>手续费</th><th>滑点</th><th>净盈亏</th><th>结构归因</th></tr></thead>
+          <thead><tr><th>#</th><th>ID</th><th>成交动作</th><th>手数</th><th>成交时间</th><th>K 线</th><th>成交价</th><th>毛盈亏</th><th>手续费</th><th>滑点</th><th>净盈亏</th><th>成交原因</th><th>结构快照</th></tr></thead>
           <tbody>
-            <tr v-if="trades.length === 0"><td colspan="15">尚无交易。完成正式回测后，全部交易会显示在这里。</td></tr>
+            <tr v-if="tradeLedgerRows.length === 0"><td colspan="13">尚无交易。完成正式回测后，全部交易会显示在这里。</td></tr>
             <tr
-              v-for="(trade, index) in trades" :key="trade.trade_id"
-              :data-trade-id="trade.trade_id" :class="{ selected: selectedTradeId === trade.trade_id }" tabindex="0"
-              @dblclick="focusTrade(trade)" @keydown.enter="focusTrade(trade)"
+              v-for="(row, index) in tradeLedgerRows" :key="row.recordId"
+              :data-trade-id="row.recordId" :data-trade-leg="row.leg" :class="{ selected: selectedTradeId === row.recordId }" tabindex="0"
+              @dblclick="focusTrade(row)" @keydown.enter="focusTrade(row)"
             >
-              <td>{{ index + 1 }}</td><td>{{ trade.trade_id }}</td><td>{{ trade.side === 'long' ? '多' : '空' }}</td><td>{{ trade.quantity }}</td>
-              <td>{{ formatTradeTime(trade.entry_time) }}</td><td>{{ trade.entry_bar_index }}</td><td>{{ trade.entry_price_i64 }}</td>
-              <td>{{ formatTradeTime(trade.exit_time) }}</td><td>{{ trade.exit_bar_index }}</td><td>{{ trade.exit_price_i64 }}</td>
-              <td>{{ trade.gross_pnl_i64 }}</td><td>{{ trade.commission_i64 }}</td><td>{{ trade.slippage_i64 }}</td>
-              <td :class="trade.net_pnl_i64 >= 0 ? 'profit' : 'loss'">{{ trade.net_pnl_i64 }}</td>
-              <td>{{ trade.trigger_category ?? '—' }} · {{ trade.attribution_reason_code ?? '—' }}</td>
+              <td>{{ index + 1 }}</td><td>{{ row.recordId }}</td><td>{{ row.action }}</td><td>{{ row.trade.quantity }}</td>
+              <td>{{ formatTradeTime(row.timestamp) }}</td><td>{{ row.barIndex }}</td><td>{{ row.priceI64 }}</td>
+              <td>{{ row.leg === 'entry' ? '—' : row.trade.gross_pnl_i64 }}</td>
+              <td>{{ row.leg === 'entry' ? '—' : row.trade.commission_i64 }}</td>
+              <td>{{ row.leg === 'entry' ? '—' : row.trade.slippage_i64 }}</td>
+              <td :class="row.leg === 'exit' ? (row.trade.net_pnl_i64 >= 0 ? 'profit' : 'loss') : ''">{{ row.leg === 'entry' ? '—' : row.trade.net_pnl_i64 }}</td>
+              <td class="trade-reason-cell" :title="tradeLedgerReasonCode(row)">{{ tradeLedgerReason(row) }}</td>
+              <td>{{ row.leg === 'entry' ? `${row.trade.trigger_category ?? '—'} · ${tradeStructureSnapshot(row.trade)}` : '—' }}</td>
             </tr>
           </tbody>
         </table>
       </div>
     </section>
     <table v-if="view === 'trades'" class="trade-table">
-      <thead><tr><th>ID</th><th>方向</th><th>入场</th><th>出场</th><th>净盈亏</th></tr></thead>
+      <thead><tr><th>ID</th><th>成交动作</th><th>成交时间</th><th>K 线</th><th>成交价</th><th>毛盈亏</th><th>手续费</th><th>滑点</th><th>净盈亏</th><th>成交原因</th></tr></thead>
       <tbody>
-        <tr v-if="trades.length === 0"><td colspan="5">本次没有成交，主图不会显示开平仓标记。</td></tr>
-        <tr v-for="trade in trades" :key="trade.trade_id" @dblclick="focusTrade(trade)"><td>{{ trade.trade_id }}</td><td>{{ trade.side }}</td><td>{{ trade.entry_bar_index }} @ {{ trade.entry_price_i64 }}</td><td>{{ trade.exit_bar_index }} @ {{ trade.exit_price_i64 }}</td><td>{{ trade.net_pnl_i64 }}</td></tr>
+        <tr v-if="tradeLedgerRows.length === 0"><td colspan="10">本次没有成交，主图不会显示开平仓标记。</td></tr>
+        <tr v-for="row in tradeLedgerRows" :key="row.recordId" @dblclick="focusTrade(row)">
+          <td>{{ row.recordId }}</td><td>{{ row.action }}</td><td>{{ formatTradeTime(row.timestamp) }}</td><td>{{ row.barIndex }}</td><td>{{ row.priceI64 }}</td>
+          <td>{{ row.leg === 'entry' ? '—' : row.trade.gross_pnl_i64 }}</td><td>{{ row.leg === 'entry' ? '—' : row.trade.commission_i64 }}</td>
+          <td>{{ row.leg === 'entry' ? '—' : row.trade.slippage_i64 }}</td><td>{{ row.leg === 'entry' ? '—' : row.trade.net_pnl_i64 }}</td><td>{{ tradeLedgerReason(row) }}</td>
+        </tr>
       </tbody>
     </table>
     <svg v-if="view === 'equity'" class="equity-chart" viewBox="0 0 600 110" preserveAspectRatio="none" aria-label="权益曲线"><polyline :points="points" /></svg>

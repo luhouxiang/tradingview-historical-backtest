@@ -331,14 +331,24 @@ function addStrategyRunSource(source: StrategyRunSource): void {
   rightTab.value = 'objects'
 }
 
-function focusBacktestTrade(trade: BacktestTrade): void {
+function focusBacktestTrade(trade: BacktestTrade, leg: 'entry' | 'exit' = 'entry'): void {
+  const markerId = `${trade.trade_id}:${leg}`
+  const executionMarker = strategyRunSources.value
+    .flatMap((source) => source.signals)
+    .find((candidate) => candidate.object_id === markerId)
+  const isEntry = leg === 'entry'
+  const isBuy = trade.side === 'long' ? isEntry : !isEntry
   const signal: ChanTreeObject = {
-    object_id: `${trade.trade_id}:entry`,
-    bar_index: trade.entry_bar_index, time: trade.entry_time, price_i64: trade.entry_price_i64,
-    confirmed_at_bar_index: trade.entry_bar_index,
-    known_at_bar_index: trade.entry_signal_known_at_bar_index,
-    object_revision: 1, label: trade.side === 'long' ? '买入' : '卖出',
-    detail: `${trade.quantity} 手 · ${trade.trade_id}`,
+    object_id: markerId,
+    bar_index: isEntry ? trade.entry_bar_index : trade.exit_bar_index,
+    time: isEntry ? trade.entry_time : trade.exit_time,
+    price_i64: isEntry ? trade.entry_price_i64 : trade.exit_price_i64,
+    confirmed_at_bar_index: isEntry ? trade.entry_bar_index : trade.exit_bar_index,
+    known_at_bar_index: isEntry ? trade.entry_signal_known_at_bar_index : trade.exit_bar_index,
+    object_revision: 1, label: isBuy ? '买入' : '卖出',
+    detail: typeof executionMarker?.classification_detail === 'string'
+      ? executionMarker.classification_detail
+      : `${trade.quantity} 手 · ${trade.trade_id}`,
   }
   selectedDrawingId.value = null
   selectedSignal.value = signal
@@ -377,7 +387,7 @@ onMounted(() => {
       return
     }
     if (message.type === 'run-completed') addStrategyRunSource(message.source)
-    else if (message.type === 'focus-trade') focusBacktestTrade(message.trade)
+    else if (message.type === 'focus-trade') focusBacktestTrade(message.trade, message.leg)
   }
 })
 
