@@ -344,9 +344,9 @@ def first_centre_b3_macd_definition() -> dict[str, Any]:
 def second_buy_only_definition() -> dict[str, Any]:
     result = _chan_strategy_definition(
         "second_buy_only",
-        "只做第二类买点",
+        "只做二买（标准/类二可选）",
         "二买",
-        algorithm_version="1.1.0",
+        algorithm_version="1.2.0",
     )
     result["parameter_schema"] = {
         "type": "object",
@@ -358,6 +358,7 @@ def second_buy_only_definition() -> dict[str, Any]:
                 "maximum": 100_000,
                 "default": 1024,
             },
+            "allow_class_like_entries": {"type": "boolean", "default": False},
             "allow_strongest": {"type": "boolean", "default": True},
             "allow_normal": {"type": "boolean", "default": True},
             "allow_weakest": {"type": "boolean", "default": True},
@@ -382,6 +383,7 @@ def second_buy_only_definition() -> dict[str, Any]:
         },
         "required": [
             "checkpoint_interval",
+            "allow_class_like_entries",
             "allow_strongest",
             "allow_normal",
             "allow_weakest",
@@ -2163,6 +2165,7 @@ def _run_second_buy_only(
         strength: bool(parameters[f"allow_{strength}"])
         for strength in ("strongest", "normal", "weakest")
     }
+    allow_class_like_entries = bool(parameters.get("allow_class_like_entries", False))
 
     chan = chan_definition()
     chan_payload = {
@@ -2421,6 +2424,17 @@ def _run_second_buy_only(
             and value.get("signal_type") in signal_types
         )
 
+    def accepted_buy_two(value: dict[str, Any]) -> bool:
+        if value.get("confirmed") is not True:
+            return False
+        signal_class = value.get("signal_class")
+        signal_type = value.get("signal_type")
+        return (signal_class == "standard" and signal_type == "buy_2") or (
+            allow_class_like_entries
+            and signal_class == "class_like"
+            and signal_type == "class_buy_2"
+        )
+
     def reset_position_context() -> None:
         nonlocal current_b2_id, b2_segment_id, b2_end_bar_index
         nonlocal b2_price_i64, rebound_high_i64, origin_center_id, b3_seen
@@ -2643,7 +2657,7 @@ def _run_second_buy_only(
         entries = [
             (object_id, value)
             for object_id, value in new_points
-            if standard_point(value, "buy_2")
+            if accepted_buy_two(value)
             and value.get("strength") in {"strongest", "normal", "weakest"}
         ]
         if not entries:
@@ -2717,11 +2731,17 @@ def _run_second_buy_only(
             )
             for value in active_points.values()
         )
-        reason = {
+        standard_reason = {
             "strongest": "CONFIRMED_STRONGEST_B2_ENTRY",
             "normal": "CONFIRMED_NORMAL_B2_ENTRY",
             "weakest": "CONFIRMED_WEAKEST_B2_REDUCED_ENTRY",
         }[strength]
+        class_like_reason = {
+            "strongest": "CONFIRMED_CLASS_LIKE_STRONGEST_B2_ENTRY",
+            "normal": "CONFIRMED_CLASS_LIKE_NORMAL_B2_ENTRY",
+            "weakest": "CONFIRMED_CLASS_LIKE_WEAKEST_B2_REDUCED_ENTRY",
+        }[strength]
+        reason = class_like_reason if point.get("signal_class") == "class_like" else standard_reason
         quantity = quantities[strength]
         stage_id = transition(
             bar,
@@ -2732,6 +2752,7 @@ def _run_second_buy_only(
             price_i64=point_price,
             details={
                 "strength": strength,
+                "signal_class": point.get("signal_class"),
                 "quantity": quantity,
                 "b2_segment_id": b2_segment_id,
                 "origin_center_id": origin_center_id,

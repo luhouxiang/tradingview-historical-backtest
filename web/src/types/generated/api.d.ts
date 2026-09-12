@@ -147,7 +147,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** 按尾部或向左游标读取 K 线 */
+        /** 按尾部、向左游标或向右游标读取 K 线 */
         get: operations["getBars"];
         put?: never;
         post?: never;
@@ -928,6 +928,7 @@ export interface components {
                 last_bar_index: number;
             };
             has_more_before: boolean;
+            has_more_after: boolean;
             checksum: string;
             bars: components["schemas"]["BarColumns"];
         };
@@ -3190,11 +3191,13 @@ export interface operations {
             query: {
                 revision: components["parameters"]["Revision"];
                 generation_id: string;
-                /** @description 首次读取尾部数量；与 before_bar_index 二选一，未提供游标时默认 3000 */
+                /** @description 首次读取尾部数量；与 before_bar_index、after_bar_index 互斥，未提供游标时默认 3000 */
                 tail?: number;
-                /** @description 返回 bar_index 严格小于此值的最近数据；不得与 tail 同时提供 */
+                /** @description 返回 bar_index 严格小于此值的最近数据；不得与 tail、after_bar_index 同时提供 */
                 before_bar_index?: number;
-                /** @description before_bar_index 模式的返回上限 */
+                /** @description 返回 bar_index 严格大于此值的最早数据；不得与 tail、before_bar_index 同时提供 */
+                after_bar_index?: number;
+                /** @description before_bar_index 或 after_bar_index 模式的返回上限 */
                 limit?: number;
             };
             header?: never;

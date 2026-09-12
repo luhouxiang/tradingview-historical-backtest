@@ -47,7 +47,9 @@ def test_center_consumers_publish_new_algorithm_identity() -> None:
     assert first_centre_rotation_definition()["algorithm_version"] == "1.3.0"
     assert downtrend_reversal_definition()["algorithm_version"] == "1.1.0"
     assert trend_divergence_reversal_definition()["algorithm_version"] == "1.1.0"
-    assert second_buy_only_definition()["algorithm_version"] == "1.1.0"
+    second_buy = second_buy_only_definition()
+    assert second_buy["algorithm_version"] == "1.2.0"
+    assert not second_buy["parameter_schema"]["properties"]["allow_class_like_entries"]["default"]
     third_buy = third_buy_only_definition()
     assert third_buy["algorithm_version"] == "1.1.0"
     assert third_buy["parameter_schema"]["properties"]["first_center_quantity"]["default"] == 2
@@ -1141,6 +1143,18 @@ def test_second_buy_only_caps_weak_entry_and_exits_failed_or_divergent_followthr
         buy_two(2, "weak-buy-two", 2, 100, "weakest", "weak-origin"),
         segment(3, "failed-followthrough", 2, 3, 100, 109, "up"),
         event(
+            3,
+            "divergence",
+            "class-origin",
+            {
+                "bar_index": 3,
+                "signal_type": "bottom_divergence",
+                "divergence_kind": "consolidation",
+                "reference_object_id": "center-class",
+            },
+        ),
+        segment(4, "class-retest", 3, 4, 109, 100, "down"),
+        event(
             4,
             "trade_point",
             "class-buy-two-ignored",
@@ -1150,6 +1164,7 @@ def test_second_buy_only_caps_weak_entry_and_exits_failed_or_divergent_followthr
                 "signal_type": "class_buy_2",
                 "signal_class": "class_like",
                 "strength": "normal",
+                "reference_object_id": "class-origin",
             },
         ),
         event(
@@ -1201,6 +1216,7 @@ def test_second_buy_only_caps_weak_entry_and_exits_failed_or_divergent_followthr
         },
         "parameters": {
             "checkpoint_interval": 1024,
+            "allow_class_like_entries": False,
             "allow_strongest": True,
             "allow_normal": True,
             "allow_weakest": True,
@@ -1217,6 +1233,20 @@ def test_second_buy_only_caps_weak_entry_and_exits_failed_or_divergent_followthr
     assert all(
         value["reference_object_id"] != "class-buy-two-ignored" for value in result.strategy_states
     )
+
+    class_like_payload = {
+        **payload,
+        "parameters": {**payload["parameters"], "allow_class_like_entries": True},
+    }
+    class_like_result = run_strategy(class_like_payload, guard, threading.Event())
+    class_like_entries = [
+        value
+        for value in class_like_result.trade_signals
+        if value["reference_object_id"] == "class-buy-two-ignored"
+    ]
+    assert len(class_like_entries) == 1
+    assert class_like_entries[0]["action"] == "open_long"
+    assert class_like_entries[0]["reason_code"] == "CONFIRMED_CLASS_LIKE_NORMAL_B2_ENTRY"
 
     invalid = {**payload, "parameters": {**payload["parameters"], "weakest_quantity": 4}}
     with pytest.raises(ValueError, match="weakest_quantity"):

@@ -1176,6 +1176,11 @@ func (s *Server) getBars(w http.ResponseWriter, r *http.Request) {
 		s.writeError(w, r, http.StatusBadRequest, "INVALID_BAR_QUERY", "Bar range query is invalid", nil)
 		return
 	}
+	after, err := optionalNonNegativeInt64(values.Get("after_bar_index"))
+	if err != nil {
+		s.writeError(w, r, http.StatusBadRequest, "INVALID_BAR_QUERY", "Bar range query is invalid", nil)
+		return
+	}
 	limit := 0
 	if raw := values.Get("limit"); raw != "" {
 		limit, err = strconv.Atoi(raw)
@@ -1186,7 +1191,7 @@ func (s *Server) getBars(w http.ResponseWriter, r *http.Request) {
 	}
 	result, err := s.bars.Read(r.Context(), marketdata.Query{
 		DatasetID: r.PathValue("dataset_id"), DataRevision: revision, GenerationID: generationID,
-		Tail: tail, BeforeBarIndex: before, Limit: limit,
+		Tail: tail, BeforeBarIndex: before, AfterBarIndex: after, Limit: limit,
 	})
 	switch {
 	case errors.Is(err, marketdata.ErrInvalidRange):
@@ -1232,6 +1237,17 @@ func optionalPositiveInt64(raw string) (*int64, error) {
 	}
 	value, err := strconv.ParseInt(raw, 10, 64)
 	if err != nil || value < 1 {
+		return nil, marketdata.ErrInvalidRange
+	}
+	return &value, nil
+}
+
+func optionalNonNegativeInt64(raw string) (*int64, error) {
+	if raw == "" {
+		return nil, nil
+	}
+	value, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil || value < 0 {
 		return nil, marketdata.ErrInvalidRange
 	}
 	return &value, nil

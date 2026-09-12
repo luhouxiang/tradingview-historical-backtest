@@ -4,8 +4,11 @@ import { createBacktest, getBacktest, getBacktestChartEvents, getBacktestEquity,
 import { capitalConfig, executionRequest } from '../execution/config'
 import type { AlgorithmDefinition, BacktestSummary, BacktestTrade, ChanTreeObject, DatasetMeta, EquityRow, RankingContext, RiskContext, StrategyRunSource } from '../types/api'
 
-const props = defineProps<{ dataset: DatasetMeta | null; view: 'backtest' | 'trades' | 'equity' }>()
-const emit = defineEmits<{ completed: [source: StrategyRunSource] }>()
+const props = defineProps<{ dataset: DatasetMeta | null; view: 'backtest' | 'trades' | 'equity' | 'workspace' }>()
+const emit = defineEmits<{
+  completed: [source: StrategyRunSource]
+  'focus-trade': [trade: BacktestTrade]
+}>()
 const strategies = ref<AlgorithmDefinition[]>([])
 const strategy = ref<AlgorithmDefinition | null>(null)
 const strategyParameters = ref<Record<string, string | number | boolean>>({})
@@ -32,6 +35,49 @@ const LAST_RUN_STORAGE_KEY = 'tvbt:last-backtest:v1'
 const STATUS_POLL_INTERVAL_MS = 250
 const STATUS_POLL_RETRY_DELAYS_MS = [250, 500, 1_000, 2_000, 4_000]
 const executing = computed(() => ['queued', 'running'].includes(status.value))
+const panelRoot = ref<HTMLElement | null>(null)
+const tradePane = ref<HTMLElement | null>(null)
+const tradePaneHeight = ref<number | null>(null)
+const selectedTradeId = ref<string | null>(null)
+
+const parameterLabels: Record<string, string> = {
+  allow_class_like_entries: '允许类二买入场', allow_normal: '允许普通强度', allow_strongest: '允许最强信号', allow_weakest: '允许最弱信号',
+  checkpoint_interval: '检查点间隔（根）', normal_quantity: '普通信号手数', strongest_quantity: '最强信号手数', weakest_quantity: '最弱信号手数',
+  allow_long: '允许做多', allow_short: '允许做空', ma_period: '均线周期', max_retest_bars: '最大回试根数', touch_tolerance_ticks: '触及容差（跳）',
+  fast_period: '快速周期', slow_period: '慢速周期', signal_period: '信号周期', minimum_timeframe_minutes: '最小周期（分钟）',
+  reclaim_confirm_bars: '重新站上确认根数', risk_off_confirm_bars: '风险退出确认根数', zero_axis_buffer_ticks: '零轴缓冲（跳）',
+  allow_late_center: '允许后续中枢', first_center_quantity: '首中枢手数', late_center_quantity: '后续中枢手数', minimum_entry_volume: '最小入场成交量',
+  estimated_round_trip_cost_i64: '预计往返成本', fast_execution_available: '可快速执行', max_entries_per_center: '每中枢最多入场次数',
+  minimum_net_range_i64: '最小净区间', neutral_quantity: '中性强度手数', strong_quantity: '强信号手数', weak_quantity: '弱信号手数',
+  odd_direction_is_down: '奇数段视为向下', operation_quantity: '操作手数', can_handle_high_change_candidate: '可处理高级别变化候选',
+  can_handle_mid_center_continue: '可处理中级中枢延续', can_handle_mid_third_point: '可处理中级三类点', level_graph_profile_id: '级别图配置编号',
+  execution_available: '允许执行交易', minimum_net_segment_i64: '最小净线段空间', partial_take_profit_quantity: '分批止盈手数',
+  coarse_effective_hold_bars: '粗略有效站稳根数', enable_legacy_b1_macd_proxy: '启用旧一买 MACD 代理', flat_slope_ticks: '走平斜率阈值（跳）',
+  legacy_divergence_min_bars: '旧背驰最少间隔根数', long_period: '长均线周期', short_period: '短均线周期', macd_fast_period: 'MACD 快速周期',
+  macd_slow_period: 'MACD 慢速周期', macd_signal_period: 'MACD 信号周期', proximity_ticks: '接近阈值（跳）',
+  band_turn_confirm_bars: '轨道转向确认根数', band_turn_min_change_ticks: '轨道最小变化（跳）', boll_period: '布林带周期',
+  boll_stddev_milli: '布林带标准差倍数（千分位）', contraction_confirm_bars: '收口确认根数', contraction_min_width_drop_ticks: '收口最小缩窄（跳）',
+  effective_reentry_bars: '有效重返确认根数', failed_reentry_confirm_bars: '重返失败确认根数', level_mapping_profile_id: '级别映射配置编号',
+  observation_timeframe_minutes: '观察周期（分钟）', session_profile_id: '交易时段配置编号', capacity_lookback_bars: '容量回看根数',
+  maximum_rotation_candidates: '最多轮动候选数', minimum_average_volume: '最小平均成交量', minimum_sector_coverage_milli: '最小板块覆盖率（千分位）',
+  episode_start_bar_index: '观察起点 K 线编号', observation_direction: '观察方向', pressure_confirmation_bars: '压制确认根数',
+  ma_period_1: '均线周期 1', ma_period_2: '均线周期 2', ma_period_3: '均线周期 3', ma_period_4: '均线周期 4',
+  ma_period_5: '均线周期 5', ma_period_6: '均线周期 6', ma_period_7: '均线周期 7', ma_period_8: '均线周期 8',
+  event_risk_max_position_weight_ppm: '事件风险最大仓位（百万分比）', kill_switch_on_data_revision: '数据修订变化时熔断', leverage_allowed: '允许杠杆',
+  leverage_approval_id: '杠杆审批编号', max_daily_loss_ppm: '最大日亏损（百万分比）', max_data_gap_bars: '最大数据缺口根数',
+  max_open_signal_age_bars: '开仓信号最长有效根数', max_order_loss_weight_ppm: '单笔最大损失权重（百万分比）',
+  max_order_participation_ppm: '最大成交量参与率（百万分比）', max_position_weight_ppm: '单标的最大仓位（百万分比）',
+  max_sector_weight_ppm: '板块最大仓位（百万分比）', max_stale_bars: '最大陈旧数据根数', max_strategy_drawdown_ppm: '策略最大回撤（百万分比）',
+  stress_loss_per_contract_i64: '每手压力损失',
+}
+
+const statusLabels: Record<string, string> = {
+  idle: '等待开始', queued: '排队中', running: '回测中', completed: '已完成', failed: '失败', cancelled: '已取消', interrupted: '已中断', cancelling: '取消中',
+}
+
+function parameterLabel(name: string): string {
+  return parameterLabels[name] ?? '策略参数'
+}
 
 interface StoredBacktestRun {
   dataset_id: string
@@ -71,7 +117,9 @@ const executionSummary = computed(() => {
   if (facts.semantic_version !== '1.0.0') return '执行语义：未版本化旧结果（仅按原始 manifest 解释）'
   const commission = facts.commission as Record<string, unknown> | undefined
   const slippage = facts.slippage as Record<string, unknown> | undefined
-  return `执行语义 v${facts.semantic_version} · 合约乘数 ${facts.contract_multiplier ?? '—'}（${facts.contract_multiplier_source ?? '来源未知'}） · 手续费 ${commission?.amount_i64 ?? commission?.rate ?? '—'} · 滑点 ${slippage?.value ?? '—'} ${slippage?.mode ?? ''}`
+  const multiplierSource = facts.contract_multiplier_source === 'instrument_config' ? '品种配置' : '来源未知'
+  const slippageMode = slippage?.mode === 'ticks' ? '跳' : ''
+  return `执行语义 v${facts.semantic_version} · 合约乘数 ${facts.contract_multiplier ?? '—'}（${multiplierSource}） · 手续费 ${commission?.amount_i64 ?? commission?.rate ?? '—'} · 滑点 ${slippage?.value ?? '—'} ${slippageMode}`
 })
 const rankingOnly = computed(() => strategy.value?.algorithm_id === 'aux_ma_sector_rotation')
 const daily30mProfileIssue = computed(() => {
@@ -163,6 +211,21 @@ function wait(milliseconds: number): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, milliseconds))
 }
 
+async function getAllTrades(id: string): Promise<BacktestTrade[]> {
+  const rows: BacktestTrade[] = []
+  const seen = new Set<string>()
+  let cursor: string | undefined
+  do {
+    const page = await getBacktestTrades(id, cursor)
+    rows.push(...page.rows)
+    if (!page.next_cursor) break
+    if (seen.has(page.next_cursor)) throw new Error('交易分页游标重复')
+    seen.add(page.next_cursor)
+    cursor = page.next_cursor
+  } while (cursor)
+  return rows
+}
+
 function isTransientNetworkError(cause: unknown): boolean {
   return cause instanceof TypeError
     && /fetch|network|load/i.test(cause.message)
@@ -232,7 +295,7 @@ async function execute(resume: StoredBacktestRun | null = null): Promise<void> {
         ...(risk ? { risk_overlay: risk } : {}),
         range: {
           warmup_from_bar_index: dataset.coverage.first_bar_index,
-          from_bar_index: Math.max(dataset.coverage.first_bar_index, dataset.coverage.last_bar_index - 2999),
+          from_bar_index: dataset.coverage.first_bar_index,
           to_bar_index: dataset.coverage.last_bar_index,
         },
         execution: executionRequest({ commissionAmountI64: commission.value, marginRatio: marginRatio.value, contractMultiplier: dataset.instrument.contract_multiplier }),
@@ -256,11 +319,11 @@ async function execute(resume: StoredBacktestRun | null = null): Promise<void> {
     if (current.status !== 'completed') throw new Error(current.error?.message ?? `回测${current.status}`)
     status.value = 'completed'
     executionFacts.value = (current.manifest?.execution as Record<string, unknown> | undefined) ?? null
-    const [summaryValue, tradeValue, equityValue, causalEvents] = await Promise.all([
-      getBacktestSummary(runId.value), getBacktestTrades(runId.value), getBacktestEquity(runId.value), getBacktestChartEvents(runId.value),
+    const [summaryValue, tradeRows, equityValue, causalEvents] = await Promise.all([
+      getBacktestSummary(runId.value), getAllTrades(runId.value), getBacktestEquity(runId.value), getBacktestChartEvents(runId.value),
     ])
     summary.value = summaryValue
-    trades.value = tradeValue.rows
+    trades.value = tradeRows
     equity.value = equityValue
     const currentObjects = new Map<string, ChanTreeObject>()
     const currentSignals = new Map<string, Record<string, unknown> & { object_type: string; object_id: string }>()
@@ -425,6 +488,39 @@ async function run(): Promise<void> {
   await execute()
 }
 
+function formatTradeTime(timestamp: number): string {
+  return new Intl.DateTimeFormat('zh-CN', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }).format(new Date(timestamp))
+}
+
+function focusTrade(trade: BacktestTrade): void {
+  selectedTradeId.value = trade.trade_id
+  emit('focus-trade', trade)
+}
+
+function resizeTradePane(event: PointerEvent): void {
+  if (props.view !== 'workspace' || !panelRoot.value) return
+  const total = panelRoot.value.getBoundingClientRect().height
+  if (total <= 0) return
+  const startY = event.clientY
+  const initial = tradePane.value?.getBoundingClientRect().height || total / 2
+  const move = (next: PointerEvent) => {
+    tradePaneHeight.value = Math.max(total / 2, Math.min(total - 120, initial + startY - next.clientY))
+  }
+  const finish = () => {
+    window.removeEventListener('pointermove', move)
+    window.removeEventListener('pointerup', finish)
+  }
+  window.addEventListener('pointermove', move)
+  window.addEventListener('pointerup', finish)
+}
+
+function resetTradePane(): void {
+  tradePaneHeight.value = null
+}
+
 async function restoreForDataset(dataset: DatasetMeta | null): Promise<void> {
   if (!dataset || strategies.value.length === 0) return
   const key = `${dataset.dataset_id}:${dataset.data_revision}`
@@ -514,13 +610,14 @@ watch([riskFilter, () => props.dataset], ([definition, dataset]) => {
 </script>
 
 <template>
-  <section class="backtest-panel" aria-label="回测结果">
-    <div class="backtest-controls">
+  <section ref="panelRoot" class="backtest-panel" :class="{ 'backtest-workspace': view === 'workspace' }" aria-label="回测结果">
+    <div :class="{ 'backtest-configuration-pane': view === 'workspace' }">
+      <div class="backtest-controls">
       <select v-model="strategy" aria-label="选择回测策略">
         <option v-for="candidate in strategies" :key="candidate.algorithm_id" :value="candidate">{{ candidate.name }}</option>
       </select>
-      <label v-for="(rule, name) in strategy?.parameter_schema.properties" :key="name">
-        {{ name }}
+      <label v-for="(rule, name) in strategy?.parameter_schema.properties" :key="name" :title="name">
+        {{ parameterLabel(name) }}
         <input v-if="rule.type === 'boolean'" v-model="strategyParameters[name]" type="checkbox" />
         <input v-else-if="rule.type === 'string'" v-model="strategyParameters[name]" type="text" />
         <input v-else v-model.number="strategyParameters[name]" type="number" :min="rule.minimum" :max="rule.maximum" />
@@ -533,8 +630,8 @@ watch([riskFilter, () => props.dataset], ([definition, dataset]) => {
       <label class="risk-enable"><input v-model="riskEnabled" type="checkbox" /> 启用统一风险与执行覆盖层</label>
       <details v-if="riskEnabled" class="risk-overlay-controls" open>
         <summary>{{ riskFilter?.name ?? '风险覆盖算法不可用' }}</summary>
-        <label v-for="(rule, name) in riskFilter?.parameter_schema.properties" :key="`risk-${name}`">
-          {{ name }}
+        <label v-for="(rule, name) in riskFilter?.parameter_schema.properties" :key="`risk-${name}`" :title="name">
+          {{ parameterLabel(name) }}
           <input v-if="rule.type === 'boolean'" v-model="riskParameters[name]" type="checkbox" />
           <input v-else-if="rule.type === 'string'" v-model="riskParameters[name]" type="text" />
           <input v-else v-model.number="riskParameters[name]" type="number" :min="rule.minimum" :max="rule.maximum" />
@@ -553,11 +650,11 @@ watch([riskFilter, () => props.dataset], ([definition, dataset]) => {
         class="backtest-run-button" :class="{ 'is-running': executing }" :aria-busy="executing"
         :disabled="!dataset || !strategy || Boolean(algorithmContextIssue) || executing" @click="run"
       >{{ auxiliaryOnly ? '生成辅助事件（不交易）' : '开始正式回测' }}</button>
-      <span>{{ status }} <small v-if="restored">· 已恢复最近结果</small> <small v-if="runId">{{ runId }} · {{ signature.slice(0, 18) }}</small></span>
+      <span>{{ statusLabels[status] ?? status }} <small v-if="restored">· 已恢复最近结果</small> <small v-if="runId">{{ runId }} · {{ signature.slice(0, 18) }}</small></span>
       <span v-if="algorithmContextIssue" class="issue">{{ algorithmContextIssue }}</span>
       <span v-if="error" class="issue">{{ error }}</span>
-    </div>
-    <div v-if="view === 'backtest'" class="summary-grid">
+      </div>
+      <div v-if="view === 'backtest' || view === 'workspace'" class="summary-grid">
       <span v-if="executionSummary" class="execution-summary">{{ executionSummary }}</span>
       <template v-if="summary">
         <span>总收益 {{ (summary.total_return * 100).toFixed(2) }}%</span>
@@ -572,14 +669,46 @@ watch([riskFilter, () => props.dataset], ([definition, dataset]) => {
         <span>风险熔断 {{ summary.risk_kill_switch_count }}</span>
         <span v-if="summary.trade_count === 0" class="issue">本次没有成交，因此图上没有开平仓标记。</span>
       </template>
+      </div>
     </div>
-    <table v-else-if="view === 'trades'" class="trade-table">
+    <button
+      v-if="view === 'workspace'" class="backtest-pane-splitter" aria-label="调整交易明细高度"
+      @pointerdown="resizeTradePane" @dblclick="resetTradePane"
+    />
+    <section
+      v-if="view === 'workspace'" ref="tradePane" class="backtest-trade-pane"
+      :style="{ height: tradePaneHeight === null ? '50%' : `${tradePaneHeight}px` }"
+      aria-label="交易明细"
+    >
+      <header><strong>交易明细</strong><span>{{ trades.length }} 笔</span><small>双击交易定位入场 K 线</small></header>
+      <div class="trade-table-scroll">
+        <table class="trade-table detailed-trade-table">
+          <thead><tr><th>#</th><th>ID</th><th>方向</th><th>手数</th><th>入场时间</th><th>入场 K</th><th>入场价</th><th>出场时间</th><th>出场 K</th><th>出场价</th><th>毛盈亏</th><th>手续费</th><th>滑点</th><th>净盈亏</th><th>结构归因</th></tr></thead>
+          <tbody>
+            <tr v-if="trades.length === 0"><td colspan="15">尚无交易。完成正式回测后，全部交易会显示在这里。</td></tr>
+            <tr
+              v-for="(trade, index) in trades" :key="trade.trade_id"
+              :data-trade-id="trade.trade_id" :class="{ selected: selectedTradeId === trade.trade_id }" tabindex="0"
+              @dblclick="focusTrade(trade)" @keydown.enter="focusTrade(trade)"
+            >
+              <td>{{ index + 1 }}</td><td>{{ trade.trade_id }}</td><td>{{ trade.side === 'long' ? '多' : '空' }}</td><td>{{ trade.quantity }}</td>
+              <td>{{ formatTradeTime(trade.entry_time) }}</td><td>{{ trade.entry_bar_index }}</td><td>{{ trade.entry_price_i64 }}</td>
+              <td>{{ formatTradeTime(trade.exit_time) }}</td><td>{{ trade.exit_bar_index }}</td><td>{{ trade.exit_price_i64 }}</td>
+              <td>{{ trade.gross_pnl_i64 }}</td><td>{{ trade.commission_i64 }}</td><td>{{ trade.slippage_i64 }}</td>
+              <td :class="trade.net_pnl_i64 >= 0 ? 'profit' : 'loss'">{{ trade.net_pnl_i64 }}</td>
+              <td>{{ trade.trigger_category ?? '—' }} · {{ trade.attribution_reason_code ?? '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <table v-if="view === 'trades'" class="trade-table">
       <thead><tr><th>ID</th><th>方向</th><th>入场</th><th>出场</th><th>净盈亏</th></tr></thead>
       <tbody>
         <tr v-if="trades.length === 0"><td colspan="5">本次没有成交，主图不会显示开平仓标记。</td></tr>
-        <tr v-for="trade in trades" :key="trade.trade_id"><td>{{ trade.trade_id }}</td><td>{{ trade.side }}</td><td>{{ trade.entry_bar_index }} @ {{ trade.entry_price_i64 }}</td><td>{{ trade.exit_bar_index }} @ {{ trade.exit_price_i64 }}</td><td>{{ trade.net_pnl_i64 }}</td></tr>
+        <tr v-for="trade in trades" :key="trade.trade_id" @dblclick="focusTrade(trade)"><td>{{ trade.trade_id }}</td><td>{{ trade.side }}</td><td>{{ trade.entry_bar_index }} @ {{ trade.entry_price_i64 }}</td><td>{{ trade.exit_bar_index }} @ {{ trade.exit_price_i64 }}</td><td>{{ trade.net_pnl_i64 }}</td></tr>
       </tbody>
     </table>
-    <svg v-else class="equity-chart" viewBox="0 0 600 110" preserveAspectRatio="none" aria-label="权益曲线"><polyline :points="points" /></svg>
+    <svg v-if="view === 'equity'" class="equity-chart" viewBox="0 0 600 110" preserveAspectRatio="none" aria-label="权益曲线"><polyline :points="points" /></svg>
   </section>
 </template>

@@ -34,6 +34,7 @@ type Query struct {
 	GenerationID   string
 	Tail           *int
 	BeforeBarIndex *int64
+	AfterBarIndex  *int64
 	Limit          int
 }
 
@@ -60,6 +61,7 @@ type Response struct {
 	PriceScale    int64      `json:"price_scale"`
 	Coverage      Coverage   `json:"coverage"`
 	HasMoreBefore bool       `json:"has_more_before"`
+	HasMoreAfter  bool       `json:"has_more_after"`
 	Checksum      string     `json:"checksum"`
 	Bars          BarColumns `json:"bars"`
 }
@@ -81,7 +83,17 @@ func NewReader(guard *storage.PathGuard, store *catalog.Store, config Config) *R
 }
 
 func (r *Reader) Read(ctx context.Context, query Query) (Response, error) {
-	if query.DatasetID == "" || query.DataRevision == "" || query.GenerationID == "" || query.Tail != nil && query.BeforeBarIndex != nil {
+	modeCount := 0
+	if query.Tail != nil {
+		modeCount++
+	}
+	if query.BeforeBarIndex != nil {
+		modeCount++
+	}
+	if query.AfterBarIndex != nil {
+		modeCount++
+	}
+	if query.DatasetID == "" || query.DataRevision == "" || query.GenerationID == "" || modeCount > 1 {
 		return Response{}, ErrInvalidRange
 	}
 	meta, err := r.catalog.Get(query.DatasetID, "")
@@ -102,7 +114,7 @@ func (r *Reader) Read(ctx context.Context, query Query) (Response, error) {
 	if err != nil {
 		return Response{}, err
 	}
-	start, end := rangeBounds(len(bars), query.BeforeBarIndex, count)
+	start, end := rangeBounds(len(bars), query.BeforeBarIndex, query.AfterBarIndex, count)
 	selected := bars[start:end]
 	columns := columns(selected)
 	checksum, err := checksum(columns)
@@ -116,14 +128,14 @@ func (r *Reader) Read(ctx context.Context, query Query) (Response, error) {
 	}
 	return Response{
 		DatasetID: query.DatasetID, DataRevision: query.DataRevision, GenerationID: query.GenerationID,
-		PriceScale: meta.Price.PriceScale, Coverage: coverage, HasMoreBefore: start > 0, Checksum: checksum, Bars: columns,
+		PriceScale: meta.Price.PriceScale, Coverage: coverage, HasMoreBefore: start > 0, HasMoreAfter: end < len(bars), Checksum: checksum, Bars: columns,
 	}, nil
 }
 
 func (r *Reader) requestCount(query Query) (int, error) {
 	count := r.config.InitialBars
-	if query.BeforeBarIndex != nil {
-		if *query.BeforeBarIndex < 1 || query.Tail != nil {
+	if query.BeforeBarIndex != nil || query.AfterBarIndex != nil {
+		if query.BeforeBarIndex != nil && *query.BeforeBarIndex < 1 || query.AfterBarIndex != nil && *query.AfterBarIndex < 0 || query.Tail != nil {
 			return 0, ErrInvalidRange
 		}
 		count = r.config.PrefetchBars
@@ -144,7 +156,18 @@ func (r *Reader) requestCount(query Query) (int, error) {
 	return count, nil
 }
 
-func rangeBounds(length int, before *int64, count int) (int, int) {
+func rangeBounds(length int, before, after *int64, count int) (int, int) {
+	if after != nil {
+		start := int(*after) + 1
+		if start > length {
+			start = length
+		}
+		end := start + count
+		if end > length {
+			end = length
+		}
+		return start, end
+	}
 	end := length
 	if before != nil && *before < int64(end) {
 		end = int(*before)

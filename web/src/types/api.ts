@@ -116,6 +116,7 @@ export interface BarRangeResponse {
   price_scale: number
   coverage: { first_bar_index: number; last_bar_index: number }
   has_more_before: boolean
+  has_more_after: boolean
   checksum: string
   bars: BarColumns
 }

@@ -20,7 +20,7 @@ function range(generation: string, first: number, count: number, hasMoreBefore: 
   const indexes = Array.from({ length: count }, (_, index) => first + index)
   return {
     request_id: 'req', dataset_id: 'SHFE.AO2609.5m', data_revision: revision, generation_id: generation,
-    price_scale: 1, coverage: { first_bar_index: first, last_bar_index: first + count - 1 }, has_more_before: hasMoreBefore,
+    price_scale: 1, coverage: { first_bar_index: first, last_bar_index: first + count - 1 }, has_more_before: hasMoreBefore, has_more_after: first + count - 1 < 5999,
     checksum: `sha256:${'b'.repeat(64)}`,
     bars: {
       bar_index: indexes, timestamp_utc: indexes.map((index) => index * 300_000),
@@ -74,5 +74,42 @@ describe('ChartSession', () => {
     expect(session.bars.some((bar) => bar.barIndex === 1000)).toBe(true)
     expect(session.bars).toHaveLength(241)
     expect(session.bars.some((bar) => bar.barIndex === 3000)).toBe(false)
+  })
+
+  it('ignores an older prefetch that finishes after a replacing historical focus', async () => {
+    let resolvePrefetch!: (value: BarRangeResponse) => void
+    const fetcher = vi.fn(async (_dataset: string, _revision: string, generation: string, options: { tail?: number; beforeBarIndex?: number } = {}) => {
+      if (options.tail) return range(generation, 3000, 3000, true)
+      if (options.beforeBarIndex === 3000) {
+        return new Promise<BarRangeResponse>((resolve) => { resolvePrefetch = resolve })
+      }
+      return range(generation, 880, 241, true)
+    })
+    const session = new ChartSession(fetcher)
+    await session.open(meta())
+    const stalePrefetch = session.prefetchBefore()
+    await session.loadAround(1000, 120, true)
+    resolvePrefetch(range(session.generation, 1500, 1500, true))
+    expect(await stalePrefetch).toBe(0)
+    expect(session.bars[0]?.barIndex).toBe(880)
+    expect(session.bars.at(-1)?.barIndex).toBe(1120)
+    expect(session.bars).toHaveLength(241)
+  })
+
+  it('prefetches newer bars from the right edge after a historical focus', async () => {
+    const fetcher = vi.fn(async (_dataset: string, _revision: string, generation: string, options: { tail?: number; beforeBarIndex?: number; afterBarIndex?: number } = {}) => {
+      if (options.tail) return range(generation, 3000, 3000, true)
+      if (options.afterBarIndex === 1120) return range(generation, 1121, 1500, true)
+      return range(generation, 880, 241, true)
+    })
+    const session = new ChartSession(fetcher)
+    await session.open(meta())
+    await session.loadAround(1000, 120, true)
+    expect(session.hasMoreAfter).toBe(true)
+    expect(await session.prefetchAfter()).toBe(1500)
+    expect(fetcher).toHaveBeenLastCalledWith('SHFE.AO2609.5m', revision, session.generation, {
+      afterBarIndex: 1120, limit: 1500,
+    })
+    expect(session.bars.at(-1)?.barIndex).toBe(2620)
   })
 })

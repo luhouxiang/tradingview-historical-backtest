@@ -4205,6 +4205,7 @@ type BarRangeResponse struct {
 	DataRevision  string `json:"data_revision"`
 	DatasetId     string `json:"dataset_id"`
 	GenerationId  string `json:"generation_id"`
+	HasMoreAfter  bool   `json:"has_more_after"`
 	HasMoreBefore bool   `json:"has_more_before"`
 	PriceScale    int    `json:"price_scale"`
 	RequestId     string `json:"request_id"`
@@ -8031,13 +8032,16 @@ type GetBarsParams struct {
 	Revision     string `form:"revision" json:"revision"`
 	GenerationId string `form:"generation_id" json:"generation_id"`
 
-	// Tail 首次读取尾部数量；与 before_bar_index 二选一，未提供游标时默认 3000
+	// Tail 首次读取尾部数量；与 before_bar_index、after_bar_index 互斥，未提供游标时默认 3000
 	Tail *int `form:"tail,omitempty" json:"tail,omitempty"`
 
-	// BeforeBarIndex 返回 bar_index 严格小于此值的最近数据；不得与 tail 同时提供
+	// BeforeBarIndex 返回 bar_index 严格小于此值的最近数据；不得与 tail、after_bar_index 同时提供
 	BeforeBarIndex *int `form:"before_bar_index,omitempty" json:"before_bar_index,omitempty"`
 
-	// Limit before_bar_index 模式的返回上限
+	// AfterBarIndex 返回 bar_index 严格大于此值的最早数据；不得与 tail、before_bar_index 同时提供
+	AfterBarIndex *int `form:"after_bar_index,omitempty" json:"after_bar_index,omitempty"`
+
+	// Limit before_bar_index 或 after_bar_index 模式的返回上限
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 }
 

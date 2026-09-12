@@ -171,7 +171,7 @@ paths:
     get:
       tags: [Datasets]
       operationId: getBars
-      summary: 按尾部或向左游标读取 K 线
+      summary: 按尾部、向左游标或向右游标读取 K 线
       parameters:
         - $ref: "#/components/parameters/DatasetId"
         - $ref: "#/components/parameters/Revision"
@@ -182,7 +182,7 @@ paths:
             type: string
         - name: tail
           in: query
-          description: 首次读取尾部数量；与 before_bar_index 二选一，未提供游标时默认 3000
+          description: 首次读取尾部数量；与 before_bar_index、after_bar_index 互斥，未提供游标时默认 3000
           schema:
             type: integer
             minimum: 0
@@ -190,13 +190,19 @@ paths:
             default: 3000
         - name: before_bar_index
           in: query
-          description: 返回 bar_index 严格小于此值的最近数据；不得与 tail 同时提供
+          description: 返回 bar_index 严格小于此值的最近数据；不得与 tail、after_bar_index 同时提供
           schema:
             type: integer
             minimum: 1
+        - name: after_bar_index
+          in: query
+          description: 返回 bar_index 严格大于此值的最早数据；不得与 tail、before_bar_index 同时提供
+          schema:
+            type: integer
+            minimum: 0
         - name: limit
           in: query
-          description: before_bar_index 模式的返回上限
+          description: before_bar_index 或 after_bar_index 模式的返回上限
           schema:
             type: integer
             minimum: 1
@@ -1320,6 +1326,7 @@ components:
         - price_scale
         - coverage
         - has_more_before
+        - has_more_after
         - checksum
         - bars
       properties:
@@ -1340,6 +1347,8 @@ components:
             first_bar_index: {type: integer}
             last_bar_index: {type: integer}
         has_more_before:
+          type: boolean
+        has_more_after:
           type: boolean
         checksum:
           type: string

@@ -20,10 +20,13 @@ function generationId(): string {
 
 export class ChartSession {
   private readonly byIndex = new Map<number, CachedBar>()
-  private inflight: Promise<number> | null = null
+  private inflightBefore: Promise<number> | null = null
+  private inflightAfter: Promise<number> | null = null
   private hasMoreBeforeValue = false
+  private hasMoreAfterValue = false
   private metaValue: DatasetMeta | null = null
   private generationValue = ''
+  private rangeEpoch = 0
 
   constructor(private readonly fetchBars: BarFetcher = getBars) {}
 
@@ -39,16 +42,23 @@ export class ChartSession {
     return this.hasMoreBeforeValue
   }
 
+  get hasMoreAfter(): boolean {
+    return this.hasMoreAfterValue
+  }
+
   get bars(): CachedBar[] {
     return [...this.byIndex.values()].sort((left, right) => left.barIndex - right.barIndex)
   }
 
   async open(meta: DatasetMeta): Promise<CachedBar[]> {
+    this.rangeEpoch += 1
     this.metaValue = meta
     this.generationValue = generationId()
     this.byIndex.clear()
     this.hasMoreBeforeValue = false
-    this.inflight = null
+    this.hasMoreAfterValue = false
+    this.inflightBefore = null
+    this.inflightAfter = null
     const generation = this.generationValue
     const response = await this.fetchBars(meta.dataset_id, meta.data_revision, generation, { tail: 3000 })
     if (generation !== this.generationValue) return this.bars
@@ -58,30 +68,60 @@ export class ChartSession {
 
   prefetchBefore(): Promise<number> {
     if (!this.metaValue || !this.hasMoreBeforeValue || this.byIndex.size === 0) return Promise.resolve(0)
-    if (this.inflight) return this.inflight
+    if (this.inflightBefore) return this.inflightBefore
     const meta = this.metaValue
     const generation = this.generationValue
+    const rangeEpoch = this.rangeEpoch
     const beforeBarIndex = Math.min(...this.byIndex.keys())
-    this.inflight = this.fetchBars(meta.dataset_id, meta.data_revision, generation, {
+    this.inflightBefore = this.fetchBars(meta.dataset_id, meta.data_revision, generation, {
       beforeBarIndex,
       limit: 1500,
     })
       .then((response) => {
-        if (generation !== this.generationValue) return 0
+        if (generation !== this.generationValue || rangeEpoch !== this.rangeEpoch) return 0
         const before = this.byIndex.size
         this.merge(response)
         return this.byIndex.size - before
       })
       .finally(() => {
-        if (generation === this.generationValue) this.inflight = null
+        if (generation === this.generationValue && rangeEpoch === this.rangeEpoch) this.inflightBefore = null
       })
-    return this.inflight
+    return this.inflightBefore
+  }
+
+  prefetchAfter(): Promise<number> {
+    if (!this.metaValue || !this.hasMoreAfterValue || this.byIndex.size === 0) return Promise.resolve(0)
+    if (this.inflightAfter) return this.inflightAfter
+    const meta = this.metaValue
+    const generation = this.generationValue
+    const rangeEpoch = this.rangeEpoch
+    const afterBarIndex = Math.max(...this.byIndex.keys())
+    this.inflightAfter = this.fetchBars(meta.dataset_id, meta.data_revision, generation, {
+      afterBarIndex,
+      limit: 1500,
+    })
+      .then((response) => {
+        if (generation !== this.generationValue || rangeEpoch !== this.rangeEpoch) return 0
+        const before = this.byIndex.size
+        this.merge(response)
+        return this.byIndex.size - before
+      })
+      .finally(() => {
+        if (generation === this.generationValue && rangeEpoch === this.rangeEpoch) this.inflightAfter = null
+      })
+    return this.inflightAfter
   }
 
   async loadAround(barIndex: number, radius = 120, replace = false): Promise<number> {
     if (!this.metaValue) return 0
     const meta = this.metaValue
     const generation = this.generationValue
+    if (replace) {
+      this.rangeEpoch += 1
+      this.inflightBefore = null
+      this.inflightAfter = null
+    }
+    const rangeEpoch = this.rangeEpoch
     const first = Math.max(meta.coverage.first_bar_index, barIndex - radius)
     const last = Math.min(meta.coverage.last_bar_index, barIndex + radius)
     const beforeBarIndex = last + 1
@@ -90,7 +130,7 @@ export class ChartSession {
       beforeBarIndex,
       limit: last - first + 1,
     })
-    if (generation !== this.generationValue) return 0
+    if (generation !== this.generationValue || rangeEpoch !== this.rangeEpoch) return 0
     if (replace) this.byIndex.clear()
     this.merge(response)
     return this.byIndex.size - before
@@ -134,6 +174,12 @@ export class ChartSession {
         openInterest: bars.open_interest[index],
       })
     }
-    this.hasMoreBeforeValue = response.has_more_before
+    if (this.byIndex.size === 0) {
+      this.hasMoreBeforeValue = false
+      this.hasMoreAfterValue = false
+      return
+    }
+    this.hasMoreBeforeValue = Math.min(...this.byIndex.keys()) > meta.coverage.first_bar_index
+    this.hasMoreAfterValue = Math.max(...this.byIndex.keys()) < meta.coverage.last_bar_index
   }
 }

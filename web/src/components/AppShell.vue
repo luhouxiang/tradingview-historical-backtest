@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import TopToolbar from './TopToolbar.vue'
 import DatasetPanel from './DatasetPanel.vue'
 import IndicatorManagerPanel from './IndicatorManagerPanel.vue'
@@ -15,8 +15,9 @@ import { ApiError, cancelCalculation, createCalculation, getCalculation, getCalc
 import { DrawingHistory, LayerManager, type DrawingObject, type DrawingType } from '../drawing/model'
 import { defaultIndicatorSpecs } from '../indicators/defaults'
 import { defaultChanSpec } from '../chan/defaults'
+import { createBacktestWorkspaceChannel, createBacktestWorkspaceUrl, type BacktestWorkspaceMessage } from '../backtest/workspaceChannel'
 import type { ReplayObjects, ReplaySignal } from '../replay/eventIndex'
-import type { AlgorithmDefinition, CalculationRequest, ChanCenterMonitor, ChanSignalPoint, ChanTreeObject, DatasetMeta, SeriesSource, StrategyRunSource, StrategySource, StrategySourceDynamicConfig, StrategySourcePreference, WorkspaceLayout } from '../types/api'
+import type { AlgorithmDefinition, BacktestTrade, CalculationRequest, ChanCenterMonitor, ChanSignalPoint, ChanTreeObject, DatasetMeta, SeriesSource, StrategyRunSource, StrategySource, StrategySourceDynamicConfig, StrategySourcePreference, WorkspaceLayout } from '../types/api'
 
 defineProps<{ health: string }>()
 
@@ -34,6 +35,7 @@ const drawings = ref<DrawingObject[]>([])
 const selectedDrawingId = ref<string | null>(null)
 const signalObjectsBySource = ref<Record<string, ChanTreeObject[]>>({})
 const selectedSignal = ref<ChanTreeObject | null>(null)
+const selectedSignalOrigin = ref<'strategy' | 'trade' | null>(null)
 const lockedSignalId = ref<string | null>(null)
 const signalLoading = ref(false)
 const drawingTool = ref<DrawingType | 'cursor'>('cursor')
@@ -68,6 +70,7 @@ let workspaceGeneration = 0
 let strategyConfigurationSaveTimer: number | undefined
 let layoutWriteQueue: Promise<void> = Promise.resolve()
 let strategyConfigWriteQueue: Promise<void> = Promise.resolve()
+const backtestWorkspaceChannel = createBacktestWorkspaceChannel()
 const workspaceColumns = computed(() => rightOpen.value
   ? `48px minmax(320px, 1fr) 1px ${rightWidth.value}px`
   : '48px minmax(320px, 1fr)')
@@ -146,6 +149,7 @@ async function createWorkspaceCalculation(request: CalculationRequest, generatio
 onBeforeUnmount(() => {
   workspaceGeneration += 1
   cancelWorkspaceJobs()
+  backtestWorkspaceChannel?.close()
 })
 
 async function trackCalculation(source: SeriesSource): Promise<void> {
@@ -186,8 +190,11 @@ async function loadSignalObjects(): Promise<void> {
   const generation = ++signalLoadGeneration
   if (!dataset || sources.length === 0) {
     signalObjectsBySource.value = {}
-    selectedSignal.value = null
-    lockedSignalId.value = null
+    if (selectedSignalOrigin.value !== 'trade') {
+      selectedSignal.value = null
+      selectedSignalOrigin.value = null
+      lockedSignalId.value = null
+    }
     return
   }
   signalLoading.value = true
@@ -261,8 +268,8 @@ async function loadSignalObjects(): Promise<void> {
       for (const signal of sourceSignals.values()) byId.set(signal.object_id, signal)
     }
     signalObjectsBySource.value = bySource
-    if (selectedSignal.value) selectedSignal.value = byId.get(selectedSignal.value.object_id) ?? null
-    if (lockedSignalId.value && !byId.has(lockedSignalId.value)) lockedSignalId.value = null
+    if (selectedSignal.value && selectedSignalOrigin.value !== 'trade') selectedSignal.value = byId.get(selectedSignal.value.object_id) ?? null
+    if (selectedSignalOrigin.value !== 'trade' && lockedSignalId.value && !byId.has(lockedSignalId.value)) lockedSignalId.value = null
   } catch (cause) {
     if (generation === signalLoadGeneration) workspaceStatus.value = cause instanceof Error ? `信号对象读取失败：${cause.message}` : '信号对象读取失败'
   } finally {
@@ -297,10 +304,12 @@ function treeSignal(signal: ChanSignalPoint, objectType: 'divergence' | 'trade_p
 function selectSignal(signal: ChanTreeObject): void {
   selectedDrawingId.value = null
   selectedSignal.value = signal
+  selectedSignalOrigin.value = 'strategy'
 }
 
 function selectDrawingObject(id: string): void {
   selectedSignal.value = null
+  selectedSignalOrigin.value = null
   selectedDrawingId.value = id
 }
 
@@ -321,6 +330,56 @@ function addStrategyRunSource(source: StrategyRunSource): void {
   ]
   rightTab.value = 'objects'
 }
+
+function focusBacktestTrade(trade: BacktestTrade): void {
+  const signal: ChanTreeObject = {
+    object_id: `${trade.trade_id}:entry`,
+    bar_index: trade.entry_bar_index, time: trade.entry_time, price_i64: trade.entry_price_i64,
+    confirmed_at_bar_index: trade.entry_bar_index,
+    known_at_bar_index: trade.entry_signal_known_at_bar_index,
+    object_revision: 1, label: trade.side === 'long' ? '买入' : '卖出',
+    detail: `${trade.quantity} 手 · ${trade.trade_id}`,
+  }
+  selectedDrawingId.value = null
+  selectedSignal.value = signal
+  selectedSignalOrigin.value = 'trade'
+  lockedSignalId.value = signal.object_id
+  void chartRef.value?.focusSignal(signal)
+  window.focus()
+}
+
+function openBacktestWorkspace(): void {
+  const dataset = selectedDataset.value
+  if (!dataset) {
+    workspaceStatus.value = '请先选择 K 线数据集'
+    return
+  }
+  const popup = window.open(
+    createBacktestWorkspaceUrl(dataset, window.location.origin),
+    `tvbt-backtest-${dataset.dataset_id.replace(/[^a-zA-Z0-9]/g, '-')}`,
+    'popup,width=1480,height=920,resizable=yes,scrollbars=no',
+  )
+  if (!popup) {
+    workspaceStatus.value = '浏览器阻止了回测窗口，请允许本站弹出窗口'
+    return
+  }
+  popup.focus()
+  workspaceStatus.value = `已打开并绑定 ${dataset.dataset_id} 的回测窗口`
+}
+
+onMounted(() => {
+  if (!backtestWorkspaceChannel) return
+  backtestWorkspaceChannel.onmessage = (event: MessageEvent<BacktestWorkspaceMessage>) => {
+    const message = event.data
+    const dataset = selectedDataset.value
+    if (!dataset || message.dataset_id !== dataset.dataset_id || message.data_revision !== dataset.data_revision) {
+      workspaceStatus.value = '回测窗口与当前 K 线数据版本不一致，未执行联动'
+      return
+    }
+    if (message.type === 'run-completed') addStrategyRunSource(message.source)
+    else if (message.type === 'focus-trade') focusBacktestTrade(message.trade)
+  }
+})
 
 function focusResearchTrade(trade: { trade_id: string; entry_bar_index: number; entry_time: number; entry_price_i64: number }): void {
   void chartRef.value?.focusSignal({ object_id: trade.trade_id, bar_index: trade.entry_bar_index, time: trade.entry_time, price_i64: trade.entry_price_i64, confirmed_at_bar_index: trade.entry_bar_index, known_at_bar_index: trade.entry_bar_index, object_revision: 1 })
@@ -496,6 +555,7 @@ async function selectDataset(dataset: DatasetMeta, origin: 'automatic' | 'user' 
   selectedDrawingId.value = null
   signalObjectsBySource.value = {}
   selectedSignal.value = null
+  selectedSignalOrigin.value = null
   lockedSignalId.value = null
   workspaceStatus.value = ''
   const [layoutResult, drawingResult, strategyConfigResult] = await Promise.allSettled([
@@ -785,7 +845,7 @@ function resizeBottom(event: PointerEvent): void {
       <button v-if="bottomOpen" class="bottom-splitter" aria-label="调整底部面板高度" @pointerdown="resizeBottom" />
       <nav>
         <button :class="{ active: bottomTab === 'replay' }" @click="bottomTab = 'replay'; bottomOpen = true">回放</button>
-        <button :class="{ active: bottomTab === 'backtest' }" @click="bottomTab = 'backtest'; bottomOpen = true">回测</button>
+        <button aria-label="打开独立回测工作区" @click="openBacktestWorkspace">回测 ↗</button>
         <button :class="{ active: bottomTab === 'trades' }" @click="bottomTab = 'trades'; bottomOpen = true">交易</button>
         <button :class="{ active: bottomTab === 'equity' }" @click="bottomTab = 'equity'; bottomOpen = true">权益</button>
         <button :class="{ active: bottomTab === 'optimization' }" @click="bottomTab = 'optimization'; bottomOpen = true">优化</button>

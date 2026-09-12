@@ -21,7 +21,7 @@ func TestReaderTailAndCursorRanges(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(tail.Bars.BarIndex) != 3000 || tail.Coverage.FirstBarIndex != 3000 || tail.Coverage.LastBarIndex != 5999 || !tail.HasMoreBefore {
+	if len(tail.Bars.BarIndex) != 3000 || tail.Coverage.FirstBarIndex != 3000 || tail.Coverage.LastBarIndex != 5999 || !tail.HasMoreBefore || tail.HasMoreAfter {
 		t.Fatalf("tail range: %#v (%d bars)", tail.Coverage, len(tail.Bars.BarIndex))
 	}
 	if tail.GenerationID != "gen-1" || tail.PriceScale != 10 || !strings.HasPrefix(tail.Checksum, "sha256:") {
@@ -34,7 +34,7 @@ func TestReaderTailAndCursorRanges(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(prefetch.Bars.BarIndex) != 1500 || prefetch.Bars.BarIndex[0] != 1500 || prefetch.Bars.BarIndex[1499] != 2999 || !prefetch.HasMoreBefore {
+	if len(prefetch.Bars.BarIndex) != 1500 || prefetch.Bars.BarIndex[0] != 1500 || prefetch.Bars.BarIndex[1499] != 2999 || !prefetch.HasMoreBefore || !prefetch.HasMoreAfter {
 		t.Fatalf("prefetch range: %#v", prefetch)
 	}
 	before = 1000
@@ -44,12 +44,22 @@ func TestReaderTailAndCursorRanges(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(first.Bars.BarIndex) != 1000 || first.Bars.BarIndex[0] != 0 || first.Bars.BarIndex[999] != 999 || first.HasMoreBefore {
+	if len(first.Bars.BarIndex) != 1000 || first.Bars.BarIndex[0] != 0 || first.Bars.BarIndex[999] != 999 || first.HasMoreBefore || !first.HasMoreAfter {
 		t.Fatalf("first range: %#v", first)
 	}
 	again, err := reader.Read(context.Background(), Query{DatasetID: "SHFE.AO2609.5m", DataRevision: revision, GenerationID: "gen-2"})
 	if err != nil || again.Checksum != tail.Checksum {
 		t.Fatalf("stable checksum: %q/%q, %v", tail.Checksum, again.Checksum, err)
+	}
+	after := int64(999)
+	forward, err := reader.Read(context.Background(), Query{
+		DatasetID: "SHFE.AO2609.5m", DataRevision: revision, GenerationID: "gen-1", AfterBarIndex: &after, Limit: 1500,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(forward.Bars.BarIndex) != 1500 || forward.Bars.BarIndex[0] != 1000 || forward.Bars.BarIndex[1499] != 2499 || !forward.HasMoreBefore || !forward.HasMoreAfter {
+		t.Fatalf("forward range: %#v", forward)
 	}
 }
 
@@ -61,10 +71,12 @@ func TestReaderRejectsRevisionAndInvalidRanges(t *testing.T) {
 	if !errors.Is(err, ErrRevisionMismatch) {
 		t.Fatalf("revision mismatch = %v", err)
 	}
-	tail, before := 5, int64(5)
+	tail, before, after := 5, int64(5), int64(5)
 	for _, query := range []Query{
 		{DatasetID: "SHFE.AO2609.5m", DataRevision: revision},
 		{DatasetID: "SHFE.AO2609.5m", DataRevision: revision, GenerationID: "gen", Tail: &tail, BeforeBarIndex: &before},
+		{DatasetID: "SHFE.AO2609.5m", DataRevision: revision, GenerationID: "gen", BeforeBarIndex: &before, AfterBarIndex: &after},
+		{DatasetID: "SHFE.AO2609.5m", DataRevision: revision, GenerationID: "gen", Tail: &tail, AfterBarIndex: &after},
 		{DatasetID: "SHFE.AO2609.5m", DataRevision: revision, GenerationID: "gen", Limit: 10},
 	} {
 		if _, err := reader.Read(context.Background(), query); !errors.Is(err, ErrInvalidRange) {

@@ -138,11 +138,12 @@ export function getBars(
   datasetId: string,
   revision: string,
   generationId: string,
-  range: { tail?: number; beforeBarIndex?: number; limit?: number } = {},
+  range: { tail?: number; beforeBarIndex?: number; afterBarIndex?: number; limit?: number } = {},
 ): Promise<BarRangeResponse> {
   const query = new URLSearchParams({ revision, generation_id: generationId })
   if (range.tail !== undefined) query.set('tail', String(range.tail))
   if (range.beforeBarIndex !== undefined) query.set('before_bar_index', String(range.beforeBarIndex))
+  if (range.afterBarIndex !== undefined) query.set('after_bar_index', String(range.afterBarIndex))
   if (range.limit !== undefined) query.set('limit', String(range.limit))
   return apiRequest(`/api/v1/datasets/${encodeURIComponent(datasetId)}/bars?${query}`)
 }

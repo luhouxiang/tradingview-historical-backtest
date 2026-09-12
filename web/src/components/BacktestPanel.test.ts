@@ -18,10 +18,11 @@ const strategy = {
   },
 }
 const secondBuyStrategy = {
-  kind: 'strategy', algorithm_id: 'second_buy_only', algorithm_version: '1.1.0', source_hash: `sha256:${'4'.repeat(64)}`,
-  name: '只做第二类买点', parameter_schema: {
+  kind: 'strategy', algorithm_id: 'second_buy_only', algorithm_version: '1.2.0', source_hash: `sha256:${'4'.repeat(64)}`,
+  name: '只做二买（标准/类二可选）', parameter_schema: {
     properties: {
       checkpoint_interval: { type: 'integer', minimum: 64, maximum: 100_000, default: 1024 },
+      allow_class_like_entries: { type: 'boolean', default: false },
       allow_strongest: { type: 'boolean', default: true }, allow_normal: { type: 'boolean', default: true },
       allow_weakest: { type: 'boolean', default: true }, strongest_quantity: { type: 'integer', minimum: 1, maximum: 100, default: 2 },
       normal_quantity: { type: 'integer', minimum: 1, maximum: 100, default: 2 },
@@ -201,7 +202,7 @@ const unifiedRiskOverlay = {
 const dataset = {
   dataset_id: 'TEST.A1.5m', data_revision: `sha256:${'2'.repeat(64)}`,
   timeframe: '5m', instrument: { exchange: 'TEST', symbol: 'A1', product: 'A', contract_multiplier: 20 },
-  coverage: { first_bar_index: 0, last_bar_index: 100 },
+  coverage: { first_bar_index: 0, last_bar_index: 5000 },
 } as DatasetMeta
 const daily30mDataset = {
   ...dataset,
@@ -246,6 +247,18 @@ describe('BacktestPanel', () => {
     api.getBacktestChartEvents.mockResolvedValue([])
   })
 
+  it('shows strategy, risk and state controls in Chinese', async () => {
+    const wrapper = mount(BacktestPanel, { props: { dataset, view: 'workspace' } })
+    await flushPromises()
+    expect(wrapper.text()).toContain('均线周期')
+    expect(wrapper.text()).toContain('最大日亏损（百万分比）')
+    expect(wrapper.text()).toContain('等待开始')
+    expect(wrapper.text()).not.toContain('ma_period')
+    expect(wrapper.text()).not.toContain('max_daily_loss_ppm')
+    expect(wrapper.text()).not.toContain('idle')
+    wrapper.unmount()
+  })
+
   it('creates a formal run and renders summary, trades and equity views', async () => {
     api.getBacktestChartEvents.mockResolvedValue([
       {
@@ -264,6 +277,7 @@ describe('BacktestPanel', () => {
     await wrapper.get('.backtest-controls button').trigger('click')
     await flushPromises()
     expect(api.createBacktest).toHaveBeenCalledWith(expect.objectContaining({
+      range: { warmup_from_bar_index: 0, from_bar_index: 0, to_bar_index: 5000 },
       execution: expect.objectContaining({ semantic_version: '1.0.0', fill_timing: 'next_bar_open', contract_multiplier: 20, contract_multiplier_source: 'instrument_config' }),
       risk_overlay: expect.objectContaining({
         algorithm: expect.objectContaining({ kind: 'risk_filter', algorithm_id: 'unified_risk_execution_overlay' }),
@@ -288,6 +302,48 @@ describe('BacktestPanel', () => {
     expect(wrapper.get('.trade-table').text()).toContain('trade-1')
     await wrapper.setProps({ view: 'equity' })
     expect(wrapper.get('.equity-chart polyline').attributes('points')).not.toBe('')
+  })
+
+  it('renders a resizable half-page trade ledger, loads every page and emits double-click focus', async () => {
+    const secondTrade = {
+      trade_id: 'trade-2', side: 'long' as const, entry_bar_index: 30, entry_time: 1_700_006_000_000,
+      entry_price_i64: 110, entry_signal_id: 'signal-entry-2', entry_signal_known_at_bar_index: 29, entry_order_id: 'order-entry-2',
+      exit_bar_index: 40, exit_time: 1_700_009_000_000, exit_price_i64: 120, exit_signal_id: 'signal-exit-2', exit_order_id: 'order-exit-2',
+      quantity: 2, gross_pnl_i64: 200, net_pnl_i64: 180, commission_i64: 12, slippage_i64: 8,
+      trigger_category: 'B2' as const, attribution_reason_code: 'CONFIRMED_CLASS_LIKE_NORMAL_B2_ENTRY',
+    }
+    api.getBacktestTrades
+      .mockResolvedValueOnce({ rows: [{
+        trade_id: 'trade-1', side: 'short', entry_bar_index: 10, entry_time: 1_700_000_000_000,
+        entry_price_i64: 100, entry_signal_id: 'signal-entry', entry_signal_known_at_bar_index: 9, entry_order_id: 'order-entry',
+        exit_bar_index: 20, exit_time: 1_700_003_000_000, exit_price_i64: 90, exit_signal_id: 'signal-exit', exit_order_id: 'order-exit',
+        quantity: 1, gross_pnl_i64: 20, net_pnl_i64: 10, commission_i64: 6, slippage_i64: 4,
+      }], next_cursor: 'page-2' })
+      .mockResolvedValueOnce({ rows: [secondTrade], next_cursor: null })
+    const wrapper = mount(BacktestPanel, { props: { dataset, view: 'workspace' } })
+    await flushPromises()
+    await wrapper.get('.backtest-run-button').trigger('click')
+    await flushPromises()
+
+    expect(api.getBacktestTrades).toHaveBeenNthCalledWith(1, 'run-1', undefined)
+    expect(api.getBacktestTrades).toHaveBeenNthCalledWith(2, 'run-1', 'page-2')
+    expect(wrapper.get('[aria-label="交易明细"]').attributes('style')).toContain('height: 50%')
+    expect(wrapper.findAll('.detailed-trade-table tbody tr')).toHaveLength(2)
+
+    const row = wrapper.get('[data-trade-id="trade-2"]')
+    await row.trigger('dblclick')
+    expect(row.classes()).toContain('selected')
+    expect(wrapper.emitted('focus-trade')?.[0]?.[0]).toMatchObject({ trade_id: 'trade-2', entry_bar_index: 30 })
+
+    vi.spyOn(wrapper.get('.backtest-panel').element, 'getBoundingClientRect').mockReturnValue({ height: 800 } as DOMRect)
+    vi.spyOn(wrapper.get('.backtest-trade-pane').element, 'getBoundingClientRect').mockReturnValue({ height: 400 } as DOMRect)
+    const pointerDown = new Event('pointerdown')
+    Object.defineProperty(pointerDown, 'clientY', { value: 400 })
+    wrapper.get('.backtest-pane-splitter').element.dispatchEvent(pointerDown)
+    window.dispatchEvent(new MouseEvent('pointermove', { clientY: 200 }))
+    await wrapper.vm.$nextTick()
+    expect(wrapper.get('[aria-label="交易明细"]').attributes('style')).toContain('height: 600px')
+    window.dispatchEvent(new MouseEvent('pointerup'))
   })
 
   it('highlights the run button before and after execution and greys it while running', async () => {
@@ -460,12 +516,15 @@ describe('BacktestPanel', () => {
     ;(select.findAll('option')[1].element as HTMLOptionElement).selected = true
     await select.trigger('change')
     await flushPromises()
-    expect(wrapper.text()).toContain('weakest_quantity')
+    expect(wrapper.text()).toContain('最弱信号手数')
     await wrapper.get('.backtest-controls button').trigger('click')
     await flushPromises()
     expect(api.createBacktest).toHaveBeenCalledWith(expect.objectContaining({
       strategy: expect.objectContaining({ algorithm_id: 'second_buy_only' }),
-      parameters: expect.objectContaining({ strongest_quantity: 2, normal_quantity: 2, weakest_quantity: 1 }),
+      parameters: expect.objectContaining({
+        allow_class_like_entries: false,
+        strongest_quantity: 2, normal_quantity: 2, weakest_quantity: 1,
+      }),
     }))
     expect(wrapper.emitted('completed')?.[0]?.[0]).toMatchObject({
       objects: [expect.objectContaining({ object_id: 'handoff-73', label: '移交三买趋势持有', bar_index: 70 })],
@@ -487,7 +546,7 @@ describe('BacktestPanel', () => {
     ;(select.findAll('option')[8].element as HTMLOptionElement).selected = true
     await select.trigger('change')
     await flushPromises()
-    expect(wrapper.text()).toContain('enable_legacy_b1_macd_proxy')
+    expect(wrapper.text()).toContain('启用旧一买 MACD 代理')
     expect(wrapper.get('.backtest-controls button').text()).toBe('生成辅助事件（不交易）')
     await wrapper.get('.backtest-controls button').trigger('click')
     await flushPromises()
@@ -522,7 +581,7 @@ describe('BacktestPanel', () => {
     ;(select.findAll('option')[9].element as HTMLOptionElement).selected = true
     await select.trigger('change')
     await flushPromises()
-    expect(wrapper.text()).toContain('reclaim_confirm_bars')
+    expect(wrapper.text()).toContain('重新站上确认根数')
     expect(wrapper.get('.backtest-controls button').text()).toBe('生成辅助事件（不交易）')
     await wrapper.get('.backtest-controls button').trigger('click')
     await flushPromises()
@@ -556,7 +615,7 @@ describe('BacktestPanel', () => {
     ;(select.findAll('option')[10].element as HTMLOptionElement).selected = true
     await select.trigger('change')
     await flushPromises()
-    expect(wrapper.text()).toContain('contraction_confirm_bars')
+    expect(wrapper.text()).toContain('收口确认根数')
     expect(wrapper.get('.backtest-controls button').text()).toBe('生成辅助事件（不交易）')
     await wrapper.get('.backtest-controls button').trigger('click')
     await flushPromises()
@@ -688,7 +747,7 @@ describe('BacktestPanel', () => {
     ;(select.findAll('option')[2].element as HTMLOptionElement).selected = true
     await select.trigger('change')
     await flushPromises()
-    expect(wrapper.text()).toContain('minimum_entry_volume')
+    expect(wrapper.text()).toContain('最小入场成交量')
     await wrapper.get('.backtest-controls button').trigger('click')
     await flushPromises()
     expect(api.createBacktest).toHaveBeenCalledWith(expect.objectContaining({
@@ -712,8 +771,8 @@ describe('BacktestPanel', () => {
     ;(select.findAll('option')[3].element as HTMLOptionElement).selected = true
     await select.trigger('change')
     await flushPromises()
-    expect(wrapper.text()).toContain('estimated_round_trip_cost_i64')
-    expect(wrapper.text()).toContain('max_entries_per_center')
+    expect(wrapper.text()).toContain('预计往返成本')
+    expect(wrapper.text()).toContain('每中枢最多入场次数')
     await wrapper.get('.backtest-controls button').trigger('click')
     await flushPromises()
     expect(api.createBacktest).toHaveBeenCalledWith(expect.objectContaining({
@@ -745,8 +804,8 @@ describe('BacktestPanel', () => {
     ;(select.findAll('option')[4].element as HTMLOptionElement).selected = true
     await select.trigger('change')
     await flushPromises()
-    expect(wrapper.text()).toContain('odd_direction_is_down')
-    expect(wrapper.text()).toContain('operation_quantity')
+    expect(wrapper.text()).toContain('奇数段视为向下')
+    expect(wrapper.text()).toContain('操作手数')
     await wrapper.get('.backtest-controls button').trigger('click')
     await flushPromises()
     expect(api.createBacktest).toHaveBeenCalledWith(expect.objectContaining({
@@ -773,8 +832,8 @@ describe('BacktestPanel', () => {
     ;(select.findAll('option')[6].element as HTMLOptionElement).selected = true
     await select.trigger('change')
     await flushPromises()
-    expect(wrapper.text()).toContain('partial_take_profit_quantity')
-    expect(wrapper.text()).toContain('minimum_net_segment_i64')
+    expect(wrapper.text()).toContain('分批止盈手数')
+    expect(wrapper.text()).toContain('最小净线段空间')
     await wrapper.get('.backtest-controls button').trigger('click')
     await flushPromises()
     expect(api.createBacktest).toHaveBeenCalledWith(expect.objectContaining({
@@ -802,8 +861,8 @@ describe('BacktestPanel', () => {
     ;(select.findAll('option')[5].element as HTMLOptionElement).selected = true
     await select.trigger('change')
     await flushPromises()
-    expect(wrapper.text()).toContain('level_graph_profile_id')
-    expect(wrapper.text()).toContain('can_handle_mid_center_continue')
+    expect(wrapper.text()).toContain('级别图配置编号')
+    expect(wrapper.text()).toContain('可处理中级中枢延续')
     await wrapper.get('.backtest-controls button').trigger('click')
     await flushPromises()
     expect(api.createBacktest).toHaveBeenCalledWith(expect.objectContaining({
@@ -831,8 +890,8 @@ describe('BacktestPanel', () => {
     ;(select.findAll('option')[7].element as HTMLOptionElement).selected = true
     await select.trigger('change')
     await flushPromises()
-    expect(wrapper.text()).toContain('coarse_effective_hold_bars')
-    expect(wrapper.text()).toContain('execution_available')
+    expect(wrapper.text()).toContain('粗略有效站稳根数')
+    expect(wrapper.text()).toContain('允许执行交易')
     await wrapper.get('.backtest-controls button').trigger('click')
     await flushPromises()
     expect(api.createBacktest).toHaveBeenCalledWith(expect.objectContaining({

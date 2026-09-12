@@ -66,7 +66,7 @@ $calendarLines.Add('trading_day,night_session_date,is_open,note')
 $day = [datetime]'2026-01-05'
 $createdDays = 0
 $barIndex = 0
-while ($createdDays -lt 30) {
+while ($createdDays -lt 70) {
     if ($day.DayOfWeek -notin @([DayOfWeek]::Saturday, [DayOfWeek]::Sunday)) {
         $dayText = $day.ToString('yyyy/MM/dd')
         $calendarLines.Add("$($day.ToString('yyyy-MM-dd')),$($day.AddDays(-1).ToString('yyyy-MM-dd')),true,e2e")
@@ -202,7 +202,7 @@ try {
         dataset_id = 'SHFE.AOL9.5m'
         fixture_bars = $barIndex
         isolated_ports = @($webPort, $goPort, $pythonPort)
-        verified = @('startup_selection', 'candles_visible', 'formal_backtest', 'polling_completion', 'reload_result_restore')
+        verified = @('startup_selection', 'candles_visible', 'formal_backtest', 'polling_completion', 'historical_trade_focus', 'forward_prefetch', 'reload_result_restore')
     } | ConvertTo-Json -Compress
 } catch {
     foreach ($name in @('python.stderr.log', 'go.stderr.log', 'web.stderr.log')) {

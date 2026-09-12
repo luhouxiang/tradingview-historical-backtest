@@ -89,8 +89,12 @@ let chart: IChartApi | null = null
 let candles: ISeriesApi<'Candlestick'> | null = null
 let macdPlaceholder: ISeriesApi<'Histogram'> | null = null
 let volume: ISeriesApi<'Custom'> | null = null
-let prefetchTimer: number | undefined
+let prefetchBeforeTimer: number | undefined
+let prefetchAfterTimer: number | undefined
 let indicatorTimer: number | undefined
+let focusGeneration = 0
+let focusInProgress = false
+let prefetchSuppressedUntil = 0
 let dragCleanup: (() => void) | null = null
 let savedWeights: number[] | null = null
 let resizeObserver: ResizeObserver | null = null
@@ -144,7 +148,9 @@ const projectedSelectedSignal = computed(() => {
   projectionRevision.value
   const signal = props.selectedSignal
   if (!signal || !chart || !candles || !props.dataset) return null
-  const startX = chart.timeScale().timeToCoordinate(Math.floor(signal.time / 1000) as UTCTimestamp)
+  const anchoredBar = session.bars.find((bar) => bar.barIndex === signal.bar_index)
+  const anchorTime = anchoredBar?.timestampUtc ?? signal.time
+  const startX = chart.timeScale().timeToCoordinate(Math.floor(anchorTime / 1000) as UTCTimestamp)
   const y = candles.priceToCoordinate(signal.price_i64 / props.dataset.price.price_scale)
   if (startX === null || y === null) return null
   const width = host.value?.clientWidth ?? 0
@@ -155,7 +161,14 @@ const projectedSelectedSignal = computed(() => {
   const confirmedX = confirmedBar
     ? chart.timeScale().timeToCoordinate(Math.floor(confirmedBar.timestampUtc / 1000) as UTCTimestamp)
     : null
-  return { startX, endX: confirmedX === null || confirmedX === startX ? startX + 12 : confirmedX, y }
+  const labelAbove = y > 48
+  return {
+    startX, endX: confirmedX === null || confirmedX === startX ? startX + 12 : confirmedX, y,
+    label: signal.label ?? '成交', labelY: labelAbove ? y - 24 : y + 34,
+    markerPath: labelAbove
+      ? `M ${startX} ${y - 5} l -7 -12 h 14 z`
+      : `M ${startX} ${y + 5} l -7 12 h 14 z`,
+  }
 })
 
 const effectivePanes = computed(() => enforceMinimumHeights(panes.value.map((pane) => ({
@@ -619,41 +632,58 @@ async function openDataset(meta: DatasetMeta): Promise<void> {
 
 async function focusSignal(signal: ChanTreeObject): Promise<void> {
   if (!props.dataset || session.meta?.dataset_id !== props.dataset.dataset_id) return
+  const requestGeneration = ++focusGeneration
+  focusInProgress = true
+  prefetchSuppressedUntil = Number.POSITIVE_INFINITY
+  window.clearTimeout(prefetchBeforeTimer)
+  window.clearTimeout(prefetchAfterTimer)
+  prefetchBeforeTimer = undefined
+  prefetchAfterTimer = undefined
   const currentBars = session.bars
   const currentIndex = currentBars.findIndex((bar) => bar.barIndex === signal.bar_index)
   const currentRange = chart?.timeScale().getVisibleLogicalRange()
-  if (currentIndex >= 0 && currentRange && currentIndex >= currentRange.from && currentIndex <= currentRange.to) {
-    projectionRevision.value += 1
-    return
-  }
   loading.value = true
   error.value = ''
   try {
-    const confirmationDistance = signal.confirmed_at_bar_index === null ? 0 : Math.abs(signal.confirmed_at_bar_index - signal.bar_index)
-    const radius = confirmationDistance <= 2300 ? Math.max(120, confirmationDistance + 30) : 120
-    await session.loadAround(signal.bar_index, radius, true)
-    renderBars()
+    if (currentIndex < 0) {
+      const confirmationDistance = signal.confirmed_at_bar_index === null ? 0 : Math.abs(signal.confirmed_at_bar_index - signal.bar_index)
+      const radius = confirmationDistance <= 2300 ? Math.max(120, confirmationDistance + 30) : 120
+      await session.loadAround(signal.bar_index, radius, true)
+      if (requestGeneration !== focusGeneration) return
+      renderBars()
+    }
     const bars = session.bars
     const start = bars.findIndex((bar) => bar.barIndex === signal.bar_index)
     const confirmed = signal.confirmed_at_bar_index === null
       ? start
       : bars.findIndex((bar) => bar.barIndex === signal.confirmed_at_bar_index)
     if (start < 0) throw new Error('信号对应的 K 线未能加载')
-    const left = Math.max(0, Math.min(start, confirmed < 0 ? start : confirmed) - 30)
-    const right = Math.min(bars.length - 1, Math.max(start, confirmed < 0 ? start : confirmed) + 30)
-    chart?.timeScale().setVisibleLogicalRange({ from: left, to: right })
-    projectionRevision.value += 1
-    const fromBarIndex = bars[left]?.barIndex
-    const toBarIndex = bars[right]?.barIndex
+    const contextLeft = Math.max(0, Math.min(start, confirmed < 0 ? start : confirmed) - 80)
+    const contextRight = Math.min(bars.length - 1, Math.max(start, confirmed < 0 ? start : confirmed) + 80)
+    const fromBarIndex = bars[contextLeft]?.barIndex
+    const toBarIndex = bars[contextRight]?.barIndex
     if (fromBarIndex !== undefined && toBarIndex !== undefined) {
       await Promise.all([renderIndicators(fromBarIndex, toBarIndex), renderChan(fromBarIndex, toBarIndex)])
     }
+    if (requestGeneration !== focusGeneration) return
+    const previousSpan = currentRange ? currentRange.to - currentRange.from : 80
+    const visibleSpan = Math.min(160, Math.max(40, previousSpan))
+    chart?.timeScale().setVisibleLogicalRange({ from: start - visibleSpan / 2, to: start + visibleSpan / 2 })
+    projectionRevision.value += 1
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : '信号定位失败'
     logger.error('ui.error', 'Signal focus failed', { object_id: signal.object_id, reason: error.value })
   } finally {
-    loading.value = false
+    if (requestGeneration === focusGeneration) {
+      focusInProgress = false
+      prefetchSuppressedUntil = Date.now() + 500
+      loading.value = false
+    }
   }
+}
+
+function enableChartPrefetch(): void {
+  prefetchSuppressedUntil = 0
 }
 
 function visibleRangeChanged(range: LogicalRange | null): void {
@@ -661,24 +691,44 @@ function visibleRangeChanged(range: LogicalRange | null): void {
   projectDrawings()
   projectionRevision.value += 1
   scheduleIndicatorRange(range)
-  if (props.replayCursor !== null || !session.hasMoreBefore) return
+  if (focusInProgress || Date.now() < prefetchSuppressedUntil || props.replayCursor !== null) return
   const screen = Math.max(1, range.to - range.from)
-  if (range.from > screen) return
-  window.clearTimeout(prefetchTimer)
-  prefetchTimer = window.setTimeout(async () => {
-    const preserved = chart?.timeScale().getVisibleLogicalRange()
-    try {
-      const added = await session.prefetchBefore()
-      if (added < 1) return
-      renderBars()
-      if (preserved) {
-        scheduleIndicatorRange(preserved)
-        chart?.timeScale().setVisibleLogicalRange({ from: preserved.from + added, to: preserved.to + added })
+  const edgeThreshold = Math.max(10, screen * .15)
+  if (session.hasMoreBefore && range.from <= edgeThreshold) {
+    window.clearTimeout(prefetchBeforeTimer)
+    prefetchBeforeTimer = window.setTimeout(async () => {
+      const preserved = chart?.timeScale().getVisibleLogicalRange()
+      try {
+        const added = await session.prefetchBefore()
+        if (added < 1) return
+        renderBars()
+        if (preserved) {
+          const shifted = { from: preserved.from + added, to: preserved.to + added } as LogicalRange
+          scheduleIndicatorRange(shifted)
+          chart?.timeScale().setVisibleLogicalRange(shifted)
+        }
+      } catch (cause) {
+        logger.error('ui.error', 'K-line backward prefetch failed', { reason: cause instanceof Error ? cause.message : 'unknown' })
       }
-    } catch (cause) {
-      logger.error('ui.error', 'K-line prefetch failed', { reason: cause instanceof Error ? cause.message : 'unknown' })
-    }
-  }, 150)
+    }, 150)
+  }
+  if (session.hasMoreAfter && range.to >= session.bars.length - 1 - edgeThreshold) {
+    window.clearTimeout(prefetchAfterTimer)
+    prefetchAfterTimer = window.setTimeout(async () => {
+      const preserved = chart?.timeScale().getVisibleLogicalRange()
+      try {
+        const added = await session.prefetchAfter()
+        if (added < 1) return
+        renderBars()
+        if (preserved) {
+          scheduleIndicatorRange(preserved)
+          chart?.timeScale().setVisibleLogicalRange(preserved)
+        }
+      } catch (cause) {
+        logger.error('ui.error', 'K-line forward prefetch failed', { reason: cause instanceof Error ? cause.message : 'unknown' })
+      }
+    }, 150)
+  }
 }
 
 function beginPaneResize(index: number, event: PointerEvent): void {
@@ -872,7 +922,8 @@ defineExpose({
 })
 
 onBeforeUnmount(() => {
-  window.clearTimeout(prefetchTimer)
+  window.clearTimeout(prefetchBeforeTimer)
+  window.clearTimeout(prefetchAfterTimer)
   window.clearTimeout(indicatorTimer)
   dragCleanup?.()
   resizeObserver?.disconnect()
@@ -890,9 +941,10 @@ onBeforeUnmount(() => {
     class="chart-group"
     aria-label="K 线多窗格图表"
     :data-cache-first-index="cacheFirstIndex ?? ''"
+    :data-cache-last-index="latestBar?.barIndex ?? ''"
     :data-cache-bar-count="cacheBarCount"
   >
-    <div ref="host" class="chart-host" />
+    <div ref="host" class="chart-host" @pointerdown="enableChartPrefetch" />
     <svg class="drawing-layer" aria-label="用户绘图图层" @pointermove="drawingPointerMove">
       <rect v-if="drawingTool !== 'cursor'" class="drawing-capture" width="100%" height="100%" @pointerdown="createDrawing" />
       <rect
@@ -906,7 +958,10 @@ onBeforeUnmount(() => {
         <text :x="signal.x + 7" :y="signal.y + 9">{{ signal.label }}</text>
       </g>
       <g v-if="projectedSelectedSignal" class="signal-selection" :class="{ locked: signalLocked }" data-selected-signal="true">
+        <line class="signal-selection-time" :x1="projectedSelectedSignal.startX" y1="0" :x2="projectedSelectedSignal.startX" :y2="chartHeight" />
         <line :x1="projectedSelectedSignal.startX" :y1="projectedSelectedSignal.y" :x2="projectedSelectedSignal.endX" :y2="projectedSelectedSignal.y" />
+        <path class="signal-selection-marker" :d="projectedSelectedSignal.markerPath" />
+        <text class="signal-selection-label" :x="projectedSelectedSignal.startX + 10" :y="projectedSelectedSignal.labelY">{{ projectedSelectedSignal.label }}</text>
         <circle :cx="projectedSelectedSignal.startX" :cy="projectedSelectedSignal.y" r="7" />
         <circle :cx="projectedSelectedSignal.endX" :cy="projectedSelectedSignal.y" r="7" />
       </g>

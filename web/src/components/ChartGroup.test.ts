@@ -57,7 +57,7 @@ describe('ChartGroup', () => {
     vi.clearAllMocks()
     apiMocks.getBars.mockImplementation(async (_dataset: string, _revision: string, generation: string) => ({
       request_id: 'req', dataset_id: 'SHFE.AO2609.5m', data_revision: revision, generation_id: generation,
-      price_scale: 1, coverage: { first_bar_index: 0, last_bar_index: 1 }, has_more_before: false,
+      price_scale: 1, coverage: { first_bar_index: 0, last_bar_index: 1 }, has_more_before: false, has_more_after: false,
       checksum: `sha256:${'b'.repeat(64)}`,
       bars: { bar_index: [0, 1], timestamp_utc: [1_700_000_000_000, 1_700_000_300_000], open_i64: [10, 11], high_i64: [12, 13], low_i64: [9, 10], close_i64: [11, 10], volume: [3, 4], open_interest: [null, 5] },
     }))
@@ -105,7 +105,7 @@ describe('ChartGroup', () => {
       const first = options.tail ? 3000 : 1500
       return {
         request_id: 'req', dataset_id: 'SHFE.AO2609.5m', data_revision: revision, generation_id: generation,
-        price_scale: 1, coverage: { first_bar_index: first, last_bar_index: first + 1 }, has_more_before: true,
+        price_scale: 1, coverage: { first_bar_index: first, last_bar_index: first + 1 }, has_more_before: true, has_more_after: true,
         checksum: `sha256:${'b'.repeat(64)}`,
         bars: { bar_index: [first, first + 1], timestamp_utc: [1_700_000_000_000 + first, 1_700_000_300_000 + first], open_i64: [10, 11], high_i64: [12, 13], low_i64: [9, 10], close_i64: [11, 12], volume: [3, 4], open_interest: [null, null] },
       }
@@ -538,26 +538,83 @@ describe('ChartGroup', () => {
     wrapper.unmount()
   })
 
-  it('draws two endpoint handles for a selected signal and focuses it when requested', async () => {
+  it('centers a selected signal already in cache and renders its trade label', async () => {
     const selectedSignal = {
       object_id: 'signal-1', bar_index: 0, time: 1_700_000_000_000, price_i64: 11,
       signal_type: 'buy_1' as const, divergence_kind: null, signal_class: 'standard' as const, strength: null,
       reference_object_id: null, macd_area_reference: null, macd_area_current: null,
-      confirmed: true, confirmed_at_bar_index: 1, known_at_bar_index: 1, object_revision: 1,
+      confirmed: true, confirmed_at_bar_index: 1, known_at_bar_index: 1, object_revision: 1, label: '买入',
     }
     const wrapper = mount(ChartGroup, { props: { dataset: dataset(), selectedSignal, signalLocked: true } })
     await flushPromises()
     expect(wrapper.find('[data-selected-signal="true"]').classes()).toContain('locked')
     expect(wrapper.findAll('.signal-selection circle')).toHaveLength(2)
+    expect(wrapper.get('.signal-selection-label').text()).toBe('买入')
+    expect(wrapper.find('.signal-selection-marker').exists()).toBe(true)
     chartMocks.timeScale.getVisibleLogicalRange.mockReturnValueOnce({ from: 0, to: 1 })
     await (wrapper.vm as unknown as { focusSignal: (signal: typeof selectedSignal) => Promise<void> }).focusSignal(selectedSignal)
     expect(apiMocks.getBars).toHaveBeenCalledTimes(1)
+    expect(chartMocks.timeScale.setVisibleLogicalRange).toHaveBeenLastCalledWith({ from: -20, to: 20 })
+    wrapper.unmount()
+  })
+
+  it('loads and centers an arbitrary historical trade bar', async () => {
+    const historicalIndexes = Array.from({ length: 241 }, (_, index) => 880 + index)
+    apiMocks.getBars.mockImplementation(async (_dataset: string, _revision: string, generation: string, options: { tail?: number; beforeBarIndex?: number; afterBarIndex?: number }) => {
+      if (options.tail) {
+        return {
+          request_id: 'req', dataset_id: 'SHFE.AO2609.5m', data_revision: revision, generation_id: generation,
+          price_scale: 1, coverage: { first_bar_index: 3000, last_bar_index: 5999 }, has_more_before: true, has_more_after: false,
+          checksum: `sha256:${'b'.repeat(64)}`,
+          bars: { bar_index: [3000, 5999], timestamp_utc: [1_700_900_000_000, 1_701_799_700_000], open_i64: [10, 11], high_i64: [12, 13], low_i64: [9, 10], close_i64: [11, 10], volume: [3, 4], open_interest: [null, null] },
+        }
+      }
+      if (options.afterBarIndex === 1120) {
+        return {
+          request_id: 'req', dataset_id: 'SHFE.AO2609.5m', data_revision: revision, generation_id: generation,
+          price_scale: 1, coverage: { first_bar_index: 1121, last_bar_index: 1122 }, has_more_before: true, has_more_after: true,
+          checksum: `sha256:${'b'.repeat(64)}`,
+          bars: { bar_index: [1121, 1122], timestamp_utc: [1_700_336_300_000, 1_700_336_600_000], open_i64: [1121, 1122], high_i64: [1123, 1124], low_i64: [1120, 1121], close_i64: [1122, 1123], volume: [1121, 1122], open_interest: [null, null] },
+        }
+      }
+      return {
+        request_id: 'req', dataset_id: 'SHFE.AO2609.5m', data_revision: revision, generation_id: generation,
+        price_scale: 1, coverage: { first_bar_index: 880, last_bar_index: 1120 }, has_more_before: true, has_more_after: true,
+        checksum: `sha256:${'b'.repeat(64)}`,
+        bars: {
+          bar_index: historicalIndexes, timestamp_utc: historicalIndexes.map((index) => 1_700_000_000_000 + index * 300_000),
+          open_i64: historicalIndexes, high_i64: historicalIndexes.map((index) => index + 2), low_i64: historicalIndexes.map((index) => index - 1), close_i64: historicalIndexes.map((index) => index + 1),
+          volume: historicalIndexes, open_interest: historicalIndexes.map(() => null),
+        },
+      }
+    })
+    const wideDataset = dataset()
+    wideDataset.coverage = { ...wideDataset.coverage, bar_count: 6000, last_bar_index: 5999 }
+    const selectedSignal = {
+      object_id: 'trade-1000:entry', bar_index: 1000, time: 1_700_300_000_000, price_i64: 1000,
+      confirmed_at_bar_index: 1000, known_at_bar_index: 1000, object_revision: 1, label: '买入',
+    }
+    const wrapper = mount(ChartGroup, { props: { dataset: wideDataset, selectedSignal, signalLocked: true } })
+    await flushPromises()
+    chartMocks.timeScale.getVisibleLogicalRange.mockReturnValueOnce({ from: 0, to: 100 })
     await (wrapper.vm as unknown as { focusSignal: (signal: typeof selectedSignal) => Promise<void> }).focusSignal(selectedSignal)
     await flushPromises()
     expect(apiMocks.getBars).toHaveBeenLastCalledWith(
-      'SHFE.AO2609.5m', revision, expect.stringMatching(/^gen-/), { beforeBarIndex: 2, limit: 2 },
+      'SHFE.AO2609.5m', revision, expect.stringMatching(/^gen-/), { beforeBarIndex: 1121, limit: 241 },
     )
-    expect(chartMocks.timeScale.setVisibleLogicalRange).toHaveBeenLastCalledWith({ from: 0, to: 1 })
+    expect(chartMocks.timeScale.setVisibleLogicalRange).toHaveBeenLastCalledWith({ from: 70, to: 170 })
+    expect(wrapper.get('.signal-selection-label').text()).toBe('买入')
+    vi.useFakeTimers()
+    await wrapper.get('.chart-host').trigger('pointerdown')
+    const rangeChanged = chartMocks.timeScale.subscribeVisibleLogicalRangeChange.mock.calls[0][0] as (range: { from: number; to: number }) => void
+    rangeChanged({ from: 180, to: 240 })
+    await vi.advanceTimersByTimeAsync(160)
+    await flushPromises()
+    expect(apiMocks.getBars).toHaveBeenLastCalledWith(
+      'SHFE.AO2609.5m', revision, expect.stringMatching(/^gen-/), { afterBarIndex: 1120, limit: 1500 },
+    )
+    expect(wrapper.get('.chart-group').attributes('data-cache-bar-count')).toBe('243')
+    vi.useRealTimers()
     wrapper.unmount()
   })
 

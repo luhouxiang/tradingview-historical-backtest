@@ -22,7 +22,7 @@ OpenAPI 权威入口：contracts/openapi.yaml。JSON Schema 权威入口：contr
 | POST | /api/v1/datasets/import | 创建导入任务 |
 | GET | /api/v1/datasets | 数据集目录 |
 | GET | /api/v1/datasets/{dataset_id} | 元数据 |
-| GET | /api/v1/datasets/{dataset_id}/bars | 初始或向左加载 K 线 |
+| GET | /api/v1/datasets/{dataset_id}/bars | 初始、向左或向右加载 K 线 |
 
 所有长任务统一通过 `GET /api/v1/jobs/{job_id}` 查询状态，通过
 `POST /api/v1/jobs/{job_id}/cancel` 请求协作式取消；数据集扫描和导入返回的 `job_id`
@@ -31,8 +31,9 @@ OpenAPI 权威入口：contracts/openapi.yaml。JSON Schema 权威入口：contr
 K 线查询：
 
 - revision：必填，避免混用修订。
-- tail：首次尾部数量，与 before_bar_index 二选一。
+- tail：首次尾部数量，与 before_bar_index、after_bar_index 互斥。
 - before_bar_index：向左加载时使用，返回严格更早的数据。
+- after_bar_index：向右加载时使用，返回严格更新的数据。
 - limit：默认 1500，最大 5000。
 
 紧凑响应：
@@ -45,6 +46,7 @@ K 线查询：
   "price_scale": 1,
   "coverage": {"first_bar_index": 9000, "last_bar_index": 10499},
   "has_more_before": true,
+  "has_more_after": false,
   "bars": {
     "bar_index": [9000],
     "timestamp_utc": [1785502800000],

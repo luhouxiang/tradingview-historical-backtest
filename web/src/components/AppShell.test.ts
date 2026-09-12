@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { defineComponent, h } from 'vue'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../api/client'
 import type { AlgorithmDefinition, DatasetMeta } from '../types/api'
 import AppShell from './AppShell.vue'
@@ -25,6 +25,14 @@ const dataset = {
   price: { price_scale: 1 }, coverage: { first_bar_index: 0, last_bar_index: 100 },
 } as DatasetMeta
 const focusSignalMock = vi.fn()
+
+class FakeBroadcastChannel {
+  static instances: FakeBroadcastChannel[] = []
+  onmessage: ((event: MessageEvent) => void) | null = null
+  constructor(readonly name: string) { FakeBroadcastChannel.instances.push(this) }
+  postMessage(): void {}
+  close(): void {}
+}
 
 const ChartStub = defineComponent({
   name: 'ChartGroup',
@@ -65,6 +73,7 @@ function chanDefinition(): AlgorithmDefinition {
 }
 
 describe('AppShell', () => {
+  afterEach(() => vi.unstubAllGlobals())
   it('cancels the previous dataset calculation and ignores its late poll', async () => {
     api.getLayout.mockRejectedValue(new ApiError('WORKSPACE_NOT_FOUND', 'missing', 'req-layout'))
     api.getDrawings.mockRejectedValue(new ApiError('DRAWINGS_NOT_FOUND', 'missing', 'req-drawings'))
@@ -136,6 +145,47 @@ describe('AppShell', () => {
     expect(wrapper.get('[aria-label="绘图工具栏"]').element).toBeTruthy()
     expect(wrapper.get('[aria-label="右侧面板"]').element).toBeTruthy()
     expect(wrapper.get('[aria-label="底部面板"]').element).toBeTruthy()
+  })
+
+  it('opens a revision-bound backtest page and focuses its double-clicked trade', async () => {
+    FakeBroadcastChannel.instances = []
+    vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel)
+    vi.spyOn(window, 'focus').mockImplementation(() => undefined)
+    const popupFocus = vi.fn()
+    const open = vi.spyOn(window, 'open').mockReturnValue({ focus: popupFocus } as unknown as Window)
+    api.getLayout.mockRejectedValue(new ApiError('WORKSPACE_NOT_FOUND', 'missing', 'req-layout'))
+    api.getDrawings.mockRejectedValue(new ApiError('DRAWINGS_NOT_FOUND', 'missing', 'req-drawings'))
+    api.listAlgorithms.mockResolvedValue([])
+    const wrapper = mount(AppShell, {
+      props: { health: 'ok' }, global: { stubs: { ChartGroup: ChartStub, DatasetPanel: true } },
+    })
+    wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset)
+    await flushPromises()
+
+    await wrapper.get('[aria-label="打开独立回测工作区"]').trigger('click')
+    const opened = new URL(String(open.mock.calls[0]?.[0]))
+    expect(opened.pathname).toBe('/backtest')
+    expect(opened.searchParams.get('dataset_id')).toBe(dataset.dataset_id)
+    expect(opened.searchParams.get('revision')).toBe(dataset.data_revision)
+    expect(popupFocus).toHaveBeenCalled()
+
+    FakeBroadcastChannel.instances[0]?.onmessage?.({ data: {
+      type: 'focus-trade', dataset_id: dataset.dataset_id, data_revision: dataset.data_revision,
+      trade: {
+        trade_id: 'trade-linked', side: 'long', entry_bar_index: 42, entry_time: 1_700_000_000_000,
+        entry_price_i64: 2660, entry_signal_id: 'signal-entry', entry_signal_known_at_bar_index: 41,
+        entry_order_id: 'order-entry', exit_bar_index: 50, exit_time: 1_700_003_000_000,
+        exit_price_i64: 2690, quantity: 1, gross_pnl_i64: 600, net_pnl_i64: 500,
+        commission_i64: 60, slippage_i64: 40,
+      },
+    } } as MessageEvent)
+    await flushPromises()
+    expect(focusSignalMock).toHaveBeenCalledWith(expect.objectContaining({
+      object_id: 'trade-linked:entry', bar_index: 42, price_i64: 2660, label: '买入',
+    }))
+    expect(wrapper.findComponent(ChartStub).props('selectedSignal')).toMatchObject({ object_id: 'trade-linked:entry' })
+    wrapper.unmount()
+    open.mockRestore()
   })
 
   it('compresses the chart when dock panels are expanded and keeps panel sizes bounded', async () => {

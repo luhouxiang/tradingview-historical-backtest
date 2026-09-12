@@ -166,6 +166,18 @@ func TestGetBarsPassesCursorAndReturnsColumnarResponse(t *testing.T) {
 	}
 }
 
+func TestGetBarsPassesForwardCursor(t *testing.T) {
+	reader := &fakeBarReader{}
+	server, _ := testServer(t, "http://127.0.0.1:1", WithBarReader(reader))
+	revision := "sha256:" + strings.Repeat("b", 64)
+	request := httptest.NewRequest(http.MethodGet, "/api/v1/datasets/SHFE.AO2609.5m/bars?revision="+revision+"&generation_id=gen-43&after_bar_index=8&limit=1500", nil)
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK || reader.query.AfterBarIndex == nil || *reader.query.AfterBarIndex != 8 || reader.query.Limit != 1500 {
+		t.Fatalf("forward bar response %d, query %#v: %s", recorder.Code, reader.query, recorder.Body.String())
+	}
+}
+
 func TestGetBarsMapsStableErrors(t *testing.T) {
 	tests := []struct {
 		err    error

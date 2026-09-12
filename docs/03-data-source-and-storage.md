@@ -339,7 +339,7 @@ logs/vue/client.log
 
 - 所有返回按 bar_index 递增。
 - 首次尾部查询默认 3000 根。
-- 向左预取默认 1500 根。
-- 请求可指定 before_bar_index，返回严格小于该值的最近 N 根。
-- 每个响应返回 coverage、has_more_before、data_revision 和 checksum。
+- 双向预取默认 1500 根。
+- 请求可指定 before_bar_index，返回严格小于该值的最近 N 根；或指定 after_bar_index，返回严格大于该值的最早 N 根。两个游标与 tail 互斥。
+- 每个响应返回 coverage、has_more_before、has_more_after、data_revision 和 checksum。
 - UI 必须拒绝不同 revision 的 K 线与指标结果混合。
