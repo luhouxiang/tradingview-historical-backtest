@@ -170,6 +170,69 @@ const projectedSelectedSignal = computed(() => {
       : `M ${startX} ${y + 5} l -7 12 h 14 z`,
   }
 })
+const projectedThirdBuyEvidence = computed(() => {
+  projectionRevision.value
+  const evidence = props.selectedSignal?.third_buy_evidence
+  if (!evidence || !chart || !candles || !props.dataset) return null
+  const project = (barIndex: number, timestamp: number | null, priceI64: number) => {
+    const cached = session.bars.find((bar) => bar.barIndex === barIndex)
+    const resolvedTimestamp = cached?.timestampUtc ?? timestamp
+    if (resolvedTimestamp === null || !Number.isFinite(resolvedTimestamp)) return null
+    const x = chart!.timeScale().timeToCoordinate(Math.floor(resolvedTimestamp / 1000) as UTCTimestamp)
+    const y = candles!.priceToCoordinate(priceI64 / props.dataset!.price.price_scale)
+    return x === null || y === null ? null : { x, y }
+  }
+  const centerZd = evidence.source_center_zd_i64
+  const centerStart = centerZd === null ? null : project(
+    evidence.source_center_start_bar_index,
+    evidence.source_center_start_timestamp_utc,
+    evidence.source_center_zg_i64,
+  )
+  const centerEnd = centerZd === null ? null : project(
+    evidence.source_center_end_bar_index,
+    evidence.source_center_end_timestamp_utc,
+    centerZd,
+  )
+  const departureStart = project(evidence.departure_start_bar_index, evidence.departure_start_timestamp_utc, evidence.departure_start_price_i64)
+  const departureEnd = project(evidence.departure_end_bar_index, evidence.departure_end_timestamp_utc, evidence.departure_end_price_i64)
+  const returnStart = project(evidence.return_start_bar_index, evidence.return_start_timestamp_utc, evidence.return_start_price_i64)
+  const returnEnd = project(evidence.return_end_bar_index, evidence.return_end_timestamp_utc, evidence.return_end_price_i64)
+  const returnLow = project(evidence.return_low_source_bar_index, evidence.return_low_source_timestamp_utc, evidence.return_low_i64)
+  const confirmation = project(evidence.b3_confirmed_at_bar_index, evidence.b3_confirmed_at_timestamp_utc, evidence.b3_price_i64)
+  if (!centerStart || !centerEnd || !departureStart || !departureEnd || !returnStart || !returnEnd || !returnLow || !confirmation) return null
+  const centerX = Math.min(centerStart.x, centerEnd.x)
+  const centerY = Math.min(centerStart.y, centerEnd.y)
+  return {
+    center: {
+      x: centerX, y: centerY,
+      width: Math.max(3, Math.abs(centerEnd.x - centerStart.x)),
+      height: Math.max(2, Math.abs(centerEnd.y - centerStart.y)),
+      labelX: centerX + 5,
+      labelY: centerY > 24 ? centerY - 7 : centerY + 17,
+      label: `来源中枢 ${evidence.source_center_id} · ZD ${centerZd} / ZG ${evidence.source_center_zg_i64}`,
+    },
+    departure: { ...departureStart, endX: departureEnd.x, endY: departureEnd.y },
+    returning: { ...returnStart, endX: returnEnd.x, endY: returnEnd.y },
+    returnEnd: {
+      ...returnEnd,
+      labelX: returnEnd.x + 9,
+      labelY: returnEnd.y > 36 ? returnEnd.y - 12 : returnEnd.y + 25,
+      label: `首次回试结构结束 K${evidence.return_end_bar_index} @ ${evidence.return_end_price_i64}`,
+    },
+    returnLow: {
+      ...returnLow,
+      labelX: returnLow.x + 9,
+      labelY: returnLow.y + 23,
+      label: `实际低点 K${evidence.return_low_source_bar_index} @ ${evidence.return_low_i64} ≥ ZG ${evidence.source_center_zg_i64}`,
+    },
+    confirmation: {
+      ...confirmation,
+      labelX: confirmation.x + 8,
+      labelY: confirmation.y > 64 ? confirmation.y - 42 : confirmation.y + 52,
+      label: `B3 于 K${evidence.b3_confirmed_at_bar_index} 确认可知`,
+    },
+  }
+})
 
 const effectivePanes = computed(() => enforceMinimumHeights(panes.value.map((pane) => ({
   ...pane,
@@ -641,13 +704,18 @@ async function focusSignal(signal: ChanTreeObject): Promise<void> {
   prefetchAfterTimer = undefined
   const currentBars = session.bars
   const currentIndex = currentBars.findIndex((bar) => bar.barIndex === signal.bar_index)
+  const evidenceStart = signal.third_buy_evidence?.source_center_start_bar_index
+  const evidenceStartLoaded = evidenceStart === undefined
+    || currentBars.some((bar) => bar.barIndex === evidenceStart)
   const currentRange = chart?.timeScale().getVisibleLogicalRange()
   loading.value = true
   error.value = ''
   try {
-    if (currentIndex < 0) {
+    if (currentIndex < 0 || !evidenceStartLoaded) {
       const confirmationDistance = signal.confirmed_at_bar_index === null ? 0 : Math.abs(signal.confirmed_at_bar_index - signal.bar_index)
-      const radius = confirmationDistance <= 2300 ? Math.max(120, confirmationDistance + 30) : 120
+      const evidenceDistance = evidenceStart === undefined ? 0 : Math.abs(signal.bar_index - evidenceStart)
+      const requiredDistance = Math.max(confirmationDistance, evidenceDistance)
+      const radius = requiredDistance <= 2300 ? Math.max(120, requiredDistance + 30) : 120
       await session.loadAround(signal.bar_index, radius, true)
       if (requestGeneration !== focusGeneration) return
       renderBars()
@@ -657,8 +725,11 @@ async function focusSignal(signal: ChanTreeObject): Promise<void> {
     const confirmed = signal.confirmed_at_bar_index === null
       ? start
       : bars.findIndex((bar) => bar.barIndex === signal.confirmed_at_bar_index)
+    const evidenceStartIndex = evidenceStart === undefined
+      ? -1
+      : bars.findIndex((bar) => bar.barIndex === evidenceStart)
     if (start < 0) throw new Error('信号对应的 K 线未能加载')
-    const contextLeft = Math.max(0, Math.min(start, confirmed < 0 ? start : confirmed) - 80)
+    const contextLeft = Math.max(0, Math.min(start, confirmed < 0 ? start : confirmed, evidenceStartIndex < 0 ? start : evidenceStartIndex) - 80)
     const contextRight = Math.min(bars.length - 1, Math.max(start, confirmed < 0 ? start : confirmed) + 80)
     const fromBarIndex = bars[contextLeft]?.barIndex
     const toBarIndex = bars[contextRight]?.barIndex
@@ -667,7 +738,9 @@ async function focusSignal(signal: ChanTreeObject): Promise<void> {
     }
     if (requestGeneration !== focusGeneration) return
     const previousSpan = currentRange ? currentRange.to - currentRange.from : 80
-    const visibleSpan = Math.min(160, Math.max(40, previousSpan))
+    const normalVisibleSpan = Math.min(160, Math.max(40, previousSpan))
+    const evidenceVisibleSpan = evidenceStartIndex < 0 ? 0 : 2 * (Math.abs(start - evidenceStartIndex) + 20)
+    const visibleSpan = Math.max(normalVisibleSpan, evidenceVisibleSpan)
     chart?.timeScale().setVisibleLogicalRange({ from: start - visibleSpan / 2, to: start + visibleSpan / 2 })
     projectionRevision.value += 1
   } catch (cause) {
@@ -956,6 +1029,52 @@ onBeforeUnmount(() => {
       <g v-for="signal in projectedReplaySignals" :key="signal.id" class="replay-signal" :class="signal.type">
         <path :d="`M ${signal.x} ${signal.y} l -5 9 h 10 z`" />
         <text :x="signal.x + 7" :y="signal.y + 9">{{ signal.label }}</text>
+      </g>
+      <g v-if="projectedThirdBuyEvidence" class="third-buy-evidence" data-third-buy-evidence="true">
+        <rect
+          class="third-buy-source-center"
+          :x="projectedThirdBuyEvidence.center.x" :y="projectedThirdBuyEvidence.center.y"
+          :width="projectedThirdBuyEvidence.center.width" :height="projectedThirdBuyEvidence.center.height"
+        />
+        <text
+          class="third-buy-center-label"
+          :x="projectedThirdBuyEvidence.center.labelX" :y="projectedThirdBuyEvidence.center.labelY"
+        >{{ projectedThirdBuyEvidence.center.label }}</text>
+        <line
+          class="third-buy-departure"
+          :x1="projectedThirdBuyEvidence.departure.x" :y1="projectedThirdBuyEvidence.departure.y"
+          :x2="projectedThirdBuyEvidence.departure.endX" :y2="projectedThirdBuyEvidence.departure.endY"
+        />
+        <text
+          class="third-buy-departure-label"
+          :x="(projectedThirdBuyEvidence.departure.x + projectedThirdBuyEvidence.departure.endX) / 2 + 6"
+          :y="(projectedThirdBuyEvidence.departure.y + projectedThirdBuyEvidence.departure.endY) / 2 - 8"
+        >向上离开</text>
+        <line
+          class="third-buy-return"
+          :x1="projectedThirdBuyEvidence.returning.x" :y1="projectedThirdBuyEvidence.returning.y"
+          :x2="projectedThirdBuyEvidence.returning.endX" :y2="projectedThirdBuyEvidence.returning.endY"
+        />
+        <circle class="third-buy-return-end" :cx="projectedThirdBuyEvidence.returnEnd.x" :cy="projectedThirdBuyEvidence.returnEnd.y" r="7" />
+        <text
+          class="third-buy-return-label"
+          :x="projectedThirdBuyEvidence.returnEnd.labelX" :y="projectedThirdBuyEvidence.returnEnd.labelY"
+        >{{ projectedThirdBuyEvidence.returnEnd.label }}</text>
+        <circle class="third-buy-return-low" :cx="projectedThirdBuyEvidence.returnLow.x" :cy="projectedThirdBuyEvidence.returnLow.y" r="5" />
+        <text
+          class="third-buy-return-label"
+          :x="projectedThirdBuyEvidence.returnLow.labelX" :y="projectedThirdBuyEvidence.returnLow.labelY"
+        >{{ projectedThirdBuyEvidence.returnLow.label }}</text>
+        <line
+          class="third-buy-confirmation-line"
+          :x1="projectedThirdBuyEvidence.confirmation.x" y1="0"
+          :x2="projectedThirdBuyEvidence.confirmation.x" :y2="chartHeight"
+        />
+        <circle class="third-buy-confirmation" :cx="projectedThirdBuyEvidence.confirmation.x" :cy="projectedThirdBuyEvidence.confirmation.y" r="5" />
+        <text
+          class="third-buy-confirmation-label"
+          :x="projectedThirdBuyEvidence.confirmation.labelX" :y="projectedThirdBuyEvidence.confirmation.labelY"
+        >{{ projectedThirdBuyEvidence.confirmation.label }}</text>
       </g>
       <g v-if="projectedSelectedSignal" class="signal-selection" :class="{ locked: signalLocked }" data-selected-signal="true">
         <line class="signal-selection-time" :x1="projectedSelectedSignal.startX" y1="0" :x2="projectedSelectedSignal.startX" :y2="chartHeight" />

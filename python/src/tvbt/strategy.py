@@ -400,7 +400,7 @@ def third_buy_only_definition() -> dict[str, Any]:
         "third_buy_only",
         "只做第三类买点",
         "三买",
-        algorithm_version="1.1.0",
+        algorithm_version="1.2.0",
     )
     result["parameter_schema"] = {
         "type": "object",
@@ -3052,6 +3052,7 @@ def _run_third_buy_only(
         last_bar_index=last_bar_index,
         object_types={"segment", "segment_zhongshu", "divergence", "trade_point"},
     )
+    timestamp_by_bar_index = {bar.bar_index: bar.timestamp_utc for bar in feed.bars}
     output = _CausalStrategyOutput("B3", "waiting_standard_B3")
     active_segments: dict[str, dict[str, Any]] = {}
     active_centers: dict[str, dict[str, Any]] = {}
@@ -3405,9 +3406,14 @@ def _run_third_buy_only(
                 valid_return = (
                     returning is not None
                     and center is not None
-                    and min(
-                        int(returning[1]["start_price_i64"]),
-                        int(returning[1]["end_price_i64"]),
+                    and int(
+                        returning[1].get(
+                            "range_low_i64",
+                            min(
+                                int(returning[1]["start_price_i64"]),
+                                int(returning[1]["end_price_i64"]),
+                            ),
+                        )
                     )
                     >= int(center["zg_i64"])
                 )
@@ -3448,6 +3454,92 @@ def _run_third_buy_only(
                 endpoint = int(point.get("bar_index", bar.bar_index))
                 point_price = int(point.get("price_i64", bar.close_i64))
                 priority = "high" if ordinal == 1 else "penalized"
+                center_start = int(center["start_bar_index"])
+                center_end = int(center["end_bar_index"])
+                center_zg = int(center["zg_i64"])
+                return_value = returning[1]
+                departure_value = departure[1]
+                return_start = int(return_value["start_bar_index"])
+                return_end = int(return_value["end_bar_index"])
+                return_start_price = int(return_value["start_price_i64"])
+                return_end_price = int(return_value["end_price_i64"])
+                return_low = int(
+                    return_value.get("range_low_i64", min(return_start_price, return_end_price))
+                )
+                return_low_source = int(
+                    return_value.get(
+                        "range_low_source_bar_index",
+                        return_start if return_start_price <= return_end_price else return_end,
+                    )
+                )
+                departure_start = int(departure_value["start_bar_index"])
+                departure_end = int(departure_value["end_bar_index"])
+                departure_start_price = int(departure_value["start_price_i64"])
+                departure_end_price = int(departure_value["end_price_i64"])
+                departure_high = int(
+                    departure_value.get(
+                        "range_high_i64", max(departure_start_price, departure_end_price)
+                    )
+                )
+                departure_high_source = int(
+                    departure_value.get(
+                        "range_high_source_bar_index",
+                        departure_start
+                        if departure_start_price >= departure_end_price
+                        else departure_end,
+                    )
+                )
+                entry_evidence: dict[str, Any] = {
+                    "evidence_profile": "third_buy_entry_evidence_v1",
+                    "b3_object_id": object_id,
+                    "b3_bar_index": endpoint,
+                    "b3_timestamp_utc": timestamp_by_bar_index.get(endpoint),
+                    "b3_price_i64": point_price,
+                    "b3_confirmed_at_bar_index": bar.bar_index,
+                    "b3_confirmed_at_timestamp_utc": bar.timestamp_utc,
+                    "source_center_id": str(point["reference_object_id"]),
+                    "source_center_start_bar_index": center_start,
+                    "source_center_start_timestamp_utc": timestamp_by_bar_index.get(center_start),
+                    "source_center_end_bar_index": center_end,
+                    "source_center_end_timestamp_utc": timestamp_by_bar_index.get(center_end),
+                    "source_center_zd_i64": (int(center["zd_i64"]) if "zd_i64" in center else None),
+                    "source_center_zg_i64": center_zg,
+                    "source_center_dd_i64": (int(center["dd_i64"]) if "dd_i64" in center else None),
+                    "source_center_gg_i64": (int(center["gg_i64"]) if "gg_i64" in center else None),
+                    "center_ordinal_in_trend": ordinal,
+                    "priority": priority,
+                    "departure_segment_id": departure[0],
+                    "departure_start_bar_index": departure_start,
+                    "departure_start_timestamp_utc": timestamp_by_bar_index.get(departure_start),
+                    "departure_end_bar_index": departure_end,
+                    "departure_end_timestamp_utc": timestamp_by_bar_index.get(departure_end),
+                    "departure_start_price_i64": departure_start_price,
+                    "departure_end_price_i64": departure_end_price,
+                    "departure_high_i64": departure_high,
+                    "departure_high_source_bar_index": departure_high_source,
+                    "departure_high_source_timestamp_utc": timestamp_by_bar_index.get(
+                        departure_high_source
+                    ),
+                    "return_segment_id": returning[0],
+                    "return_start_bar_index": return_start,
+                    "return_start_timestamp_utc": timestamp_by_bar_index.get(return_start),
+                    "return_end_bar_index": return_end,
+                    "return_end_timestamp_utc": timestamp_by_bar_index.get(return_end),
+                    "return_start_price_i64": return_start_price,
+                    "return_end_price_i64": return_end_price,
+                    "return_low_i64": return_low,
+                    "return_low_source_bar_index": return_low_source,
+                    "return_low_source_timestamp_utc": timestamp_by_bar_index.get(
+                        return_low_source
+                    ),
+                    "return_range_profile": return_value.get(
+                        "range_profile", "endpoint_extrema_v1"
+                    ),
+                    "return_boundary_relation": "at_or_above_ZG",
+                    "return_clearance_above_zg_i64": return_low - center_zg,
+                    "entry_volume": entry_volume,
+                    "minimum_entry_volume": minimum_volume,
+                }
                 if risk_reason:
                     output.transition(
                         bar,
@@ -3456,12 +3548,7 @@ def _run_third_buy_only(
                         object_id,
                         anchor_bar_index=endpoint,
                         price_i64=point_price,
-                        details={
-                            "center_ordinal_in_trend": ordinal,
-                            "priority": priority,
-                            "entry_volume": entry_volume,
-                            "minimum_entry_volume": minimum_volume,
-                        },
+                        details=entry_evidence,
                     )
                 else:
                     quantity = first_quantity if ordinal == 1 else late_quantity
@@ -3476,10 +3563,7 @@ def _run_third_buy_only(
                     source_center_zg_i64 = int(center["zg_i64"])
                     return_segment_id = returning[0]
                     return_end_bar_index = int(returning[1]["end_bar_index"])
-                    departure_high_i64 = max(
-                        int(departure[1]["start_price_i64"]),
-                        int(departure[1]["end_price_i64"]),
-                    )
+                    departure_high_i64 = departure_high
                     position_quantity = quantity
                     stage_id = output.transition(
                         bar,
@@ -3490,14 +3574,7 @@ def _run_third_buy_only(
                         object_id,
                         anchor_bar_index=endpoint,
                         price_i64=point_price,
-                        details={
-                            "center_ordinal_in_trend": ordinal,
-                            "priority": priority,
-                            "quantity": quantity,
-                            "source_center_id": source_center_id,
-                            "return_segment_id": return_segment_id,
-                            "entry_volume": entry_volume,
-                        },
+                        details={**entry_evidence, "quantity": quantity},
                     )
                     output.trade(
                         bar,
@@ -3508,10 +3585,7 @@ def _run_third_buy_only(
                         anchor_bar_index=endpoint,
                         price_i64=point_price,
                         stage_id=stage_id,
-                        details={
-                            "center_ordinal_in_trend": ordinal,
-                            "priority": priority,
-                        },
+                        details={**entry_evidence, "quantity": quantity},
                     )
 
         if position_quantity and followthrough_segment_id is None:
@@ -3523,7 +3597,13 @@ def _run_third_buy_only(
                 followthrough_end_bar_index = endpoint
                 made_new_high = (
                     departure_high_i64 is not None
-                    and max(int(segment["start_price_i64"]), endpoint_price) > departure_high_i64
+                    and int(
+                        segment.get(
+                            "range_high_i64",
+                            max(int(segment["start_price_i64"]), endpoint_price),
+                        )
+                    )
+                    > departure_high_i64
                 )
                 followthrough_divergence = next(
                     (

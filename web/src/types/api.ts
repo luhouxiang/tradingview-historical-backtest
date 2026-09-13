@@ -352,6 +352,54 @@ export interface ChanTreeObject {
   label?: string
   detail?: string
   signal?: ChanSignalPoint
+  third_buy_evidence?: ThirdBuyEntryEvidence
+}
+
+export interface ThirdBuyEntryEvidence {
+  evidence_profile: 'third_buy_entry_evidence_v1'
+  b3_object_id: string
+  b3_bar_index: number
+  b3_timestamp_utc: number | null
+  b3_price_i64: number
+  b3_confirmed_at_bar_index: number
+  b3_confirmed_at_timestamp_utc: number
+  source_center_id: string
+  source_center_start_bar_index: number
+  source_center_start_timestamp_utc: number | null
+  source_center_end_bar_index: number
+  source_center_end_timestamp_utc: number | null
+  source_center_zd_i64: number | null
+  source_center_zg_i64: number
+  source_center_dd_i64: number | null
+  source_center_gg_i64: number | null
+  center_ordinal_in_trend: number
+  priority: string
+  departure_segment_id: string
+  departure_start_bar_index: number
+  departure_start_timestamp_utc: number | null
+  departure_end_bar_index: number
+  departure_end_timestamp_utc: number | null
+  departure_start_price_i64: number
+  departure_end_price_i64: number
+  departure_high_i64: number
+  departure_high_source_bar_index: number
+  departure_high_source_timestamp_utc: number | null
+  return_segment_id: string
+  return_start_bar_index: number
+  return_start_timestamp_utc: number | null
+  return_end_bar_index: number
+  return_end_timestamp_utc: number | null
+  return_start_price_i64: number
+  return_end_price_i64: number
+  return_low_i64: number
+  return_low_source_bar_index: number
+  return_low_source_timestamp_utc: number | null
+  return_range_profile: string
+  return_boundary_relation: 'at_or_above_ZG'
+  return_clearance_above_zg_i64: number
+  entry_volume: number | null
+  minimum_entry_volume: number
+  quantity?: number
 }
 
 export interface StrategyRunSource {

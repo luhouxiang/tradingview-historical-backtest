@@ -51,7 +51,7 @@ def test_center_consumers_publish_new_algorithm_identity() -> None:
     assert second_buy["algorithm_version"] == "1.2.0"
     assert not second_buy["parameter_schema"]["properties"]["allow_class_like_entries"]["default"]
     third_buy = third_buy_only_definition()
-    assert third_buy["algorithm_version"] == "1.1.0"
+    assert third_buy["algorithm_version"] == "1.2.0"
     assert third_buy["parameter_schema"]["properties"]["first_center_quantity"]["default"] == 2
     assert third_buy["parameter_schema"]["properties"]["late_center_quantity"]["default"] == 1
     oscillation = centre_oscillation_spread_definition()
@@ -1293,6 +1293,11 @@ def test_third_buy_only_prefers_first_center_and_holds_new_center_until_trend_di
         start_price: int,
         end_price: int,
         direction: str,
+        *,
+        range_low: int | None = None,
+        range_high: int | None = None,
+        range_low_source: int | None = None,
+        range_high_source: int | None = None,
     ) -> object:
         return event(
             known_at,
@@ -1304,6 +1309,19 @@ def test_third_buy_only_prefers_first_center_and_holds_new_center_until_trend_di
                 "start_price_i64": start_price,
                 "end_price_i64": end_price,
                 "direction": direction,
+                **({"range_low_i64": range_low} if range_low is not None else {}),
+                **({"range_high_i64": range_high} if range_high is not None else {}),
+                **(
+                    {"range_low_source_bar_index": range_low_source}
+                    if range_low_source is not None
+                    else {}
+                ),
+                **(
+                    {"range_high_source_bar_index": range_high_source}
+                    if range_high_source is not None
+                    else {}
+                ),
+                "range_profile": "constituent_bi_union_v1",
             },
         )
 
@@ -1323,15 +1341,39 @@ def test_third_buy_only_prefers_first_center_and_holds_new_center_until_trend_di
                 "leave_direction": "up",
             },
         ),
-        segment(3, "B3-departure", 2, 3, 100, 120, "up"),
-        segment(4, "B3-first-return", 3, 4, 120, 100, "down"),
+        segment(
+            3,
+            "B3-departure",
+            2,
+            3,
+            100,
+            120,
+            "up",
+            range_low=99,
+            range_high=122,
+            range_low_source=2,
+            range_high_source=3,
+        ),
+        segment(
+            4,
+            "B3-first-return",
+            3,
+            4,
+            120,
+            102,
+            "down",
+            range_low=100,
+            range_high=121,
+            range_low_source=4,
+            range_high_source=3,
+        ),
         event(
             4,
             "trade_point",
             "first-center-B3",
             {
                 "bar_index": 4,
-                "price_i64": 100,
+                "price_i64": 102,
                 "signal_type": "buy_3",
                 "signal_class": "standard",
                 "reference_object_id": "first-up-center",
@@ -1404,6 +1446,48 @@ def test_third_buy_only_prefers_first_center_and_holds_new_center_until_trend_di
     assert [value["quantity"] for value in result.trade_signals] == [2, 2]
     assert result.trade_signals[0]["center_ordinal_in_trend"] == 1
     assert result.trade_signals[0]["priority"] == "high"
+    assert (
+        result.trade_signals[0]
+        | {
+            "evidence_profile": "third_buy_entry_evidence_v1",
+            "b3_object_id": "first-center-B3",
+            "b3_bar_index": 4,
+            "b3_timestamp_utc": 1_200_000,
+            "b3_price_i64": 102,
+            "source_center_id": "first-up-center",
+            "source_center_start_bar_index": 0,
+            "source_center_start_timestamp_utc": 0,
+            "source_center_end_bar_index": 2,
+            "source_center_end_timestamp_utc": 600_000,
+            "source_center_zd_i64": 90,
+            "source_center_zg_i64": 100,
+            "source_center_dd_i64": 80,
+            "source_center_gg_i64": 110,
+            "departure_segment_id": "B3-departure",
+            "departure_start_bar_index": 2,
+            "departure_end_bar_index": 3,
+            "departure_start_price_i64": 100,
+            "departure_end_price_i64": 120,
+            "departure_high_i64": 122,
+            "departure_high_source_bar_index": 3,
+            "departure_high_source_timestamp_utc": 900_000,
+            "return_segment_id": "B3-first-return",
+            "return_start_bar_index": 3,
+            "return_end_bar_index": 4,
+            "return_start_price_i64": 120,
+            "return_end_price_i64": 102,
+            "return_low_i64": 100,
+            "return_low_source_bar_index": 4,
+            "return_low_source_timestamp_utc": 1_200_000,
+            "return_range_profile": "constituent_bi_union_v1",
+            "return_boundary_relation": "at_or_above_ZG",
+            "return_clearance_above_zg_i64": 0,
+            "entry_volume": 500,
+            "minimum_entry_volume": 100,
+            "quantity": 2,
+        }
+        == result.trade_signals[0]
+    )
     assert [value["event_type"] for value in result.chart_events] == [
         "open_long",
         "hold_after_B3",

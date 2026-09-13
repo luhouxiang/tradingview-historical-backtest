@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { createBacktest, getBacktest, getBacktestChartEvents, getBacktestEquity, getBacktestSummary, getBacktestTrades, listAlgorithms } from '../api/client'
 import { capitalConfig, executionRequest } from '../execution/config'
-import type { AlgorithmDefinition, BacktestSummary, BacktestTrade, ChanTreeObject, DatasetMeta, EquityRow, RankingContext, RiskContext, StrategyRunSource } from '../types/api'
+import type { AlgorithmDefinition, BacktestSummary, BacktestTrade, ChanTreeObject, DatasetMeta, EquityRow, RankingContext, RiskContext, StrategyRunSource, ThirdBuyEntryEvidence } from '../types/api'
 
 const props = defineProps<{ dataset: DatasetMeta | null; view: 'backtest' | 'trades' | 'equity' | 'workspace' }>()
 type TradeLedgerLeg = 'entry' | 'exit'
@@ -50,6 +50,7 @@ const tradePane = ref<HTMLElement | null>(null)
 const tradePaneHeight = ref<number | null>(null)
 const selectedTradeId = ref<string | null>(null)
 const tradeSignalReasonById = ref<Record<string, string>>({})
+const tradeSignalEvidenceById = ref<Record<string, ThirdBuyEntryEvidence>>({})
 
 const thirdBuyEntryReasonLabels: Record<string, string> = {
   CONFIRMED_FIRST_CENTER_B3_ENTRY: '首中枢标准三买已确认：价格向上离开中枢后，首次回试守在中枢上沿 ZG 之上，对象链完整且成交量门槛通过。',
@@ -110,11 +111,54 @@ function tradeSignalReason(trade: BacktestTrade, leg: 'entry' | 'exit'): string 
   return signalId ? tradeSignalReasonById.value[signalId] ?? '' : ''
 }
 
+function asThirdBuyEntryEvidence(payload: Record<string, unknown>): ThirdBuyEntryEvidence | null {
+  if (payload.evidence_profile !== 'third_buy_entry_evidence_v1') return null
+  const requiredStrings = ['b3_object_id', 'source_center_id', 'departure_segment_id', 'return_segment_id', 'return_range_profile']
+  const requiredNumbers = [
+    'b3_bar_index', 'b3_price_i64', 'b3_confirmed_at_bar_index',
+    'source_center_start_bar_index', 'source_center_end_bar_index', 'source_center_zg_i64',
+    'departure_start_bar_index', 'departure_end_bar_index', 'departure_start_price_i64', 'departure_end_price_i64', 'departure_high_source_bar_index',
+    'return_start_bar_index', 'return_end_bar_index', 'return_start_price_i64', 'return_end_price_i64', 'return_low_i64', 'return_low_source_bar_index',
+    'return_clearance_above_zg_i64', 'minimum_entry_volume',
+  ]
+  if (!requiredStrings.every((key) => typeof payload[key] === 'string')) return null
+  if (!requiredNumbers.every((key) => Number.isFinite(Number(payload[key])))) return null
+  return payload as unknown as ThirdBuyEntryEvidence
+}
+
+function tradeEntryEvidence(trade: BacktestTrade): ThirdBuyEntryEvidence | null {
+  return trade.entry_signal_id ? tradeSignalEvidenceById.value[trade.entry_signal_id] ?? null : null
+}
+
+function optionalEvidencePrice(value: number | null): string {
+  return value === null ? '—' : String(value)
+}
+
+function optionalEvidenceTime(value: number | null): string {
+  return value === null ? '时间未记录' : formatTradeTime(value)
+}
+
+function thirdBuyEntryEvidenceText(evidence: ThirdBuyEntryEvidence): string {
+  const centerRange = `K${evidence.source_center_start_bar_index}–K${evidence.source_center_end_bar_index}`
+  const centerTime = `${optionalEvidenceTime(evidence.source_center_start_timestamp_utc)}–${optionalEvidenceTime(evidence.source_center_end_timestamp_utc)}`
+  const centerBounds = `核心 ZD=${optionalEvidencePrice(evidence.source_center_zd_i64)}、ZG=${evidence.source_center_zg_i64}，全区间 DD=${optionalEvidencePrice(evidence.source_center_dd_i64)}、GG=${optionalEvidencePrice(evidence.source_center_gg_i64)}`
+  const volume = evidence.entry_volume === null
+    ? `成交量未取得，门槛=${evidence.minimum_entry_volume}`
+    : `成交量 ${evidence.entry_volume} ≥ 门槛 ${evidence.minimum_entry_volume}`
+  return `参考中枢 ${evidence.source_center_id}（${centerRange}，${centerTime}，${centerBounds}）；` +
+    `向上离开段 ${evidence.departure_segment_id}：K${evidence.departure_start_bar_index}→K${evidence.departure_end_bar_index}，${evidence.departure_start_price_i64}→${evidence.departure_end_price_i64}，实际区间高点 ${evidence.departure_high_i64} 位于 K${evidence.departure_high_source_bar_index}；` +
+    `首次回试段 ${evidence.return_segment_id}：K${evidence.return_start_bar_index}→K${evidence.return_end_bar_index}，${evidence.return_start_price_i64}→${evidence.return_end_price_i64}，结构回试在 ${optionalEvidenceTime(evidence.return_end_timestamp_utc)} 的 K${evidence.return_end_bar_index} 结束；` +
+    `该段实际区间最低点 ${evidence.return_low_i64} 位于 K${evidence.return_low_source_bar_index}，${evidence.return_low_i64} ≥ ZG ${evidence.source_center_zg_i64}（高出 ${evidence.return_clearance_above_zg_i64}），未跌破中枢上沿；` +
+    `标准三买对象 ${evidence.b3_object_id} 的理论端点为 K${evidence.b3_bar_index}、价格 ${evidence.b3_price_i64}，到 ${optionalEvidenceTime(evidence.b3_confirmed_at_timestamp_utc)} 的 K${evidence.b3_confirmed_at_bar_index} 才确认可知；${volume}，因此在该 K 收盘后生成买入信号。`
+}
+
 function tradeEntryCondition(trade: BacktestTrade): string {
   const reason = tradeSignalReason(trade, 'entry')
+  const evidence = tradeEntryEvidence(trade)
+  if (evidence) return thirdBuyEntryEvidenceText(evidence)
   if (thirdBuyEntryReasonLabels[reason]) return thirdBuyEntryReasonLabels[reason]
   if (reason) return `买入信号：${reason}`
-  if (trade.trigger_category === 'B3') return '标准三买已确认；该旧结果未找到可关联的买入信号详情。'
+  if (trade.trigger_category === 'B3') return '标准三买已确认；该结果生成于结构证据增强前，请重新运行正式回测以查看来源中枢、离开段和首次回试段。'
   return '未记录买入信号原因。'
 }
 
@@ -144,6 +188,7 @@ function tradeExecutionMarkers(rows: BacktestTrade[]): Array<Record<string, unkn
     const openAction = trade.side === 'long' ? 'open_long' : 'open_short'
     const closeAction = trade.side === 'long' ? 'close_long' : 'close_short'
     const identity = `${trade.quantity} 手 · ${trade.trade_id}`
+    const thirdBuyEvidence = tradeEntryEvidence(trade)
     const entryDetail = `买入：${tradeEntryCondition(trade)}；卖出：${tradeExitCondition(trade)} · ${identity}`
     const exitDetail = `卖出：${tradeExitCondition(trade)}；买入：${tradeEntryCondition(trade)} · ${identity}`
     return [
@@ -152,7 +197,7 @@ function tradeExecutionMarkers(rows: BacktestTrade[]): Array<Record<string, unkn
         bar_index: trade.entry_bar_index, known_at_bar_index: trade.entry_bar_index,
         timestamp_utc: trade.entry_time, price_i64: trade.entry_price_i64,
         display_label: trade.side === 'long' ? '成交·开多' : '成交·开空', classification_detail: entryDetail,
-        execution_fact: true,
+        execution_fact: true, ...(thirdBuyEvidence ? { third_buy_evidence: thirdBuyEvidence } : {}),
       },
       {
         object_type: 'chart_event', object_id: `${trade.trade_id}:exit`, event_type: closeAction, action: closeAction,
@@ -330,6 +375,7 @@ async function execute(resume: StoredBacktestRun | null = null): Promise<void> {
   summary.value = null
   executionFacts.value = null
   tradeSignalReasonById.value = {}
+  tradeSignalEvidenceById.value = {}
   restored.value = false
   try {
     const parameters = { ...strategyParameters.value }
@@ -354,8 +400,10 @@ async function execute(resume: StoredBacktestRun | null = null): Promise<void> {
       if (current.run_signature !== resume.run_signature
         || manifestDataset?.dataset_id !== dataset.dataset_id
         || manifestDataset?.data_revision !== dataset.data_revision
-        || manifestStrategy?.strategy_id !== definition.algorithm_id) {
-        throw new Error('最近回测与当前数据集或策略不匹配')
+        || manifestStrategy?.strategy_id !== definition.algorithm_id
+        || manifestStrategy?.version !== definition.algorithm_version
+        || manifestStrategy?.source_hash !== definition.source_hash) {
+        throw new Error('最近回测与当前数据集或策略版本不匹配，请重新运行正式回测')
       }
       restored.value = true
     }
@@ -404,18 +452,22 @@ async function execute(resume: StoredBacktestRun | null = null): Promise<void> {
     const currentObjects = new Map<string, ChanTreeObject>()
     const currentSignals = new Map<string, Record<string, unknown> & { object_type: string; object_id: string }>()
     const currentTradeSignalReasons: Record<string, string> = {}
+    const currentTradeSignalEvidence: Record<string, ThirdBuyEntryEvidence> = {}
     for (const event of causalEvents) {
       const key = `${event.object_type}:${event.object_id}`
       if (event.operation === 'delete') {
         currentObjects.delete(key)
         currentSignals.delete(key)
         if (event.object_type === 'trade_signal') delete currentTradeSignalReasons[event.object_id]
+        if (event.object_type === 'trade_signal') delete currentTradeSignalEvidence[event.object_id]
         continue
       }
       const payload = event.payload
+      const thirdBuyEvidence = asThirdBuyEntryEvidence(payload)
       if (event.object_type === 'trade_signal' && typeof payload.reason_code === 'string') {
         const signalId = typeof payload.signal_id === 'string' ? payload.signal_id : event.object_id
         currentTradeSignalReasons[signalId] = payload.reason_code
+        if (thirdBuyEvidence) currentTradeSignalEvidence[signalId] = thirdBuyEvidence
       }
       currentSignals.set(key, { ...payload, object_type: event.object_type, object_id: event.object_id })
       const state = String(payload.state_to ?? payload.stage ?? payload.action ?? payload.event_type ?? event.object_type)
@@ -548,9 +600,11 @@ async function execute(resume: StoredBacktestRun | null = null): Promise<void> {
         object_revision: event.object_revision,
         label: String(payload.display_label ?? labels[state] ?? state),
         detail: String(payload.classification_detail ?? payload.reason_code ?? event.object_type),
+        ...(thirdBuyEvidence ? { third_buy_evidence: thirdBuyEvidence } : {}),
       })
     }
     tradeSignalReasonById.value = currentTradeSignalReasons
+    tradeSignalEvidenceById.value = currentTradeSignalEvidence
     if (!auxiliaryOnly.value) {
       for (const marker of tradeExecutionMarkers(trades.value)) {
         currentSignals.set(`${marker.object_type}:${marker.object_id}`, marker)

@@ -544,6 +544,27 @@ describe('ChartGroup', () => {
       signal_type: 'buy_1' as const, divergence_kind: null, signal_class: 'standard' as const, strength: null,
       reference_object_id: null, macd_area_reference: null, macd_area_current: null,
       confirmed: true, confirmed_at_bar_index: 1, known_at_bar_index: 1, object_revision: 1, label: '买入',
+      third_buy_evidence: {
+        evidence_profile: 'third_buy_entry_evidence_v1' as const,
+        b3_object_id: 'B3-1', b3_bar_index: 1, b3_timestamp_utc: 1_700_000_300_000,
+        b3_price_i64: 11, b3_confirmed_at_bar_index: 1, b3_confirmed_at_timestamp_utc: 1_700_000_300_000,
+        source_center_id: 'ZS-0', source_center_start_bar_index: 0,
+        source_center_start_timestamp_utc: 1_700_000_000_000, source_center_end_bar_index: 0,
+        source_center_end_timestamp_utc: 1_700_000_000_000, source_center_zd_i64: 10,
+        source_center_zg_i64: 11, source_center_dd_i64: 9, source_center_gg_i64: 12,
+        center_ordinal_in_trend: 1, priority: 'high', departure_segment_id: 'UP-0-1',
+        departure_start_bar_index: 0, departure_start_timestamp_utc: 1_700_000_000_000,
+        departure_end_bar_index: 1, departure_end_timestamp_utc: 1_700_000_300_000,
+        departure_start_price_i64: 11, departure_end_price_i64: 13, departure_high_i64: 13,
+        departure_high_source_bar_index: 1, departure_high_source_timestamp_utc: 1_700_000_300_000,
+        return_segment_id: 'DOWN-1', return_start_bar_index: 1,
+        return_start_timestamp_utc: 1_700_000_300_000, return_end_bar_index: 1,
+        return_end_timestamp_utc: 1_700_000_300_000, return_start_price_i64: 13,
+        return_end_price_i64: 11, return_low_i64: 11, return_boundary_relation: 'at_or_above_ZG' as const,
+        return_low_source_bar_index: 1, return_low_source_timestamp_utc: 1_700_000_300_000,
+        return_range_profile: 'constituent_bi_union_v1',
+        return_clearance_above_zg_i64: 0, entry_volume: 500, minimum_entry_volume: 0, quantity: 2,
+      },
     }
     const wrapper = mount(ChartGroup, { props: { dataset: dataset(), selectedSignal, signalLocked: true } })
     await flushPromises()
@@ -551,6 +572,12 @@ describe('ChartGroup', () => {
     expect(wrapper.findAll('.signal-selection circle')).toHaveLength(2)
     expect(wrapper.get('.signal-selection-label').text()).toBe('买入')
     expect(wrapper.find('.signal-selection-marker').exists()).toBe(true)
+    expect(wrapper.find('[data-third-buy-evidence="true"]').exists()).toBe(true)
+    expect(wrapper.get('.third-buy-center-label').text()).toContain('来源中枢 ZS-0 · ZD 10 / ZG 11')
+    expect(wrapper.get('.third-buy-departure-label').text()).toBe('向上离开')
+    expect(wrapper.findAll('.third-buy-return-label')[0]?.text()).toContain('首次回试结构结束 K1 @ 11')
+    expect(wrapper.findAll('.third-buy-return-label')[1]?.text()).toContain('实际低点 K1 @ 11 ≥ ZG 11')
+    expect(wrapper.get('.third-buy-confirmation-label').text()).toBe('B3 于 K1 确认可知')
     chartMocks.timeScale.getVisibleLogicalRange.mockReturnValueOnce({ from: 0, to: 1 })
     await (wrapper.vm as unknown as { focusSignal: (signal: typeof selectedSignal) => Promise<void> }).focusSignal(selectedSignal)
     expect(apiMocks.getBars).toHaveBeenCalledTimes(1)

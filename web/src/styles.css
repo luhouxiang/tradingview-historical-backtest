@@ -314,6 +314,19 @@ button:disabled { color: #787b86; }
   fill: rgba(38, 198, 218, 0.12);
   stroke: #26c6da;
 }
+.third-buy-evidence { pointer-events: none; }
+.third-buy-source-center { fill: rgba(41, 98, 255, .18); stroke: #42a5f5; stroke-width: 2; stroke-dasharray: 7 4; }
+.third-buy-departure { stroke: #00c853; stroke-width: 4; }
+.third-buy-return { stroke: #ff9800; stroke-width: 4; }
+.third-buy-return-end { fill: #ffca28; stroke: #fff; stroke-width: 2; }
+.third-buy-return-low { fill: #f23645; stroke: #fff; stroke-width: 1.5; }
+.third-buy-confirmation-line { stroke: #ab47bc; stroke-width: 1.5; stroke-dasharray: 5 4; opacity: .8; }
+.third-buy-confirmation { fill: #ab47bc; stroke: #fff; stroke-width: 1.5; }
+.third-buy-evidence text { stroke: #131722; stroke-width: 4; paint-order: stroke; font-size: 12px; font-weight: 700; }
+.third-buy-center-label { fill: #64b5f6; }
+.third-buy-departure-label { fill: #69f0ae; }
+.third-buy-return-label { fill: #ffd54f; }
+.third-buy-confirmation-label { fill: #ce93d8; }
 .signal-selection { pointer-events: none; fill: #131722; stroke: #fff; stroke-width: 2; }
 .signal-selection line { stroke: #fff; stroke-width: 1; stroke-dasharray: 4 3; }
 .signal-selection.locked { stroke: #2962ff; }

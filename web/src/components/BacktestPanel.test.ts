@@ -31,7 +31,7 @@ const secondBuyStrategy = {
   },
 }
 const thirdBuyStrategy = {
-  kind: 'strategy', algorithm_id: 'third_buy_only', algorithm_version: '1.1.0', source_hash: `sha256:${'5'.repeat(64)}`,
+  kind: 'strategy', algorithm_id: 'third_buy_only', algorithm_version: '1.2.0', source_hash: `sha256:${'5'.repeat(64)}`,
   name: '只做第三类买点', parameter_schema: {
     properties: {
       checkpoint_interval: { type: 'integer', minimum: 64, maximum: 100_000, default: 1024 },
@@ -417,7 +417,7 @@ describe('BacktestPanel', () => {
       run_id: 'run-restored', run_signature: `sha256:${'3'.repeat(64)}`, status: 'completed', progress: 1,
       manifest: {
         dataset: { dataset_id: dataset.dataset_id, data_revision: dataset.data_revision },
-        strategy: { strategy_id: strategy.algorithm_id },
+        strategy: { strategy_id: strategy.algorithm_id, version: strategy.algorithm_version, source_hash: strategy.source_hash },
         execution: { semantic_version: '1.0.0', contract_multiplier: 20, contract_multiplier_source: 'instrument_config', commission: { amount_i64: 300 }, slippage: { mode: 'ticks', value: 1 } },
       },
     })
@@ -430,6 +430,28 @@ describe('BacktestPanel', () => {
     expect(wrapper.text()).toContain('已恢复最近结果')
     expect(wrapper.get('.summary-grid').text()).toContain('10.00%')
     expect(wrapper.emitted('completed')?.[0]?.[0]).toMatchObject({ run_id: 'run-restored' })
+  })
+
+  it('does not restore a run produced by an older strategy definition', async () => {
+    window.localStorage.setItem('tvbt:last-backtest:v1', JSON.stringify({
+      dataset_id: dataset.dataset_id, data_revision: dataset.data_revision,
+      run_id: 'run-old-strategy', run_signature: `sha256:${'4'.repeat(64)}`,
+      algorithm_id: strategy.algorithm_id,
+    }))
+    api.getBacktest.mockResolvedValue({
+      run_id: 'run-old-strategy', run_signature: `sha256:${'4'.repeat(64)}`, status: 'completed', progress: 1,
+      manifest: {
+        dataset: { dataset_id: dataset.dataset_id, data_revision: dataset.data_revision },
+        strategy: { strategy_id: strategy.algorithm_id, version: '0.9.0', source_hash: `sha256:${'0'.repeat(64)}` },
+      },
+    })
+
+    const wrapper = mount(BacktestPanel, { props: { dataset, view: 'backtest' } })
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('策略版本不匹配，请重新运行正式回测')
+    expect(wrapper.text()).not.toContain('已恢复最近结果')
+    expect(wrapper.emitted('completed')).toBeUndefined()
   })
 
   it('labels an old run without execution semantic_version instead of treating it as current', async () => {
@@ -748,7 +770,28 @@ describe('BacktestPanel', () => {
       {
         event_seq: 1, known_at_bar_index: 79, object_type: 'trade_signal', object_id: 'signal-B3-entry',
         operation: 'upsert', object_revision: 1,
-        payload: { signal_id: 'signal-B3-entry', action: 'open_long', reason_code: 'CONFIRMED_FIRST_CENTER_B3_ENTRY' },
+        payload: {
+          signal_id: 'signal-B3-entry', action: 'open_long', reason_code: 'CONFIRMED_FIRST_CENTER_B3_ENTRY',
+          evidence_profile: 'third_buy_entry_evidence_v1', b3_object_id: 'B3-79', b3_bar_index: 79,
+          b3_timestamp_utc: 1_699_999_700_000, b3_price_i64: 2648, b3_confirmed_at_bar_index: 79,
+          b3_confirmed_at_timestamp_utc: 1_699_999_700_000,
+          source_center_id: 'SEG-ZS-60-70', source_center_start_bar_index: 60,
+          source_center_start_timestamp_utc: 1_699_994_000_000, source_center_end_bar_index: 70,
+          source_center_end_timestamp_utc: 1_699_997_000_000, source_center_zd_i64: 2610,
+          source_center_zg_i64: 2630, source_center_dd_i64: 2600, source_center_gg_i64: 2640,
+          center_ordinal_in_trend: 1, priority: 'high', departure_segment_id: 'SEG-UP-70-75',
+          departure_start_bar_index: 70, departure_start_timestamp_utc: 1_699_997_000_000,
+          departure_end_bar_index: 75, departure_end_timestamp_utc: 1_699_998_500_000,
+          departure_start_price_i64: 2630, departure_end_price_i64: 2680, departure_high_i64: 2680,
+          departure_high_source_bar_index: 75, departure_high_source_timestamp_utc: 1_699_998_500_000,
+          return_segment_id: 'SEG-DOWN-75-79', return_start_bar_index: 75,
+          return_start_timestamp_utc: 1_699_998_500_000, return_end_bar_index: 79,
+          return_end_timestamp_utc: 1_699_999_700_000, return_start_price_i64: 2680,
+          return_end_price_i64: 2648, return_low_i64: 2648, return_boundary_relation: 'at_or_above_ZG',
+          return_low_source_bar_index: 79, return_low_source_timestamp_utc: 1_699_999_700_000,
+          return_range_profile: 'constituent_bi_union_v1',
+          return_clearance_above_zg_i64: 18, entry_volume: 1153, minimum_entry_volume: 0, quantity: 2,
+        },
       },
       {
         event_seq: 2, known_at_bar_index: 89, object_type: 'trade_signal', object_id: 'signal-B3-exit',
@@ -782,14 +825,21 @@ describe('BacktestPanel', () => {
     expect(wrapper.emitted('completed')?.[0]?.[0]).toMatchObject({ signals: expect.arrayContaining([
       expect.objectContaining({
         object_id: 'trade-B3:entry',
-        classification_detail: expect.stringContaining('买入：首中枢标准三买已确认'),
+        classification_detail: expect.stringContaining('参考中枢 SEG-ZS-60-70'),
+        third_buy_evidence: expect.objectContaining({ return_segment_id: 'SEG-DOWN-75-79' }),
       }),
     ]) })
     const entryRow = wrapper.get('[data-trade-id="trade-B3-01"]')
     const exitRow = wrapper.get('[data-trade-id="trade-B3-02"]')
     expect(entryRow.text()).toContain('trade-B3-01')
     expect(entryRow.text()).toContain('买入开仓')
-    expect(entryRow.text()).toContain('首中枢标准三买已确认')
+    expect(entryRow.text()).toContain('参考中枢 SEG-ZS-60-70')
+    expect(entryRow.text()).toContain('核心 ZD=2610、ZG=2630')
+    expect(entryRow.text()).toContain('首次回试段 SEG-DOWN-75-79')
+    expect(entryRow.text()).toContain('实际区间最低点 2648 位于 K79，2648 ≥ ZG 2630（高出 18）')
+    expect(entryRow.text()).toContain('理论端点为 K79、价格 2648')
+    expect(entryRow.text()).toContain('K79 才确认可知')
+    expect(entryRow.text()).toContain('成交量 1153 ≥ 门槛 0')
     expect(entryRow.text()).toContain('入场信号时未匹配到通用结构快照')
     expect(entryRow.text()).not.toContain('800')
     expect(exitRow.text()).toContain('trade-B3-02')

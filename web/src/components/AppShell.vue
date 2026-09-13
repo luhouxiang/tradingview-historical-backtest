@@ -349,6 +349,9 @@ function focusBacktestTrade(trade: BacktestTrade, leg: 'entry' | 'exit' = 'entry
     detail: typeof executionMarker?.classification_detail === 'string'
       ? executionMarker.classification_detail
       : `${trade.quantity} 手 · ${trade.trade_id}`,
+    ...(executionMarker?.third_buy_evidence && typeof executionMarker.third_buy_evidence === 'object'
+      ? { third_buy_evidence: executionMarker.third_buy_evidence as ChanTreeObject['third_buy_evidence'] }
+      : {}),
   }
   selectedDrawingId.value = null
   selectedSignal.value = signal
