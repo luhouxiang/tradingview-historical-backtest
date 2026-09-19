@@ -7,13 +7,13 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any
+from typing import Any, cast
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 
 from tvbt.chan.checkpoint import dump_checkpoint, write_checkpoint
-from tvbt.chan.engine import ChanEngine, ChanParameters, RawBar
+from tvbt.chan.engine import CenterBoundaryProfile, ChanEngine, ChanParameters, RawBar
 from tvbt.chan.storage import EVENT_SCHEMA, ChanResult, write_chan_cache
 from tvbt.logging_proxy import logger
 from tvbt.storage.memory_guard import check_memory
@@ -48,6 +48,7 @@ def _source_hash() -> str:
         "engine.py",
         "events.py",
         "level_graph.py",
+        "local_center.py",
         "reference.py",
         "signals.py",
         "storage.py",
@@ -81,9 +82,15 @@ def definition() -> dict[str, Any]:
             "additionalProperties": False,
             "properties": {
                 "checkpoint_interval": {**integer, "default": 1024},
+                "center_boundary_profile": {
+                    "type": "string",
+                    "enum": ["local_center_boundary_v1"],
+                    "default": "local_center_boundary_v1",
+                },
             },
             "required": [
                 "checkpoint_interval",
+                "center_boundary_profile",
             ],
         },
         "outputs": [
@@ -100,8 +107,9 @@ def definition() -> dict[str, Any]:
                 ("bi", "笔"),
                 ("bi_state", "笔在线状态"),
                 ("segment", "段"),
-                ("zhongshu", "笔中枢"),
-                ("segment_zhongshu", "标准线段中枢"),
+                ("local_center", "局部分界中枢"),
+                ("center_connection", "中枢连接"),
+                ("center_audit_event", "中枢边界审计事件"),
                 ("level_center", "递归层级中枢"),
                 ("level_movement", "递归层级走势"),
                 ("movement_state", "走势状态"),
@@ -172,8 +180,9 @@ def calculate_chan(payload: dict[str, Any], guard: PathGuard, cancelled: threadi
                 bi=rows["bi"],
                 bi_states=rows["bi_states"],
                 segments=rows["segments"],
-                zhongshu=rows["zhongshu"],
-                segment_zhongshu=rows["segment_zhongshu"],
+                local_centers=rows["local_centers"],
+                center_connections=rows["center_connections"],
+                center_audit_events=rows["center_audit_events"],
                 level_centers=rows["level_centers"],
                 level_movements=rows["level_movements"],
                 movement_states=rows["movement_states"],
@@ -200,8 +209,9 @@ def calculate_chan(payload: dict[str, Any], guard: PathGuard, cancelled: threadi
                     "bi": len(result.bi),
                     "bi_states": len(result.bi_states),
                     "segments": len(result.segments),
-                    "zhongshu": len(result.zhongshu),
-                    "segment_zhongshu": len(result.segment_zhongshu),
+                    "local_centers": len(result.local_centers),
+                    "center_connections": len(result.center_connections),
+                    "center_audit_events": len(result.center_audit_events),
                     "level_centers": len(result.level_centers),
                     "level_movements": len(result.level_movements),
                     "divergences": len(result.divergences),
@@ -270,7 +280,7 @@ def run_chan(
             raise ValueError(f"algorithm {key} does not match engine definition")
     bars_path = guard.resolve(str(dataset.get("bars_path", "")))
     meta_path = guard.resolve(str(dataset.get("meta_path", "")))
-    json.loads(meta_path.read_text(encoding="utf-8"))
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
     logger.debug(
         "algorithm.loaded",
         "Chan algorithm payload accepted",
@@ -283,10 +293,24 @@ def run_chan(
     check_memory()
     parquet = pq.ParquetFile(bars_path)
     columns = ["bar_index", "timestamp_utc", "open_i64", "high_i64", "low_i64", "close_i64"]
+    instrument = meta.get("instrument")
+    stream_symbol = (
+        str(instrument.get("symbol"))
+        if isinstance(instrument, dict) and instrument.get("symbol")
+        else str(dataset["dataset_id"])
+    )
     runtime = ChanEngine(
         ChanParameters(
             checkpoint_interval=int(parameters["checkpoint_interval"]),
-        )
+            center_boundary_profile=cast(
+                CenterBoundaryProfile,
+                str(parameters.get("center_boundary_profile", "local_center_boundary_v1")),
+            ),
+        ),
+        stream_symbol=stream_symbol,
+        stream_timeframe=str(meta.get("timeframe", "unknown")),
+        stream_anchor_id=f"{dataset['data_revision']}:dataset-start",
+        price_tick_i64=meta["price"]["tick_size_i64"],
     )
     checkpoints: dict[int, bytes] = {}
     indices: list[int] = []

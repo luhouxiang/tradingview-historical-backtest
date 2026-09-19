@@ -4,9 +4,9 @@
   "algorithm": {
     "kind": "chan",
     "algorithm_id": "chan_standard",
-    "algorithm_version": "1.0.0",
+    "algorithm_version": "17.0.0",
     "source_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
   },
-  "parameters": {"min_fractal_gap": 5, "checkpoint_interval": 1024},
+  "parameters": {"min_fractal_gap": 5, "checkpoint_interval": 1024, "center_boundary_profile": "local_center_boundary_v1"},
   "calculation_mode": "causal_events"
 }

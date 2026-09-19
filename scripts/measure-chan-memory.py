@@ -22,10 +22,21 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--data-root", required=True)
 parser.add_argument("--meta", required=True)
 parser.add_argument("--output", required=True)
+parser.add_argument("--cache-key")
+parser.add_argument(
+    "--center-boundary-profile",
+    choices=("local_center_boundary_v1",),
+    default="local_center_boundary_v1",
+)
 args = parser.parse_args()
 guard = PathGuard(Path(args.data_root))
-if guard.resolve(args.output).exists() or guard.resolve(args.output + "-memory.json").exists():
-    parser.error("Use a new --output path for each measurement; existing evidence is immutable")
+if (
+    guard.resolve(args.output).exists()
+    or guard.resolve(args.output + "-memory.json").exists()
+):
+    parser.error(
+        "Use a new --output path for each measurement; existing evidence is immutable"
+    )
 meta = json.loads(guard.resolve(args.meta).read_text(encoding="utf-8"))
 algorithm = definition()
 payload = {
@@ -36,11 +47,15 @@ payload = {
         "bars_path": next(f["path"] for f in meta["files"] if f["role"] == "bars"),
     },
     "algorithm": {
-        key: algorithm[key] for key in ("kind", "algorithm_id", "algorithm_version", "source_hash")
+        key: algorithm[key]
+        for key in ("kind", "algorithm_id", "algorithm_version", "source_hash")
     },
-    "parameters": {"checkpoint_interval": 1024},
+    "parameters": {
+        "checkpoint_interval": 1024,
+        "center_boundary_profile": args.center_boundary_profile,
+    },
     "calculation_mode": "causal_events",
-    "cache_key": algorithm["source_hash"],
+    "cache_key": args.cache_key or algorithm["source_hash"],
     "output_path": args.output,
 }
 stopped = threading.Event()
@@ -63,7 +78,7 @@ result = {
 try:
     result["result_ref"] = calculate_chan(payload, guard, threading.Event())
     result["status"] = "completed"
-except Exception as exc:
+except Exception as exc:  # noqa: BLE001 - the evidence report must retain any terminal failure.
     result.update(status="failed", error=str(exc))
 finally:
     peak[0] = max(peak[0], memory_usage()[0])
@@ -75,7 +90,9 @@ finally:
     )
     report = guard.resolve(args.output + "-memory.json")
     report.parent.mkdir(parents=True, exist_ok=True)
-    report.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    report.write_text(
+        json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     print(json.dumps(result, ensure_ascii=False), flush=True)
 if result["status"] != "completed":
     sys.exit(1)

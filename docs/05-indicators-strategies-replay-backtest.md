@@ -50,9 +50,8 @@ flowchart TD
 - include_merge：包含关系处理。
 - fractal_detector：分型。
 - bi_builder：笔。
-- zhongshu_builder：中枢。
 - segment_builder：段。
-- segment_zhongshu_builder：标准线段中枢。
+- local_center_builder：BI/SEGMENT 共用的权威实体中枢状态机。
 - divergence_and_trade_point_builder：趋势/盘整背驰和一二三类买卖点。
 - checkpoint：连续状态序列化。
 - event_emitter：upsert/delete 事件。
@@ -63,10 +62,9 @@ flowchart TD
 - 分型由左、中、右三根去包含后的独立 K 线构成，中间 K 线的高低点同时严格高于两侧为顶、同时严格低于两侧为底；右侧独立 K 线出现即封存。
 - 笔至少跨越 5 根独立 K 线；上涨笔必须由区间最低底连接到区间最高顶，下降笔必须由区间最高顶连接到区间最低底。同类分型按后顶更高、后底更低替换，不使用 ATR 振幅门槛。
 - 相邻笔必须共享端点且方向严格交替，不允许连续两笔向上或连续两笔向下。
-- 笔中枢按 `algo-ui` 的 `compute_bi_pivots/process_down_up` 扫描同奇偶位置笔的区间交集；后续同奇偶笔相交时延长时间范围而不改变 ZD/ZG。
 - 段按 `algo-ui` 的 `_NCHDUAN` 及其首段发现、正反向确认、临时段修订函数计算。
-- 笔中枢和段的完整规则、金样与因果约束见 `docs/13-chan-bi-center-segment-algorithm.md`。
-- 标准线段中枢只接受正宽重叠；背驰、MACD 力度和一二三类买卖点的完整口径见 `docs/14-chan-108-segment-center-divergence-trade-points.md`。
+- 实体中枢使用三个连续已确认单元的正宽重叠（`ZD < ZG`）冻结核心，分界及重新扫描遵守 `local_center_boundary_v1`。
+- 背驰、MACD 力度和一二三类买卖点只消费 SEGMENT 实体中枢的因果投影。
 
 Python 输出时间、价格、确认状态和修订，不输出像素。
 

@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from dataclasses import replace
+import json
 from itertools import pairwise
 from pathlib import Path
 
 import pytest
 
 from tvbt.chan.engine import ChanEngine, ChanParameters, Fractal, LineObject, RawBar
-from tvbt.chan.reference import ReferenceSegmentAccumulator, reference_centers
+from tvbt.chan.reference import ReferenceSegmentAccumulator
 
 
 def bar(index: int, high: int, low: int) -> RawBar:
@@ -290,7 +290,7 @@ def test_reference_fractal_is_sealed_by_the_right_independent_bar() -> None:
     assert fractal.confirmed_at_bar_index == 5
 
 
-def test_reference_extremes_build_alternating_bi_and_confirmed_center() -> None:
+def test_reference_extremes_build_alternating_bi_and_local_center() -> None:
     """测试标准波形是否能生成方向交替的笔和已确认笔中枢。
 
     预期:确认笔至少包含向下、向上、向下三段交替结构,每笔跨度满足
@@ -307,12 +307,12 @@ def test_reference_extremes_build_alternating_bi_and_confirmed_center() -> None:
         value.end.normalized_index - value.start.normalized_index + 1 >= 5 for value in runtime.bi
     )
     assert_bi_use_processed_extremes(runtime)
-    assert rows["zhongshu"]
-    center = rows["zhongshu"][0]
+    centers = [value for value in rows["local_centers"] if value["unit_kind"] == "BI"]
+    assert centers
+    center = centers[0]
     assert center["zd_i64"] < center["zg_i64"]
-    assert center["status"] in {"confirmed", "extended", "left"}
-    assert center["leave_direction"] in {None, "up", "down"}
-    assert center["known_at_bar_index"] >= center["confirmed_at_bar_index"]
+    assert center["status"] in {"ACTIVE", "FORMED", "EXTENDING", "PENDING_BREAK", "CLOSED"}
+    assert center["known_at_bar_index"] >= center["formed_at_bar_index"]
 
 
 def test_later_more_extreme_fractal_revises_existing_bi() -> None:
@@ -482,7 +482,7 @@ def test_algo_ui_segment_golden_for_aol9_prefix_is_exact() -> None:
     assert all(left["direction"] != right["direction"] for left, right in pairwise(segments))
 
 
-def test_standard_segment_centers_and_third_points_are_causal_on_aol9() -> None:
+def test_segment_local_centers_and_third_points_are_causal_on_aol9() -> None:
     """测试 AOL9 前缀上的标准线段中枢与三买信号因果性。
 
     预期:标准线段中枢均满足 `ZD < ZG`,中枢监视对象具有合法强弱和相对位置,
@@ -506,15 +506,20 @@ def test_standard_segment_centers_and_third_points_are_causal_on_aol9() -> None:
             )
         )
     result = runtime.result_rows()
-    assert len(result["segment_zhongshu"]) == 3
-    assert all(value["zd_i64"] < value["zg_i64"] for value in result["segment_zhongshu"])
+    segment_centers = [
+        value for value in result["local_centers"] if value["unit_kind"] == "SEGMENT"
+    ]
+    assert segment_centers
+    assert all(value["zd_i64"] < value["zg_i64"] for value in segment_centers)
     assert all(
-        value["analysis_level"] == "segment"
-        and value["component_kind"] == "segment"
-        and value["component_count"] >= 3
-        and value["dd_i64"] <= value["zd_i64"] < value["zg_i64"] <= value["gg_i64"]
-        and value["z_i64"] == (value["zd_i64"] + value["zg_i64"]) // 2
-        for value in result["segment_zhongshu"]
+        value["structural_level"] == "segment"
+        and len(value["seed_ids"]) == 3
+        and value["observed_low_i64"]
+        <= value["zd_i64"]
+        < value["zg_i64"]
+        <= value["observed_high_i64"]
+        and value["known_at_bar_index"] >= value["formed_at_bar_index"]
+        for value in segment_centers
     )
     assert result["movement_states"]
     assert result["level_movements"]
@@ -549,11 +554,13 @@ def test_standard_segment_centers_and_third_points_are_causal_on_aol9() -> None:
         or value["range_high_i64"] > max(value["start_price_i64"], value["end_price_i64"])
         for value in result["segments"]
     )
-    assert [
+    standard_points = [
         (value["signal_type"], value["bar_index"])
         for value in result["trade_points"]
         if value["signal_class"] == "standard"
-    ] == []
+    ]
+    assert standard_points
+    assert all(signal_type == "buy_3" for signal_type, _ in standard_points)
     assert any(
         value["signal_class"] == "class_like"
         and value["signal_type"] in {"class_buy_1", "class_sell_1"}
@@ -564,102 +571,6 @@ def test_standard_segment_centers_and_third_points_are_causal_on_aol9() -> None:
         or value["known_at_bar_index"] >= value["confirmed_at_bar_index"]
         for value in [*result["divergences"], *result["trade_points"]]
     )
-
-
-def test_algo_ui_center_starts_from_three_same_parity_lines_and_extends() -> None:
-    """测试中枢是否从同奇偶三笔形成并可继续延伸。
-
-    预期:初始两条同奇偶笔冻结 `[ZD, ZG]` 核心,后续同奇偶相交笔只延长
-    时间范围,不改变核心;首次不相交时标记离开方向。
-    """
-    lines = [
-        line(0, 15, 20),
-        line(1, 20, 0),
-        line(2, 0, 10),
-        line(3, 10, 2),
-        line(4, 2, 8),
-        line(5, 8, 4),
-        line(6, 4, 12),
-        line(7, 12, 9),
-        line(8, 9, 20),
-        line(9, 20, 12),
-    ]
-    confirmed = reference_centers(lines[:5])[0]
-    extended = reference_centers(lines[:7])[0]
-    left = reference_centers(lines)[0]
-    assert confirmed.status == "confirmed"
-    assert (confirmed.zd_i64, confirmed.zg_i64) == (2, 10)
-    assert extended.status == "extended"
-    assert left.status == "left"
-    assert left.leave_direction == "up"
-    assert left.known_at_bar_index == 8
-
-
-def test_algo_ui_center_does_not_require_a_fourth_return_line() -> None:
-    """测试笔中枢形成是否不要求第四笔返回。
-
-    预期:只要基准同奇偶两笔存在交集,就能立即生成中枢,不需要额外等待
-    第四笔回到该区间。
-    """
-    lines = [
-        line(0, 15, 20),
-        line(1, 20, 0),
-        line(2, 0, 10),
-        line(3, 10, 2),
-        line(4, 2, 12),
-        line(5, 12, 11),
-    ]
-    centers = reference_centers(lines)
-    assert len(centers) == 1
-    assert (centers[0].zd_i64, centers[0].zg_i64) == (2, 10)
-
-
-def test_algo_ui_center_base_progression_matches_reference_semantics() -> None:
-    """测试中枢扫描基点推进规则是否匹配参考语义。
-
-    预期:连续中枢的 `base_index` 与 `seed_end_index` 按参考实现的
-    `new_base - 1 / new_base - 2` 规则推进。
-    """
-    lines = [
-        line(0, 15, 20),
-        line(1, 20, 0),
-        line(2, 0, 10),
-        line(3, 10, 2),
-        line(4, 2, 8),
-        line(5, 8, 4),
-        line(6, 4, 12),
-        line(7, 12, 9),
-        line(8, 9, 20),
-        line(9, 20, 12),
-        line(10, 12, 18),
-        line(11, 18, 14),
-    ]
-    centers = reference_centers(lines)
-    assert [(value.base_index, value.seed_end_index) for value in centers] == [
-        (1, 3),
-        (7, 9),
-        (9, 11),
-    ]
-
-
-def test_center_known_at_is_the_latest_participating_line() -> None:
-    """测试中枢可知时间是否取参与笔中的最晚时间。
-
-    预期:若参与中枢的某条笔较晚才可知,中枢 `known_at_bar_index` 必须等于
-    该最晚可知位置,不能提前显示。
-    """
-    lines = [
-        line(0, 15, 20),
-        line(1, 20, 0),
-        line(2, 0, 10),
-        line(3, 10, 2),
-        line(4, 2, 8),
-        replace(line(5, 8, 4), confirmed_at_bar_index=20, known_at_bar_index=20),
-        line(6, 4, 12),
-        line(7, 12, 9),
-    ]
-    center = reference_centers(lines)[0]
-    assert center.known_at_bar_index == 20
 
 
 def test_chan_event_stream_is_prefix_invariant_for_multiple_cutoffs() -> None:
@@ -702,6 +613,19 @@ def test_engine_state_restore_matches_uninterrupted_events_and_objects() -> None
     combined = [*prefix_events, *(event.row() for event in restored.emitter.events)]
     assert combined == [event.row() for event in full.emitter.events]
     assert restored.result_rows() == full.result_rows()
+
+
+def test_json_checkpoint_keeps_same_anchor_object_order_stable() -> None:
+    runtime = engine()
+    for object_type, anchor in (
+        ("bi", "start_bar_index"),
+        ("center_monitor", "bar_index"),
+        ("trade_point", "bar_index"),
+    ):
+        for object_id in ("object-z", "object-a"):
+            runtime.emitter.upsert(5, object_type, object_id, {anchor: 5})
+    restored = ChanEngine.from_state(json.loads(json.dumps(runtime.export_state(), sort_keys=True)))
+    assert restored.result_rows() == runtime.result_rows()
 
 
 def test_incremental_upper_structures_match_forced_full_rescan_events() -> None:

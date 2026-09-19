@@ -4,7 +4,7 @@ from collections.abc import Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, replace
 from typing import Literal
 
-from tvbt.chan.reference import LineLike, ReferenceCenter
+from tvbt.chan.reference import LineLike
 
 """线段级缠论信号生成。
 
@@ -41,6 +41,25 @@ SignalType = Literal[
     "class_sell_3",
 ]
 MacdAreaKey = tuple[str, int, int, str]
+
+
+@dataclass(frozen=True)
+class StructuralCenter:
+    """Signal-facing projection of the authoritative local-center decomposition."""
+
+    base_index: int
+    seed_end_index: int
+    end_index: int
+    exit_index: int | None
+    start_bar_index: int
+    end_bar_index: int
+    start_time: int
+    end_time: int
+    zd_i64: int
+    zg_i64: int
+    known_at_bar_index: int
+    status: Literal["confirmed", "extended", "left"]
+    leave_direction: Literal["up", "down"] | None
 
 
 @dataclass(frozen=True)
@@ -120,7 +139,7 @@ def _high(line: LineLike) -> int:
     return value if value is not None else max(line.start.price_i64, line.end.price_i64)
 
 
-def _outer_range(center: ReferenceCenter, segments: Sequence[LineLike]) -> tuple[int, int]:
+def _outer_range(center: StructuralCenter, segments: Sequence[LineLike]) -> tuple[int, int]:
     """返回中枢参与组件完整外包络 `[DD, GG]`。"""
     components = segments[center.base_index : center.end_index + 1]
     return min(_low(line) for line in components), max(_high(line) for line in components)
@@ -141,7 +160,7 @@ def _previous_same_direction(
 
 
 def _center_component_known_at(
-    center: ReferenceCenter,
+    center: StructuralCenter,
     segments: Sequence[LineLike],
     component_index: int,
 ) -> int:
@@ -256,7 +275,7 @@ def _divergence(
 
 def chan_divergences(
     segments: Sequence[LineLike],
-    centers: list[ReferenceCenter],
+    centers: list[StructuralCenter],
     center_ids: list[str],
     histogram: Mapping[int, float],
     area_cache: MutableMapping[MacdAreaKey, float] | None = None,
@@ -392,7 +411,7 @@ def chan_divergences(
 
 def chan_first_point_candidates(
     segments: Sequence[LineLike],
-    centers: list[ReferenceCenter],
+    centers: list[StructuralCenter],
     center_ids: list[str],
     histogram: Mapping[int, float],
     area_cache: MutableMapping[MacdAreaKey, float] | None = None,
@@ -524,7 +543,7 @@ def _point_from_divergence(
 
 
 def _third_points(
-    segments: Sequence[LineLike], centers: list[ReferenceCenter], center_ids: list[str]
+    segments: Sequence[LineLike], centers: list[StructuralCenter], center_ids: list[str]
 ) -> list[ChanSignal]:
     """扫描严格三买/三卖。
 
@@ -617,7 +636,7 @@ def _third_points(
 
 def chan_trade_points(
     segments: Sequence[LineLike],
-    centers: list[ReferenceCenter],
+    centers: list[StructuralCenter],
     center_ids: list[str],
     divergences: list[tuple[str, ChanSignal]],
 ) -> list[ChanSignal]:

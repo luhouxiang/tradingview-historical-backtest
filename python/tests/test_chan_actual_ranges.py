@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from tvbt.chan.engine import Fractal, LineObject
-from tvbt.chan.reference import reference_centers
-from tvbt.chan.signals import _high, _low
 from tvbt.chan.zn import classify_zn_components
 
 
@@ -48,20 +46,6 @@ def line(
         index * 10 + 3 if range_high is not None else None,
         "constituent_bi_union_v1" if range_low is not None else "endpoint_extrema_v1",
     )
-
-
-def test_actual_range_changes_upper_structure_without_moving_drawing_endpoints() -> None:
-    values = [
-        line(0, 90, 95),
-        line(1, 120, 100, range_low=100, range_high=140),
-        line(2, 100, 105),
-        line(3, 110, 130, range_low=105, range_high=130),
-    ]
-    centers = reference_centers(values, minimum_line_count=4)
-    assert len(centers) == 1
-    assert (centers[0].zd_i64, centers[0].zg_i64) == (105, 130)
-    assert (values[1].start.price_i64, values[1].end.price_i64) == (120, 100)
-    assert (_low(values[1]), _high(values[1])) == (100, 140)
 
 
 def test_zn_uses_actual_range_midpoint() -> None:

@@ -954,7 +954,7 @@ export interface components {
                 /** @enum {unknown} */
                 series_type: "line" | "histogram" | "semantic_objects";
                 /** @enum {unknown} */
-                object_type?: "processed_bar" | "fractal" | "bi" | "bi_state" | "segment" | "zhongshu" | "segment_zhongshu" | "level_center" | "level_movement" | "movement_state" | "center_monitor" | "divergence" | "trade_point" | "strategy_state" | "stage_signal" | "trade_signal" | "chart_event" | "risk_decision";
+                object_type?: "processed_bar" | "fractal" | "bi" | "bi_state" | "segment" | "local_center" | "center_connection" | "center_audit_event" | "level_center" | "level_movement" | "movement_state" | "center_monitor" | "divergence" | "trade_point" | "strategy_state" | "stage_signal" | "trade_signal" | "chart_event" | "risk_decision";
             }[];
             warmup: {
                 /** @constant */
@@ -1013,8 +1013,9 @@ export interface components {
             bi: components["schemas"]["ChanLineObject"][];
             bi_states: components["schemas"]["ChanBiState"][];
             segments: components["schemas"]["ChanLineObject"][];
-            zhongshu: components["schemas"]["ChanZhongshu"][];
-            segment_zhongshu: components["schemas"]["ChanZhongshu"][];
+            local_centers: components["schemas"]["ChanLocalCenter"][];
+            center_connections: components["schemas"]["ChanCenterConnection"][];
+            center_audit_events: components["schemas"]["ChanCenterAuditEvent"][];
             level_centers: components["schemas"]["ChanLevelCenter"][];
             level_movements: components["schemas"]["ChanLevelMovement"][];
             movement_states: components["schemas"]["ChanMovementState"][];
@@ -1128,30 +1129,106 @@ export interface components {
             known_at_bar_index: number;
             object_revision: number;
         };
-        ChanZhongshu: {
+        /** @description Local boundary object. Relation fields are emitted by current producers; absent fields in preserved historical events mean unavailable evidence, not a verified trend. */
+        ChanLocalCenter: {
             object_id: string;
+            stream_key: string;
+            /** @constant */
+            rule_version: "local_center_boundary_v1";
+            previous_center_id?: string | null;
+            /** @enum {string|null} */
+            core_relation?: "CORE_ABOVE" | "CORE_BELOW" | "CORE_TOUCH_OR_OVERLAP" | null;
+            higher_level_review_required?: boolean;
+            /** @constant */
+            trend_status?: "UNVERIFIED";
+            /** @enum {unknown} */
+            unit_kind: "BI" | "SEGMENT";
+            structural_level: string;
+            scan_floor: number;
+            seed_ids: string[];
+            zd_i64: number;
+            zg_i64: number;
+            seed_start_bar_index: number;
+            seed_start_time: number;
+            seed_end_bar_index: number;
+            seed_end_time: number;
+            formed_at_bar_index: number;
+            body_start_bar_index: number;
+            body_start_time: number;
+            body_end_bar_index: number | null;
+            body_end_time: number | null;
+            observed_start_bar_index: number;
+            observed_start_time: number;
+            observed_end_bar_index: number;
+            observed_end_time: number;
+            observed_low_i64: number;
+            observed_high_i64: number;
+            /** @enum {unknown} */
+            status: "ACTIVE" | "PENDING_BREAK" | "CLOSED";
+            pending_exit_id: string | null;
+            exit_id: string | null;
+            first_retest_id: string | null;
+            entry_id: string | null;
+            /** @enum {string|null} */
+            local_entry: "FROM_BELOW" | "FROM_ABOVE" | null;
+            /** @enum {string|null} */
+            break_direction: "up" | "down" | null;
+            break_confirmed_at_bar_index: number | null;
+            parent_id: string | null;
+            left_context_incomplete: boolean;
+            roles_overlap_seed: boolean;
+            source_revision: string;
+            known_at_bar_index: number;
+            object_revision: number;
+        };
+        ChanCenterConnection: {
+            object_id: string;
+            stream_key: string;
+            /** @constant */
+            rule_version: "local_center_boundary_v1";
+            /** @enum {unknown} */
+            unit_kind: "BI" | "SEGMENT";
+            structural_level: string;
+            from_center_id: string;
+            to_center_id: string | null;
+            ordered_unit_ids: string[];
+            exit_unit_id: string;
+            entry_unit_id: string | null;
+            first_retest_id: string;
             start_bar_index: number;
             start_time: number;
             end_bar_index: number;
             end_time: number;
-            zg_i64: number;
-            zd_i64: number;
-            gg_i64: number;
-            dd_i64: number;
-            z_i64: number;
-            analysis_level: string;
-            /** @enum {string} */
-            component_kind: "bi" | "segment";
-            component_count: number;
-            confirmed: boolean;
-            confirmed_at_bar_index: number | null;
-            /** @enum {string} */
-            status: "confirmed" | "extended" | "left";
-            /** @enum {string|null} */
-            leave_direction: "up" | "down" | null;
+            confirmed_at_bar_index: number;
+            roles_overlap_seed: boolean;
+            source_revision: string;
             known_at_bar_index: number;
             object_revision: number;
         };
+        ChanCenterAuditEvent: {
+            object_id: string;
+            /** @enum {unknown} */
+            event_type: "SEED_FOUND" | "EXIT_PENDING" | "RETEST_TOUCH" | "BREAK_CONFIRMED" | "SEARCH_RESTARTED" | "ENTRY_LINKED" | "CENTER_REVISED" | "PREVIEW_UPDATED";
+            /** @enum {string|null} */
+            preview_state?: "EXIT_PENDING" | "RETEST_PENDING" | "RETEST_TOUCH" | null;
+            preview_confirmed?: boolean | null;
+            /** @enum {string|null} */
+            preview_direction?: "up" | "down" | null;
+            source_revision?: string | null;
+            center_id: string;
+            unit_ids: string[];
+            zd_i64: number;
+            zg_i64: number;
+            comparison_i64: number | null;
+            event_bar_index: number;
+            event_time: number;
+            /** @constant */
+            rule_version: "local_center_boundary_v1";
+            source_file: string;
+            source_line: number;
+            known_at_bar_index: number;
+            object_revision: number;
+        } & unknown;
         ChanMovementState: {
             object_id: string;
             start_bar_index: number;
@@ -2770,8 +2847,7 @@ export interface components {
                     level_centers?: boolean;
                     level_movements?: boolean;
                     segments?: boolean;
-                    zhongshu: boolean;
-                    segment_zhongshu?: boolean;
+                    local_centers: boolean;
                     movement_states?: boolean;
                     center_monitors?: boolean;
                     divergences?: boolean;
@@ -2821,8 +2897,7 @@ export interface components {
                     level_centers?: boolean;
                     level_movements?: boolean;
                     segments: boolean;
-                    zhongshu: boolean;
-                    segment_zhongshu: boolean;
+                    local_centers: boolean;
                     movement_states: boolean;
                     center_monitors: boolean;
                     divergences: boolean;

@@ -120,27 +120,95 @@ BI_STATE_SCHEMA = pa.schema(
         ("object_revision", pa.int64()),
     ]
 )
-# 中枢 schema，复用于笔中枢和标准线段中枢。`ZD/ZG` 是冻结核心，
-# `DD/GG` 是参与组件完整振荡包络，`Z` 是核心中轴。
-ZHONGSHU_SCHEMA = pa.schema(
+# 版本化局部分解对象，作为中枢及其派生算法的唯一权威输入。
+LOCAL_CENTER_SCHEMA = pa.schema(
     [
         ("object_id", pa.string()),
+        ("previous_center_id", pa.string()),
+        ("core_relation", pa.string()),
+        ("higher_level_review_required", pa.bool_()),
+        ("trend_status", pa.string()),
+        ("stream_key", pa.string()),
+        ("rule_version", pa.string()),
+        ("unit_kind", pa.string()),
+        ("structural_level", pa.string()),
+        ("scan_floor", pa.int64()),
+        ("seed_ids", pa.list_(pa.string())),
+        ("zd_i64", pa.int64()),
+        ("zg_i64", pa.int64()),
+        ("seed_start_bar_index", pa.int64()),
+        ("seed_start_time", pa.int64()),
+        ("seed_end_bar_index", pa.int64()),
+        ("seed_end_time", pa.int64()),
+        ("formed_at_bar_index", pa.int64()),
+        ("body_start_bar_index", pa.int64()),
+        ("body_start_time", pa.int64()),
+        ("body_end_bar_index", pa.int64()),
+        ("body_end_time", pa.int64()),
+        ("observed_start_bar_index", pa.int64()),
+        ("observed_start_time", pa.int64()),
+        ("observed_end_bar_index", pa.int64()),
+        ("observed_end_time", pa.int64()),
+        ("observed_low_i64", pa.int64()),
+        ("observed_high_i64", pa.int64()),
+        ("status", pa.string()),
+        ("pending_exit_id", pa.string()),
+        ("exit_id", pa.string()),
+        ("first_retest_id", pa.string()),
+        ("entry_id", pa.string()),
+        ("local_entry", pa.string()),
+        ("break_direction", pa.string()),
+        ("break_confirmed_at_bar_index", pa.int64()),
+        ("parent_id", pa.string()),
+        ("left_context_incomplete", pa.bool_()),
+        ("roles_overlap_seed", pa.bool_()),
+        ("source_revision", pa.string()),
+        ("known_at_bar_index", pa.int64()),
+        ("object_revision", pa.int64()),
+    ]
+)
+CENTER_CONNECTION_SCHEMA = pa.schema(
+    [
+        ("object_id", pa.string()),
+        ("stream_key", pa.string()),
+        ("rule_version", pa.string()),
+        ("unit_kind", pa.string()),
+        ("structural_level", pa.string()),
+        ("from_center_id", pa.string()),
+        ("to_center_id", pa.string()),
+        ("ordered_unit_ids", pa.list_(pa.string())),
+        ("exit_unit_id", pa.string()),
+        ("entry_unit_id", pa.string()),
+        ("first_retest_id", pa.string()),
         ("start_bar_index", pa.int64()),
         ("start_time", pa.int64()),
         ("end_bar_index", pa.int64()),
         ("end_time", pa.int64()),
-        ("zg_i64", pa.int64()),
-        ("zd_i64", pa.int64()),
-        ("gg_i64", pa.int64()),
-        ("dd_i64", pa.int64()),
-        ("z_i64", pa.int64()),
-        ("analysis_level", pa.string()),
-        ("component_kind", pa.string()),
-        ("component_count", pa.int64()),
-        ("confirmed", pa.bool_()),
         ("confirmed_at_bar_index", pa.int64()),
-        ("status", pa.string()),
-        ("leave_direction", pa.string()),
+        ("roles_overlap_seed", pa.bool_()),
+        ("source_revision", pa.string()),
+        ("known_at_bar_index", pa.int64()),
+        ("object_revision", pa.int64()),
+    ]
+)
+CENTER_AUDIT_EVENT_SCHEMA = pa.schema(
+    [
+        ("object_id", pa.string()),
+        ("preview_state", pa.string()),
+        ("preview_confirmed", pa.bool_()),
+        ("preview_direction", pa.string()),
+        ("source_revision", pa.string()),
+        ("event_type", pa.string()),
+        ("center_id", pa.string()),
+        ("unit_ids", pa.list_(pa.string())),
+        ("zd_i64", pa.int64()),
+        ("zg_i64", pa.int64()),
+        ("comparison_i64", pa.int64()),
+        ("event_bar_index", pa.int64()),
+        ("event_time", pa.int64()),
+        ("rule_version", pa.string()),
+        ("source_file", pa.string()),
+        ("source_line", pa.int64()),
         ("known_at_bar_index", pa.int64()),
         ("object_revision", pa.int64()),
     ]
@@ -328,8 +396,9 @@ class ChanResult:
     bi: list[dict[str, Any]] = field(default_factory=list)
     bi_states: list[dict[str, Any]] = field(default_factory=list)
     segments: list[dict[str, Any]] = field(default_factory=list)
-    zhongshu: list[dict[str, Any]] = field(default_factory=list)
-    segment_zhongshu: list[dict[str, Any]] = field(default_factory=list)
+    local_centers: list[dict[str, Any]] = field(default_factory=list)
+    center_connections: list[dict[str, Any]] = field(default_factory=list)
+    center_audit_events: list[dict[str, Any]] = field(default_factory=list)
     level_centers: list[dict[str, Any]] = field(default_factory=list)
     level_movements: list[dict[str, Any]] = field(default_factory=list)
     movement_states: list[dict[str, Any]] = field(default_factory=list)
@@ -377,8 +446,12 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
             "bi": (result.bi, LINE_SCHEMA),
             "bi_states": (result.bi_states, BI_STATE_SCHEMA),
             "segments": (result.segments, LINE_SCHEMA),
-            "zhongshu": (result.zhongshu, ZHONGSHU_SCHEMA),
-            "segment_zhongshu": (result.segment_zhongshu, ZHONGSHU_SCHEMA),
+            "local_centers": (result.local_centers, LOCAL_CENTER_SCHEMA),
+            "center_connections": (result.center_connections, CENTER_CONNECTION_SCHEMA),
+            "center_audit_events": (
+                result.center_audit_events,
+                CENTER_AUDIT_EVENT_SCHEMA,
+            ),
             "level_centers": (result.level_centers, LEVEL_CENTER_SCHEMA),
             "level_movements": (result.level_movements, LEVEL_MOVEMENT_SCHEMA),
             "movement_states": (result.movement_states, MOVEMENT_STATE_SCHEMA),
@@ -412,7 +485,7 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
             )
         checkpoint_indices = sorted(result.checkpoints.keys() | result.checkpoint_files.keys())
         manifest = {
-            "schema_version": 4,
+            "schema_version": 6,
             "cache_key": payload["cache_key"],
             "dataset_id": dataset["dataset_id"],
             "data_revision": dataset["data_revision"],
@@ -432,8 +505,9 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
                 "bi": len(result.bi),
                 "bi_states": len(result.bi_states),
                 "segments": len(result.segments),
-                "zhongshu": len(result.zhongshu),
-                "segment_zhongshu": len(result.segment_zhongshu),
+                "local_centers": len(result.local_centers),
+                "center_connections": len(result.center_connections),
+                "center_audit_events": len(result.center_audit_events),
                 "level_centers": len(result.level_centers),
                 "level_movements": len(result.level_movements),
                 "movement_states": len(result.movement_states),

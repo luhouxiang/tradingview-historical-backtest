@@ -5,6 +5,7 @@ import threading
 import pytest
 
 from tvbt.api.jobs import Job, JobStore
+from tvbt.chan.engine import ChanParameters, Fractal, IncludedBar, LineObject, RawBar
 from tvbt.storage import memory_guard
 
 
@@ -38,6 +39,19 @@ def test_compute_queue_is_serial_and_cancelled_waiter_never_runs() -> None:
     assert store.get("three").status == "completed"
 
 
+def test_compute_slot_releases_unused_memory_before_next_job(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    released: list[bool] = []
+    monkeypatch.setattr(memory_guard, "release_unused_memory", lambda: released.append(True))
+    store = JobStore()
+    store.submit(Job("one", "calculation", "request", "trace"))
+
+    store.run("one", lambda *_: "result")
+
+    assert released == [True]
+
+
 @pytest.mark.parametrize("used,available", [(2048, 4096), (128, 511)])
 def test_memory_guard_stops_before_exhaustion(
     monkeypatch: pytest.MonkeyPatch, used: int, available: int
@@ -58,3 +72,10 @@ def test_memory_guard_allows_work_within_budget(monkeypatch: pytest.MonkeyPatch)
         memory_guard, "memory_usage", lambda: (200 * memory_guard.MIB, 1024 * memory_guard.MIB)
     )
     memory_guard.check_memory()
+
+
+def test_high_cardinality_chan_value_objects_use_slots() -> None:
+    """全历史计算中的高基数对象不得为每个实例分配 ``__dict__``。"""
+
+    for value_type in (RawBar, IncludedBar, Fractal, LineObject, ChanParameters):
+        assert "__dict__" not in value_type.__dict__

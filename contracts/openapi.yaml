@@ -1396,7 +1396,7 @@ components:
                   display_name: {type: string, minLength: 1}
                   pane: {enum: [main, indicator]}
                   series_type: {enum: [line, histogram, semantic_objects]}
-                  object_type: {enum: [processed_bar, fractal, bi, bi_state, segment, zhongshu, segment_zhongshu, level_center, level_movement, movement_state, center_monitor, divergence, trade_point, strategy_state, stage_signal, trade_signal, chart_event, risk_decision]}
+                  object_type: {enum: [processed_bar, fractal, bi, bi_state, segment, local_center, center_connection, center_audit_event, level_center, level_movement, movement_state, center_monitor, divergence, trade_point, strategy_state, stage_signal, trade_signal, chart_event, risk_decision]}
             warmup:
               type: object
               additionalProperties: false
@@ -1516,7 +1516,7 @@ components:
     ChanObjects:
       type: object
       additionalProperties: false
-      required: [processed_bars, fractals, bi, bi_states, segments, zhongshu, segment_zhongshu, level_centers, level_movements, movement_states, center_monitors, divergences, trade_points]
+      required: [processed_bars, fractals, bi, bi_states, segments, local_centers, center_connections, center_audit_events, level_centers, level_movements, movement_states, center_monitors, divergences, trade_points]
       properties:
         processed_bars:
           type: array
@@ -1533,12 +1533,15 @@ components:
         segments:
           type: array
           items: {$ref: "#/components/schemas/ChanLineObject"}
-        zhongshu:
+        local_centers:
           type: array
-          items: {$ref: "#/components/schemas/ChanZhongshu"}
-        segment_zhongshu:
+          items: {$ref: "#/components/schemas/ChanLocalCenter"}
+        center_connections:
           type: array
-          items: {$ref: "#/components/schemas/ChanZhongshu"}
+          items: {$ref: "#/components/schemas/ChanCenterConnection"}
+        center_audit_events:
+          type: array
+          items: {$ref: "#/components/schemas/ChanCenterAuditEvent"}
         level_centers:
           type: array
           items: {$ref: "#/components/schemas/ChanLevelCenter"}
@@ -1712,28 +1715,123 @@ components:
         known_at_bar_index: {type: integer, minimum: 0}
         object_revision: {type: integer, minimum: 1}
 
-    ChanZhongshu:
+    ChanLocalCenter:
       type: object
       additionalProperties: false
-      required: [object_id, start_bar_index, start_time, end_bar_index, end_time, zg_i64, zd_i64, gg_i64, dd_i64, z_i64, analysis_level, component_kind, component_count, confirmed, confirmed_at_bar_index, status, leave_direction, known_at_bar_index, object_revision]
+      description: Local boundary object. Relation fields are emitted by current producers; absent fields in preserved historical events mean unavailable evidence, not a verified trend.
+      required: [object_id, stream_key, rule_version, unit_kind, structural_level, scan_floor, seed_ids, zd_i64, zg_i64, seed_start_bar_index, seed_start_time, seed_end_bar_index, seed_end_time, formed_at_bar_index, body_start_bar_index, body_start_time, body_end_bar_index, body_end_time, observed_start_bar_index, observed_start_time, observed_end_bar_index, observed_end_time, observed_low_i64, observed_high_i64, status, pending_exit_id, exit_id, first_retest_id, entry_id, local_entry, break_direction, break_confirmed_at_bar_index, parent_id, left_context_incomplete, roles_overlap_seed, source_revision, known_at_bar_index, object_revision]
       properties:
         object_id: {type: string, minLength: 1}
+        stream_key: {type: string, minLength: 1}
+        rule_version: {const: local_center_boundary_v1}
+        previous_center_id: {type: [string, "null"]}
+        core_relation: {type: [string, "null"], enum: [CORE_ABOVE, CORE_BELOW, CORE_TOUCH_OR_OVERLAP, null]}
+        higher_level_review_required: {type: boolean}
+        trend_status: {const: UNVERIFIED}
+        unit_kind: {enum: [BI, SEGMENT]}
+        structural_level: {type: string, minLength: 1}
+        scan_floor: {type: integer, minimum: 0}
+        seed_ids:
+          type: array
+          minItems: 3
+          maxItems: 3
+          items: {type: string, minLength: 1}
+        zd_i64: {type: integer}
+        zg_i64: {type: integer}
+        seed_start_bar_index: {type: integer, minimum: 0}
+        seed_start_time: {type: integer}
+        seed_end_bar_index: {type: integer, minimum: 0}
+        seed_end_time: {type: integer}
+        formed_at_bar_index: {type: integer, minimum: 0}
+        body_start_bar_index: {type: integer, minimum: 0}
+        body_start_time: {type: integer}
+        body_end_bar_index: {type: [integer, "null"], minimum: 0}
+        body_end_time: {type: [integer, "null"]}
+        observed_start_bar_index: {type: integer, minimum: 0}
+        observed_start_time: {type: integer}
+        observed_end_bar_index: {type: integer, minimum: 0}
+        observed_end_time: {type: integer}
+        observed_low_i64: {type: integer}
+        observed_high_i64: {type: integer}
+        status: {enum: [ACTIVE, PENDING_BREAK, CLOSED]}
+        pending_exit_id: {type: [string, "null"]}
+        exit_id: {type: [string, "null"]}
+        first_retest_id: {type: [string, "null"]}
+        entry_id: {type: [string, "null"]}
+        local_entry: {type: [string, "null"], enum: [FROM_BELOW, FROM_ABOVE, null]}
+        break_direction: {type: [string, "null"], enum: [up, down, null]}
+        break_confirmed_at_bar_index: {type: [integer, "null"], minimum: 0}
+        parent_id: {type: [string, "null"]}
+        left_context_incomplete: {type: boolean}
+        roles_overlap_seed: {type: boolean}
+        source_revision: {type: string, minLength: 1}
+        known_at_bar_index: {type: integer, minimum: 0}
+        object_revision: {type: integer, minimum: 1}
+
+    ChanCenterConnection:
+      type: object
+      additionalProperties: false
+      required: [object_id, stream_key, rule_version, unit_kind, structural_level, from_center_id, to_center_id, ordered_unit_ids, exit_unit_id, entry_unit_id, first_retest_id, start_bar_index, start_time, end_bar_index, end_time, confirmed_at_bar_index, roles_overlap_seed, source_revision, known_at_bar_index, object_revision]
+      properties:
+        object_id: {type: string, minLength: 1}
+        stream_key: {type: string, minLength: 1}
+        rule_version: {const: local_center_boundary_v1}
+        unit_kind: {enum: [BI, SEGMENT]}
+        structural_level: {type: string, minLength: 1}
+        from_center_id: {type: string, minLength: 1}
+        to_center_id: {type: [string, "null"]}
+        ordered_unit_ids:
+          type: array
+          minItems: 1
+          items: {type: string, minLength: 1}
+        exit_unit_id: {type: string, minLength: 1}
+        entry_unit_id: {type: [string, "null"]}
+        first_retest_id: {type: string, minLength: 1}
         start_bar_index: {type: integer, minimum: 0}
         start_time: {type: integer}
         end_bar_index: {type: integer, minimum: 0}
         end_time: {type: integer}
-        zg_i64: {type: integer}
+        confirmed_at_bar_index: {type: integer, minimum: 0}
+        roles_overlap_seed: {type: boolean}
+        source_revision: {type: string, minLength: 1}
+        known_at_bar_index: {type: integer, minimum: 0}
+        object_revision: {type: integer, minimum: 1}
+
+    ChanCenterAuditEvent:
+      type: object
+      additionalProperties: false
+      allOf:
+        - if:
+            properties:
+              event_type: {const: PREVIEW_UPDATED}
+          then:
+            required: [preview_state, preview_confirmed, preview_direction, source_revision]
+            properties:
+              preview_state: {enum: [EXIT_PENDING, RETEST_PENDING, RETEST_TOUCH]}
+              preview_confirmed: {const: false}
+              preview_direction: {enum: [up, down]}
+              source_revision: {type: string, minLength: 1}
+      required: [object_id, event_type, center_id, unit_ids, zd_i64, zg_i64, comparison_i64, event_bar_index, event_time, rule_version, source_file, source_line, known_at_bar_index, object_revision]
+      properties:
+        object_id: {type: string, minLength: 1}
+        event_type: {enum: [SEED_FOUND, EXIT_PENDING, RETEST_TOUCH, BREAK_CONFIRMED, SEARCH_RESTARTED, ENTRY_LINKED, CENTER_REVISED, PREVIEW_UPDATED]}
+        preview_state: {type: [string, "null"], enum: [EXIT_PENDING, RETEST_PENDING, RETEST_TOUCH, null]}
+        preview_confirmed: {type: [boolean, "null"]}
+        preview_direction: {type: [string, "null"], enum: [up, down, null]}
+        source_revision: {type: [string, "null"]}
+        center_id: {type: string, minLength: 1}
+        unit_ids:
+          type: array
+          minItems: 1
+          items: {type: string, minLength: 1}
         zd_i64: {type: integer}
-        gg_i64: {type: integer}
-        dd_i64: {type: integer}
-        z_i64: {type: integer}
-        analysis_level: {type: string, minLength: 1}
-        component_kind: {type: string, enum: [bi, segment]}
-        component_count: {type: integer, minimum: 3}
-        confirmed: {type: boolean}
-        confirmed_at_bar_index: {type: [integer, "null"], minimum: 0}
-        status: {type: string, enum: [confirmed, extended, left]}
-        leave_direction: {type: [string, "null"], enum: [up, down, null]}
+        zg_i64: {type: integer}
+        comparison_i64: {type: [integer, "null"]}
+        event_bar_index: {type: integer, minimum: 0}
+        event_time: {type: integer}
+        rule_version: {const: local_center_boundary_v1}
+        source_file: {type: string, minLength: 1}
+        source_line: {type: integer, minimum: 1}
         known_at_bar_index: {type: integer, minimum: 0}
         object_revision: {type: integer, minimum: 1}
 

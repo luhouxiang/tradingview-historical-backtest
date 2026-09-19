@@ -121,7 +121,7 @@ func TestStrategySourceConfigUsesDedicatedAtomicFile(t *testing.T) {
 		SchemaVersion: 1, ProfileID: "default", Revision: 1,
 		StrategySources: []StrategySourcePreference{{
 			DatasetID: "SHFE.AO2609.5m", DataRevision: "sha256:" + repeat("1", 64), SourceID: "strategy-default-chan", Visible: true,
-			CategoryVisibility: DynamicCategoryVisibility{ProcessedBars: false, Bi: true, BiStates: true, Segments: true, Zhongshu: true, SegmentZhongshu: true, MovementStates: true, CenterMonitors: true, Divergences: true, TradePoints: true},
+			CategoryVisibility: DynamicCategoryVisibility{ProcessedBars: false, Bi: true, BiStates: true, Segments: true, LocalCenters: true, MovementStates: true, CenterMonitors: true, Divergences: true, TradePoints: true},
 		}},
 	}
 	saved, err := store.PutStrategySourceConfig("default", 0, document)

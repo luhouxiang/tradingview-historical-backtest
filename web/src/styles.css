@@ -341,6 +341,7 @@ button:disabled { color: #787b86; }
 .chart-empty { position: absolute; inset: 0; z-index: 2; display: grid; place-content: center; text-align: center; pointer-events: none; }
 .chart-empty p { margin: 0 0 8px; color: #b2b5be; }.chart-empty small { color: #5d606b; }
 .chart-status { position: absolute; z-index: 8; top: 8px; left: 50%; transform: translateX(-50%); padding: 5px 9px; border-radius: 4px; background: #1e222de6; color: #b2b5be; font-size: 11px; }
+.chan-hover-card { position: absolute; z-index: 12; max-width: 420px; margin: 0; padding: 8px 10px; border: 1px solid #4b638f; border-radius: 4px; background: #151a26f2; color: #d9e2f2; font: 11px/1.55 ui-monospace, Consolas, monospace; pointer-events: none; white-space: pre-wrap; }
 .chart-error { color: #f23645; }
 .pane-controls { position: absolute; z-index: 6; inset: 0; pointer-events: none; }
 .pane-control { position: absolute; left: 8px; display: flex; align-items: center; gap: 6px; height: 20px; color: #787b86; font-size: 10px; pointer-events: auto; }
@@ -348,6 +349,19 @@ button:disabled { color: #787b86; }
 .pane-actions { display: inline-flex; gap: 2px; }
 .legend-value { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .legend-ohlc { color: #b2b5be; }
+.legend-bar-index {
+  margin-left: 4px;
+  padding: 1px 6px;
+  border: 1px solid #4d8dff;
+  border-radius: 3px;
+  background: rgb(29 43 70 / 90%);
+  box-shadow: 0 0 6px rgb(41 98 255 / 45%);
+  color: #f5f8ff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 16px;
+  text-shadow: 0 0 5px rgb(77 141 255 / 75%);
+}
 .legend-macd-title, .legend-dea, .legend-volume { color: #f2d600 !important; }
 .legend-diff { color: #e0e3eb; }
 .legend-chan { color: #64b5f6; }

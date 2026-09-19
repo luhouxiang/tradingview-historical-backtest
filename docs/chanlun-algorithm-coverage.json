@@ -67,7 +67,7 @@
       "status": "implemented",
       "implemented_emits": ["center_confirmed", "center_extended", "center_promoted", "center_terminated"],
       "missing_emits": [],
-      "implementation_refs": ["python/src/tvbt/chan/reference.py#ReferenceCenter", "python/src/tvbt/chan/level_graph.py#build_level_graph", "python/src/tvbt/chan/engine.py#ChanEngine", "internal/calculation/results.go#ChanLevelCenter"],
+      "implementation_refs": ["python/src/tvbt/chan/local_center.py#LocalCenter", "python/src/tvbt/chan/level_graph.py#build_level_graph", "python/src/tvbt/chan/engine.py#ChanEngine", "internal/calculation/results.go#ChanLevelCenter"],
       "test_refs": ["python/tests/test_chan_level_graph.py", "python/tests/test_chan_engine.py", "internal/calculation/service_test.go"],
       "chart_refs": ["web/src/chart/chanPrimitive.ts", "web/src/chart/chanPrimitive.test.ts", "web/src/components/ObjectTreePanel.vue"],
       "limitations": [],

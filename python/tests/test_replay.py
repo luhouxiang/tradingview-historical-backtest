@@ -33,7 +33,9 @@ def test_replay_writes_only_causal_events_through_requested_end(tmp_path: Path) 
         ),
         dataset / "bars.parquet",
     )
-    (dataset / "meta.json").write_text(json.dumps({"price": {"price_scale": 1}}), encoding="utf-8")
+    (dataset / "meta.json").write_text(
+        json.dumps({"price": {"price_scale": 1, "tick_size_i64": 1}}), encoding="utf-8"
+    )
     algorithm = definition()
     parameters = {
         name: rule["default"] for name, rule in algorithm["parameter_schema"]["properties"].items()

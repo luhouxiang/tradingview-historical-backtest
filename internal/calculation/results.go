@@ -231,26 +231,93 @@ type ChanBiState struct {
 	ObjectRevision     int64   `json:"object_revision" parquet:"object_revision"`
 }
 
-type ChanZhongshu struct {
-	ObjectID            string  `json:"object_id" parquet:"object_id"`
-	StartBarIndex       int64   `json:"start_bar_index" parquet:"start_bar_index"`
-	StartTime           int64   `json:"start_time" parquet:"start_time"`
-	EndBarIndex         int64   `json:"end_bar_index" parquet:"end_bar_index"`
-	EndTime             int64   `json:"end_time" parquet:"end_time"`
-	ZGI64               int64   `json:"zg_i64" parquet:"zg_i64"`
-	ZDI64               int64   `json:"zd_i64" parquet:"zd_i64"`
-	GGI64               int64   `json:"gg_i64" parquet:"gg_i64"`
-	DDI64               int64   `json:"dd_i64" parquet:"dd_i64"`
-	ZI64                int64   `json:"z_i64" parquet:"z_i64"`
-	AnalysisLevel       string  `json:"analysis_level" parquet:"analysis_level"`
-	ComponentKind       string  `json:"component_kind" parquet:"component_kind"`
-	ComponentCount      int64   `json:"component_count" parquet:"component_count"`
-	Confirmed           bool    `json:"confirmed" parquet:"confirmed"`
-	ConfirmedAtBarIndex *int64  `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index,optional"`
-	Status              string  `json:"status" parquet:"status"`
-	LeaveDirection      *string `json:"leave_direction" parquet:"leave_direction,optional"`
-	KnownAtBarIndex     int64   `json:"known_at_bar_index" parquet:"known_at_bar_index"`
-	ObjectRevision      int64   `json:"object_revision" parquet:"object_revision"`
+type ChanLocalCenter struct {
+	PreviousCenterID          *string  `json:"previous_center_id" parquet:"previous_center_id,optional"`
+	CoreRelation              *string  `json:"core_relation" parquet:"core_relation,optional"`
+	HigherLevelReviewRequired bool     `json:"higher_level_review_required" parquet:"higher_level_review_required"`
+	TrendStatus               string   `json:"trend_status" parquet:"trend_status"`
+	ObjectID                  string   `json:"object_id" parquet:"object_id"`
+	StreamKey                 string   `json:"stream_key" parquet:"stream_key"`
+	RuleVersion               string   `json:"rule_version" parquet:"rule_version"`
+	UnitKind                  string   `json:"unit_kind" parquet:"unit_kind"`
+	StructuralLevel           string   `json:"structural_level" parquet:"structural_level"`
+	ScanFloor                 int64    `json:"scan_floor" parquet:"scan_floor"`
+	SeedIDs                   []string `json:"seed_ids" parquet:"seed_ids"`
+	ZDI64                     int64    `json:"zd_i64" parquet:"zd_i64"`
+	ZGI64                     int64    `json:"zg_i64" parquet:"zg_i64"`
+	SeedStartBarIndex         int64    `json:"seed_start_bar_index" parquet:"seed_start_bar_index"`
+	SeedStartTime             int64    `json:"seed_start_time" parquet:"seed_start_time"`
+	SeedEndBarIndex           int64    `json:"seed_end_bar_index" parquet:"seed_end_bar_index"`
+	SeedEndTime               int64    `json:"seed_end_time" parquet:"seed_end_time"`
+	FormedAtBarIndex          int64    `json:"formed_at_bar_index" parquet:"formed_at_bar_index"`
+	BodyStartBarIndex         int64    `json:"body_start_bar_index" parquet:"body_start_bar_index"`
+	BodyStartTime             int64    `json:"body_start_time" parquet:"body_start_time"`
+	BodyEndBarIndex           *int64   `json:"body_end_bar_index" parquet:"body_end_bar_index,optional"`
+	BodyEndTime               *int64   `json:"body_end_time" parquet:"body_end_time,optional"`
+	ObservedStartBarIndex     int64    `json:"observed_start_bar_index" parquet:"observed_start_bar_index"`
+	ObservedStartTime         int64    `json:"observed_start_time" parquet:"observed_start_time"`
+	ObservedEndBarIndex       int64    `json:"observed_end_bar_index" parquet:"observed_end_bar_index"`
+	ObservedEndTime           int64    `json:"observed_end_time" parquet:"observed_end_time"`
+	ObservedLowI64            int64    `json:"observed_low_i64" parquet:"observed_low_i64"`
+	ObservedHighI64           int64    `json:"observed_high_i64" parquet:"observed_high_i64"`
+	Status                    string   `json:"status" parquet:"status"`
+	PendingExitID             *string  `json:"pending_exit_id" parquet:"pending_exit_id,optional"`
+	ExitID                    *string  `json:"exit_id" parquet:"exit_id,optional"`
+	FirstRetestID             *string  `json:"first_retest_id" parquet:"first_retest_id,optional"`
+	EntryID                   *string  `json:"entry_id" parquet:"entry_id,optional"`
+	LocalEntry                *string  `json:"local_entry" parquet:"local_entry,optional"`
+	BreakDirection            *string  `json:"break_direction" parquet:"break_direction,optional"`
+	BreakConfirmedAtBarIndex  *int64   `json:"break_confirmed_at_bar_index" parquet:"break_confirmed_at_bar_index,optional"`
+	ParentID                  *string  `json:"parent_id" parquet:"parent_id,optional"`
+	LeftContextIncomplete     bool     `json:"left_context_incomplete" parquet:"left_context_incomplete"`
+	RolesOverlapSeed          bool     `json:"roles_overlap_seed" parquet:"roles_overlap_seed"`
+	SourceRevision            string   `json:"source_revision" parquet:"source_revision"`
+	KnownAtBarIndex           int64    `json:"known_at_bar_index" parquet:"known_at_bar_index"`
+	ObjectRevision            int64    `json:"object_revision" parquet:"object_revision"`
+}
+
+type ChanCenterConnection struct {
+	ObjectID            string   `json:"object_id" parquet:"object_id"`
+	StreamKey           string   `json:"stream_key" parquet:"stream_key"`
+	RuleVersion         string   `json:"rule_version" parquet:"rule_version"`
+	UnitKind            string   `json:"unit_kind" parquet:"unit_kind"`
+	StructuralLevel     string   `json:"structural_level" parquet:"structural_level"`
+	FromCenterID        string   `json:"from_center_id" parquet:"from_center_id"`
+	ToCenterID          *string  `json:"to_center_id" parquet:"to_center_id,optional"`
+	OrderedUnitIDs      []string `json:"ordered_unit_ids" parquet:"ordered_unit_ids"`
+	ExitUnitID          string   `json:"exit_unit_id" parquet:"exit_unit_id"`
+	EntryUnitID         *string  `json:"entry_unit_id" parquet:"entry_unit_id,optional"`
+	FirstRetestID       string   `json:"first_retest_id" parquet:"first_retest_id"`
+	StartBarIndex       int64    `json:"start_bar_index" parquet:"start_bar_index"`
+	StartTime           int64    `json:"start_time" parquet:"start_time"`
+	EndBarIndex         int64    `json:"end_bar_index" parquet:"end_bar_index"`
+	EndTime             int64    `json:"end_time" parquet:"end_time"`
+	ConfirmedAtBarIndex int64    `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index"`
+	RolesOverlapSeed    bool     `json:"roles_overlap_seed" parquet:"roles_overlap_seed"`
+	SourceRevision      string   `json:"source_revision" parquet:"source_revision"`
+	KnownAtBarIndex     int64    `json:"known_at_bar_index" parquet:"known_at_bar_index"`
+	ObjectRevision      int64    `json:"object_revision" parquet:"object_revision"`
+}
+
+type ChanCenterAuditEvent struct {
+	PreviewState     *string  `json:"preview_state" parquet:"preview_state,optional"`
+	PreviewConfirmed *bool    `json:"preview_confirmed" parquet:"preview_confirmed,optional"`
+	PreviewDirection *string  `json:"preview_direction" parquet:"preview_direction,optional"`
+	SourceRevision   *string  `json:"source_revision" parquet:"source_revision,optional"`
+	ObjectID         string   `json:"object_id" parquet:"object_id"`
+	EventType        string   `json:"event_type" parquet:"event_type"`
+	CenterID         string   `json:"center_id" parquet:"center_id"`
+	UnitIDs          []string `json:"unit_ids" parquet:"unit_ids"`
+	ZDI64            int64    `json:"zd_i64" parquet:"zd_i64"`
+	ZGI64            int64    `json:"zg_i64" parquet:"zg_i64"`
+	ComparisonI64    *int64   `json:"comparison_i64" parquet:"comparison_i64,optional"`
+	EventBarIndex    int64    `json:"event_bar_index" parquet:"event_bar_index"`
+	EventTime        int64    `json:"event_time" parquet:"event_time"`
+	RuleVersion      string   `json:"rule_version" parquet:"rule_version"`
+	SourceFile       string   `json:"source_file" parquet:"source_file"`
+	SourceLine       int64    `json:"source_line" parquet:"source_line"`
+	KnownAtBarIndex  int64    `json:"known_at_bar_index" parquet:"known_at_bar_index"`
+	ObjectRevision   int64    `json:"object_revision" parquet:"object_revision"`
 }
 
 type ChanMovementState struct {
@@ -395,19 +462,20 @@ type ChanSignalPoint struct {
 }
 
 type ChanObjects struct {
-	ProcessedBars   []ChanProcessedBar  `json:"processed_bars"`
-	Fractals        []ChanFractal       `json:"fractals"`
-	Bi              []ChanLineObject    `json:"bi"`
-	BiStates        []ChanBiState       `json:"bi_states"`
-	Segments        []ChanLineObject    `json:"segments"`
-	Zhongshu        []ChanZhongshu      `json:"zhongshu"`
-	SegmentZhongshu []ChanZhongshu      `json:"segment_zhongshu"`
-	LevelCenters    []ChanLevelCenter   `json:"level_centers"`
-	LevelMovements  []ChanLevelMovement `json:"level_movements"`
-	MovementStates  []ChanMovementState `json:"movement_states"`
-	CenterMonitors  []ChanCenterMonitor `json:"center_monitors"`
-	Divergences     []ChanSignalPoint   `json:"divergences"`
-	TradePoints     []ChanSignalPoint   `json:"trade_points"`
+	ProcessedBars     []ChanProcessedBar     `json:"processed_bars"`
+	Fractals          []ChanFractal          `json:"fractals"`
+	Bi                []ChanLineObject       `json:"bi"`
+	BiStates          []ChanBiState          `json:"bi_states"`
+	Segments          []ChanLineObject       `json:"segments"`
+	LocalCenters      []ChanLocalCenter      `json:"local_centers"`
+	CenterConnections []ChanCenterConnection `json:"center_connections"`
+	CenterAuditEvents []ChanCenterAuditEvent `json:"center_audit_events"`
+	LevelCenters      []ChanLevelCenter      `json:"level_centers"`
+	LevelMovements    []ChanLevelMovement    `json:"level_movements"`
+	MovementStates    []ChanMovementState    `json:"movement_states"`
+	CenterMonitors    []ChanCenterMonitor    `json:"center_monitors"`
+	Divergences       []ChanSignalPoint      `json:"divergences"`
+	TradePoints       []ChanSignalPoint      `json:"trade_points"`
 }
 
 func readChanResults(directory, jobID, cacheKey string, meta manifest, from, to int64) (Results, error) {
@@ -431,11 +499,15 @@ func readChanResults(directory, jobID, cacheKey string, meta manifest, from, to 
 	if err != nil {
 		return Results{}, err
 	}
-	zhongshu, err := parquet.ReadFile[ChanZhongshu](filepath.Join(directory, "zhongshu.parquet"))
+	localCenters, err := parquet.ReadFile[ChanLocalCenter](filepath.Join(directory, "local_centers.parquet"))
 	if err != nil {
 		return Results{}, err
 	}
-	segmentZhongshu, err := parquet.ReadFile[ChanZhongshu](filepath.Join(directory, "segment_zhongshu.parquet"))
+	centerConnections, err := parquet.ReadFile[ChanCenterConnection](filepath.Join(directory, "center_connections.parquet"))
+	if err != nil {
+		return Results{}, err
+	}
+	centerAuditEvents, err := parquet.ReadFile[ChanCenterAuditEvent](filepath.Join(directory, "center_audit_events.parquet"))
 	if err != nil {
 		return Results{}, err
 	}
@@ -464,21 +536,22 @@ func readChanResults(directory, jobID, cacheKey string, meta manifest, from, to 
 		return Results{}, err
 	}
 	objects := ChanObjects{
-		ProcessedBars:   filterProcessedBars(processedBars, from, to),
-		Fractals:        filterFractals(fractals, from, to),
-		Bi:              filterLines(bi, from, to),
-		BiStates:        filterBiStates(biStates, from, to),
-		Segments:        filterLines(segments, from, to),
-		Zhongshu:        filterZhongshu(zhongshu, from, to),
-		SegmentZhongshu: filterZhongshu(segmentZhongshu, from, to),
-		LevelCenters:    filterLevelCenters(levelCenters, from, to),
-		LevelMovements:  filterLevelMovements(levelMovements, from, to),
-		MovementStates:  filterMovementStates(movementStates, from, to),
-		CenterMonitors:  filterCenterMonitors(centerMonitors, from, to),
-		Divergences:     filterSignalPoints(divergences, from, to),
-		TradePoints:     filterSignalPoints(tradePoints, from, to),
+		ProcessedBars:     filterProcessedBars(processedBars, from, to),
+		Fractals:          filterFractals(fractals, from, to),
+		Bi:                filterLines(bi, from, to),
+		BiStates:          filterBiStates(biStates, from, to),
+		Segments:          filterLines(segments, from, to),
+		LocalCenters:      filterLocalCenters(localCenters, from, to),
+		CenterConnections: filterCenterConnections(centerConnections, from, to),
+		CenterAuditEvents: filterCenterAuditEvents(centerAuditEvents, from, to),
+		LevelCenters:      filterLevelCenters(levelCenters, from, to),
+		LevelMovements:    filterLevelMovements(levelMovements, from, to),
+		MovementStates:    filterMovementStates(movementStates, from, to),
+		CenterMonitors:    filterCenterMonitors(centerMonitors, from, to),
+		Divergences:       filterSignalPoints(divergences, from, to),
+		TradePoints:       filterSignalPoints(tradePoints, from, to),
 	}
-	returned := len(objects.ProcessedBars) + len(objects.Fractals) + len(objects.Bi) + len(objects.BiStates) + len(objects.Segments) + len(objects.Zhongshu) + len(objects.SegmentZhongshu) + len(objects.LevelCenters) + len(objects.LevelMovements) + len(objects.MovementStates) + len(objects.CenterMonitors) + len(objects.Divergences) + len(objects.TradePoints)
+	returned := len(objects.ProcessedBars) + len(objects.Fractals) + len(objects.Bi) + len(objects.BiStates) + len(objects.Segments) + len(objects.LocalCenters) + len(objects.CenterConnections) + len(objects.CenterAuditEvents) + len(objects.LevelCenters) + len(objects.LevelMovements) + len(objects.MovementStates) + len(objects.CenterMonitors) + len(objects.Divergences) + len(objects.TradePoints)
 	checksumPayload, _ := json.Marshal(objects)
 	digest := sha256.Sum256(checksumPayload)
 	return Results{
@@ -578,10 +651,34 @@ func filterLines(values []ChanLineObject, from, to int64) []ChanLineObject {
 	return result
 }
 
-func filterZhongshu(values []ChanZhongshu, from, to int64) []ChanZhongshu {
-	result := make([]ChanZhongshu, 0)
+func filterLocalCenters(values []ChanLocalCenter, from, to int64) []ChanLocalCenter {
+	result := make([]ChanLocalCenter, 0)
+	for _, value := range values {
+		end := value.ObservedEndBarIndex
+		if value.BodyEndBarIndex != nil {
+			end = *value.BodyEndBarIndex
+		}
+		if end >= from && value.BodyStartBarIndex <= to {
+			result = append(result, value)
+		}
+	}
+	return result
+}
+
+func filterCenterConnections(values []ChanCenterConnection, from, to int64) []ChanCenterConnection {
+	result := make([]ChanCenterConnection, 0)
 	for _, value := range values {
 		if value.EndBarIndex >= from && value.StartBarIndex <= to {
+			result = append(result, value)
+		}
+	}
+	return result
+}
+
+func filterCenterAuditEvents(values []ChanCenterAuditEvent, from, to int64) []ChanCenterAuditEvent {
+	result := make([]ChanCenterAuditEvent, 0)
+	for _, value := range values {
+		if value.EventBarIndex >= from && value.EventBarIndex <= to {
 			result = append(result, value)
 		}
 	}

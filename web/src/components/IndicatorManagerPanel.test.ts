@@ -69,8 +69,29 @@ describe('IndicatorManagerPanel', () => {
     expect(indicatorSources[0]).toMatchObject({ source_type: 'SeriesSource', parameters: { period: 20 } })
     expect(strategySources[0]).toMatchObject({
       source_type: 'StrategySource', parameters: { period: 20 },
-      category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true, segment_zhongshu: true, divergences: true, trade_points: true },
+      category_visibility: { fractals: false, bi: true, segments: true, local_centers: true, divergences: true, trade_points: true },
     })
+  })
+
+  it('discloses the strict local boundary rule in Chinese without changing enum values', async () => {
+    const chan = definition('chan_engineering', 'chan')
+    chan.parameter_schema.properties = {
+      center_boundary_profile: { type: 'string', enum: ['local_center_boundary_v1'], default: 'local_center_boundary_v1' },
+    }
+    const source: StrategySource = {
+      source_type: 'StrategySource', source_id: 'chan-local', definition: chan,
+      parameters: { center_boundary_profile: 'local_center_boundary_v1' },
+      job_id: 'job-local', status: 'completed', visible: true,
+      category_visibility: { processed_bars: false, fractals: false, bi: true, bi_states: false, segments: false, local_centers: true, level_centers: false, level_movements: false, movement_states: false, center_monitors: false, divergences: false, trade_points: false },
+    }
+    api.listAlgorithms.mockResolvedValue([chan])
+    const wrapper = mount(IndicatorManagerPanel, { props: { dataset, indicatorSources: [], strategySources: [source] } })
+    await flushPromises()
+    await wrapper.get('[aria-label="指标范围"] button:last-child').trigger('click')
+    expect(wrapper.text()).toContain('中枢边界口径')
+    expect(wrapper.get('.local-center-boundary-disclosure').text()).toContain('触边算返回，不确认分离')
+    expect(wrapper.get('select').element.value).toBe('local_center_boundary_v1')
+    expect(wrapper.get('select').text()).toContain('局部固定核心（严格分界）')
   })
 
   it('shows active instances as compact expandable cards and filters the current list', async () => {
@@ -82,7 +103,7 @@ describe('IndicatorManagerPanel', () => {
     }
     const strategySource: StrategySource = {
       source_type: 'StrategySource', source_id: 'strategy-1', definition: chan, parameters: { period: 5 }, job_id: 'job-2', status: 'completed',
-      visible: true, category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true, segment_zhongshu: true, divergences: true, trade_points: true },
+      visible: true, category_visibility: { fractals: false, bi: true, segments: true, local_centers: true, divergences: true, trade_points: true },
     }
     const wrapper = mount(IndicatorManagerPanel, { props: { dataset, indicatorSources: [indicatorSource], strategySources: [strategySource] } })
     await flushPromises()

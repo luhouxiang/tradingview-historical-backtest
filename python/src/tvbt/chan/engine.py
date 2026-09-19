@@ -1,20 +1,30 @@
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
 from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
 from tvbt.chan.events import EventEmitter
 from tvbt.chan.level_graph import GraphCenter, build_level_graph
+from tvbt.chan.local_center import RULE_VERSION as LOCAL_CENTER_RULE_VERSION
+from tvbt.chan.local_center import (
+    CenterAuditEvent,
+    CenterConnection,
+    CenterStreamKey,
+    CenterUnit,
+    LocalCenter,
+    LocalCenterAccumulator,
+    compare_center_boundaries,
+)
 from tvbt.chan.reference import (
-    ReferenceCenter,
     ReferenceSegment,
     ReferenceSegmentAccumulator,
-    update_reference_centers,
 )
 from tvbt.chan.signals import (
     ChanSignal,
+    StructuralCenter,
     chan_divergences,
     chan_first_point_candidates,
     chan_trade_points,
@@ -47,6 +57,7 @@ BiLiveState = Literal[
     "DOWN_EXTENDING",
     "BOTTOM_FORMING",
 ]
+CenterBoundaryProfile = Literal["local_center_boundary_v1"]
 # 一笔至少跨越 5 根包含处理后的独立 K 线。
 REFERENCE_MIN_INDEPENDENT_BARS = 5
 
@@ -57,7 +68,7 @@ def _stable_id(prefix: str, *parts: object) -> str:
     return f"{prefix}-{hashlib.sha256(data).hexdigest()[:20]}"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class RawBar:
     """Go 指定的标准化原始 K 线，完整保留 OHLC 定点价格字段。"""
 
@@ -73,7 +84,7 @@ class RawBar:
     close_i64: int
 
 
-@dataclass
+@dataclass(slots=True)
 class IncludedBar:
     """包含关系处理后的独立 K 线，是分型和成笔判断的基础序列。"""
 
@@ -133,7 +144,7 @@ class IncludedBar:
         }
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Fractal:
     """严格三根独立 K 线确认的顶/底分型。"""
 
@@ -207,7 +218,7 @@ class Fractal:
         }
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class LineObject:
     """缠论线性对象，当前同时用于笔和已确认线段的统一表示。"""
 
@@ -285,27 +296,48 @@ class LineObject:
         }
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ChanParameters:
     """缠论引擎参数。当前只暴露检查点间隔，便于后续恢复与长任务拆分。"""
 
     # 每处理多少根 K 线允许外层保存一次检查点。
     checkpoint_interval: int = 1024
+    center_boundary_profile: CenterBoundaryProfile = "local_center_boundary_v1"
 
     def __post_init__(self) -> None:
         if self.checkpoint_interval < 1:
             raise ValueError("bar-count parameters must be positive")
+        if self.center_boundary_profile != "local_center_boundary_v1":
+            raise ValueError("unsupported center_boundary_profile")
 
 
 class ChanEngine:
     """逐 K 线因果缠论引擎，负责分型、笔、线段、中枢和信号事件生成。"""
 
     # 算法版本参与缓存键；任何语义变化都必须升级版本，禁止复用旧缓存。
-    algorithm_version = "15.0.0"
+    algorithm_version = "17.0.0"
 
-    def __init__(self, parameters: ChanParameters | None = None) -> None:
+    def __init__(
+        self,
+        parameters: ChanParameters | None = None,
+        *,
+        stream_symbol: str = "UNKNOWN",
+        stream_timeframe: str = "unknown",
+        stream_anchor_id: str = "full-history",
+        price_tick_i64: int = 1,
+    ) -> None:
         # 运行参数。
         self.parameters = parameters or ChanParameters()
+        self.stream_symbol = stream_symbol
+        self.stream_timeframe = stream_timeframe
+        self.stream_anchor_id = stream_anchor_id
+        if (
+            isinstance(price_tick_i64, bool)
+            or not isinstance(price_tick_i64, int)
+            or price_tick_i64 <= 0
+        ):
+            raise ValueError("price_tick_i64 must be a positive integer")
+        self.price_tick_i64 = price_tick_i64
         # 原始 K 线序列，必须按 bar_index 和 time 严格递增。
         self.raw_bars: list[RawBar] = []
         # 经过包含关系处理后的独立 K 线序列。
@@ -328,12 +360,13 @@ class ChanEngine:
         # 线段扫描器保存每个笔前缀的小状态，笔尾修订时只回滚并重放变化部分。
         self._segment_accumulator = ReferenceSegmentAccumulator()
         # 已离开的中枢和已确认线段构成稳定前缀，后续只替换各级未确定尾部。
-        self._bi_centers: list[ReferenceCenter] = []
-        self._center_values: list[tuple[str, dict[str, Any], int]] = []
         self._segment_specs: list[ReferenceSegment] = []
         self._segment_records: list[tuple[tuple[str, dict[str, Any], int], LineObject | None]] = []
         self._segment_lines: list[LineObject] = []
-        self._all_segment_centers: list[ReferenceCenter] = []
+        self._local_center_accumulators: dict[str, LocalCenterAccumulator] = {}
+        self._local_center_preview_ids: dict[str, str] = {}
+        self._center_unit_cache: dict[tuple[str, int, LineObject], CenterUnit] = {}
+        self._center_audit_payload_cache: dict[str, dict[str, Any]] = {}
         # 独立 K 线位置到分型列表位置的索引，供区间极值扫描快速定位候选端点。
         self._fractal_by_normalized_index: dict[int, int] = {}
         # MACD EMA 状态，用于后续线段背驰面积计算。
@@ -378,6 +411,7 @@ class ChanEngine:
             self._update_structures(bar.bar_index, changed_bi_index)
         candidate_changed = self._refresh_fractal_candidate(bar.bar_index)
         bi_candidate_changed = self._refresh_bi_candidate(bar.bar_index)
+        self._publish_local_center_previews(bar.bar_index)
         if not self.fractals and self._fractal_candidate is None:
             trigger = "initial"
         elif resolved is not None:
@@ -948,57 +982,7 @@ class ChanEngine:
             )
 
     def _update_structures(self, known_at_bar_index: int, changed_bi_index: int) -> None:
-        """从首次变化笔位置更新中枢、线段、线段中枢、背驰和买卖点。"""
-        # 笔中枢：使用参考扫描器从已确认笔序列中提取。
-        updated_bi_centers = update_reference_centers(
-            self.bi,
-            self._bi_centers,
-            changed_bi_index,
-        )
-        changed_center_index = self._common_prefix_length(
-            self._bi_centers,
-            updated_bi_centers,
-        )
-        centers = self._center_values[:changed_center_index]
-        self._bi_centers = updated_bi_centers
-        for center in self._bi_centers[changed_center_index:]:
-            object_id = _stable_id(
-                "zhongshu",
-                self.bi[center.base_index].object_id,
-                self.bi[center.seed_end_index].object_id,
-            )
-            components = self.bi[center.base_index : center.end_index + 1]
-            dd_i64 = min(
-                line.range_low_i64 for line in components if line.range_low_i64 is not None
-            )
-            gg_i64 = max(
-                line.range_high_i64 for line in components if line.range_high_i64 is not None
-            )
-            centers.append(
-                (
-                    object_id,
-                    {
-                        "start_bar_index": center.start_bar_index,
-                        "start_time": center.start_time,
-                        "end_bar_index": center.end_bar_index,
-                        "end_time": center.end_time,
-                        "zg_i64": center.zg_i64,
-                        "zd_i64": center.zd_i64,
-                        "gg_i64": gg_i64,
-                        "dd_i64": dd_i64,
-                        "z_i64": (center.zd_i64 + center.zg_i64) // 2,
-                        "analysis_level": "stroke",
-                        "component_kind": "bi",
-                        "component_count": len(components),
-                        "confirmed": True,
-                        "confirmed_at_bar_index": center.known_at_bar_index,
-                        "status": center.status,
-                        "leave_direction": center.leave_direction,
-                    },
-                    center.known_at_bar_index,
-                )
-            )
-        self._center_values = centers
+        """从首次变化笔位置更新线段、实体中枢、背驰和买卖点。"""
         segment_specs = self._segment_accumulator.update(
             self.bi,
             self.raw_bars,
@@ -1010,7 +994,7 @@ class ChanEngine:
         )
         segment_records = self._segment_records[:changed_segment_spec_index]
         self._segment_specs = segment_specs
-        # 线段：参考算法返回线段语义对象；确认线段额外转成 LineObject 供线段中枢复用。
+        # 线段：扫描器返回线段语义对象；确认段转成 LineObject 供实体中枢状态机消费。
         for segment in segment_specs[changed_segment_spec_index:]:
             object_id = _stable_id(
                 "segment",
@@ -1105,7 +1089,7 @@ class ChanEngine:
         segments = [value for value, _ in segment_records]
         segment_lines = [line for _, line in segment_records if line is not None]
 
-        # 标准中枢使用闭区间交集；三条已确认线段的重叠可以退化为 ZD == ZG 的点中枢。
+        # BI/SEGMENT 两条流在同一状态机中独立生成实体中枢。
         changed_confirmed_segment_index = self._common_prefix_length(
             self._segment_lines,
             segment_lines,
@@ -1114,7 +1098,7 @@ class ChanEngine:
             self._segment_lines
         ) or changed_confirmed_segment_index < len(segment_lines)
         self._segment_lines = segment_lines
-        self._sync_objects("zhongshu", centers, known_at_bar_index)
+        self._update_local_center_objects(known_at_bar_index)
         self._sync_objects("segment", segments, known_at_bar_index)
         if not confirmed_segments_changed:
             logger.debug(
@@ -1129,30 +1113,14 @@ class ChanEngine:
             )
             return
 
-        self._all_segment_centers = update_reference_centers(
-            segment_lines,
-            self._all_segment_centers,
-            changed_confirmed_segment_index,
-            minimum_line_count=4,
-        )
-        segment_centers = [
-            center for center in self._all_segment_centers if center.zd_i64 <= center.zg_i64
-        ]
-        segment_center_ids: list[str] = []
-        segment_center_values: list[tuple[str, dict[str, Any], int]] = []
+        segment_centers, segment_center_ids = self._segment_structural_centers()
         graph_centers: list[GraphCenter] = []
         # 走势状态事件：记录中枢震荡、盘整和中枢迁移。
         movement_state_values: list[tuple[str, dict[str, Any], int]] = []
         # Z/Zn 监控事件：跟踪各线段相对中枢中轴的位置、强弱和越界/楔形预警。
         center_monitor_values: list[tuple[str, dict[str, Any], int]] = []
-        previous_center: tuple[ReferenceCenter, str, int, int] | None = None
-        for center in segment_centers:
-            object_id = _stable_id(
-                "segment-zhongshu",
-                segment_lines[center.base_index].object_id,
-                segment_lines[center.seed_end_index].object_id,
-            )
-            segment_center_ids.append(object_id)
+        previous_center: tuple[StructuralCenter, str, int, int] | None = None
+        for center, object_id in zip(segment_centers, segment_center_ids, strict=True):
             components = segment_lines[center.base_index : center.end_index + 1]
             dd_i64 = min(
                 line.range_low_i64 for line in components if line.range_low_i64 is not None
@@ -1161,30 +1129,6 @@ class ChanEngine:
                 line.range_high_i64 for line in components if line.range_high_i64 is not None
             )
             z_i64 = (center.zd_i64 + center.zg_i64) // 2
-            segment_center_values.append(
-                (
-                    object_id,
-                    {
-                        "start_bar_index": center.start_bar_index,
-                        "start_time": center.start_time,
-                        "end_bar_index": center.end_bar_index,
-                        "end_time": center.end_time,
-                        "zg_i64": center.zg_i64,
-                        "zd_i64": center.zd_i64,
-                        "gg_i64": gg_i64,
-                        "dd_i64": dd_i64,
-                        "z_i64": z_i64,
-                        "analysis_level": "segment",
-                        "component_kind": "segment",
-                        "component_count": len(components),
-                        "confirmed": True,
-                        "confirmed_at_bar_index": center.known_at_bar_index,
-                        "status": center.status,
-                        "leave_direction": center.leave_direction,
-                    },
-                    center.known_at_bar_index,
-                )
-            )
             graph_centers.append(
                 GraphCenter(
                     object_id=object_id,
@@ -1301,7 +1245,7 @@ class ChanEngine:
         )
         divergence_values: list[tuple[str, dict[str, Any], int]] = []
         divergence_objects: list[tuple[str, ChanSignal]] = []
-        # 背驰：使用线段、线段中枢和 MACD 柱面积计算，结果仍以因果 known_at 发布。
+        # 背驰：使用线段、SEGMENT 实体中枢投影和 MACD 柱面积计算。
         for signal in divergence_specs:
             object_id = _stable_id(
                 "divergence",
@@ -1315,7 +1259,7 @@ class ChanEngine:
             )
 
         trade_point_by_id: dict[str, tuple[str, dict[str, Any], int]] = {}
-        level_sources: list[tuple[str, list[ReferenceCenter], list[str]]] = [
+        level_sources: list[tuple[str, list[StructuralCenter], list[str]]] = [
             ("L0", segment_centers, segment_center_ids)
         ]
         promoted_indices = [
@@ -1351,7 +1295,7 @@ class ChanEngine:
                     _signal_payload(signal),
                     signal.known_at_bar_index,
                 )
-        # 买卖点：消费标准线段中枢和背驰对象，生成一二三类买卖点事件。
+        # 买卖点：消费 SEGMENT 实体中枢投影和背驰对象。
         for signal in chan_trade_points(
             segment_lines, segment_centers, segment_center_ids, divergence_objects
         ):
@@ -1369,7 +1313,6 @@ class ChanEngine:
         trade_point_values = self._retain_invalidated_first_points(
             list(trade_point_by_id.values()), known_at_bar_index
         )
-        self._sync_objects("segment_zhongshu", segment_center_values, known_at_bar_index)
         self._sync_objects("level_center", list(level_graph.centers), known_at_bar_index)
         self._sync_objects("level_movement", list(level_graph.movements), known_at_bar_index)
         self._sync_objects("movement_state", movement_state_values, known_at_bar_index)
@@ -1384,9 +1327,8 @@ class ChanEngine:
                 "merged_bar_count": len(self.included),
                 "fractal_count": len(self.fractals),
                 "bi_count": len(self.bi),
-                "zhongshu_count": len(centers),
                 "segment_count": len(segments),
-                "segment_zhongshu_count": len(segment_center_values),
+                "local_segment_center_count": len(segment_centers),
                 "level_center_count": len(level_graph.centers),
                 "level_movement_count": len(level_graph.movements),
                 "movement_state_count": len(movement_state_values),
@@ -1396,6 +1338,441 @@ class ChanEngine:
                 "event_count": len(self.emitter.events),
             },
         )
+
+    def _center_units(
+        self, lines: list[LineObject], unit_kind: Literal["BI", "SEGMENT"]
+    ) -> tuple[tuple[CenterUnit, ...], dict[str, LineObject], dict[int, int]]:
+        units: list[CenterUnit] = []
+        by_id: dict[str, LineObject] = {}
+        bar_by_time: dict[int, int] = {}
+        for index, line in enumerate(lines):
+            bar_by_time[line.start.time] = line.start.bar_index
+            bar_by_time[line.end.time] = line.end.bar_index
+            cache_key = (unit_kind, index, line)
+            cached = self._center_unit_cache.get(cache_key)
+            if cached is not None:
+                units.append(cached)
+                by_id[line.object_id] = line
+                continue
+            assert line.range_low_i64 is not None and line.range_high_i64 is not None
+            source_revision = _stable_id(
+                "center-unit-revision",
+                line.object_id,
+                line.start.bar_index,
+                line.end.bar_index,
+                line.start.price_i64,
+                line.end.price_i64,
+                line.range_low_i64,
+                line.range_high_i64,
+                line.confirmed_at_bar_index,
+            )
+            unit = CenterUnit(
+                id=line.object_id,
+                index=index,
+                direction=line.direction,
+                start_pivot_id=_stable_id(
+                    "center-pivot",
+                    unit_kind,
+                    line.start.bar_index,
+                    line.start.time,
+                    line.start.price_i64,
+                ),
+                end_pivot_id=_stable_id(
+                    "center-pivot",
+                    unit_kind,
+                    line.end.bar_index,
+                    line.end.time,
+                    line.end.price_i64,
+                ),
+                start_time=line.start.time,
+                end_time=line.end.time,
+                start_price_tick=self._to_price_tick(line.start.price_i64),
+                end_price_tick=self._to_price_tick(line.end.price_i64),
+                low_tick=self._to_price_tick(line.range_low_i64),
+                high_tick=self._to_price_tick(line.range_high_i64),
+                confirmed_at=line.confirmed_at_bar_index,
+                source_revision=source_revision,
+            )
+            self._center_unit_cache[cache_key] = unit
+            units.append(unit)
+            by_id[line.object_id] = line
+        return tuple(units), by_id, bar_by_time
+
+    def _to_price_tick(self, price_i64: int) -> int:
+        if price_i64 % self.price_tick_i64:
+            raise ValueError("local center unit price is not aligned to the minimum quotation tick")
+        return price_i64 // self.price_tick_i64
+
+    def _publish_local_center_previews(self, known_at_bar_index: int) -> None:
+        """Project upstream tail units separately from confirmed boundary state."""
+        for unit_kind in ("BI", "SEGMENT"):
+            accumulator = self._local_center_accumulators.get(unit_kind)
+            last = None if accumulator is None else accumulator.last_unit
+            candidates: list[dict[str, Any]] = []
+            if last is not None:
+                if unit_kind == "BI":
+                    candidate = (
+                        None
+                        if self._active_bi_candidate_id is None
+                        else self.emitter.get("bi", self._active_bi_candidate_id)
+                    )
+                    if candidate is not None:
+                        candidates = [candidate]
+                else:
+                    candidates = self.emitter.current("segment")
+            candidates = [
+                candidate
+                for candidate in candidates
+                if candidate.get("status") == "candidate"
+                and not candidate.get("confirmed")
+                and last is not None
+                and candidate["start_time"] == last.end_time
+                and candidate["start_price_i64"] == last.end_price_tick * self.price_tick_i64
+                and candidate["direction"] != last.direction
+            ]
+            preview = None
+            if candidates and last is not None and accumulator is not None:
+                candidate = max(
+                    candidates, key=lambda value: (value["end_time"], value["object_id"])
+                )
+                tail = CenterUnit(
+                    id=str(candidate["object_id"]),
+                    index=last.index + 1,
+                    direction=candidate["direction"],
+                    start_pivot_id=last.end_pivot_id,
+                    end_pivot_id=_stable_id("preview-pivot", candidate["object_id"]),
+                    start_time=int(candidate["start_time"]),
+                    end_time=int(candidate["end_time"]),
+                    start_price_tick=self._to_price_tick(int(candidate["start_price_i64"])),
+                    end_price_tick=self._to_price_tick(int(candidate["end_price_i64"])),
+                    low_tick=self._to_price_tick(int(candidate["range_low_i64"])),
+                    high_tick=self._to_price_tick(int(candidate["range_high_i64"])),
+                    confirmed_at=None,
+                    source_revision=_stable_id("preview-unit-revision", candidate),
+                )
+                preview = accumulator.preview(tail, known_at=known_at_bar_index)
+            previous_id = self._local_center_preview_ids.get(unit_kind)
+            if previous_id is not None and (preview is None or previous_id != preview.id):
+                self.emitter.delete(known_at_bar_index, "center_audit_event", previous_id)
+                del self._local_center_preview_ids[unit_kind]
+            if preview is None or accumulator is None:
+                continue
+            current_preview = self.emitter.get("center_audit_event", preview.id)
+            if current_preview is not None and all(
+                current_preview.get(name) == value
+                for name, value in {
+                    "source_revision": preview.source_revision,
+                    "preview_state": preview.state,
+                    "comparison_i64": preview.comparison_value * self.price_tick_i64,
+                }.items()
+            ):
+                continue
+            center = accumulator.result().centers[-1]
+            frame = inspect.currentframe()
+            source_line = frame.f_lineno if frame is not None else 1
+            del frame
+            self.emitter.upsert(
+                known_at_bar_index,
+                "center_audit_event",
+                preview.id,
+                {
+                    "event_type": "PREVIEW_UPDATED",
+                    "center_id": preview.center_id,
+                    "unit_ids": list(dict.fromkeys((preview.exit_unit_id, preview.unit_id))),
+                    "zd_i64": center.zd_tick * self.price_tick_i64,
+                    "zg_i64": center.zg_tick * self.price_tick_i64,
+                    "comparison_i64": preview.comparison_value * self.price_tick_i64,
+                    "event_bar_index": known_at_bar_index,
+                    "event_time": self.raw_bars[-1].time,
+                    "rule_version": preview.rule_version,
+                    "source_file": "python/src/tvbt/chan/engine.py",
+                    "source_line": source_line,
+                    "preview_state": preview.state,
+                    "preview_confirmed": False,
+                    "preview_direction": preview.direction,
+                    "source_revision": preview.source_revision,
+                },
+            )
+            self._local_center_preview_ids[unit_kind] = preview.id
+
+    def _local_center_payload(
+        self,
+        center: LocalCenter,
+        lines: dict[str, LineObject],
+        bar_by_time: dict[int, int],
+        previous_center: LocalCenter | None = None,
+    ) -> dict[str, Any]:
+        first_seed = lines[center.seed_ids[0]]
+        last_seed = lines[center.seed_ids[-1]]
+        relation = (
+            None if previous_center is None else compare_center_boundaries(previous_center, center)
+        )
+        ordered_lines = sorted(lines.values(), key=lambda item: item.start.time)
+        components = [
+            line
+            for line in ordered_lines
+            if line.start.time >= center.body_start
+            and (
+                (center.body_end is None and line.end.time <= center.observed_end)
+                or (center.body_end is not None and line.start.time < center.body_end)
+            )
+        ]
+        body_end_time = center.body_end or center.observed_end
+        body_end_bar_index = bar_by_time[body_end_time]
+        outer_low = min(line.range_low_i64 for line in components if line.range_low_i64 is not None)
+        outer_high = max(
+            line.range_high_i64 for line in components if line.range_high_i64 is not None
+        )
+        return {
+            "stream_key": center.stream_key,
+            "rule_version": center.rule_version,
+            "previous_center_id": None if relation is None else relation.previous_center_id,
+            "core_relation": None if relation is None else relation.core_relation,
+            "higher_level_review_required": (
+                False if relation is None else relation.higher_level_review_required
+            ),
+            "trend_status": "UNVERIFIED",
+            "unit_kind": center.unit_kind,
+            "structural_level": center.structural_level,
+            "scan_floor": center.scan_floor,
+            "seed_ids": list(center.seed_ids),
+            "zd_i64": center.zd_tick * self.price_tick_i64,
+            "zg_i64": center.zg_tick * self.price_tick_i64,
+            "z_i64": (center.zd_tick + center.zg_tick) * self.price_tick_i64 // 2,
+            "dd_i64": outer_low,
+            "gg_i64": outer_high,
+            "start_bar_index": first_seed.start.bar_index,
+            "start_time": center.body_start,
+            "end_bar_index": body_end_bar_index,
+            "end_time": body_end_time,
+            "analysis_level": center.structural_level,
+            "component_kind": center.unit_kind.lower(),
+            "component_count": len(components),
+            "confirmed": True,
+            "confirmed_at_bar_index": center.formed_at,
+            "leave_direction": center.break_direction,
+            "seed_start_bar_index": first_seed.start.bar_index,
+            "seed_start_time": center.seed_start,
+            "seed_end_bar_index": last_seed.end.bar_index,
+            "seed_end_time": center.seed_end,
+            "formed_at_bar_index": center.formed_at,
+            "body_start_bar_index": first_seed.start.bar_index,
+            "body_start_time": center.body_start,
+            "body_end_bar_index": None if center.body_end is None else body_end_bar_index,
+            "body_end_time": center.body_end,
+            "observed_start_bar_index": first_seed.start.bar_index,
+            "observed_start_time": center.observed_start,
+            "observed_end_bar_index": bar_by_time[center.observed_end],
+            "observed_end_time": center.observed_end,
+            "observed_low_i64": center.observed_low * self.price_tick_i64,
+            "observed_high_i64": center.observed_high * self.price_tick_i64,
+            "status": center.status,
+            "pending_exit_id": center.pending_exit_id,
+            "exit_id": center.exit_id,
+            "first_retest_id": center.first_retest_id,
+            "entry_id": center.entry_id,
+            "local_entry": center.local_entry,
+            "break_direction": center.break_direction,
+            "break_confirmed_at_bar_index": center.break_confirmed_at,
+            "parent_id": center.parent_id,
+            "left_context_incomplete": center.left_context_incomplete,
+            "roles_overlap_seed": center.roles_overlap_seed,
+            "source_revision": center.source_revision,
+        }
+
+    @staticmethod
+    def _center_connection_payload(
+        connection: CenterConnection,
+        lines: dict[str, LineObject],
+        *,
+        unit_kind: Literal["BI", "SEGMENT"],
+        structural_level: str,
+    ) -> dict[str, Any]:
+        first = lines[connection.unit_ids[0]]
+        last = lines[connection.unit_ids[-1]]
+        return {
+            "stream_key": connection.stream_key,
+            "rule_version": connection.rule_version,
+            "unit_kind": unit_kind,
+            "structural_level": structural_level,
+            "from_center_id": connection.from_center_id,
+            "to_center_id": connection.to_center_id,
+            "ordered_unit_ids": list(connection.unit_ids),
+            "exit_unit_id": connection.exit_unit_id,
+            "entry_unit_id": connection.entry_unit_id,
+            "first_retest_id": connection.first_retest_id,
+            "start_bar_index": first.start.bar_index,
+            "start_time": first.start.time,
+            "end_bar_index": last.end.bar_index,
+            "end_time": last.end.time,
+            "confirmed_at_bar_index": connection.confirmed_at,
+            "roles_overlap_seed": connection.roles_overlap_seed,
+            "source_revision": connection.source_revision,
+        }
+
+    def _center_audit_payload(
+        self, event: CenterAuditEvent, bar_by_time: dict[int, int]
+    ) -> dict[str, Any]:
+        return {
+            "event_type": event.event_type,
+            "center_id": event.center_id,
+            "unit_ids": list(event.unit_ids),
+            "zd_i64": event.zd_tick * self.price_tick_i64,
+            "zg_i64": event.zg_tick * self.price_tick_i64,
+            "comparison_i64": None
+            if event.comparison_value is None
+            else event.comparison_value
+            * (1 if event.event_type == "SEARCH_RESTARTED" else self.price_tick_i64),
+            "event_bar_index": bar_by_time[event.event_time],
+            "event_time": event.event_time,
+            "rule_version": event.rule_version,
+            "source_file": event.source_file,
+            "source_line": event.source_line,
+        }
+
+    def _update_local_center_objects(self, known_at_bar_index: int) -> None:
+        center_values: list[tuple[str, dict[str, Any], int]] = []
+        connection_values: list[tuple[str, dict[str, Any], int]] = []
+        audit_values: list[tuple[CenterAuditEvent, dict[int, int]]] = []
+        streams: tuple[tuple[Literal["BI", "SEGMENT"], str, list[LineObject]], ...] = (
+            ("BI", "stroke", self.bi),
+            ("SEGMENT", "segment", self._segment_lines),
+        )
+        for unit_kind, structural_level, lines in streams:
+            units, by_id, bar_by_time = self._center_units(lines, unit_kind)
+            stream = CenterStreamKey(
+                symbol=self.stream_symbol,
+                timeframe=self.stream_timeframe,
+                unit_kind=unit_kind,
+                structural_level=structural_level,
+                algorithm_version=self.algorithm_version,
+                anchor_id=self.stream_anchor_id,
+            )
+            accumulator = self._local_center_accumulators.get(unit_kind)
+            if accumulator is None:
+                accumulator = LocalCenterAccumulator(stream, left_context_complete=False)
+                self._local_center_accumulators[unit_kind] = accumulator
+            decomposition = accumulator.update(units)
+            center_values.extend(
+                (
+                    center.id,
+                    self._local_center_payload(
+                        center,
+                        by_id,
+                        bar_by_time,
+                        None if index == 0 else decomposition.centers[index - 1],
+                    ),
+                    center.break_confirmed_at or center.formed_at,
+                )
+                for index, center in enumerate(decomposition.centers)
+            )
+            connection_values.extend(
+                (
+                    connection.id,
+                    self._center_connection_payload(
+                        connection,
+                        by_id,
+                        unit_kind=unit_kind,
+                        structural_level=structural_level,
+                    ),
+                    connection.confirmed_at,
+                )
+                for connection in decomposition.connections
+            )
+            audit_values.extend((event, bar_by_time) for event in accumulator.updated_events)
+
+        previous_centers = {
+            str(item["object_id"]): item for item in self.emitter.current("local_center")
+        }
+        self._sync_objects("local_center", center_values, known_at_bar_index)
+        self._sync_objects("center_connection", connection_values, known_at_bar_index)
+        for event, bar_by_time in audit_values:
+            payload = self._center_audit_payload(event, bar_by_time)
+            if self._center_audit_payload_cache.get(event.id) == payload:
+                continue
+            self.emitter.upsert(
+                max(event.known_at, known_at_bar_index),
+                "center_audit_event",
+                event.id,
+                payload,
+            )
+            self._center_audit_payload_cache[event.id] = payload
+        for object_id, payload, _ in center_values:
+            previous = previous_centers.get(object_id)
+            if previous is None or all(
+                previous.get(name) == value for name, value in payload.items()
+            ):
+                continue
+            revision = int(previous["object_revision"]) + 1
+            audit_id = _stable_id(object_id, "CENTER_REVISED", revision)
+            self.emitter.upsert(
+                known_at_bar_index,
+                "center_audit_event",
+                audit_id,
+                {
+                    "event_type": "CENTER_REVISED",
+                    "center_id": object_id,
+                    "unit_ids": payload["seed_ids"],
+                    "zd_i64": payload["zd_i64"],
+                    "zg_i64": payload["zg_i64"],
+                    "comparison_i64": None,
+                    "event_bar_index": known_at_bar_index,
+                    "event_time": self.raw_bars[-1].time,
+                    "rule_version": LOCAL_CENTER_RULE_VERSION,
+                    "source_file": "python/src/tvbt/chan/engine.py",
+                    "source_line": self._update_local_center_objects.__code__.co_firstlineno,
+                },
+            )
+
+    def _segment_structural_centers(self) -> tuple[list[StructuralCenter], list[str]]:
+        """Project authoritative SEGMENT local centers into the signal algorithms."""
+        accumulator = self._local_center_accumulators.get("SEGMENT")
+        if accumulator is None:
+            return [], []
+        positions = {line.object_id: index for index, line in enumerate(self._segment_lines)}
+        centers: list[StructuralCenter] = []
+        center_ids: list[str] = []
+        for center in accumulator.result().centers:
+            if any(seed_id not in positions for seed_id in center.seed_ids):
+                continue
+            base_index = positions[center.seed_ids[0]]
+            seed_end_index = positions[center.seed_ids[-1]]
+            exit_index = None if center.exit_id is None else positions.get(center.exit_id)
+            end_index = (
+                max(seed_end_index, exit_index - 1)
+                if exit_index is not None
+                else max(
+                    index
+                    for index, line in enumerate(self._segment_lines)
+                    if line.end.time <= center.observed_end
+                )
+            )
+            end_line = self._segment_lines[end_index]
+            centers.append(
+                StructuralCenter(
+                    base_index=base_index,
+                    seed_end_index=seed_end_index,
+                    end_index=end_index,
+                    exit_index=exit_index,
+                    start_bar_index=self._segment_lines[base_index].start.bar_index,
+                    end_bar_index=end_line.end.bar_index,
+                    start_time=self._segment_lines[base_index].start.time,
+                    end_time=end_line.end.time,
+                    zd_i64=center.zd_tick * self.price_tick_i64,
+                    zg_i64=center.zg_tick * self.price_tick_i64,
+                    known_at_bar_index=center.break_confirmed_at or center.formed_at,
+                    status=(
+                        "left"
+                        if center.status == "CLOSED"
+                        else "extended"
+                        if end_index > seed_end_index
+                        else "confirmed"
+                    ),
+                    leave_direction=center.break_direction,
+                )
+            )
+            center_ids.append(center.id)
+        return centers, center_ids
 
     @staticmethod
     def _common_prefix_length(left: list[Any], right: list[Any]) -> int:
@@ -1479,19 +1856,35 @@ class ChanEngine:
                 self.emitter.current("processed_bar"), key=lambda item: item["normalized_index"]
             ),
             "fractals": sorted(self.emitter.current("fractal"), key=lambda item: item["bar_index"]),
-            "bi": sorted(self.emitter.current("bi"), key=lambda item: item["start_bar_index"]),
+            "bi": sorted(
+                self.emitter.current("bi"),
+                key=lambda item: (item["start_bar_index"], item["object_id"]),
+            ),
             "bi_states": sorted(
                 self.emitter.current("bi_state"), key=lambda item: item["bar_index"]
             ),
             "segments": sorted(
                 self.emitter.current("segment"), key=lambda item: item["start_bar_index"]
             ),
-            "zhongshu": sorted(
-                self.emitter.current("zhongshu"), key=lambda item: item["start_bar_index"]
+            "local_centers": sorted(
+                self.emitter.current("local_center"),
+                key=lambda item: (
+                    item["body_start_bar_index"],
+                    item["unit_kind"],
+                    item["object_id"],
+                ),
             ),
-            "segment_zhongshu": sorted(
-                self.emitter.current("segment_zhongshu"),
-                key=lambda item: item["start_bar_index"],
+            "center_connections": sorted(
+                self.emitter.current("center_connection"),
+                key=lambda item: (item["start_bar_index"], item["object_id"]),
+            ),
+            "center_audit_events": sorted(
+                self.emitter.current("center_audit_event"),
+                key=lambda item: (
+                    item["known_at_bar_index"],
+                    item["event_bar_index"],
+                    item["object_id"],
+                ),
             ),
             "level_centers": sorted(
                 self.emitter.current("level_center"),
@@ -1505,13 +1898,15 @@ class ChanEngine:
                 self.emitter.current("movement_state"), key=lambda item: item["start_bar_index"]
             ),
             "center_monitors": sorted(
-                self.emitter.current("center_monitor"), key=lambda item: item["bar_index"]
+                self.emitter.current("center_monitor"),
+                key=lambda item: (item["bar_index"], item["object_id"]),
             ),
             "divergences": sorted(
                 self.emitter.current("divergence"), key=lambda item: item["bar_index"]
             ),
             "trade_points": sorted(
-                self.emitter.current("trade_point"), key=lambda item: item["bar_index"]
+                self.emitter.current("trade_point"),
+                key=lambda item: (item["bar_index"], item["object_id"]),
             ),
         }
 
@@ -1532,13 +1927,32 @@ class ChanEngine:
             "bi_path_positions": self._bi_path_positions,
             "active_bi_candidate_id": self._active_bi_candidate_id,
             "bi_live_state": self._bi_live_state,
+            "stream_identity": {
+                "price_tick_i64": self.price_tick_i64,
+                "symbol": self.stream_symbol,
+                "timeframe": self.stream_timeframe,
+                "anchor_id": self.stream_anchor_id,
+            },
+            "local_center_accumulators": {
+                key: accumulator.state()
+                for key, accumulator in self._local_center_accumulators.items()
+            },
+            "center_audit_payload_cache": self._center_audit_payload_cache,
+            "local_center_preview_ids": self._local_center_preview_ids,
             "emitter": self.emitter.state(),
         }
 
     @classmethod
     def from_state(cls, state: dict[str, Any]) -> ChanEngine:
         """从检查点恢复引擎，并重建 MACD 状态和事件收集器。"""
-        engine = cls(ChanParameters(**state["parameters"]))
+        identity = state.get("stream_identity", {})
+        engine = cls(
+            ChanParameters(**state["parameters"]),
+            stream_symbol=str(identity.get("symbol", "UNKNOWN")),
+            stream_timeframe=str(identity.get("timeframe", "unknown")),
+            stream_anchor_id=str(identity.get("anchor_id", "full-history")),
+            price_tick_i64=int(identity.get("price_tick_i64", 1)),
+        )
         engine.raw_bars = [RawBar(**item) for item in state["raw_bars"]]
         for bar in engine.raw_bars:
             engine._append_macd(bar)
@@ -1564,6 +1978,15 @@ class ChanEngine:
             fractal.normalized_index: position for position, fractal in enumerate(engine.fractals)
         }
         engine._segment_accumulator.update(engine.bi, engine.raw_bars, 0)
+        engine._local_center_accumulators = {
+            str(key): LocalCenterAccumulator.from_state(value)
+            for key, value in state.get("local_center_accumulators", {}).items()
+        }
+        engine._local_center_preview_ids = dict(state.get("local_center_preview_ids", {}))
+        engine._center_audit_payload_cache = {
+            str(key): dict(value)
+            for key, value in state.get("center_audit_payload_cache", {}).items()
+        }
         engine.emitter = EventEmitter.from_state(state["emitter"])
         return engine
 

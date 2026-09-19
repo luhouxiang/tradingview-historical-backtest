@@ -40,7 +40,8 @@ def _write_chan_dataset(root: Path, *, count: int = 25) -> dict[str, str]:
         dataset_dir / "bars.parquet",
     )
     (dataset_dir / "meta.json").write_text(
-        json.dumps({"price": {"price_scale": 1}}), encoding="utf-8"
+        json.dumps({"timeframe": "1m", "price": {"price_scale": 1, "tick_size_i64": 1}}),
+        encoding="utf-8",
     )
     return {
         "bars_path": "normalized/TEST.CHAN.1m/revision/bars.parquet",
@@ -62,7 +63,10 @@ def _payload(root: Path, *, output_path: str = "cache/chan/key") -> dict[str, ob
         "algorithm": {
             key: spec[key] for key in ("kind", "algorithm_id", "algorithm_version", "source_hash")
         },
-        "parameters": {"checkpoint_interval": 4},
+        "parameters": {
+            "checkpoint_interval": 4,
+            "center_boundary_profile": "local_center_boundary_v1",
+        },
         "calculation_mode": "causal_events",
         "output_path": output_path,
     }
@@ -98,14 +102,19 @@ def test_definition_documents_how_go_and_vue_should_call_chan() -> None:
     assert spec["causal"] is True
     assert spec["parameter_schema"]["additionalProperties"] is False
     assert spec["parameter_schema"]["properties"]["checkpoint_interval"]["default"] == 1024
+    assert (
+        spec["parameter_schema"]["properties"]["center_boundary_profile"]["default"]
+        == "local_center_boundary_v1"
+    )
     assert {output["object_type"] for output in spec["outputs"]} == {
         "processed_bar",
         "fractal",
         "bi",
         "bi_state",
         "segment",
-        "zhongshu",
-        "segment_zhongshu",
+        "local_center",
+        "center_connection",
+        "center_audit_event",
         "level_center",
         "level_movement",
         "movement_state",
@@ -183,8 +192,6 @@ def test_calculate_chan_writes_the_causal_cache_contract(tmp_path: Path) -> None
         "fractals",
         "bi",
         "segments",
-        "zhongshu",
-        "segment_zhongshu",
         "level_centers",
         "level_movements",
         "movement_states",

@@ -220,7 +220,10 @@ cache/chan/<cache_key>/
 ├── manifest.json
 ├── fractals.parquet
 ├── bi.parquet
-├── zhongshu.parquet
+├── segments.parquet
+├── local_centers.parquet
+├── center_connections.parquet
+├── center_audit_events.parquet
 ├── events.parquet
 ├── checkpoints/
 │   └── <bar_index>.bin
@@ -243,7 +246,7 @@ events.parquet：
 |---|---|
 | event_seq | 稳定递增序号 |
 | known_at_bar_index | 回放可见时间 |
-| object_type | fractal、bi、zhongshu |
+| object_type | fractal、bi、segment、local_center 及其派生对象 |
 | object_id | 对象稳定 ID |
 | operation | upsert 或 delete |
 | object_revision | 对象修订 |

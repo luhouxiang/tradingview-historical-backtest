@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from tvbt.chan.reference import ReferenceCenter
 from tvbt.chan.signals import (
+    StructuralCenter,
     chan_divergences,
     chan_first_point_candidates,
     chan_trade_points,
@@ -54,9 +54,9 @@ def center(
     zd: int,
     zg: int,
     leave_direction: str = "up",
-) -> ReferenceCenter:
+) -> StructuralCenter:
     """构造一个已经离开的标准线段中枢测试桩。"""
-    return ReferenceCenter(
+    return StructuralCenter(
         base_index=base,
         seed_end_index=base + 2,
         end_index=end,
@@ -73,9 +73,9 @@ def center(
     )
 
 
-def active_center(base: int, end: int, zd: int, zg: int) -> ReferenceCenter:
+def active_center(base: int, end: int, zd: int, zg: int) -> StructuralCenter:
     """构造尚未离开的活动标准线段中枢测试桩。"""
-    return ReferenceCenter(
+    return StructuralCenter(
         base_index=base,
         seed_end_index=base + 2,
         end_index=end,

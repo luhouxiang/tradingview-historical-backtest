@@ -371,12 +371,12 @@ try {
         if ($chanResults.result_kind -ne 'chan' -or $chanResults.checksum -notmatch '^sha256:[0-9a-f]{64}$' -or $chanResults.PSObject.Properties['bar_index'] -or $chanResults.PSObject.Properties['values']) {
             throw 'Chan range response did not use the semantic-object contract.'
         }
-        $chanObjectCount = @($chanResults.objects.fractals).Count + @($chanResults.objects.bi).Count + @($chanResults.objects.segments).Count + @($chanResults.objects.zhongshu).Count + @($chanResults.objects.segment_zhongshu).Count + @($chanResults.objects.divergences).Count + @($chanResults.objects.trade_points).Count
-        if (@($chanResults.objects.bi).Count -lt 1 -or @($chanResults.objects.segments).Count -lt 1 -or @($chanResults.objects.zhongshu).Count -lt 1 -or @($chanResults.objects.segment_zhongshu).Count -lt 1) {
-            throw "Full sample did not produce bi, segment, bi-center and segment-center objects: $($chanResults.objects | ConvertTo-Json -Depth 4 -Compress)"
+        $chanObjectCount = @($chanResults.objects.fractals).Count + @($chanResults.objects.bi).Count + @($chanResults.objects.segments).Count + @($chanResults.objects.local_centers).Count + @($chanResults.objects.divergences).Count + @($chanResults.objects.trade_points).Count
+        if (@($chanResults.objects.bi).Count -lt 1 -or @($chanResults.objects.segments).Count -lt 1 -or @($chanResults.objects.local_centers).Count -lt 1) {
+            throw "Full sample did not produce bi, segment and local-center objects: $($chanResults.objects | ConvertTo-Json -Depth 4 -Compress)"
         }
         $chanCachePath = Join-Path $dataRoot $chanCompleted.result_ref
-        foreach ($name in @('manifest.json', 'fractals.parquet', 'bi.parquet', 'segments.parquet', 'zhongshu.parquet', 'segment_zhongshu.parquet', 'divergences.parquet', 'trade_points.parquet', 'events.parquet', '_SUCCESS')) {
+        foreach ($name in @('manifest.json', 'fractals.parquet', 'bi.parquet', 'segments.parquet', 'local_centers.parquet', 'center_connections.parquet', 'center_audit_events.parquet', 'divergences.parquet', 'trade_points.parquet', 'events.parquet', '_SUCCESS')) {
             if (-not (Test-Path -LiteralPath (Join-Path $chanCachePath $name))) { throw "Chan cache is missing $name." }
         }
         node "$projectRoot/web/scripts/validate-chan-cache.mjs" "$chanCachePath/manifest.json"
@@ -430,7 +430,7 @@ try {
         foreach ($name in @('manifest.json', 'events.parquet', '_SUCCESS')) {
             if (-not (Test-Path -LiteralPath (Join-Path $replayCachePath $name))) { throw "Replay cache is missing $name." }
         }
-        foreach ($name in @('fractals.parquet', 'bi.parquet', 'zhongshu.parquet', 'segments.parquet', 'segment_zhongshu.parquet', 'divergences.parquet', 'trade_points.parquet')) {
+        foreach ($name in @('fractals.parquet', 'bi.parquet', 'segments.parquet', 'local_centers.parquet', 'center_connections.parquet', 'center_audit_events.parquet', 'divergences.parquet', 'trade_points.parquet')) {
             if (Test-Path -LiteralPath (Join-Path $replayCachePath $name)) { throw "Replay cache unexpectedly contains $name." }
         }
         node "$projectRoot/web/scripts/validate-replay-cache.mjs" "$replayCachePath/manifest.json"
@@ -600,7 +600,7 @@ try {
                 source_id = 'strategy-chan-smoke'; name = $chanAlgorithmRef.name; pane_id = 'price'; visible = $true; locked = $true
                 z_band = 500; order_in_band = 0; dataset_id = $meta.dataset_id; data_revision = $revision
                 algorithm = @{ kind = $chanAlgorithmRef.kind; algorithm_id = $chanAlgorithmRef.algorithm_id; algorithm_version = $chanAlgorithmRef.algorithm_version; source_hash = $chanAlgorithmRef.source_hash }
-                parameters = $chanParameters; category_visibility = @{ fractals = $true; bi = $true; zhongshu = $true }
+                parameters = $chanParameters; category_visibility = @{ fractals = $true; bi = $true; segments = $true; local_centers = $true; divergences = $true; trade_points = $true }
             })
         }
         $layoutBody = @{

@@ -328,7 +328,7 @@ def derive_bardo_contexts(
                 and payload.get("state_type") in {"centre_migration_up", "centre_migration_down"}
             )
             resolved_by_promotion = (
-                event.object_type == "segment_zhongshu"
+                event.object_type == "local_center"
                 and payload.get("confirmed") is True
                 and int(payload.get("component_count", 0)) >= 9
             )

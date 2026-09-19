@@ -17,7 +17,7 @@ import { defaultIndicatorSpecs } from '../indicators/defaults'
 import { defaultChanSpec } from '../chan/defaults'
 import { createBacktestWorkspaceChannel, createBacktestWorkspaceUrl, type BacktestWorkspaceMessage } from '../backtest/workspaceChannel'
 import type { ReplayObjects, ReplaySignal } from '../replay/eventIndex'
-import type { AlgorithmDefinition, BacktestTrade, CalculationRequest, ChanCenterMonitor, ChanSignalPoint, ChanTreeObject, DatasetMeta, SeriesSource, StrategyRunSource, StrategySource, StrategySourceDynamicConfig, StrategySourcePreference, WorkspaceLayout } from '../types/api'
+import type { AlgorithmDefinition, BacktestTrade, CalculationRequest, ChanCenterMonitor, ChanLocalCenter, ChanSignalPoint, ChanTreeObject, DatasetMeta, SeriesSource, StrategyRunSource, StrategySource, StrategySourceDynamicConfig, StrategySourcePreference, WorkspaceLayout } from '../types/api'
 
 defineProps<{ health: string }>()
 
@@ -184,6 +184,20 @@ async function trackStrategyCalculation(source: StrategySource): Promise<void> {
   }
 }
 
+function formatTreeTimestamp(timestamp: number, dataset: DatasetMeta): string {
+  return new Intl.DateTimeFormat('zh-CN', {
+    timeZone: dataset.time.timezone, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }).format(new Date(timestamp)).replaceAll('/', '-')
+}
+
+function defaultLocalCenterScope(centers: ChanLocalCenter[]): ChanLocalCenter[] {
+  if (centers.length === 0) return []
+  const unitKind = centers.some((center) => center.unit_kind === 'BI') ? 'BI' : 'SEGMENT'
+  const structuralLevel = [...new Set(centers.filter((center) => center.unit_kind === unitKind).map((center) => center.structural_level))].sort()[0]
+  return centers.filter((center) => center.unit_kind === unitKind && center.structural_level === structuralLevel)
+}
+
 async function loadSignalObjects(): Promise<void> {
   const dataset = selectedDataset.value
   const sources = strategySources.value.filter((source) => source.status === 'completed')
@@ -206,6 +220,13 @@ async function loadSignalObjects(): Promise<void> {
         if (generation !== signalLoadGeneration) return { source, signals: [] }
         const result = await getCalculationResults(source.job_id, from, to)
         if (result.result_kind === 'chan') {
+          const localCenters = defaultLocalCenterScope(result.objects.local_centers ?? [])
+          const connectionByCenter = new Map((result.objects.center_connections ?? []).map((connection) => [connection.from_center_id, connection]))
+          const incomingConnectionByCenter = new Map((result.objects.center_connections ?? [])
+            .filter((connection) => connection.to_center_id !== null)
+            .map((connection) => [connection.to_center_id, connection]))
+          const confirmationByCenter = new Map((result.objects.center_audit_events ?? []).filter((event) => event.event_type === 'BREAK_CONFIRMED').map((event) => [event.center_id, event]))
+          const previewByCenter = new Map((result.objects.center_audit_events ?? []).filter((event) => event.event_type === 'PREVIEW_UPDATED' && event.preview_confirmed === false).map((event) => [event.center_id, event]))
           signals.push(
             ...result.objects.bi_states.map((state): ChanTreeObject => ({
               object_id: state.object_id, object_type: 'bi_state',
@@ -216,6 +237,41 @@ async function loadSignalObjects(): Promise<void> {
             })),
             ...result.objects.divergences.map((signal) => treeSignal(signal, 'divergence')),
             ...result.objects.trade_points.map((signal) => treeSignal(signal, 'trade_point')),
+            ...localCenters.map((center): ChanTreeObject => {
+              const connection = connectionByCenter.get(center.object_id)
+              const incomingConnection = incomingConnectionByCenter.get(center.object_id)
+              const confirmation = confirmationByCenter.get(center.object_id)
+              const preview = previewByCenter.get(center.object_id)
+              const entry = center.entry_id ?? '—'
+              const exit = center.exit_id ?? center.pending_exit_id ?? '—'
+              const retest = center.first_retest_id ?? '—'
+              return {
+                object_id: center.object_id, object_type: 'local_center',
+                bar_index: center.observed_end_bar_index, time: center.observed_end_time,
+                price_i64: Math.trunc((center.zd_i64 + center.zg_i64) / 2),
+                confirmed_at_bar_index: center.break_confirmed_at_bar_index,
+                known_at_bar_index: center.known_at_bar_index, object_revision: center.object_revision,
+                label: `${center.unit_kind === 'BI' ? '笔' : '线段'}实体中枢 · ${center.status === 'ACTIVE' ? '活动' : center.status === 'PENDING_BREAK' ? '候选离开' : '已分界'}`,
+                detail: `ZD ${center.zd_i64} / ZG ${center.zg_i64} · ${center.structural_level}`,
+                hover_detail: [
+                  `实体中枢：${center.object_id}`,
+                  `模式/层级：${center.unit_kind} / ${center.structural_level}`,
+                  `核心关系：${center.core_relation === 'CORE_ABOVE' ? '核心上移' : center.core_relation === 'CORE_BELOW' ? '核心下移' : center.core_relation === 'CORE_TOUCH_OR_OVERLAP' ? '核心触及或重叠' : '无前中枢关系证据'}（前中枢：${center.previous_center_id ?? '—'}）`,
+                  `趋势：未验证${center.higher_level_review_required ? ' · 外围波动接触，需高级别递归检查' : ''}`,
+                  `尾单元预览：${preview ? `${preview.preview_state === 'RETEST_TOUCH' ? '触边，候选即时失效' : preview.preview_state === 'RETEST_PENDING' ? '首次回试待确认' : '离开待确认'} · 比较值 ${preview.comparison_i64} · K${preview.known_at_bar_index} · ${preview.unit_ids.join(' → ')}（不可交易）` : '无'}`,
+                  `构成三单元：${center.seed_ids.join(' → ')}`,
+                  `进入/离开/首次回试：${entry} / ${exit} / ${retest}`,
+                  `前向连接：${incomingConnection?.object_id ?? '—'}（来源中枢：${incomingConnection?.from_center_id ?? '—'}）`,
+                  `后向连接：${connection?.object_id ?? '—'}（目标中枢：${connection?.to_center_id ?? '尚未形成后中枢'}）`,
+                  `扫描起点：单元索引 ${center.scan_floor}`,
+                  `形成确认：K${center.formed_at_bar_index}`,
+                  `分界确认：${confirmation ? `K${confirmation.event_bar_index} · ${formatTreeTimestamp(confirmation.event_time, dataset)}` : '尚未确认'}`,
+                  `规则：${center.rule_version}${center.left_context_incomplete ? ' · 左侧上下文不完整' : ''}`,
+                ].join('\n'),
+                local_center_unit_kind: center.unit_kind,
+                local_center_structural_level: center.structural_level,
+              }
+            }),
             ...(result.objects.level_centers ?? []).map((center): ChanTreeObject => ({
               object_id: center.object_id, object_type: 'level_center',
               bar_index: center.end_bar_index, time: center.end_time,
@@ -253,7 +309,14 @@ async function loadSignalObjects(): Promise<void> {
           )
         }
       }
-      return { source, signals }
+      const localCenterObjects = signals.filter((item) => item.object_type === 'local_center')
+      if (localCenterObjects.length === 0) return { source, signals }
+      const unitKind = localCenterObjects.some((item) => item.local_center_unit_kind === 'BI') ? 'BI' : 'SEGMENT'
+      const structuralLevel = [...new Set(localCenterObjects.filter((item) => item.local_center_unit_kind === unitKind).map((item) => item.local_center_structural_level ?? ''))].sort()[0]
+      return {
+        source,
+        signals: signals.filter((item) => item.object_type !== 'local_center' || item.local_center_unit_kind === unitKind && item.local_center_structural_level === structuralLevel),
+      }
     }))
     if (generation !== signalLoadGeneration) return
     const byId = new Map<string, ChanTreeObject>()
@@ -430,10 +493,10 @@ async function installDefaultIndicators(dataset: DatasetMeta, definitions?: Algo
   for (const source of indicatorSources.value.filter((candidate) => candidate.status !== 'completed')) void trackCalculation(source)
 }
 
-function completeCategoryVisibility(value: StrategySource['category_visibility']): Required<StrategySource['category_visibility']> {
+function completeCategoryVisibility(value: StrategySource['category_visibility'] | WorkspaceLayout['strategy_sources'][number]['category_visibility']): Required<StrategySource['category_visibility']> {
   return {
-    processed_bars: value.processed_bars ?? false, fractals: value.fractals, bi: value.bi, bi_states: value.bi_states ?? true, segments: value.segments ?? true, zhongshu: value.zhongshu,
-    segment_zhongshu: value.segment_zhongshu ?? true, level_centers: value.level_centers ?? true,
+    processed_bars: value.processed_bars ?? false, fractals: value.fractals, bi: value.bi, bi_states: value.bi_states ?? true, segments: value.segments ?? true,
+    local_centers: value.local_centers, level_centers: value.level_centers ?? false,
     level_movements: value.level_movements ?? true, movement_states: value.movement_states ?? true,
     center_monitors: value.center_monitors ?? true, divergences: value.divergences ?? true, trade_points: value.trade_points ?? true,
   }
@@ -450,7 +513,11 @@ function rememberLayoutStrategyPresentation(source: StrategySource): void {
 function applyDynamicStrategyConfig(source: StrategySource, dataset: DatasetMeta): StrategySource {
   const saved = strategySourcePreferences.value.find((item) =>
     item.dataset_id === dataset.dataset_id && item.data_revision === dataset.data_revision && item.source_id === source.source_id)
-  return saved ? { ...source, visible: saved.visible, category_visibility: saved.category_visibility } : source
+  if (!saved) return source
+  return {
+    ...source, visible: saved.visible,
+    category_visibility: completeCategoryVisibility(saved.category_visibility),
+  }
 }
 
 async function installDefaultChan(dataset: DatasetMeta, definitions?: AlgorithmDefinition[]): Promise<void> {
@@ -474,7 +541,7 @@ async function installDefaultChan(dataset: DatasetMeta, definitions?: AlgorithmD
   const source: StrategySource = {
     source_type: 'StrategySource', source_id: spec.sourceId, definition: spec.definition,
     parameters: spec.parameters, job_id: accepted.job_id, status: accepted.status,
-    visible: true, category_visibility: { processed_bars: false, fractals: false, bi: true, bi_states: true, segments: true, zhongshu: true, segment_zhongshu: true, level_centers: true, level_movements: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
+    visible: true, category_visibility: { processed_bars: false, fractals: false, bi: true, bi_states: true, segments: true, local_centers: true, level_centers: false, level_movements: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
   }
   rememberLayoutStrategyPresentation(source)
   strategySources.value = [applyDynamicStrategyConfig(source, dataset)]
@@ -523,19 +590,7 @@ async function restoreSources(layout: WorkspaceLayout, dataset: DatasetMeta): Pr
       source_type: 'StrategySource', source_id: saved.source_id, definition,
       parameters: saved.parameters, job_id: accepted.job_id, status: accepted.status,
       visible: saved.visible,
-      category_visibility: {
-        ...saved.category_visibility,
-        processed_bars: saved.category_visibility.processed_bars ?? false,
-        bi_states: saved.category_visibility.bi_states ?? true,
-        segments: saved.category_visibility.segments ?? true,
-        segment_zhongshu: saved.category_visibility.segment_zhongshu ?? true,
-        level_centers: saved.category_visibility.level_centers ?? true,
-        level_movements: saved.category_visibility.level_movements ?? true,
-        movement_states: saved.category_visibility.movement_states ?? true,
-        center_monitors: saved.category_visibility.center_monitors ?? true,
-        divergences: saved.category_visibility.divergences ?? true,
-        trade_points: saved.category_visibility.trade_points ?? true,
-      },
+      category_visibility: completeCategoryVisibility(saved.category_visibility),
       style: saved.style,
     }
     rememberLayoutStrategyPresentation(source)

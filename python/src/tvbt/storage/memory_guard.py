@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ctypes
+import gc
 import os
 from pathlib import Path
 
@@ -79,3 +80,21 @@ def check_memory() -> None:
             f"缠论计算已触发内存保护：进程 {used // MIB} MiB，上限 {limit} MiB，"
             f"系统可用 {available // MIB} MiB；请释放内存后重试。未生成不完整结果。"
         )
+
+
+def release_unused_memory() -> None:
+    """Best-effort cleanup between serialized compute jobs.
+
+    A failed full-history run may leave cyclic Python objects and unused Arrow
+    allocation slabs behind.  Reclaim them before admitting the next job so a
+    retry is not charged for the previous job's transient working set.
+    """
+
+    try:
+        gc.collect()
+        import pyarrow as pa
+
+        pa.default_memory_pool().release_unused()
+    except Exception:
+        # Resource cleanup must never replace the actual terminal job result.
+        return

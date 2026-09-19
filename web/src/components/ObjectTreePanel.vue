@@ -65,6 +65,13 @@ function objectSide(value: ChanTreeObject): 'buy' | 'sell' | 'semantic' {
   if (!signal) return 'semantic'
   return signal.signal_type.includes('buy') || signal.signal_type === 'bottom_divergence' ? 'buy' : 'sell'
 }
+
+const categoryLabels: Record<keyof StrategySource['category_visibility'], string> = {
+  processed_bars: '处理后 K 线', fractals: '分型', bi: '笔', bi_states: '笔状态', segments: '线段',
+  local_centers: '实体中枢',
+  level_centers: '高级别中枢', level_movements: '高级别走势', movement_states: '走势状态',
+  center_monitors: '中枢监控', divergences: '背驰', trade_points: '买卖点',
+}
 </script>
 
 <template>
@@ -88,21 +95,21 @@ function objectSide(value: ChanTreeObject): 'buy' | 'sell' | 'semantic' {
       <div v-if="!collapsedStrategies.has(source.source_id)" class="strategy-children">
         <details class="strategy-categories">
           <summary>图层分类</summary>
-          <label v-for="category in (['processed_bars', 'fractals', 'bi', 'bi_states', 'segments', 'zhongshu', 'segment_zhongshu', 'level_centers', 'level_movements', 'movement_states', 'center_monitors', 'divergences', 'trade_points'] as const)" :key="category">
+          <label v-for="category in (['processed_bars', 'fractals', 'bi', 'bi_states', 'segments', 'local_centers', 'level_centers', 'level_movements', 'movement_states', 'center_monitors', 'divergences', 'trade_points'] as const)" :key="category">
             <input
               type="checkbox" :checked="source.category_visibility[category]"
               @change="emit('patchStrategy', source.source_id, { category_visibility: { ...source.category_visibility, [category]: !source.category_visibility[category] } })"
-            />{{ category }}
+            />{{ categoryLabels[category] }}
           </label>
         </details>
-        <div class="signal-branch-title"><span>└─ 信号对象</span><small>{{ signalsFor(source.source_id).length }}</small></div>
-        <p v-if="signalsLoading" class="signal-tree-empty">正在读取信号…</p>
-        <p v-else-if="signalsFor(source.source_id).length === 0" class="signal-tree-empty">暂无背驰或买卖点</p>
+        <div class="signal-branch-title"><span>└─ 缠论对象</span><small>{{ signalsFor(source.source_id).length }}</small></div>
+        <p v-if="signalsLoading" class="signal-tree-empty">正在读取缠论对象…</p>
+        <p v-else-if="signalsFor(source.source_id).length === 0" class="signal-tree-empty">暂无中枢、背驰或买卖点</p>
         <div
           v-for="signal in signalsFor(source.source_id)" :key="signal.object_id"
           class="signal-object-node" :class="{ selected: selectedSignalId === signal.object_id }"
           data-object-type="ChanSignalObject" :data-signal-id="signal.object_id"
-          role="button" tabindex="0" @click="emit('selectSignal', signal)" @keydown.enter="emit('selectSignal', signal)"
+          role="button" tabindex="0" :title="signal.hover_detail ?? signal.detail" @click="emit('selectSignal', signal)" @keydown.enter="emit('selectSignal', signal)"
         >
           <span class="tree-elbow">└</span>
           <span class="signal-object-content">

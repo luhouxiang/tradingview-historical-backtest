@@ -5,11 +5,10 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Literal, Protocol
 
-"""缠论参考算法端口。
+"""缠论线段扫描端口。
 
-本文件只移植 `algo-ui/common/chanlun/c_bi.py` 中和“段、笔中枢、线段中枢”
-有关的纯结构扫描逻辑。它通过 Protocol 读取 `engine.py` 的轻量对象，避免把
-参考实现的数据模型复制到项目内。
+本文件只保留 `algo-ui/common/chanlun/c_bi.py` 的线段结构扫描逻辑。它通过
+Protocol 读取 `engine.py` 的轻量对象，避免把参考实现的数据模型复制到项目内。
 
 重要约束：
 
@@ -100,37 +99,6 @@ class ReferenceSegment:
     end_time: int = 0
     start_price_i64: int = 0
     end_price_i64: int = 0
-
-
-@dataclass(frozen=True)
-class ReferenceCenter:
-    """参考中枢结构。
-
-    `base_index/seed_end_index/end_index/exit_index` 均为组件索引。笔中枢时组件
-    是笔，标准线段中枢时组件是已确认线段。
-    """
-
-    # 中枢扫描基点，以及形成冻结核心的同奇偶第三个组件。
-    base_index: int
-    seed_end_index: int
-    # 当前中枢延伸到的最后一个参与组件。
-    end_index: int
-    # 首个离开中枢的同奇偶组件；未离开时为 None。
-    exit_index: int | None
-    # 图形时间范围。
-    start_bar_index: int
-    end_bar_index: int
-    start_time: int
-    end_time: int
-    # 冻结核心区间：[ZD, ZG]。标准线段中枢还会在 engine.py 过滤 `ZD < ZG`。
-    zd_i64: int
-    zg_i64: int
-    # 中枢最早可知时刻。
-    known_at_bar_index: int
-    # confirmed=刚形成，extended=继续相交延伸，left=已有离开组件。
-    status: Literal["confirmed", "extended", "left"]
-    # 离开方向，只有 status=left 时有值。
-    leave_direction: Literal["up", "down"] | None
 
 
 def _low(line: LineLike) -> int:
@@ -528,95 +496,6 @@ def reference_segments(
     """按参考 `_NCHDUAN` 规则从已确认笔生成线段。
 
     输入必须是方向严格交替、首尾相接的笔序列。返回结果包含已确认段和末尾
-    当前段/临时段；调用方再决定哪些段可参与标准线段中枢。
+    当前段/临时段；调用方再将已确认段交给权威实体中枢状态机。
     """
     return ReferenceSegmentAccumulator().update(lines, raw_bars, 0)
-
-
-def reference_centers(
-    lines: Sequence[LineLike],
-    *,
-    start_base: int = 1,
-    minimum_line_count: int = 5,
-) -> list[ReferenceCenter]:
-    """按参考 `compute_bi_pivots/process_down_up` 扫描同奇偶组件中枢。
-
-    从 `base=1` 开始，使用 `base` 与 `base+2` 的价格交集冻结 `ZD/ZG`，
-    后续同奇偶组件只延长中枢时间范围，不改变冻结核心；首个不相交组件记录为
-    `exit_index` 和 `leave_direction`。遗留笔中枢保留至少 5 条输入线的门槛；
-    标准线段中枢传入 4，使基点前导线加三条已完成构件即可确认。
-    """
-    result: list[ReferenceCenter] = []
-    if len(lines) < minimum_line_count:
-        return result
-    base = start_base
-    while base < len(lines) - 2:
-        seed_end = base + 2
-        if max(_low(lines[base]), _low(lines[seed_end])) > min(
-            _high(lines[base]), _high(lines[seed_end])
-        ):
-            new_base = min(base + 2, len(lines))
-        else:
-            low = max(_low(lines[base]), _low(lines[seed_end]))
-            high = min(_high(lines[base]), _high(lines[seed_end]))
-            cursor = base + 4
-            end_index = seed_end
-            while cursor < len(lines) and max(low, _low(lines[cursor])) <= min(
-                high, _high(lines[cursor])
-            ):
-                end_index = cursor
-                cursor += 2
-            leave_direction: Literal["up", "down"] | None = None
-            status: Literal["confirmed", "extended", "left"] = (
-                "extended" if end_index > seed_end else "confirmed"
-            )
-            if cursor < len(lines):
-                status = "left"
-                leave_direction = "up" if _low(lines[cursor]) > high else "down"
-            used = lines[base : end_index + 1]
-            result.append(
-                ReferenceCenter(
-                    base_index=base,
-                    seed_end_index=seed_end,
-                    end_index=end_index,
-                    exit_index=cursor if cursor < len(lines) else None,
-                    start_bar_index=lines[base].start.bar_index,
-                    end_bar_index=lines[end_index].end.bar_index,
-                    start_time=lines[base].start.time,
-                    end_time=lines[end_index].end.time,
-                    zd_i64=low,
-                    zg_i64=high,
-                    known_at_bar_index=max(line.known_at_bar_index for line in used),
-                    status=status,
-                    leave_direction=leave_direction,
-                )
-            )
-            new_base = cursor
-        base = new_base - 1 if base == new_base - 2 else new_base - 2
-    return result
-
-
-def update_reference_centers(
-    lines: Sequence[LineLike],
-    previous: list[ReferenceCenter],
-    changed_component_index: int,
-    *,
-    minimum_line_count: int = 5,
-) -> list[ReferenceCenter]:
-    """保留离开位置早于变化点的中枢，只从首个不确定中枢基点继续扫描。"""
-    stable: list[ReferenceCenter] = []
-    restart_base = 1
-    for center in previous:
-        if center.exit_index is None or center.exit_index >= changed_component_index:
-            break
-        stable.append(center)
-        new_base = center.exit_index
-        restart_base = new_base - 1 if center.base_index == new_base - 2 else new_base - 2
-    return [
-        *stable,
-        *reference_centers(
-            lines,
-            start_base=max(restart_base, 1),
-            minimum_line_count=minimum_line_count,
-        ),
-    ]

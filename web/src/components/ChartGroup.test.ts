@@ -20,6 +20,7 @@ const chartMocks = vi.hoisted(() => {
     subscribeVisibleLogicalRangeChange: vi.fn(), unsubscribeVisibleLogicalRangeChange: vi.fn(),
     fitContent: vi.fn(), getVisibleLogicalRange: vi.fn(), setVisibleLogicalRange: vi.fn(),
     timeToCoordinate: vi.fn((time: number) => time - 1_700_000_000),
+    timeToIndex: vi.fn(() => null as number | null),
     coordinateToTime: vi.fn((coordinate: number) => 1_700_000_000 + coordinate),
   }
   const chart = {
@@ -66,6 +67,9 @@ describe('ChartGroup', () => {
   it('uses one chart instance with price, MACD placeholder, and custom volume panes at 6:1:1', () => {
     const wrapper = mount(ChartGroup, { props: { dataset: null } })
     expect(chartMocks.createChart).toHaveBeenCalledTimes(1)
+    expect(chartMocks.createChart).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      timeScale: expect.objectContaining({ minBarSpacing: .1 }),
+    }))
     expect(chartMocks.chart.addSeries.mock.calls.map((call) => call[2])).toEqual([0, 1])
     expect(chartMocks.chart.addCustomSeries).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ priceFormat: { type: 'volume' } }), 2)
     expect(wrapper.findAll('.pane-control').map((item) => item.attributes('data-weight'))).toEqual(['6', '1', '1'])
@@ -154,8 +158,9 @@ describe('ChartGroup', () => {
     expect(chartMocks.chart.addSeries).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ lineWidth: 1 }), 0)
     expect(wrapper.get('.legend-bar-index').text()).toBe('K线 00002')
     const priceText = wrapper.get('[data-pane-id="price"]').text()
-    expect(priceText.indexOf('收 10')).toBeLessThan(priceText.indexOf('K线 00002'))
-    expect(priceText.indexOf('K线 00002')).toBeLessThan(priceText.indexOf('MA20 11.50'))
+    expect(priceText.indexOf('收 10')).toBeLessThan(priceText.indexOf('MA20 11.50'))
+    expect(priceText.indexOf('MA20 11.50')).toBeLessThan(priceText.indexOf('K线 00002'))
+    expect(wrapper.get('.legend-bar-index').element.nextElementSibling?.classList.contains('pane-actions')).toBe(true)
     vi.useRealTimers()
     wrapper.unmount()
   })
@@ -326,14 +331,13 @@ describe('ChartGroup', () => {
         fractals: [],
         bi: [{ object_id: 'bi-1', start_time: 1_700_000_000_000, start_price_i64: 10, end_time: 1_700_000_300_000, end_price_i64: 12, confirmed: true }],
         segments: [{ object_id: 'segment-1', start_time: 1_700_000_000_000, start_price_i64: 10, end_time: 1_700_000_300_000, end_price_i64: 12, confirmed: true }],
-        zhongshu: [{ object_id: 'zs-1', start_time: 1_700_000_000_000, end_time: 1_700_000_300_000, zg_i64: 12, zd_i64: 10, confirmed: true }],
-        bi_states: [], segment_zhongshu: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [],
+        bi_states: [], local_centers: [], center_connections: [], center_audit_events: [], level_centers: [], level_movements: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [],
       },
       coverage: { first_bar_index: 0, last_bar_index: 1, returned_count: 2 },
     })
     const source = {
       source_type: 'StrategySource' as const, source_id: 'strategy-1', job_id: 'job-chan', status: 'completed' as const,
-      visible: true, category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true, segment_zhongshu: true, divergences: true, trade_points: true }, parameters: { min_fractal_gap: 5 },
+      visible: true, category_visibility: { fractals: false, bi: true, segments: true, local_centers: true, divergences: true, trade_points: true }, parameters: { min_fractal_gap: 5 },
       definition: {
         kind: 'chan' as const, algorithm_id: 'chan_standard', algorithm_version: '1.0.0', source_hash: `sha256:${'c'.repeat(64)}`,
         name: '标准缠论', input_schema: 'bars.v1' as const, causal: true as const,
@@ -347,12 +351,12 @@ describe('ChartGroup', () => {
     expect(apiMocks.getCalculationResults).toHaveBeenCalledWith('job-chan', 0, 1)
     expect(chartMocks.candle.attachPrimitive).toHaveBeenCalledTimes(1)
     expect(apiMocks.createCalculation).not.toHaveBeenCalled()
-    expect(wrapper.get('[data-pane-id="price"]').text()).toContain('缠论 笔 1 段 1 笔中枢 1 段中枢 0 背驰 0 买卖点 0')
+    expect(wrapper.get('[data-pane-id="price"]').text()).toContain('缠论 笔 1 段 1 实体中枢 0 背驰 0 买卖点 0')
     wrapper.unmount()
   })
 
   it('hides future bars when replay cursor moves without creating calculations', async () => {
-    const wrapper = mount(ChartGroup, { props: { dataset: dataset(), replayCursor: 0, replayObjects: { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], zhongshu: [], segment_zhongshu: [], level_centers: [], level_movements: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] } } })
+    const wrapper = mount(ChartGroup, { props: { dataset: dataset(), replayCursor: 0, replayObjects: { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], local_centers: [], center_connections: [], center_audit_events: [], level_centers: [], level_movements: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] } } })
     await flushPromises()
     expect(chartMocks.candle.setData).toHaveBeenLastCalledWith([
       expect.objectContaining({ time: 1_700_000_000, open: 10, high: 12, low: 9, close: 11 }),
@@ -581,7 +585,7 @@ describe('ChartGroup', () => {
     chartMocks.timeScale.getVisibleLogicalRange.mockReturnValueOnce({ from: 0, to: 1 })
     await (wrapper.vm as unknown as { focusSignal: (signal: typeof selectedSignal) => Promise<void> }).focusSignal(selectedSignal)
     expect(apiMocks.getBars).toHaveBeenCalledTimes(1)
-    expect(chartMocks.timeScale.setVisibleLogicalRange).toHaveBeenLastCalledWith({ from: -20, to: 20 })
+    expect(chartMocks.timeScale.setVisibleLogicalRange).toHaveBeenLastCalledWith({ from: -80, to: 80 })
     wrapper.unmount()
   })
 
@@ -624,12 +628,13 @@ describe('ChartGroup', () => {
     const wrapper = mount(ChartGroup, { props: { dataset: wideDataset, selectedSignal, signalLocked: true } })
     await flushPromises()
     chartMocks.timeScale.getVisibleLogicalRange.mockReturnValueOnce({ from: 0, to: 100 })
+    chartMocks.timeScale.timeToIndex.mockReturnValueOnce(220)
     await (wrapper.vm as unknown as { focusSignal: (signal: typeof selectedSignal) => Promise<void> }).focusSignal(selectedSignal)
     await flushPromises()
     expect(apiMocks.getBars).toHaveBeenLastCalledWith(
       'SHFE.AO2609.5m', revision, expect.stringMatching(/^gen-/), { beforeBarIndex: 1121, limit: 241 },
     )
-    expect(chartMocks.timeScale.setVisibleLogicalRange).toHaveBeenLastCalledWith({ from: 70, to: 170 })
+    expect(chartMocks.timeScale.setVisibleLogicalRange).toHaveBeenLastCalledWith({ from: 170, to: 270 })
     expect(wrapper.get('.signal-selection-label').text()).toBe('买入')
     vi.useFakeTimers()
     await wrapper.get('.chart-host').trigger('pointerdown')

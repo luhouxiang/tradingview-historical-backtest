@@ -8,9 +8,7 @@ import pytest
 from tvbt.chan.engine import ChanEngine, RawBar
 from tvbt.chan.reference import (
     ReferenceSegmentAccumulator,
-    reference_centers,
     reference_segments,
-    update_reference_centers,
 )
 
 
@@ -185,51 +183,6 @@ def test_incremental_segment_scan_matches_full_scan_after_append_and_rollback() 
     assert accumulator.update(revised, bars, rollback_at) == reference_segments(revised, bars)
 
 
-def test_incremental_center_scan_preserves_left_centers_and_rebuilds_tail() -> None:
-    """测试中枢增量扫描是否冻结已离开中枢并只重算不确定尾部。
-
-    预期:组件追加或尾部修订时，离开位置早于变化点的中枢保持原对象语义；
-    增量合并后的完整中枢序列与全量扫描完全相同。
-    """
-    lines = [
-        component_line(index, start, end)
-        for index, (start, end) in enumerate(
-            [
-                (15, 20),
-                (20, 0),
-                (0, 10),
-                (10, 2),
-                (2, 8),
-                (8, 4),
-                (4, 12),
-                (12, 9),
-                (9, 20),
-                (20, 12),
-                (12, 18),
-                (18, 14),
-                (14, 25),
-                (25, 16),
-            ]
-        )
-    ]
-    current = reference_centers(lines[:7])
-    for cutoff in (9, 11, len(lines)):
-        current = update_reference_centers(lines[:cutoff], current, cutoff - 2)
-        assert current == reference_centers(lines[:cutoff])
-
-    rollback_at = 9
-    revised = [
-        *lines[:rollback_at],
-        replace(
-            lines[9],
-            start=Endpoint(9, 540_000, 20),
-            end=Endpoint(10, 600_000, 6),
-        ),
-        *lines[10:],
-    ]
-    assert update_reference_centers(revised, current, rollback_at) == reference_centers(revised)
-
-
 @pytest.mark.parametrize(
     ("pivots", "expected"),
     [
@@ -282,127 +235,3 @@ def test_segment_cases_cover_direction_confirmation_and_reversal(
     ] == expected
     assert all(left.end_index == right.start_index for left, right in pairwise(rows))
     assert all(left.up != right.up for left, right in pairwise(rows))
-
-
-@pytest.mark.parametrize(
-    ("lines", "expected"),
-    [
-        pytest.param(
-            center_fixture(extended=False)[:5],
-            [("confirmed", None, 1, 3, 2, 10)],
-            id="bi-center-confirmed",
-        ),
-        pytest.param(
-            center_fixture(extended=True)[:7],
-            [("extended", None, 1, 5, 2, 10)],
-            id="bi-center-extended",
-        ),
-        pytest.param(
-            center_fixture(leave_direction="up"),
-            [("left", "up", 1, 7, 2, 10)],
-            id="bi-center-left-up",
-        ),
-        pytest.param(
-            center_fixture(leave_direction="down"),
-            [("left", "down", 1, 7, 2, 10)],
-            id="bi-center-left-down",
-        ),
-    ],
-)
-def test_bi_zhongshu_cases_cover_confirmed_extended_and_leave_directions(
-    lines: list[ComponentLine], expected: list[tuple[str, str | None, int, int, int, int]]
-) -> None:
-    """测试笔中枢状态转换。
-
-    预期:扫描器冻结初始 ZD/ZG 核心,可以在不改变核心的前提下延长时间范围;
-    当首个不相交同奇偶笔出现时,记录向上和向下两类离开方向。
-    """
-    centers = reference_centers(lines)
-
-    observed = [
-        (
-            center.status,
-            center.leave_direction,
-            center.base_index,
-            center.end_index,
-            center.zd_i64,
-            center.zg_i64,
-        )
-        for center in centers
-    ]
-    assert observed[: len(expected)] == expected
-
-
-def test_bi_zhongshu_allows_zero_width_reference_overlap() -> None:
-    """测试笔中枢扫描器对点重叠的兼容性。
-
-    预期:当 ZD 等于 ZG 时仍返回笔中枢,因为遗留笔中枢契约允许零宽交集。
-    """
-    centers = reference_centers(
-        [
-            component_line(0, 0, 10),
-            component_line(1, 2, 0),
-            component_line(2, 0, 8),
-            component_line(3, 8, 2),
-            component_line(4, 2, 8),
-        ]
-    )
-
-    assert len(centers) == 1
-    assert centers[0].zd_i64 == centers[0].zg_i64 == 2
-    assert centers[0].status == "confirmed"
-
-
-def test_segment_zhongshu_cases_use_closed_interval_segment_core() -> None:
-    """测试标准线段中枢的闭区间核心和段级语义。
-
-    预期:段中枢在调用方保持 `analysis_level=segment` 语义,暴露给图表和存储前
-    必须满足闭区间交集,并在后续段延伸或离开时保持冻结核心不变。
-    """
-    lines = center_fixture(leave_direction="up")
-    centers = [
-        center
-        for center in reference_centers(lines, minimum_line_count=4)
-        if center.zd_i64 <= center.zg_i64
-    ]
-
-    assert [
-        (center.status, center.leave_direction, center.zd_i64, center.zg_i64) for center in centers
-    ] == [("left", "up", 2, 10), ("confirmed", None, 12, 12)]
-    components = lines[centers[0].base_index : centers[0].end_index + 1]
-    dd_i64 = min(min(line.start.price_i64, line.end.price_i64) for line in components)
-    gg_i64 = max(max(line.start.price_i64, line.end.price_i64) for line in components)
-    assert (dd_i64, centers[0].zd_i64, centers[0].zg_i64, gg_i64) == (0, 2, 10, 20)
-
-
-def test_segment_zhongshu_accepts_point_core_after_three_completed_components() -> None:
-    """测试标准线段中枢是否接受点接触核心并使用完成时点。
-
-    预期:前导线后的三条已完成线段在价格 2 形成闭区间点交集时,
-    不等待额外构件即可确认,且确认时点取参与构件的最晚已知位置。
-    """
-    lines = [
-        component_line(0, 0, 10),
-        component_line(1, 2, 0),
-        component_line(2, 0, 8),
-        component_line(3, 8, 2),
-    ]
-    centers = reference_centers(lines, minimum_line_count=4)
-
-    assert len(centers) == 1
-    assert centers[0].zd_i64 == centers[0].zg_i64 == 2
-    assert centers[0].known_at_bar_index == 4
-
-
-def test_segment_zhongshu_rejects_no_overlap_and_unfinished_components() -> None:
-    """测试无交集或不足三条已完成构件时不生成标准中枢。"""
-    no_overlap = [
-        component_line(0, 0, 10),
-        component_line(1, 2, 0),
-        component_line(2, 0, 8),
-        component_line(3, 8, 3),
-    ]
-    unfinished = no_overlap[:-1]
-
-    assert reference_centers(no_overlap, minimum_line_count=4) == []
-    assert reference_centers(unfinished, minimum_line_count=4) == []

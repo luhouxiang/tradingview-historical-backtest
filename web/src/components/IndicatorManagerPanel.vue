@@ -127,7 +127,7 @@ async function submit(definition: AlgorithmDefinition, parameters: Record<string
       const source: StrategySource = {
         source_type: 'StrategySource', source_id: id, definition, parameters,
         job_id: accepted.job_id, status: accepted.status, visible: existing?.visible ?? true,
-        category_visibility: existing?.category_visibility ?? { processed_bars: false, fractals: false, bi: true, bi_states: true, segments: true, zhongshu: true, segment_zhongshu: true, level_centers: true, level_movements: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
+        category_visibility: existing?.category_visibility ?? { processed_bars: false, fractals: false, bi: true, bi_states: true, segments: true, local_centers: true, level_centers: false, level_movements: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
         style: existing?.style,
       }
       emit('update:strategy-sources', existing
@@ -186,8 +186,7 @@ function applyStyle(style: IndicatorStyle): void {
       else if (output.object_type === 'bi') categoryVisibility.bi = visible
       else if (output.object_type === 'bi_state') categoryVisibility.bi_states = visible
       else if (output.object_type === 'segment') categoryVisibility.segments = visible
-      else if (output.object_type === 'zhongshu') categoryVisibility.zhongshu = visible
-      else if (output.object_type === 'segment_zhongshu') categoryVisibility.segment_zhongshu = visible
+      else if (output.object_type === 'local_center') categoryVisibility.local_centers = visible
       else if (output.object_type === 'level_center') categoryVisibility.level_centers = visible
       else if (output.object_type === 'level_movement') categoryVisibility.level_movements = visible
       else if (output.object_type === 'movement_state') categoryVisibility.movement_states = visible
@@ -261,14 +260,17 @@ onMounted(async () => {
         <div class="indicator-settings-body">
           <div class="indicator-parameters">
             <label v-for="(rule, name) in entry.source.definition.parameter_schema.properties" :key="name">
-              <span>{{ name }}</span>
+              <span>{{ name === 'center_boundary_profile' ? '中枢边界口径' : name === 'checkpoint_interval' ? '检查点间隔（根）' : name }}</span>
               <select v-if="rule.enum" :value="entry.source.parameters[name]" @change="updateParameter(entry, name, ($event.target as HTMLSelectElement).value)">
-                <option v-for="value in rule.enum" :key="value">{{ value }}</option>
+                <option v-for="value in rule.enum" :key="value" :value="value">{{ value === 'local_center_boundary_v1' ? '局部固定核心（严格分界）' : value }}</option>
               </select>
               <input v-else-if="rule.type === 'boolean'" type="checkbox" :checked="Boolean(entry.source.parameters[name])" @change="updateParameter(entry, name, ($event.target as HTMLInputElement).checked)" />
               <input v-else :type="rule.type === 'string' ? 'text' : 'number'" :min="rule.minimum" :max="rule.maximum" :value="entry.source.parameters[name]" @input="updateParameter(entry, name, ($event.target as HTMLInputElement).value)" />
             </label>
           </div>
+          <small v-if="entry.source.parameters.center_boundary_profile === 'local_center_boundary_v1'" class="local-center-boundary-disclosure">
+            局部分界：向上离开后首次完整反向单元最低价必须严格高于 ZG；向下离开后最高价必须严格低于 ZD。触边算返回，不确认分离。笔/线段实体中枢不代表固定分钟级别；派生三买/三卖仍按信号层回试边界判定，核心上移/下移不代表趋势已验证。
+          </small>
           <button type="button" class="indicator-style-more" :aria-label="`${entry.source.definition.name} 更多样式`" title="更多" @click="styleEntry = entry">…</button>
         </div>
         <div class="indicator-current-actions">

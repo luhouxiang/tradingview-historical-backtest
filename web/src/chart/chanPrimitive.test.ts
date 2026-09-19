@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ChanPrimitive, buildChanGeometry, chanSignalLabel } from './chanPrimitive'
+import { ChanPrimitive, buildChanGeometry, chanSignalLabel, localCenterScope } from './chanPrimitive'
 import type { ChanCalculationResults } from '../types/api'
 
 function objects(count: number): ChanCalculationResults['objects'] {
@@ -18,7 +18,7 @@ function objects(count: number): ChanCalculationResults['objects'] {
       standard_signal: false as const, execution_allowed: false as const,
       confirmed_at_bar_index: index + 2, known_at_bar_index: index + 2, object_revision: 1,
     })),
-    bi: [], bi_states: [], segments: [], zhongshu: [], segment_zhongshu: [], level_centers: [], level_movements: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [],
+    bi: [], bi_states: [], segments: [], local_centers: [], center_connections: [], center_audit_events: [], level_centers: [], level_movements: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [],
   }
 }
 
@@ -61,15 +61,8 @@ describe('ChanPrimitive', () => {
     expect(geometry.biStates[0]).toMatchObject({ x: 120, y: 11, state: 'TOP_FORMING' })
   })
 
-  it('projects standard segment centers, divergence and buy-sell markers', () => {
+  it('projects divergence, buy-sell markers and derived structures', () => {
     const source = objects(0)
-    source.segment_zhongshu.push({
-      object_id: 'segment-center-1', start_bar_index: 1, start_time: 60_000,
-      end_bar_index: 3, end_time: 180_000, zg_i64: 121, zd_i64: 100,
-      gg_i64: 130, dd_i64: 90, z_i64: 110, analysis_level: 'segment', component_kind: 'segment', component_count: 3,
-      confirmed: true, confirmed_at_bar_index: 3, status: 'confirmed', leave_direction: null,
-      known_at_bar_index: 3, object_revision: 1,
-    })
     source.divergences.push({
       object_id: 'divergence-1', bar_index: 4, time: 240_000, price_i64: 90,
       signal_type: 'bottom_divergence', divergence_kind: 'trend', signal_class: null, strength: null, reference_object_id: 'segment-center-1',
@@ -139,10 +132,8 @@ describe('ChanPrimitive', () => {
       confirmed_at_bar_index: 4, known_at_bar_index: 4,
     })
     const geometry = buildChanGeometry(source, 10, (time) => Number(time), (price) => price)
-    expect(geometry.segmentZhongshu).toHaveLength(1)
     expect(geometry.divergences[0]).toMatchObject({ x: 240, y: 9, signal_type: 'bottom_divergence' })
     expect(geometry.tradePoints.map((point) => point.status)).toEqual(['confirmed', 'candidate', 'invalidated'])
-    expect(geometry.segmentEnvelopes).toHaveLength(1)
     expect(geometry.movementStates[0]?.state_type).toBe('centre_oscillation')
     expect(geometry.levelCenters[0]).toMatchObject({ level_id: 'L1', left: 60, right: 180, top: 11.9, bottom: 10.2 })
     expect(geometry.levelMovements[0]).toMatchObject({ level_id: 'L0', classification: 'consolidation', start: { x: 60, y: 11 }, end: { x: 180, y: 11 } })
@@ -157,19 +148,49 @@ describe('ChanPrimitive', () => {
     }])
   })
 
-  it('projects a point center as a zero-height semantic region', () => {
+  it('renders one local-center scope with seed body, extension, roles and confirmation marker', () => {
     const source = objects(0)
-    source.segment_zhongshu.push({
-      object_id: 'point-center-1', start_bar_index: 1, start_time: 60_000,
-      end_bar_index: 3, end_time: 180_000, zg_i64: 100, zd_i64: 100,
-      gg_i64: 130, dd_i64: 90, z_i64: 100, analysis_level: 'segment', component_kind: 'segment', component_count: 3,
-      confirmed: true, confirmed_at_bar_index: 4, status: 'confirmed', leave_direction: null,
-      known_at_bar_index: 4, object_revision: 1,
+    source.bi.push(
+      { object_id: 'bi-entry', start_bar_index: 0, start_time: 0, start_price_i64: 90, start_extreme_source_bar_index: 0, end_bar_index: 1, end_time: 60_000, end_price_i64: 105, end_extreme_source_bar_index: 1, range_low_i64: 90, range_high_i64: 105, range_low_source_bar_index: 0, range_high_source_bar_index: 1, range_profile: 'endpoint_extrema_v1', direction: 'up', status: 'confirmed', invalidation_reason: null, catalog_algorithm_id: 'ALG-GEO-003', confirmed: true, confirmed_at_bar_index: 1, known_at_bar_index: 1, object_revision: 1 },
+      { object_id: 'bi-exit', start_bar_index: 3, start_time: 180_000, start_price_i64: 108, start_extreme_source_bar_index: 3, end_bar_index: 4, end_time: 240_000, end_price_i64: 130, end_extreme_source_bar_index: 4, range_low_i64: 108, range_high_i64: 130, range_low_source_bar_index: 3, range_high_source_bar_index: 4, range_profile: 'endpoint_extrema_v1', direction: 'up', status: 'confirmed', invalidation_reason: null, catalog_algorithm_id: 'ALG-GEO-003', confirmed: true, confirmed_at_bar_index: 4, known_at_bar_index: 4, object_revision: 1 },
+      { object_id: 'bi-retest', start_bar_index: 4, start_time: 240_000, start_price_i64: 130, start_extreme_source_bar_index: 4, end_bar_index: 5, end_time: 300_000, end_price_i64: 112, end_extreme_source_bar_index: 5, range_low_i64: 112, range_high_i64: 130, range_low_source_bar_index: 5, range_high_source_bar_index: 4, range_profile: 'endpoint_extrema_v1', direction: 'down', status: 'confirmed', invalidation_reason: null, catalog_algorithm_id: 'ALG-GEO-003', confirmed: true, confirmed_at_bar_index: 5, known_at_bar_index: 5, object_revision: 1 },
+    )
+    source.local_centers.push({
+      object_id: 'center-bi', stream_key: 'test|BI|stroke', rule_version: 'local_center_boundary_v1', unit_kind: 'BI', structural_level: 'stroke', scan_floor: 0,
+      seed_ids: ['bi-1', 'bi-2', 'bi-3'], zd_i64: 100, zg_i64: 110, seed_start_bar_index: 1, seed_start_time: 60_000, seed_end_bar_index: 3, seed_end_time: 180_000,
+      formed_at_bar_index: 3, body_start_bar_index: 1, body_start_time: 60_000, body_end_bar_index: 3, body_end_time: 180_000,
+      observed_start_bar_index: 1, observed_start_time: 60_000, observed_end_bar_index: 5, observed_end_time: 300_000, observed_low_i64: 95, observed_high_i64: 130,
+      status: 'CLOSED', pending_exit_id: null, exit_id: 'bi-exit', first_retest_id: 'bi-retest', entry_id: 'bi-entry', local_entry: 'FROM_BELOW', break_direction: 'up', break_confirmed_at_bar_index: 5,
+      parent_id: null, left_context_incomplete: false, roles_overlap_seed: false, source_revision: 'revision', known_at_bar_index: 5, object_revision: 1,
     })
+    source.local_centers.push({ ...source.local_centers[0]!, object_id: 'center-segment', unit_kind: 'SEGMENT', structural_level: 'segment' })
+    source.center_connections.push({ object_id: 'connection-1', stream_key: 'test|BI|stroke', rule_version: 'local_center_boundary_v1', unit_kind: 'BI', structural_level: 'stroke', from_center_id: 'center-bi', to_center_id: null, ordered_unit_ids: ['bi-exit', 'bi-retest'], exit_unit_id: 'bi-exit', entry_unit_id: 'bi-entry', first_retest_id: 'bi-retest', start_bar_index: 3, start_time: 180_000, end_bar_index: 5, end_time: 300_000, confirmed_at_bar_index: 5, roles_overlap_seed: false, source_revision: 'revision', known_at_bar_index: 5, object_revision: 1 })
+    source.center_audit_events.push({ object_id: 'audit-1', event_type: 'BREAK_CONFIRMED', center_id: 'center-bi', unit_ids: ['bi-exit', 'bi-retest'], zd_i64: 100, zg_i64: 110, comparison_i64: 112, event_bar_index: 5, event_time: 300_000, rule_version: 'local_center_boundary_v1', source_file: 'python/src/tvbt/chan/local_center.py', source_line: 1, known_at_bar_index: 5, object_revision: 1 })
 
     const geometry = buildChanGeometry(source, 10, (time) => Number(time), (price) => price)
 
-    expect(geometry.segmentZhongshu).toEqual([{ left: 60, right: 180, top: 10, bottom: 10, confirmed: true }])
+    expect(localCenterScope(source)).toEqual({ unitKind: 'BI', structuralLevel: 'stroke' })
+    expect(geometry.localCenters).toHaveLength(1)
+    expect(geometry.localCenters[0]).toMatchObject({ object_id: 'center-bi', left: 60, right: 180, top: 11, bottom: 10 })
+    expect(geometry.centerRoleLines.map((line) => [line.role, line.unitId])).toEqual([['entry', 'bi-entry'], ['exit', 'bi-exit'], ['retest', 'bi-retest']])
+    expect(geometry.confirmationMarkers).toEqual([{ x: 300, centerId: 'center-bi', barIndex: 5 }])
+    source.center_connections.push({ ...source.center_connections[0]!, object_id: 'connection-in', from_center_id: 'center-before', to_center_id: 'center-bi' })
+    const primitive = new ChanPrimitive()
+    primitive.setData(source, 10)
+    expect(primitive.hoverDetail('local-center:center-bi')).toContain('前向连接：connection-in；后向连接：connection-1')
+    expect(primitive.hoverDetail('local-center:center-bi')).toContain('形成确认：K3；分界确认：K5')
+    expect(primitive.hoverDetail('local-center:center-bi')).toContain('扫描起点：单元索引 0')
+    source.local_centers[0]!.status = 'PENDING_BREAK'
+    source.center_audit_events = [{
+      ...source.center_audit_events[0]!, object_id: 'preview-1', event_type: 'PREVIEW_UPDATED',
+      preview_state: 'RETEST_TOUCH', preview_confirmed: false, comparison_i64: 110,
+    }]
+    const previewGeometry = buildChanGeometry(source, 10, (time) => Number(time), (price) => price)
+    expect(previewGeometry.confirmationMarkers).toEqual([])
+    expect(previewGeometry.previewMarkers).toEqual([{ x: 300, y: 11, centerId: 'center-bi', state: 'RETEST_TOUCH' }])
+    expect(previewGeometry.localCenters[0]!.right).toBe(180)
+    source.local_centers[0]!.status = 'CLOSED'
+    expect(buildChanGeometry(source, 10, (time) => Number(time), (price) => price).previewMarkers).toEqual([])
   })
 
   it('updates semantic object rendering styles as one primitive', () => {
@@ -178,8 +199,6 @@ describe('ChanPrimitive', () => {
       fractal: { color: '#ff5252', line_width: 1, line_style: 'solid', opacity: 0.8, visible: false },
       bi: { color: '#ab47bc', line_width: 3, line_style: 'dashed', opacity: 0.7, visible: true },
       segment: { color: '#ffeb3b', line_width: 3, line_style: 'solid', opacity: 1, visible: true },
-      zhongshu: { color: '#00b8d4', line_width: 2, line_style: 'dotted', opacity: 0.6, visible: true },
-      segment_zhongshu: { color: '#5b1a78', line_width: 2, line_style: 'solid', opacity: 1, visible: true },
       divergence: { color: '#ff9800', line_width: 1, line_style: 'solid', opacity: 1, visible: true },
       trade_point: { color: '#ffffff', line_width: 1, line_style: 'solid', opacity: 1, visible: true },
     } })
@@ -189,14 +208,13 @@ describe('ChanPrimitive', () => {
       bi: { color: '#ab47bc', line_width: 3, line_style: 'dashed', opacity: 0.7, visible: true },
       biState: { color: '#26c6da', line_width: 1, line_style: 'dashed', opacity: 0.9, visible: true },
       segment: { color: '#ffeb3b', line_width: 3, line_style: 'solid', opacity: 1, visible: true },
-      zhongshu: { color: '#00b8d4', line_width: 2, line_style: 'dotted', opacity: 0.6, visible: true },
-      segmentZhongshu: { color: '#5b1a78', line_width: 2, line_style: 'solid', opacity: 1, visible: true },
       levelCenter: { color: '#ff8a65', line_width: 2, line_style: 'dashed', opacity: 0.9, visible: true },
       levelMovement: { color: '#ce93d8', line_width: 2, line_style: 'dashed', opacity: 0.9, visible: true },
       movementState: { color: '#ab47bc', line_width: 1, line_style: 'dashed', opacity: 0.9, visible: true },
       centerMonitor: { color: '#26c6da', line_width: 1, line_style: 'dotted', opacity: 0.9, visible: true },
       divergence: { color: '#ff9800', line_width: 1, line_style: 'solid', opacity: 1, visible: true },
       tradePoint: { color: '#ffffff', line_width: 1, line_style: 'solid', opacity: 1, visible: true },
+      localCenter: { color: '#42a5f5', line_width: 2, line_style: 'solid', opacity: 1, visible: true },
     })
   })
 })

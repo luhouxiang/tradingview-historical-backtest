@@ -17,8 +17,7 @@ function definition(kind: 'indicator' | 'chan'): AlgorithmDefinition {
           { name: 'segment', display_name: '段', pane: 'main', series_type: 'semantic_objects', object_type: 'segment' },
           { name: 'fractal', display_name: '分型', pane: 'main', series_type: 'semantic_objects', object_type: 'fractal' },
           { name: 'bi', display_name: '笔', pane: 'main', series_type: 'semantic_objects', object_type: 'bi' },
-          { name: 'zhongshu', display_name: '中枢', pane: 'main', series_type: 'semantic_objects', object_type: 'zhongshu' },
-          { name: 'segment_zhongshu', display_name: '标准线段中枢', pane: 'main', series_type: 'semantic_objects', object_type: 'segment_zhongshu' },
+          { name: 'local_center', display_name: '实体中枢', pane: 'main', series_type: 'semantic_objects', object_type: 'local_center' },
           { name: 'divergence', display_name: '背驰', pane: 'main', series_type: 'semantic_objects', object_type: 'divergence' },
           { name: 'trade_point', display_name: '买卖点', pane: 'main', series_type: 'semantic_objects', object_type: 'trade_point' },
         ]
@@ -46,14 +45,13 @@ describe('indicator styles', () => {
     const source: StrategySource = {
       source_type: 'StrategySource', source_id: 'strategy-1', definition: definition('chan'),
       parameters: {}, job_id: 'job-1', status: 'completed', visible: true,
-      category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true, segment_zhongshu: true, divergences: true, trade_points: true },
+      category_visibility: { fractals: false, bi: true, segments: true, local_centers: true, divergences: true, trade_points: true },
     }
     const style = completeIndicatorStyle(source)
     expect(style.outputs.fractal).toMatchObject({ color: '#f23645', visible: false })
     expect(style.outputs.bi).toMatchObject({ color: '#2962ff', line_width: 2, visible: true })
     expect(style.outputs.segment).toMatchObject({ color: '#f2d600', line_width: 2, visible: true })
-    expect(style.outputs.zhongshu).toMatchObject({ color: '#64b5f6', line_style: 'solid', visible: true })
-    expect(style.outputs.segment_zhongshu).toMatchObject({ color: '#fff176', line_style: 'solid', visible: true })
+    expect(style.outputs.local_center).toMatchObject({ color: '#42a5f5', line_style: 'solid', visible: true })
   })
 
   it('resolves saved styles and converts rendering helpers deterministically', () => {
@@ -73,7 +71,7 @@ describe('indicator styles', () => {
     const source: StrategySource = {
       source_type: 'StrategySource', source_id: 'strategy-1', definition: definition('chan'),
       parameters: {}, job_id: 'job-1', status: 'completed', visible: true,
-      category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true, segment_zhongshu: true, divergences: true, trade_points: true },
+      category_visibility: { fractals: false, bi: true, segments: true, local_centers: true, divergences: true, trade_points: true },
       style: { outputs: {
         bi: { color: '#2962ff', line_width: 2, line_style: 'solid', opacity: 1, visible: false },
         fractal: { color: '#f23645', line_width: 1, line_style: 'solid', opacity: 1, visible: true },

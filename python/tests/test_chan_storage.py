@@ -22,7 +22,11 @@ def payload() -> dict[str, object]:
             "algorithm_version": "1.0.0",
             "source_hash": "sha256:" + "2" * 64,
         },
-        "parameters": {"min_fractal_gap": 5, "checkpoint_interval": 4},
+        "parameters": {
+            "min_fractal_gap": 5,
+            "checkpoint_interval": 4,
+            "center_boundary_profile": "local_center_boundary_v1",
+        },
         "calculation_mode": "causal_events",
         "output_path": "cache/chan/example",
     }
@@ -121,13 +125,15 @@ def test_chan_cache_writes_typed_tables_checkpoints_and_success_last(tmp_path: P
         == pq.read_table(directory / "bi.parquet").schema.names
     )
     manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["schema_version"] == 4
+    assert manifest["schema_version"] == 6
     assert manifest["counts"]["events"] == 1
     assert manifest["files"]["processed_bars"]["path"] == "processed_bars.parquet"
     assert manifest["files"]["bi_states"]["path"] == "bi_states.parquet"
     assert manifest["counts"]["segments"] == 0
     assert manifest["files"]["segments"]["path"] == "segments.parquet"
-    assert manifest["counts"]["segment_zhongshu"] == 0
+    assert manifest["counts"]["local_centers"] == 0
+    assert manifest["files"]["center_connections"]["path"] == "center_connections.parquet"
+    assert manifest["files"]["center_audit_events"]["path"] == "center_audit_events.parquet"
     assert manifest["files"]["movement_states"]["path"] == "movement_states.parquet"
     assert manifest["files"]["level_centers"]["path"] == "level_centers.parquet"
     assert manifest["files"]["level_movements"]["path"] == "level_movements.parquet"

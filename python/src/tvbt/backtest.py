@@ -519,9 +519,7 @@ def _attribute_trades(
             latest[str(event["object_type"])] = (event, event_payload)
         movement = latest.get("level_movement") or latest.get("movement_state")
         direction = "" if movement is None else str(movement[1].get("direction", "")).lower()
-        center = (
-            latest.get("level_center") or latest.get("segment_zhongshu") or latest.get("zhongshu")
-        )
+        center = latest.get("level_center") or latest.get("local_center")
         market_l0 = (
             "uptrend"
             if direction in {"up", "upward", "long"}

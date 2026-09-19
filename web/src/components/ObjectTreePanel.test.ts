@@ -33,7 +33,7 @@ describe('ObjectTreePanel', () => {
     const strategy = {
       source_type: 'StrategySource', source_id: 'chan-1', definition: { name: '标准缠论' },
       parameters: {}, job_id: 'job-1', status: 'completed', visible: true,
-      category_visibility: { fractals: true, bi: true, segments: true, zhongshu: true, segment_zhongshu: true, divergences: true, trade_points: true },
+      category_visibility: { fractals: true, bi: true, segments: true, local_centers: true, divergences: true, trade_points: true },
     }
     const older = {
       object_id: 'buy-old', bar_index: 10, time: 1_700_000_000_000, price_i64: 2650,
@@ -53,7 +53,7 @@ describe('ObjectTreePanel', () => {
     expect(signals.map((node) => node.attributes('data-signal-id'))).toEqual(['class-buy-new', 'buy-old'])
     expect(signals[0]?.classes()).toContain('selected')
     expect(signals[0]?.text()).toContain('类一买')
-    expect(wrapper.findAll('.strategy-node label')).toHaveLength(13)
+    expect(wrapper.findAll('.strategy-node label')).toHaveLength(12)
     await wrapper.get('.strategy-node label input').trigger('change')
     expect(wrapper.emitted('patchStrategy')?.at(-1)?.[0]).toBe('chan-1')
     await signals[0]?.trigger('click')
@@ -84,6 +84,29 @@ describe('ObjectTreePanel', () => {
     expect(wrapper.emitted('selectSignal')?.at(-1)).toEqual([item])
     await node.get('.signal-object-lock').trigger('click')
     expect(wrapper.emitted('lockSignal')?.at(-1)).toEqual([item])
+  })
+
+  it('exposes local-center audit facts on hover with Chinese layer labels', () => {
+    const strategy = {
+      source_type: 'StrategySource', source_id: 'chan-local', definition: { name: '标准缠论' },
+      parameters: {}, job_id: 'job-local', status: 'completed', visible: true,
+      category_visibility: { fractals: false, bi: true, segments: false, local_centers: true, divergences: false, trade_points: false },
+    }
+    const center = {
+      object_id: 'center-1', object_type: 'local_center', bar_index: 20, time: 1_700_000_000_000,
+      price_i64: 2650, confirmed_at_bar_index: 21, known_at_bar_index: 21, object_revision: 1,
+      label: '笔实体中枢 · 已分界', detail: 'ZD 2600 / ZG 2700 · stroke',
+      hover_detail: '构成三单元：bi-1 → bi-2 → bi-3\n进入/离开/首次回试：bi-0 / bi-4 / bi-5\n扫描起点：K0\n分界确认：K21',
+    }
+    const wrapper = mount(ObjectTreePanel, { props: {
+      dataset: { time: { timezone: 'Asia/Shanghai' }, price: { price_scale: 1, price_decimals: 0 } } as never,
+      drawings: [], sources: [], strategySources: [strategy] as never, selectedId: null,
+      signalsBySource: { 'chan-local': [center] as never[] },
+    } })
+
+    expect(wrapper.text()).toContain('实体中枢')
+    expect(wrapper.get('[data-signal-id="center-1"]').attributes('title')).toContain('bi-1 → bi-2 → bi-3')
+    expect(wrapper.get('[data-signal-id="center-1"]').attributes('title')).toContain('分界确认：K21')
   })
 
   it('labels auxiliary run objects as non-standard and non-trading', () => {

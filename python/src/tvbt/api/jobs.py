@@ -4,6 +4,8 @@ import threading
 from dataclasses import dataclass, field
 from typing import Any
 
+from tvbt.storage import memory_guard
+
 
 @dataclass
 class Job:
@@ -83,6 +85,7 @@ class JobStore:
                 return
             self._run_admitted(job_id, work)
         finally:
+            memory_guard.release_unused_memory()
             self._compute_slot.release()
 
     def _run_admitted(self, job_id: str, work: Any) -> None:

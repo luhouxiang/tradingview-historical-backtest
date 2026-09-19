@@ -174,7 +174,7 @@ def test_fixed_level_centre_strategy_uses_confirmed_B3_and_shared_causal_events(
     fake_events = [
         SimpleNamespace(
             known_at_bar_index=0,
-            object_type="segment_zhongshu",
+            object_type="local_center",
             object_id="segment-center-1",
             operation="upsert",
             payload_json=json.dumps(center_payload),
@@ -372,7 +372,7 @@ def test_consolidation_reversion_distinguishes_centre_return_and_third_point_con
     fake_events = [
         event(
             0,
-            "segment_zhongshu",
+            "local_center",
             "segment-center-1",
             {"zd_i64": 100, "zg_i64": 110, "confirmed": True},
         ),
@@ -499,7 +499,7 @@ def test_third_point_migration_hold_exits_on_new_centre_or_opposing_trend_diverg
         )
 
     fake_events = [
-        event(0, "segment_zhongshu", "center-one", {"confirmed": True}),
+        event(0, "local_center", "center-one", {"confirmed": True}),
         event(
             1,
             "trade_point",
@@ -516,7 +516,7 @@ def test_third_point_migration_hold_exits_on_new_centre_or_opposing_trend_diverg
             "class-sell-one",
             {"signal_type": "class_sell_1", "signal_class": "class_like"},
         ),
-        event(3, "segment_zhongshu", "center-two", {"confirmed": True}),
+        event(3, "local_center", "center-two", {"confirmed": True}),
         event(
             4,
             "trade_point",
@@ -619,7 +619,7 @@ def test_first_centre_rotation_filters_later_same_direction_third_points(
         )
 
     fake_events = [
-        event(0, "segment_zhongshu", "center-one", {"confirmed": True}),
+        event(0, "local_center", "center-one", {"confirmed": True}),
         third(1, "first-buy-three", "buy_3", "center-one"),
         event(
             2,
@@ -629,7 +629,7 @@ def test_first_centre_rotation_filters_later_same_direction_third_points(
         ),
         third(3, "later-buy-three", "buy_3", "center-later"),
         third(4, "first-sell-three", "sell_3", "center-later"),
-        event(5, "segment_zhongshu", "center-down-new", {"confirmed": True}),
+        event(5, "local_center", "center-down-new", {"confirmed": True}),
         third(6, "later-sell-three", "sell_3", "center-down-new"),
     ]
     monkeypatch.setattr(
@@ -716,7 +716,7 @@ def _run_macd_third_point_fixture(
         )
 
     fake_events = [
-        event(0, "segment_zhongshu", "center-one", {"confirmed": True}),
+        event(0, "local_center", "center-one", {"confirmed": True}),
         event(
             2,
             "trade_point",
@@ -727,7 +727,7 @@ def _run_macd_third_point_fixture(
                 "reference_object_id": "center-one",
             },
         ),
-        event(3, "segment_zhongshu", "center-two", {"confirmed": True}),
+        event(3, "local_center", "center-two", {"confirmed": True}),
         event(
             5,
             "trade_point",
@@ -1328,7 +1328,7 @@ def test_third_buy_only_prefers_first_center_and_holds_new_center_until_trend_di
     fake_events = [
         event(
             2,
-            "segment_zhongshu",
+            "local_center",
             "first-up-center",
             {
                 "start_bar_index": 0,
@@ -1382,7 +1382,7 @@ def test_third_buy_only_prefers_first_center_and_holds_new_center_until_trend_di
         segment(5, "B3-followthrough", 4, 5, 100, 125, "up"),
         event(
             7,
-            "segment_zhongshu",
+            "local_center",
             "second-up-center",
             {
                 "start_bar_index": 5,
@@ -1543,7 +1543,7 @@ def test_third_buy_only_penalizes_late_center_and_covers_both_followthrough_fail
     ) -> object:
         return event(
             known_at,
-            "segment_zhongshu",
+            "local_center",
             object_id,
             {
                 "start_bar_index": start,
@@ -1799,7 +1799,7 @@ def test_third_buy_only_exits_on_S3_center_return_or_source_revision_without_ree
 
     center = event(
         1,
-        "segment_zhongshu",
+        "local_center",
         "source-center",
         {
             "start_bar_index": 0,
@@ -1978,7 +1978,7 @@ def test_centre_oscillation_spread_swings_both_directions_then_hands_off_on_B3(
     fake_events = [
         event(
             1,
-            "segment_zhongshu",
+            "local_center",
             "active-center",
             {
                 "start_bar_index": 0,
@@ -2153,7 +2153,7 @@ def test_centre_oscillation_spread_applies_cost_Zn_turnover_and_promotion_risk(
     def center(known_at: int, component_count: int) -> object:
         return event(
             known_at,
-            "segment_zhongshu",
+            "local_center",
             "risk-center",
             {
                 "start_bar_index": 0,
@@ -2363,7 +2363,7 @@ def test_centre_oscillation_spread_stops_on_S3_center_or_source_revision(
         "reference_object_id": "source-center",
     }
     base_events = [
-        event(0, "segment_zhongshu", "source-center", center_payload),
+        event(0, "local_center", "source-center", center_payload),
         event(1, "center_monitor", "source-monitor", monitor_payload),
         event(1, "divergence", "source-divergence", divergence_payload),
     ]
@@ -2388,12 +2388,12 @@ def test_centre_oscillation_spread_stops_on_S3_center_or_source_revision(
         "ACTIVE_CENTER_LEFT_WITHOUT_THIRD_POINT": [
             event(
                 2,
-                "segment_zhongshu",
+                "local_center",
                 "source-center",
                 {**center_payload, "status": "left", "leave_direction": "up"},
             )
         ],
-        "ACTIVE_CENTER_DELETED": [event(2, "segment_zhongshu", "source-center", {}, "delete")],
+        "ACTIVE_CENTER_DELETED": [event(2, "local_center", "source-center", {}, "delete")],
     }
     current_events = base_events
     monkeypatch.setattr(
@@ -2657,7 +2657,7 @@ def test_same_level_decomposition_uses_confirmed_divergence_and_stops_on_promoti
         segment(3, "unfinished-A4", 3, 4, 90, 160, "up", confirmed=False),
         event(
             4,
-            "segment_zhongshu",
+            "local_center",
             "higher-center-candidate",
             {
                 "start_bar_index": 0,
@@ -2897,7 +2897,7 @@ def test_three_level_classification_waits_and_blocks_unmanageable_legal_branch(
     events = [
         _three_level_event(
             1,
-            "segment_zhongshu",
+            "local_center",
             "middle-center-down",
             _three_level_center(leave_direction="down"),
         ),
@@ -2958,7 +2958,7 @@ def test_three_level_classification_progresses_low_mid_then_high_without_predict
     events = [
         _three_level_event(
             1,
-            "segment_zhongshu",
+            "local_center",
             "middle-center-down",
             _three_level_center(leave_direction="down"),
         ),
@@ -3060,7 +3060,7 @@ def test_three_level_classification_prioritizes_third_point_boundary_and_center_
     base_events = [
         _three_level_event(
             1,
-            "segment_zhongshu",
+            "local_center",
             "middle-center-down",
             _three_level_center(leave_direction="down"),
         ),
@@ -3163,7 +3163,7 @@ def test_three_level_classification_is_direction_symmetric_and_resets_revised_so
     events = [
         _three_level_event(
             1,
-            "segment_zhongshu",
+            "local_center",
             "middle-center-up",
             _three_level_center(leave_direction="up"),
         ),
@@ -3344,7 +3344,7 @@ def _segmented_long_events(*, followthrough_end_i64: int = 130) -> list[object]:
         ),
         _three_level_event(
             4,
-            "segment_zhongshu",
+            "local_center",
             "first-target-center",
             _segmented_center(),
         ),
@@ -3376,7 +3376,7 @@ def _segmented_long_events(*, followthrough_end_i64: int = 130) -> list[object]:
         ),
         _three_level_event(
             6,
-            "segment_zhongshu",
+            "local_center",
             "first-target-center",
             _segmented_center(
                 end_bar_index=6,
@@ -3469,7 +3469,7 @@ def _segmented_short_events() -> list[object]:
         ),
         _three_level_event(
             4,
-            "segment_zhongshu",
+            "local_center",
             "first-target-center-short",
             _segmented_center(zd_i64=100, zg_i64=120),
         ),
@@ -3501,7 +3501,7 @@ def _segmented_short_events() -> list[object]:
         ),
         _three_level_event(
             6,
-            "segment_zhongshu",
+            "local_center",
             "first-target-center-short",
             _segmented_center(
                 zd_i64=100,
@@ -4129,19 +4129,19 @@ def test_bottom_top_construction_precise_success_handoff_revision_and_prefix(
         ),
         _three_level_event(
             2,
-            "segment_zhongshu",
+            "local_center",
             "unrelated-center",
             _construction_center(0, 2),
         ),
         _three_level_event(
             4,
-            "segment_zhongshu",
+            "local_center",
             "bottom-center",
             _construction_center(1, 4),
         ),
         _three_level_event(
             5,
-            "segment_zhongshu",
+            "local_center",
             "bottom-center",
             {
                 **_construction_center(1, 5),
@@ -4177,7 +4177,7 @@ def test_bottom_top_construction_precise_success_handoff_revision_and_prefix(
         ),
         _three_level_event(
             8,
-            "segment_zhongshu",
+            "local_center",
             "top-center",
             _construction_center(7, 8),
         ),
@@ -4289,7 +4289,7 @@ def test_bottom_top_construction_failure_filters_nonstandard_points(
         ),
         _three_level_event(
             4,
-            "segment_zhongshu",
+            "local_center",
             "bottom-center",
             _construction_center(2, 4),
         ),

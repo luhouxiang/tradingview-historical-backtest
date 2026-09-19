@@ -147,7 +147,7 @@
           "category_visibility": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["fractals", "bi", "zhongshu"],
+            "required": ["fractals", "bi", "local_centers"],
             "properties": {
               "processed_bars": {"type": "boolean"},
               "fractals": {"type": "boolean"},
@@ -156,8 +156,7 @@
                 "level_centers": {"type": "boolean"},
                 "level_movements": {"type": "boolean"},
               "segments": {"type": "boolean"},
-              "zhongshu": {"type": "boolean"},
-              "segment_zhongshu": {"type": "boolean"},
+              "local_centers": {"type": "boolean"},
               "movement_states": {"type": "boolean"},
               "center_monitors": {"type": "boolean"},
               "divergences": {"type": "boolean"},

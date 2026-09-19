@@ -13,8 +13,9 @@ OBJECT_TYPES = frozenset(
         "bi",
         "bi_state",
         "segment",
-        "zhongshu",
-        "segment_zhongshu",
+        "local_center",
+        "center_connection",
+        "center_audit_event",
         "level_center",
         "level_movement",
         "movement_state",
@@ -55,7 +56,7 @@ class ChanEvent:
 class EventEmitter:
     """维护当前对象快照，并生成确定性的 upsert/delete 事件流。
 
-    引擎会反复重扫笔中枢、段中枢、背驰和买卖点。`EventEmitter` 的职责是把
+    引擎会反复更新笔、段、实体中枢及其派生对象。`EventEmitter` 的职责是把
     “当前应该存在的对象集合”转换成审计友好的增量事件，同时保证：
 
     - 内容未变化的对象不重复发事件。
@@ -180,6 +181,11 @@ class EventEmitter:
             "objects": self._objects,
             "revisions": self._revisions,
         }
+
+    def get(self, object_type: str, object_id: str) -> dict[str, Any] | None:
+        """Return one snapshot without scanning the whole structural history."""
+        value = self._objects.get(self._key(object_type, object_id))
+        return None if value is None else dict(value)
 
     def current(self, object_type: str) -> list[dict[str, Any]]:
         """返回某类对象的当前快照副本，调用方可以安全排序和序列化。"""

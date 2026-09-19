@@ -84,7 +84,7 @@ def test_chan_calculation_writes_causal_structure_cache(tmp_path: Path) -> None:
         dataset_dir / "bars.parquet",
     )
     (dataset_dir / "meta.json").write_text(
-        json.dumps({"price": {"price_scale": 1}}), encoding="utf-8"
+        json.dumps({"price": {"price_scale": 1, "tick_size_i64": 1}}), encoding="utf-8"
     )
     definition = chan_definition()
     parameters = {
@@ -114,7 +114,7 @@ def test_chan_calculation_writes_causal_structure_cache(tmp_path: Path) -> None:
     assert pq.read_table(output / "fractals.parquet").num_rows > 0
     assert pq.read_table(output / "bi.parquet").num_rows > 0
     assert (output / "segments.parquet").is_file()
-    assert (output / "segment_zhongshu.parquet").is_file()
+    assert (output / "local_centers.parquet").is_file()
     assert (output / "level_centers.parquet").is_file()
     assert (output / "level_movements.parquet").is_file()
     assert (output / "movement_states.parquet").is_file()

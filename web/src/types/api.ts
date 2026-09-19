@@ -133,7 +133,7 @@ export interface AlgorithmOutput {
   display_name: string
   pane: 'main' | 'indicator'
   series_type: 'line' | 'histogram' | 'semantic_objects'
-  object_type?: 'processed_bar' | 'fractal' | 'bi' | 'bi_state' | 'segment' | 'zhongshu' | 'segment_zhongshu' | 'level_center' | 'level_movement' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event' | 'risk_decision'
+  object_type?: 'processed_bar' | 'fractal' | 'bi' | 'bi_state' | 'segment' | 'local_center' | 'center_connection' | 'center_audit_event' | 'level_center' | 'level_movement' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event' | 'risk_decision'
 }
 
 export interface AlgorithmDefinition extends AlgorithmRef {
@@ -239,28 +239,6 @@ export interface ChanLineObject {
   object_revision: number
 }
 
-export interface ChanZhongshu {
-  object_id: string
-  start_bar_index: number
-  start_time: number
-  end_bar_index: number
-  end_time: number
-  zg_i64: number
-  zd_i64: number
-  gg_i64: number
-  dd_i64: number
-  z_i64: number
-  analysis_level: string
-  component_kind: 'bi' | 'segment'
-  component_count: number
-  confirmed: boolean
-  confirmed_at_bar_index: number | null
-  status: 'confirmed' | 'extended' | 'left'
-  leave_direction: 'up' | 'down' | null
-  known_at_bar_index: number
-  object_revision: number
-}
-
 export interface ChanSignalPoint {
   object_id: string
   bar_index: number
@@ -299,6 +277,95 @@ export interface ChanSignalPoint {
   center_chain_profile: 'confirmed_same_level_centers_known_at_signal_v1' | null
   confirmed: boolean
   confirmed_at_bar_index: number | null
+  known_at_bar_index: number
+  object_revision: number
+}
+
+export interface ChanLocalCenter {
+  previous_center_id?: string | null
+  core_relation?: 'CORE_ABOVE' | 'CORE_BELOW' | 'CORE_TOUCH_OR_OVERLAP' | null
+  higher_level_review_required?: boolean
+  trend_status?: 'UNVERIFIED'
+  object_id: string
+  stream_key: string
+  rule_version: 'local_center_boundary_v1'
+  unit_kind: 'BI' | 'SEGMENT'
+  structural_level: string
+  scan_floor: number
+  seed_ids: [string, string, string]
+  zd_i64: number
+  zg_i64: number
+  seed_start_bar_index: number
+  seed_start_time: number
+  seed_end_bar_index: number
+  seed_end_time: number
+  formed_at_bar_index: number
+  body_start_bar_index: number
+  body_start_time: number
+  body_end_bar_index: number | null
+  body_end_time: number | null
+  observed_start_bar_index: number
+  observed_start_time: number
+  observed_end_bar_index: number
+  observed_end_time: number
+  observed_low_i64: number
+  observed_high_i64: number
+  status: 'ACTIVE' | 'PENDING_BREAK' | 'CLOSED'
+  pending_exit_id: string | null
+  exit_id: string | null
+  first_retest_id: string | null
+  entry_id: string | null
+  local_entry: 'FROM_BELOW' | 'FROM_ABOVE' | null
+  break_direction: 'up' | 'down' | null
+  break_confirmed_at_bar_index: number | null
+  parent_id: string | null
+  left_context_incomplete: boolean
+  roles_overlap_seed: boolean
+  source_revision: string
+  known_at_bar_index: number
+  object_revision: number
+}
+
+export interface ChanCenterConnection {
+  object_id: string
+  stream_key: string
+  rule_version: 'local_center_boundary_v1'
+  unit_kind: 'BI' | 'SEGMENT'
+  structural_level: string
+  from_center_id: string
+  to_center_id: string | null
+  ordered_unit_ids: string[]
+  exit_unit_id: string
+  entry_unit_id: string | null
+  first_retest_id: string
+  start_bar_index: number
+  start_time: number
+  end_bar_index: number
+  end_time: number
+  confirmed_at_bar_index: number
+  roles_overlap_seed: boolean
+  source_revision: string
+  known_at_bar_index: number
+  object_revision: number
+}
+
+export interface ChanCenterAuditEvent {
+  preview_state?: 'EXIT_PENDING' | 'RETEST_PENDING' | 'RETEST_TOUCH' | null
+  preview_confirmed?: false | null
+  preview_direction?: 'up' | 'down' | null
+  source_revision?: string | null
+  object_id: string
+  event_type: 'SEED_FOUND' | 'EXIT_PENDING' | 'RETEST_TOUCH' | 'BREAK_CONFIRMED' | 'SEARCH_RESTARTED' | 'ENTRY_LINKED' | 'CENTER_REVISED' | 'PREVIEW_UPDATED'
+  center_id: string
+  unit_ids: string[]
+  zd_i64: number
+  zg_i64: number
+  comparison_i64: number | null
+  event_bar_index: number
+  event_time: number
+  rule_version: 'local_center_boundary_v1'
+  source_file: string
+  source_line: number
   known_at_bar_index: number
   object_revision: number
 }
@@ -342,7 +409,7 @@ export interface ChanBiState {
 
 export interface ChanTreeObject {
   object_id: string
-  object_type?: 'bi_state' | 'level_center' | 'level_movement' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point'
+  object_type?: 'bi_state' | 'local_center' | 'level_center' | 'level_movement' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point'
   bar_index: number
   time: number
   price_i64: number
@@ -351,6 +418,9 @@ export interface ChanTreeObject {
   object_revision: number
   label?: string
   detail?: string
+  hover_detail?: string
+  local_center_unit_kind?: 'BI' | 'SEGMENT'
+  local_center_structural_level?: string
   signal?: ChanSignalPoint
   third_buy_evidence?: ThirdBuyEntryEvidence
 }
@@ -520,8 +590,9 @@ export interface ChanCalculationResults extends CalculationResultBase {
     bi: ChanLineObject[]
     bi_states: ChanBiState[]
     segments: ChanLineObject[]
-    zhongshu: ChanZhongshu[]
-    segment_zhongshu: ChanZhongshu[]
+    local_centers: ChanLocalCenter[]
+    center_connections: ChanCenterConnection[]
+    center_audit_events: ChanCenterAuditEvent[]
     level_centers: ChanLevelCenter[]
     level_movements: ChanLevelMovement[]
     movement_states: ChanMovementState[]
@@ -556,7 +627,7 @@ export interface ReplayStatus {
 export interface CausalEvent {
   event_seq: number
   known_at_bar_index: number
-  object_type: 'processed_bar' | 'fractal' | 'bi' | 'bi_state' | 'segment' | 'zhongshu' | 'segment_zhongshu' | 'level_center' | 'level_movement' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event' | 'risk_decision'
+  object_type: 'processed_bar' | 'fractal' | 'bi' | 'bi_state' | 'segment' | 'local_center' | 'center_connection' | 'center_audit_event' | 'level_center' | 'level_movement' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event' | 'risk_decision'
   object_id: string
   operation: 'upsert' | 'delete'
   object_revision: number
@@ -1127,7 +1198,7 @@ export interface StrategySource {
   job_id: string
   status: JobStatus['status']
   visible: boolean
-  category_visibility: { processed_bars?: boolean; fractals: boolean; bi: boolean; bi_states?: boolean; segments: boolean; zhongshu: boolean; segment_zhongshu: boolean; level_centers?: boolean; level_movements?: boolean; movement_states?: boolean; center_monitors?: boolean; divergences: boolean; trade_points: boolean }
+  category_visibility: { processed_bars?: boolean; fractals: boolean; bi: boolean; bi_states?: boolean; segments: boolean; local_centers: boolean; level_centers?: boolean; level_movements?: boolean; movement_states?: boolean; center_monitors?: boolean; divergences: boolean; trade_points: boolean }
   style?: IndicatorStyle
   error?: string
 }
@@ -1184,7 +1255,7 @@ export interface PersistedStrategySource {
   data_revision: string
   algorithm: AlgorithmRef & { kind: 'chan' }
   parameters: Record<string, string | number | boolean>
-  category_visibility: { processed_bars?: boolean; fractals: boolean; bi: boolean; bi_states?: boolean; segments?: boolean; zhongshu: boolean; segment_zhongshu?: boolean; level_centers?: boolean; level_movements?: boolean; movement_states?: boolean; center_monitors?: boolean; divergences?: boolean; trade_points?: boolean }
+  category_visibility: { processed_bars?: boolean; fractals: boolean; bi: boolean; bi_states?: boolean; segments?: boolean; local_centers: boolean; level_centers?: boolean; level_movements?: boolean; movement_states?: boolean; center_monitors?: boolean; divergences?: boolean; trade_points?: boolean }
   style?: IndicatorStyle
 }
 

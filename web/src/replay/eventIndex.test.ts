@@ -3,13 +3,26 @@ import type { CausalEvent } from '../types/api'
 import { ReplayEventIndex } from './eventIndex'
 
 describe('ReplayEventIndex', () => {
+  it('replays preview revisions and withdrawal without exposing a trading signal', () => {
+    const index = new ReplayEventIndex([
+      { event_seq: 1, known_at_bar_index: 17, object_type: 'center_audit_event', object_id: 'preview', operation: 'upsert', object_revision: 1, payload: { event_type: 'PREVIEW_UPDATED', preview_state: 'RETEST_PENDING', preview_confirmed: false } },
+      { event_seq: 2, known_at_bar_index: 18, object_type: 'center_audit_event', object_id: 'preview', operation: 'upsert', object_revision: 2, payload: { event_type: 'PREVIEW_UPDATED', preview_state: 'RETEST_TOUCH', preview_confirmed: false } },
+      { event_seq: 3, known_at_bar_index: 19, object_type: 'center_audit_event', object_id: 'preview', operation: 'delete', object_revision: 3, payload: {} },
+    ])
+    expect(index.seek(16).center_audit_events).toEqual([])
+    expect(index.seek(17).center_audit_events[0]?.preview_state).toBe('RETEST_PENDING')
+    expect(index.signals()).toEqual([])
+    expect(index.seek(18).center_audit_events[0]?.preview_state).toBe('RETEST_TOUCH')
+    expect(index.seek(19).center_audit_events).toEqual([])
+    expect(index.seek(17).center_audit_events[0]?.preview_state).toBe('RETEST_PENDING')
+  })
   it('applies upserts and deletes only when known and rebuilds on rewind', () => {
     const events: CausalEvent[] = [
       { event_seq: 1, known_at_bar_index: 4, object_type: 'fractal', object_id: 'f-1', operation: 'upsert', object_revision: 1, payload: { object_id: 'f-1', bar_index: 2 } },
       { event_seq: 2, known_at_bar_index: 6, object_type: 'bi', object_id: 'b-1', operation: 'upsert', object_revision: 1, payload: { object_id: 'b-1', start_bar_index: 2 } },
       { event_seq: 3, known_at_bar_index: 8, object_type: 'bi', object_id: 'b-1', operation: 'delete', object_revision: 2, payload: {} },
       { event_seq: 4, known_at_bar_index: 9, object_type: 'segment', object_id: 's-1', operation: 'upsert', object_revision: 1, payload: { object_id: 's-1', start_bar_index: 2 } },
-      { event_seq: 5, known_at_bar_index: 10, object_type: 'segment_zhongshu', object_id: 'sz-1', operation: 'upsert', object_revision: 1, payload: { object_id: 'sz-1', start_bar_index: 2 } },
+      { event_seq: 5, known_at_bar_index: 10, object_type: 'local_center', object_id: 'center-0', operation: 'upsert', object_revision: 1, payload: { object_id: 'center-0', body_start_bar_index: 2 } },
       { event_seq: 6, known_at_bar_index: 11, object_type: 'divergence', object_id: 'd-1', operation: 'upsert', object_revision: 1, payload: { object_id: 'd-1', bar_index: 9 } },
       { event_seq: 7, known_at_bar_index: 12, object_type: 'trade_point', object_id: 'p-1', operation: 'upsert', object_revision: 1, payload: { object_id: 'p-1', bar_index: 10 } },
       { event_seq: 8, known_at_bar_index: 12, object_type: 'processed_bar', object_id: 'pb-1', operation: 'upsert', object_revision: 2, payload: { object_id: 'pb-1', normalized_index: 0 } },
@@ -18,13 +31,16 @@ describe('ReplayEventIndex', () => {
       { event_seq: 11, known_at_bar_index: 12, object_type: 'level_movement', object_id: 'lm-1', operation: 'upsert', object_revision: 1, payload: { object_id: 'lm-1', level_id: 'L0', start_bar_index: 2 } },
       { event_seq: 12, known_at_bar_index: 13, object_type: 'trade_point', object_id: 'first-1', operation: 'upsert', object_revision: 1, payload: { object_id: 'first-1', bar_index: 11, status: 'candidate', signal_type: 'buy_1' } },
       { event_seq: 13, known_at_bar_index: 15, object_type: 'trade_point', object_id: 'first-1', operation: 'upsert', object_revision: 2, payload: { object_id: 'first-1', bar_index: 11, status: 'confirmed', signal_type: 'buy_1' } },
+      { event_seq: 14, known_at_bar_index: 16, object_type: 'local_center', object_id: 'center-1', operation: 'upsert', object_revision: 1, payload: { object_id: 'center-1', body_start_bar_index: 3 } },
+      { event_seq: 15, known_at_bar_index: 16, object_type: 'center_connection', object_id: 'connection-1', operation: 'upsert', object_revision: 1, payload: { object_id: 'connection-1', start_bar_index: 8 } },
+      { event_seq: 16, known_at_bar_index: 16, object_type: 'center_audit_event', object_id: 'audit-1', operation: 'upsert', object_revision: 1, payload: { object_id: 'audit-1', event_bar_index: 16 } },
     ]
     const index = new ReplayEventIndex(events)
     expect(index.seek(3).fractals).toHaveLength(0)
     expect(index.seek(6).bi).toHaveLength(1)
     expect(index.seek(8).bi).toHaveLength(0)
     expect(index.seek(9).segments).toHaveLength(1)
-    expect(index.seek(12).segment_zhongshu).toHaveLength(1)
+    expect(index.seek(12).local_centers).toHaveLength(1)
     expect(index.seek(12).divergences).toHaveLength(1)
     expect(index.seek(12).trade_points).toHaveLength(1)
     expect(index.seek(12).processed_bars).toEqual([expect.objectContaining({ object_id: 'pb-1' })])
@@ -39,6 +55,9 @@ describe('ReplayEventIndex', () => {
       expect.objectContaining({ object_id: 'p-1' }),
       expect.objectContaining({ object_id: 'first-1', status: 'confirmed' }),
     ])
+    expect(index.seek(16).local_centers).toEqual([expect.objectContaining({ object_id: 'center-0' }), expect.objectContaining({ object_id: 'center-1' })])
+    expect(index.seek(16).center_connections).toHaveLength(1)
+    expect(index.seek(16).center_audit_events).toHaveLength(1)
     expect(index.seek(5).fractals).toHaveLength(1)
     expect(index.seek(5).bi).toHaveLength(0)
   })

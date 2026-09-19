@@ -66,7 +66,7 @@ function chanDefinition(): AlgorithmDefinition {
     },
     outputs: [
       { name: 'bi', display_name: '笔', pane: 'main', series_type: 'semantic_objects', object_type: 'bi' },
-      { name: 'zhongshu', display_name: '中枢', pane: 'main', series_type: 'semantic_objects', object_type: 'zhongshu' },
+      { name: 'local_center', display_name: '实体中枢', pane: 'main', series_type: 'semantic_objects', object_type: 'local_center' },
     ],
     warmup: { kind: 'formula', expression: 'full history causal state' },
   }
@@ -127,7 +127,7 @@ describe('AppShell', () => {
     api.getStrategySourceConfig.mockRejectedValue(new ApiError('WORKSPACE_NOT_FOUND', 'missing', 'req-strategy-config'))
     api.putStrategySourceConfig.mockImplementation(async (_profile: string, _revision: number, value: object) => ({ ...value, revision: 1 }))
     api.getCalculationResults.mockResolvedValue({
-      result_kind: 'chan', objects: { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], zhongshu: [], segment_zhongshu: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] },
+      result_kind: 'chan', objects: { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], local_centers: [], center_connections: [], center_audit_events: [], level_centers: [], level_movements: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] },
       coverage: { first_bar_index: 0, last_bar_index: 100, returned_count: 101 },
     })
   })
@@ -145,6 +145,56 @@ describe('AppShell', () => {
     expect(wrapper.get('[aria-label="绘图工具栏"]').element).toBeTruthy()
     expect(wrapper.get('[aria-label="右侧面板"]').element).toBeTruthy()
     expect(wrapper.get('[aria-label="底部面板"]').element).toBeTruthy()
+  })
+
+  it('shows both incoming and outgoing local-center connection IDs in the object tree', async () => {
+    api.getLayout.mockRejectedValue(new ApiError('WORKSPACE_NOT_FOUND', 'missing', 'req-layout'))
+    api.getDrawings.mockRejectedValue(new ApiError('DRAWINGS_NOT_FOUND', 'missing', 'req-drawings'))
+    api.listAlgorithms.mockResolvedValue([chanDefinition()])
+    api.createCalculation.mockResolvedValue({ job_id: 'center-audit', status: 'completed' })
+    const result = await api.getCalculationResults()
+    api.getCalculationResults.mockResolvedValue({
+      ...result,
+      objects: {
+        ...result.objects,
+        local_centers: [{
+          object_id: 'center-current', unit_kind: 'BI', structural_level: 'stroke',
+          seed_ids: ['unit-1', 'unit-2', 'unit-3'], scan_floor: 10,
+          zd_i64: 105, zg_i64: 115, status: 'ACTIVE',
+          observed_end_bar_index: 20, observed_end_time: 1700000000000,
+          break_confirmed_at_bar_index: null, known_at_bar_index: 20, object_revision: 1,
+          entry_id: null, exit_id: null, pending_exit_id: null, first_retest_id: null,
+          rule_version: 'local_center_boundary_v1', left_context_incomplete: false,
+          previous_center_id: 'center-before', core_relation: 'CORE_ABOVE',
+          higher_level_review_required: true, trend_status: 'UNVERIFIED',
+        }],
+        center_connections: [
+          { object_id: 'connection-in', from_center_id: 'center-before', to_center_id: 'center-current' },
+          { object_id: 'connection-out', from_center_id: 'center-current', to_center_id: null },
+        ],
+        center_audit_events: [{
+          object_id: 'preview-current', event_type: 'PREVIEW_UPDATED', center_id: 'center-current',
+          preview_state: 'RETEST_TOUCH', preview_confirmed: false, comparison_i64: 115,
+          known_at_bar_index: 21, unit_ids: ['unit-exit', 'unit-tail'],
+        }],
+      },
+    })
+    const wrapper = mount(AppShell, {
+      props: { health: 'ok' }, global: { stubs: { ChartGroup: ChartStub, DatasetPanel: true } },
+    })
+    wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset)
+    await flushPromises()
+    await wrapper.get('.right-dock nav').findAll('button').at(3)?.trigger('click')
+    const bySource = wrapper.findComponent({ name: 'ObjectTreePanel' }).props('signalsBySource') as Record<string, Array<{ hover_detail?: string }>>
+    const detail = Object.values(bySource).flat().find((signal) => signal.hover_detail?.includes('center-current'))?.hover_detail
+    expect(detail).toContain('前向连接：connection-in（来源中枢：center-before）')
+    expect(detail).toContain('后向连接：connection-out（目标中枢：尚未形成后中枢）')
+    expect(detail).toContain('构成三单元：unit-1 → unit-2 → unit-3')
+    expect(detail).toContain('扫描起点：单元索引 10')
+    expect(detail).toContain('核心关系：核心上移（前中枢：center-before）')
+    expect(detail).toContain('趋势：未验证 · 外围波动接触，需高级别递归检查')
+    expect(detail).toContain('触边，候选即时失效 · 比较值 115 · K21 · unit-exit → unit-tail（不可交易）')
+    wrapper.unmount()
   })
 
   it('opens a revision-bound backtest page and focuses its double-clicked trade', async () => {
@@ -223,7 +273,7 @@ describe('AppShell', () => {
     ])
   })
 
-  it('creates one default Chan overlay showing bi and zhongshu on a new workspace', async () => {
+  it('creates one default Chan overlay showing bi and local centers on a new workspace', async () => {
     api.getLayout.mockRejectedValue(new ApiError('WORKSPACE_NOT_FOUND', 'missing', 'req-layout'))
     api.getDrawings.mockRejectedValue(new ApiError('DRAWINGS_NOT_FOUND', 'missing', 'req-drawings'))
     api.listAlgorithms.mockResolvedValue([chanDefinition()])
@@ -241,7 +291,7 @@ describe('AppShell', () => {
     expect(chart.props('strategySources')).toEqual([
       expect.objectContaining({
         source_type: 'StrategySource', visible: true,
-        category_visibility: { processed_bars: false, fractals: false, bi: true, bi_states: true, segments: true, zhongshu: true, segment_zhongshu: true, level_centers: true, level_movements: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
+        category_visibility: { processed_bars: false, fractals: false, bi: true, bi_states: true, segments: true, local_centers: true, level_centers: false, level_movements: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
       }),
     ])
   })
@@ -270,7 +320,7 @@ describe('AppShell', () => {
       confirmed_at_bar_index: 71, known_at_bar_index: 71, object_revision: 1,
     }
     api.getCalculationResults.mockResolvedValue({
-      result_kind: 'chan', objects: { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], zhongshu: [], segment_zhongshu: [], movement_states: [], center_monitors: [monitor], divergences: [], trade_points: [signal] },
+      result_kind: 'chan', objects: { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], local_centers: [], center_connections: [], center_audit_events: [], level_centers: [], level_movements: [], movement_states: [], center_monitors: [monitor], divergences: [], trade_points: [signal] },
       coverage: { first_bar_index: 0, last_bar_index: 100, returned_count: 2 },
     })
     const wrapper = mount(AppShell, {
@@ -390,7 +440,7 @@ describe('AppShell', () => {
           dataset_id: dataset.dataset_id, data_revision: dataset.data_revision,
           algorithm: { kind: 'chan', algorithm_id: 'chan_engineering', algorithm_version: '1.0.0', source_hash: `sha256:${'b'.repeat(64)}` },
           parameters: { min_stroke_bars: 5 },
-          category_visibility: { fractals: false, bi: true, segments: true, zhongshu: true, segment_zhongshu: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
+          category_visibility: { fractals: false, bi: true, segments: true, local_centers: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
         }],
       })
       api.getDrawings.mockRejectedValue(new ApiError('DRAWINGS_NOT_FOUND', 'missing', 'req-drawings'))
@@ -398,7 +448,7 @@ describe('AppShell', () => {
         schema_version: 1, profile_id: 'default', revision: 7, updated_at: '2026-08-01T00:00:00Z',
         strategy_sources: [{
           dataset_id: dataset.dataset_id, data_revision: dataset.data_revision, source_id: 'strategy-default-chan', visible: true,
-          category_visibility: { fractals: false, bi: false, segments: true, zhongshu: true, segment_zhongshu: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
+          category_visibility: { processed_bars: false, fractals: false, bi: false, bi_states: true, segments: true, local_centers: true, level_centers: false, level_movements: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
         }],
       })
       api.listAlgorithms.mockResolvedValue([chanDefinition()])
@@ -413,7 +463,7 @@ describe('AppShell', () => {
       wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset, 'automatic')
       await flushPromises()
       const categoryToggles = wrapper.findAll('.strategy-categories input[type="checkbox"]')
-      expect(categoryToggles).toHaveLength(13)
+      expect(categoryToggles).toHaveLength(12)
       expect((categoryToggles[2]?.element as HTMLInputElement).checked).toBe(false)
       await categoryToggles[1]?.trigger('change')
       expect(api.putStrategySourceConfig).not.toHaveBeenCalled()

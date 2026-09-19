@@ -1,8 +1,10 @@
-# 缠论笔、笔中枢与段算法
+# 缠论笔、线段与实体中枢算法
+
+> 15E 起，本项目不再生成或读取旧笔中枢/旧线段中枢。文档中早期金样仅作版本历史；当前权威实现为 `local_center_boundary_v1`。
 
 ## 1. 权威参考与边界
 
-本项目的缠论结构算法运行在 Python 中。以下实现用于包含、分型、笔中枢和段的交叉参考：
+本项目的缠论结构算法运行在 Python 中。以下实现仅用于包含、分型、笔和段的交叉参考：
 
 - `E:\work\py\algo-ui\common\chanlun\c_bi.py`
 - `E:\work\py\algo-ui\common\model\kline.py`
@@ -61,8 +63,8 @@ Vue 只投影和绘制 Python 输出的时间、价格锚点，Go 只读取、�
 - 新发现对象的 `known_at_bar_index` 不早于发现它的当前笔；修改和删除以递增对象修订事件表达。
 - 上层结构按首次变化笔位置更新。已确认段和已离开中枢属于稳定前缀；当前段变化只更新段本身，只有已确认段变化才重算段中枢、走势状态、背驰和买卖点。
 - 增量实现必须与每次从第 0 笔强制全量重扫产生完全相同的事件顺序、对象修订号、可知时间和终态对象。
-- 缓存分别写入 `fractals.parquet`、`bi.parquet`、`segments.parquet`、`zhongshu.parquet`、`segment_zhongshu.parquet`、`divergences.parquet`、`trade_points.parquet` 和 `events.parquet`。
-- 主图默认显示蓝色笔、黄色段，以及带半透明填充与阴影的浅蓝色笔中枢；分型默认关闭。标准线段中枢、背驰和买卖点见 `docs/14-chan-108-segment-center-divergence-trade-points.md`。
+- 缓存写入 `fractals.parquet`、`bi.parquet`、`segments.parquet`、`local_centers.parquet`、`center_connections.parquet`、`center_audit_events.parquet`、`divergences.parquet`、`trade_points.parquet` 和 `events.parquet`。
+- 主图默认显示蓝色笔、黄色段和实体中枢；分型默认关闭。
 
 ## 6. 回归约束
 

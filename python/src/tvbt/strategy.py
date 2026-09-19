@@ -1285,9 +1285,12 @@ def _run_fixed_level_centre(
         if bar.bar_index % 256 == 0 and cancelled.is_set():
             raise InterruptedError("strategy execution cancelled")
         for event in events_by_bar.get(bar.bar_index, []):
-            if event.object_type not in {"segment_zhongshu", "trade_point"}:
+            if event.object_type not in {
+                "local_center",
+                "trade_point",
+            } or not _strategy_accepts_center_event(event):
                 continue
-            target = centers if event.object_type == "segment_zhongshu" else third_points
+            target = centers if event.object_type == "local_center" else third_points
             if event.operation == "delete":
                 target.pop(event.object_id, None)
                 continue
@@ -1616,7 +1619,11 @@ def _run_consolidation_reversion(
     ]
     events_by_bar: dict[int, list[Any]] = {}
     for event in runtime.emitter.events:
-        if event.object_type in {"segment_zhongshu", "divergence", "trade_point"}:
+        if event.object_type in {
+            "local_center",
+            "divergence",
+            "trade_point",
+        } and _strategy_accepts_center_event(event):
             events_by_bar.setdefault(event.known_at_bar_index, []).append(event)
 
     centers: dict[str, dict[str, Any]] = {}
@@ -1734,13 +1741,13 @@ def _run_consolidation_reversion(
         new_points: list[tuple[Any, dict[str, Any]]] = []
         third_points: list[tuple[Any, dict[str, Any]]] = []
         for event in events_by_bar.get(bar.bar_index, []):
-            target = centers if event.object_type == "segment_zhongshu" else divergences
+            target = centers if event.object_type == "local_center" else divergences
             if event.operation == "delete":
-                if event.object_type in {"segment_zhongshu", "divergence"}:
+                if event.object_type in {"local_center", "divergence"}:
                     target.pop(event.object_id, None)
                 continue
             value = json.loads(event.payload_json)
-            if event.object_type == "segment_zhongshu":
+            if event.object_type == "local_center":
                 centers[event.object_id] = value
             elif event.object_type == "divergence":
                 divergences[event.object_id] = value
@@ -1875,7 +1882,9 @@ def _run_third_point_migration_hold(
         }
     events_by_bar: dict[int, list[Any]] = {}
     for event in runtime.emitter.events:
-        if event.object_type in {"segment_zhongshu", "trade_point"}:
+        if event.object_type in {"local_center", "trade_point"} and _strategy_accepts_center_event(
+            event
+        ):
             events_by_bar.setdefault(event.known_at_bar_index, []).append(event)
 
     position_side = "flat"
@@ -2016,7 +2025,7 @@ def _run_third_point_migration_hold(
             if event.operation != "upsert":
                 continue
             value = json.loads(event.payload_json)
-            if event.object_type == "segment_zhongshu" and value.get("confirmed"):
+            if event.object_type == "local_center" and value.get("confirmed"):
                 new_centers.append(event)
             elif event.object_type == "trade_point" and value.get("confirmed", True) is True:
                 points.append((event, value))
@@ -2828,9 +2837,16 @@ def _load_chan_strategy_feed(
         volume_by_bar[bar_index] = None if volume is None else int(volume)
     events_by_bar: dict[int, list[Any]] = {}
     for event in runtime.emitter.events:
-        if event.object_type in object_types:
+        if event.object_type in object_types and _strategy_accepts_center_event(event):
             events_by_bar.setdefault(event.known_at_bar_index, []).append(event)
     return _ChanStrategyFeed(bars, events_by_bar, volume_by_bar)
+
+
+def _strategy_accepts_center_event(event: Any) -> bool:
+    """All existing center strategies operate on the SEGMENT local-center stream."""
+    if event.object_type != "local_center" or event.operation == "delete":
+        return True
+    return str(json.loads(event.payload_json).get("unit_kind", "SEGMENT")) == "SEGMENT"
 
 
 class _CausalStrategyOutput:
@@ -3050,7 +3066,7 @@ def _run_third_buy_only(
         guard,
         cancelled,
         last_bar_index=last_bar_index,
-        object_types={"segment", "segment_zhongshu", "divergence", "trade_point"},
+        object_types={"segment", "local_center", "divergence", "trade_point"},
     )
     timestamp_by_bar_index = {bar.bar_index: bar.timestamp_utc for bar in feed.bars}
     output = _CausalStrategyOutput("B3", "waiting_standard_B3")
@@ -3225,19 +3241,19 @@ def _run_third_buy_only(
         new_points: list[tuple[str, dict[str, Any]]] = []
         deleted: dict[str, set[str]] = {
             "segment": set(),
-            "segment_zhongshu": set(),
+            "local_center": set(),
             "divergence": set(),
             "trade_point": set(),
         }
         targets = {
             "segment": active_segments,
-            "segment_zhongshu": active_centers,
+            "local_center": active_centers,
             "divergence": active_divergences,
             "trade_point": active_points,
         }
         new_values = {
             "segment": new_segments,
-            "segment_zhongshu": new_centers,
+            "local_center": new_centers,
             "divergence": new_divergences,
             "trade_point": new_points,
         }
@@ -3260,7 +3276,7 @@ def _run_third_buy_only(
             ):
                 revised_source_id = source_b3_id
             elif source_center_id is not None and (
-                source_center_id in deleted["segment_zhongshu"]
+                source_center_id in deleted["local_center"]
                 or any(object_id == source_center_id for object_id, _ in new_centers)
             ):
                 revised_source_id = source_center_id
@@ -4010,7 +4026,7 @@ def _run_auxiliary_boll_bardo(
         guard,
         cancelled,
         last_bar_index=last_bar_index,
-        object_types={"segment_zhongshu", "movement_state", "divergence", "trade_point"},
+        object_types={"local_center", "movement_state", "divergence", "trade_point"},
     )
     structural_events = [event for values in feed.events_by_bar.values() for event in values]
     contexts = derive_bardo_contexts(feed.bars, structural_events)
@@ -4335,7 +4351,7 @@ def _run_centre_oscillation_spread(
         guard,
         cancelled,
         last_bar_index=last_bar_index,
-        object_types={"segment_zhongshu", "center_monitor", "divergence", "trade_point"},
+        object_types={"local_center", "center_monitor", "divergence", "trade_point"},
     )
     output = _CausalStrategyOutput("OSC", "waiting_active_center")
     centers: dict[str, dict[str, Any]] = {}
@@ -4481,20 +4497,20 @@ def _run_centre_oscillation_spread(
         new_divergences: list[tuple[str, dict[str, Any]]] = []
         new_points: list[tuple[str, dict[str, Any]]] = []
         deleted: dict[str, set[str]] = {
-            "segment_zhongshu": set(),
+            "local_center": set(),
             "center_monitor": set(),
             "divergence": set(),
             "trade_point": set(),
         }
         revised_center_cores: set[str] = set()
         targets = {
-            "segment_zhongshu": centers,
+            "local_center": centers,
             "center_monitor": monitors,
             "divergence": divergences,
             "trade_point": points,
         }
         new_values = {
-            "segment_zhongshu": new_centers,
+            "local_center": new_centers,
             "center_monitor": new_monitors,
             "divergence": new_divergences,
             "trade_point": new_points,
@@ -4509,7 +4525,7 @@ def _run_centre_oscillation_spread(
             value = json.loads(event.payload_json)
             previous = target.get(event.object_id)
             if (
-                event.object_type == "segment_zhongshu"
+                event.object_type == "local_center"
                 and previous is not None
                 and all(name in previous and name in value for name in ("zd_i64", "zg_i64"))
                 and center_core(previous) != center_core(value)
@@ -4583,7 +4599,7 @@ def _run_centre_oscillation_spread(
             center = centers.get(current_center_id)
             reason: str | None = None
             source_id = current_center_id
-            if current_center_id in deleted["segment_zhongshu"] or center is None:
+            if current_center_id in deleted["local_center"] or center is None:
                 reason = "ACTIVE_CENTER_DELETED"
             elif current_center_id in revised_center_cores:
                 reason = "ACTIVE_CENTER_CORE_REVISED"
@@ -4875,7 +4891,7 @@ def _run_same_level_decomposition_program(
         guard,
         cancelled,
         last_bar_index=last_bar_index,
-        object_types={"segment", "segment_zhongshu", "level_center", "divergence"},
+        object_types={"segment", "local_center", "level_center", "divergence"},
     )
     output = _CausalStrategyOutput("SLD", "waiting_same_level_sequence")
     active_segments: dict[str, dict[str, Any]] = {}
@@ -5290,7 +5306,7 @@ def _run_same_level_decomposition_program(
                     if previous is not None and position_source_id == event.object_id:
                         reset_source_ids.add(event.object_id)
                     new_divergence_ids.add(event.object_id)
-            elif event.object_type == "segment_zhongshu":
+            elif event.object_type == "local_center":
                 if event.operation == "delete":
                     active_centers.pop(event.object_id, None)
                     continue
@@ -5544,7 +5560,7 @@ def _run_three_level_complete_classification(
         last_bar_index=last_bar_index,
         object_types={
             "segment",
-            "segment_zhongshu",
+            "local_center",
             "movement_state",
             "divergence",
             "trade_point",
@@ -5555,7 +5571,7 @@ def _run_three_level_complete_classification(
         "level_graph_profile_id": 1,
         "level_graph_profile": "segment_center_chain_v1",
         "low_level": "confirmed_segment_turn",
-        "middle_level": "confirmed_segment_zhongshu",
+        "middle_level": "confirmed_local_center",
         "high_level": "confirmed_center_migration_chain",
     }
     centers: dict[str, dict[str, Any]] = {}
@@ -6084,14 +6100,14 @@ def _run_three_level_complete_classification(
         invalidated_dependencies: set[str] = set()
         targets = {
             "segment": segments,
-            "segment_zhongshu": centers,
+            "local_center": centers,
             "movement_state": movements,
             "divergence": divergences,
             "trade_point": trade_points,
         }
         new_values = {
             "segment": new_segments,
-            "segment_zhongshu": new_centers,
+            "local_center": new_centers,
             "movement_state": new_movements,
             "divergence": new_divergences,
             "trade_point": new_points,
@@ -6114,7 +6130,7 @@ def _run_three_level_complete_classification(
             target[event.object_id] = value
             changed = previous is None
             if previous is not None:
-                if event.object_type == "segment_zhongshu":
+                if event.object_type == "local_center":
                     changed = center_signature(previous) != center_signature(value)
                 else:
                     changed = source_signature(event.object_type, previous) != source_signature(
@@ -6223,7 +6239,7 @@ def _run_target_level_rebound_segmented_operation(
         guard,
         cancelled,
         last_bar_index=last_bar_index,
-        object_types={"segment", "segment_zhongshu", "divergence", "trade_point"},
+        object_types={"segment", "local_center", "divergence", "trade_point"},
     )
     output = _CausalStrategyOutput("RBS", "WAIT_TARGET_LEVEL_TURN")
     graph_details = {
@@ -7010,13 +7026,13 @@ def _run_target_level_rebound_segmented_operation(
         invalidated_dependencies: set[str] = set()
         targets = {
             "segment": segments,
-            "segment_zhongshu": centers,
+            "local_center": centers,
             "divergence": divergences,
             "trade_point": trade_points,
         }
         new_values = {
             "segment": new_segments,
-            "segment_zhongshu": new_centers,
+            "local_center": new_centers,
             "divergence": new_divergences,
             "trade_point": new_points,
         }
@@ -7048,11 +7064,11 @@ def _run_target_level_rebound_segmented_operation(
                 changed = True
             elif event.object_type == "segment":
                 changed = segment_signature(previous) != segment_signature(value)
-            elif event.object_type == "segment_zhongshu":
+            elif event.object_type == "local_center":
                 changed = center_identity_signature(previous) != center_identity_signature(value)
             else:
                 changed = signal_signature(previous) != signal_signature(value)
-            if event.object_id == target_center_id and event.object_type == "segment_zhongshu":
+            if event.object_id == target_center_id and event.object_type == "local_center":
                 target_center = value
             if changed:
                 new_values[event.object_type].append((event.object_id, value))
@@ -7153,14 +7169,14 @@ def _run_bottom_top_construction(
         guard,
         cancelled,
         last_bar_index=last_bar_index,
-        object_types={"fractal", "segment_zhongshu", "trade_point"},
+        object_types={"fractal", "local_center", "trade_point"},
     )
     output = _CausalStrategyOutput("BTC", "WAIT_BOTTOM_TOP_CONSTRUCTION")
     graph_details = {
         "level_graph_profile_id": 1,
         "level_graph_profile": "segment_bottom_top_build_v1",
         "precise_source_level": "confirmed_standard_first_point",
-        "resulting_center_level": "confirmed_segment_zhongshu",
+        "resulting_center_level": "confirmed_local_center",
         "coarse_zone_profile": "processed_fractal_zone_v1",
         "coarse_effective_hold_bars": coarse_hold_bars,
         "coarse_zone_executes_trade": False,
@@ -7664,12 +7680,12 @@ def _run_bottom_top_construction(
         }
         targets = {
             "fractal": fractals,
-            "segment_zhongshu": centers,
+            "local_center": centers,
             "trade_point": trade_points,
         }
         new_values = {
             "fractal": new_fractals,
-            "segment_zhongshu": new_centers,
+            "local_center": new_centers,
             "trade_point": new_points,
         }
         for event in feed.events_by_bar.get(bar.bar_index, []):
@@ -7688,11 +7704,11 @@ def _run_bottom_top_construction(
                 changed = True
             elif event.object_type == "fractal":
                 changed = fractal_signature(previous) != fractal_signature(value)
-            elif event.object_type == "segment_zhongshu":
+            elif event.object_type == "local_center":
                 changed = center_identity_signature(previous) != center_identity_signature(value)
             else:
                 changed = signal_signature(previous) != signal_signature(value)
-            if event.object_id == resulting_center_id and event.object_type == "segment_zhongshu":
+            if event.object_id == resulting_center_id and event.object_type == "local_center":
                 resulting_center = value
             if changed:
                 new_values[event.object_type].append((event.object_id, value))
