@@ -416,6 +416,12 @@ describe('AppShell', () => {
       macd_diff_reference_extreme: -3.1, macd_diff_current_extreme: -1.2,
       macd_dea_reference_extreme: -2.8, macd_dea_current_extreme: -1.0,
       macd_extreme_relation: 'both_weaker', a_object_id: reference.object_id,
+      strength_profile: 'price_displacement_speed_v1', strength_relation: 'conflict',
+      strength_trigger: 'baseline_span_below_80pct',
+      price_displacement_reference_i64: 100, price_displacement_current_i64: 60,
+      observed_intervals_reference: 20, observed_intervals_current: 5,
+      baseline_span_reference_i64: 100, baseline_span_current_i64: 60,
+      baseline_span_below_80pct: true,
       comparison_reference_object_id: reference.object_id, comparison_current_object_id: current.object_id,
       confirmed_at_bar_index: 45, known_at_bar_index: 45, object_revision: 1 }
     api.getCalculationResults.mockResolvedValue({ result_kind: 'chan', objects: {
@@ -436,8 +442,11 @@ describe('AppShell', () => {
     wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset)
     await flushPromises()
     await wrapper.findAll('.right-dock nav button')[3]?.trigger('click')
-    expect(wrapper.get('[data-signal-id="divergence-1"]').text()).toContain('MACD 同向面积比 0.500')
-    expect(wrapper.get('[data-signal-id="divergence-1"]').text()).toContain('MACD 同向面积 12.00 → 6.00')
+    expect(wrapper.get('[data-signal-id="divergence-1"]').text()).toContain('后段基准跨度严格小于前段 80%')
+    expect(wrapper.get('[data-signal-id="divergence-1"]').text()).toContain('结构端点位移 100 → 60')
+    expect(wrapper.get('[data-signal-id="divergence-1"]').text()).toContain('实际观测 K 线间隔 20 → 5')
+    expect(wrapper.get('[data-signal-id="divergence-1"]').text()).toContain('MACD 辅助面积比 0.500')
+    expect(wrapper.get('[data-signal-id="divergence-1"]').text()).toContain('MACD 辅助：同向面积 12.00 → 6.00')
     expect(wrapper.get('[data-signal-id="divergence-1"]').text()).toContain('DIFF 同向极值')
     expect(wrapper.get('[data-signal-id="divergence-1"]').text()).toContain('DIFF/DEA 极值辅助判断：均减弱')
     expect(wrapper.get('[data-signal-id="forming-1"]').text()).toContain('形成中')

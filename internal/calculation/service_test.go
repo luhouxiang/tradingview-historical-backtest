@@ -272,6 +272,23 @@ func TestChanCacheHitAndSemanticRangeRead(t *testing.T) {
 	departureID := "bi-departure"
 	retestID := "bi-retest"
 	signals := []ChanSignalPoint{{ObjectID: "signal-1", BarIndex: 20, Time: 2000, PriceI64: 90, SignalType: "buy_1", Status: "confirmed", LevelID: &levelID, LowerLevelTurnObjectID: &lowerTurnID, CatalogEvent: &catalogEvent, CatalogAlgorithmID: &catalogAlgorithmID, DivergenceProfile: &divergenceProfile, FormationDir: &formationDir, RelativeDir: &relativeDir, ACenterID: &centerA, BCenterID: &centerB, MACDAreaRatio: &areaRatio, MACDExtremeRelation: &extremeRelation, CContainsType3: &noProof, CMeetsSublevel: &noProof, CSublevelProfile: &proofProfile, CSublevelCenterIDs: []string{"bi-center-1"}, CType3DepartureID: &departureID, CType3RetestID: &retestID, CProofKnownAtBarIndex: &confirmedAt, Confirmed: true, ConfirmedAtBarIndex: &confirmedAt, KnownAtBarIndex: 20, ObjectRevision: 1}}
+	strengthProfile := "price_displacement_speed_v1"
+	strengthRelation := "conflict"
+	strengthTrigger := "baseline_span_below_80pct"
+	referenceDisplacement, currentDisplacement := int64(100), int64(60)
+	referenceIntervals, currentIntervals := int64(20), int64(5)
+	referenceSpan, currentSpan := int64(100), int64(60)
+	below80Pct := true
+	signals[0].StrengthProfile = &strengthProfile
+	signals[0].StrengthRelation = &strengthRelation
+	signals[0].StrengthTrigger = &strengthTrigger
+	signals[0].PriceDisplacementReferenceI64 = &referenceDisplacement
+	signals[0].PriceDisplacementCurrentI64 = &currentDisplacement
+	signals[0].ObservedIntervalsReference = &referenceIntervals
+	signals[0].ObservedIntervalsCurrent = &currentIntervals
+	signals[0].BaselineSpanReferenceI64 = &referenceSpan
+	signals[0].BaselineSpanCurrentI64 = &currentSpan
+	signals[0].BaselineSpanBelow80Pct = &below80Pct
 	breakoutWarning := "rising_wedge_below_b"
 	monitors := []ChanCenterMonitor{{ObjectID: "monitor-1", BarIndex: 20, Time: 2000, ZI64: 100, ZnI64: 101, ZTwiceI64: 201, ZnTwiceI64: 203, CoreLowI64: 90, CoreHighI64: 111, RangeHighI64: 113, RangeLowI64: 90, ComponentOrdinal: 3, ComponentDirection: "up", RelativePosition: "above", OscillationBias: "strong", BreakoutWarning: &breakoutWarning, CatalogAlgorithmID: "ALG-AUX-004", SemanticNamespace: "auxiliary", EvidenceLevel: "AUXILIARY", LevelMappingProfile: "segment_center_components_v1", StandardSignal: false, ExecutionAllowed: false, ConfirmsThirdPoint: false, AnalysisLevel: "segment", ReferenceObjectID: "local-center-1", Confirmed: true, ConfirmedAtBarIndex: &confirmedAt, KnownAtBarIndex: 20, ObjectRevision: 1}}
 	for name, value := range map[string]any{"processed_bars.parquet": processedBars, "fractals.parquet": fractals, "bi.parquet": lines, "bi_states.parquet": biStates, "segments.parquet": lines, "local_centers.parquet": localCenter, "center_connections.parquet": connections, "center_audit_events.parquet": auditEvents, "movement_states.parquet": []ChanMovementState{}, "center_monitors.parquet": monitors, "divergences.parquet": signals, "trade_points.parquet": signals, "events.parquet": []chanEventTestRow{}} {
@@ -328,6 +345,9 @@ func TestChanCacheHitAndSemanticRangeRead(t *testing.T) {
 	}
 	if divergence.CSublevelProfile == nil || *divergence.CSublevelProfile != proofProfile || len(divergence.CSublevelCenterIDs) != 1 || divergence.CSublevelCenterIDs[0] != "bi-center-1" || divergence.CType3DepartureID == nil || *divergence.CType3DepartureID != departureID || divergence.CType3RetestID == nil || *divergence.CType3RetestID != retestID || divergence.CProofKnownAtBarIndex == nil || *divergence.CProofKnownAtBarIndex != confirmedAt {
 		t.Fatalf("BI sublevel proof was not preserved across the Go cache API: %#v", divergence)
+	}
+	if divergence.StrengthProfile == nil || *divergence.StrengthProfile != strengthProfile || divergence.StrengthRelation == nil || *divergence.StrengthRelation != strengthRelation || divergence.StrengthTrigger == nil || *divergence.StrengthTrigger != strengthTrigger || divergence.PriceDisplacementReferenceI64 == nil || *divergence.PriceDisplacementReferenceI64 != referenceDisplacement || divergence.ObservedIntervalsCurrent == nil || *divergence.ObservedIntervalsCurrent != currentIntervals || divergence.BaselineSpanBelow80Pct == nil || !*divergence.BaselineSpanBelow80Pct {
+		t.Fatalf("price-time evidence was not preserved across the Go cache API: %#v", divergence)
 	}
 	if result.Objects.Bi[0].StartExtremeSourceBarIndex != 10 || result.Objects.Bi[0].EndExtremeSourceBarIndex != 20 {
 		t.Fatalf("unexpected Chan extreme source indexes: %#v", result.Objects.Bi[0])

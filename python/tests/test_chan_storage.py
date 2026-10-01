@@ -125,7 +125,7 @@ def test_chan_cache_writes_typed_tables_checkpoints_and_success_last(tmp_path: P
         == pq.read_table(directory / "bi.parquet").schema.names
     )
     manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["schema_version"] == 11
+    assert manifest["schema_version"] == 12
     assert manifest["counts"]["events"] == 1
     assert manifest["files"]["processed_bars"]["path"] == "processed_bars.parquet"
     assert manifest["files"]["bi_states"]["path"] == "bi_states.parquet"

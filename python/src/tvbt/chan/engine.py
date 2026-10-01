@@ -319,7 +319,7 @@ class ChanEngine:
     """逐 K 线因果缠论引擎，负责分型、笔、线段、中枢和信号事件生成。"""
 
     # 算法版本参与缓存键；任何语义变化都必须升级版本，禁止复用旧缓存。
-    algorithm_version = "19.3.2"
+    algorithm_version = "20.0.0"
 
     def __init__(
         self,
@@ -344,6 +344,7 @@ class ChanEngine:
         self.price_tick_i64 = price_tick_i64
         # 原始 K 线序列，必须按 bar_index 和 time 严格递增。
         self.raw_bars: list[RawBar] = []
+        self._raw_position_by_bar_index: dict[int, int] = {}
         # 经过包含关系处理后的独立 K 线序列。
         self.included: list[IncludedBar] = []
         # 已确认并发布过的分型。
@@ -398,6 +399,7 @@ class ChanEngine:
             raise ValueError("raw bar open is outside high-low range")
         if not bar.low_i64 <= bar.close_i64 <= bar.high_i64:
             raise ValueError("raw bar close is outside high-low range")
+        self._raw_position_by_bar_index[bar.bar_index] = len(self.raw_bars)
         self.raw_bars.append(bar)
         self._append_macd(bar)
         # 包含关系只有在追加出新的独立 K 线时，才可能封存上一根独立 K 线的分型。
@@ -1249,6 +1251,9 @@ class ChanEngine:
             dea=self._macd_dea_by_bar,
             bi_lines=self.bi,
             bi_centers=self._bi_sublevel_centers,
+            raw_positions=self._raw_position_by_bar_index,
+            certified_complete_positions=True,
+            strength_profile="price_displacement_speed_v1",
         )
         divergence_values: list[tuple[str, dict[str, Any], int]] = []
         divergence_objects: list[tuple[str, ChanSignal]] = []
@@ -1993,6 +1998,9 @@ class ChanEngine:
             self._macd_histogram,
             diff=self._macd_diff_by_bar,
             dea=self._macd_dea_by_bar,
+            raw_positions=self._raw_position_by_bar_index,
+            certified_complete_positions=True,
+            strength_profile="price_displacement_speed_v1",
         )
         return [
             (
@@ -2236,6 +2244,9 @@ class ChanEngine:
             price_tick_i64=int(identity.get("price_tick_i64", 1)),
         )
         engine.raw_bars = [RawBar(**item) for item in state["raw_bars"]]
+        engine._raw_position_by_bar_index = {
+            bar.bar_index: position for position, bar in enumerate(engine.raw_bars)
+        }
         for bar in engine.raw_bars:
             engine._append_macd(bar)
         engine.included = [IncludedBar(**item) for item in state["included"]]
@@ -2333,6 +2344,16 @@ def _signal_payload(signal: ChanSignal) -> dict[str, Any]:
         "comparison_reference_object_id": signal.comparison_reference_object_id,
         "comparison_current_object_id": signal.comparison_current_object_id,
         "comparison_rule": signal.comparison_rule,
+        "strength_profile": signal.strength_profile,
+        "strength_relation": signal.strength_relation,
+        "strength_trigger": signal.strength_trigger,
+        "price_displacement_reference_i64": signal.price_displacement_reference_i64,
+        "price_displacement_current_i64": signal.price_displacement_current_i64,
+        "observed_intervals_reference": signal.observed_intervals_reference,
+        "observed_intervals_current": signal.observed_intervals_current,
+        "baseline_span_reference_i64": signal.baseline_span_reference_i64,
+        "baseline_span_current_i64": signal.baseline_span_current_i64,
+        "baseline_span_below_80pct": signal.baseline_span_below_80pct,
         "new_extreme_satisfied": signal.new_extreme_satisfied,
         "departure_object_id": signal.departure_object_id,
         "return_object_id": signal.return_object_id,

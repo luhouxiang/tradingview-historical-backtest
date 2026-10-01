@@ -414,8 +414,12 @@ function treeSignal(signal: ChanSignalPoint, objectType: 'divergence' | 'trade_p
         signal.divergence_kind === 'trend' ? `a ${signal.a_object_id ?? '未知'} · b ${signal.b_object_id ?? '未知'} · c ${signal.comparison_current_object_id ?? '未知'}`
           : signal.divergence_kind === 'consolidation' ? `a ${signal.a_object_id ?? '未知'} · c ${signal.comparison_current_object_id ?? '未知'}` : '',
         `参照段 ${signal.comparison_reference_object_id ?? '未知'} · 当前段 ${signal.comparison_current_object_id ?? '未知'}`,
-        signal.macd_area_reference == null || signal.macd_area_current == null ? '' : `MACD 同向面积 ${signal.macd_area_reference.toFixed(2)} → ${signal.macd_area_current.toFixed(2)}`,
-        signal.macd_area_ratio == null ? 'MACD 力度不可比' : `MACD 同向面积比 ${signal.macd_area_ratio.toFixed(3)}`,
+        signal.strength_profile === 'price_displacement_speed_v1' ? `主力度：价格位移与观测耗时；${signal.strength_trigger === 'baseline_span_below_80pct' ? '后段基准跨度严格小于前段 80%' : signal.strength_trigger === 'price_time_joint_weakening' ? '位移和速度共同减弱' : '未记录触发项'}` : '',
+        signal.price_displacement_reference_i64 == null || signal.price_displacement_current_i64 == null ? '' : `结构端点位移 ${signal.price_displacement_reference_i64} → ${signal.price_displacement_current_i64}`,
+        signal.observed_intervals_reference == null || signal.observed_intervals_current == null ? '' : `实际观测 K 线间隔 ${signal.observed_intervals_reference} → ${signal.observed_intervals_current}`,
+        signal.baseline_span_reference_i64 == null || signal.baseline_span_current_i64 == null ? '' : `中枢基准价格跨度 ${signal.baseline_span_reference_i64} → ${signal.baseline_span_current_i64}（严格小于 80%：${signal.baseline_span_below_80pct ? '是' : '否'}）`,
+        signal.macd_area_reference == null || signal.macd_area_current == null ? '' : `MACD 辅助：同向面积 ${signal.macd_area_reference.toFixed(2)} → ${signal.macd_area_current.toFixed(2)}`,
+        signal.macd_area_ratio == null ? '' : `MACD 辅助面积比 ${signal.macd_area_ratio.toFixed(3)}（不参与主判定）`,
         signal.macd_diff_reference_extreme == null || signal.macd_diff_current_extreme == null
           ? '' : `DIFF 同向极值 ${signal.macd_diff_reference_extreme.toFixed(2)} → ${signal.macd_diff_current_extreme.toFixed(2)}`,
         signal.macd_dea_reference_extreme == null || signal.macd_dea_current_extreme == null

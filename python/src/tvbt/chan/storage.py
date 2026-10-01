@@ -318,6 +318,16 @@ SIGNAL_SCHEMA = pa.schema(
         ("comparison_reference_object_id", pa.string()),
         ("comparison_current_object_id", pa.string()),
         ("comparison_rule", pa.string()),
+        ("strength_profile", pa.string()),
+        ("strength_relation", pa.string()),
+        ("strength_trigger", pa.string()),
+        ("price_displacement_reference_i64", pa.int64()),
+        ("price_displacement_current_i64", pa.int64()),
+        ("observed_intervals_reference", pa.int64()),
+        ("observed_intervals_current", pa.int64()),
+        ("baseline_span_reference_i64", pa.int64()),
+        ("baseline_span_current_i64", pa.int64()),
+        ("baseline_span_below_80pct", pa.bool_()),
         ("new_extreme_satisfied", pa.bool_()),
         ("departure_object_id", pa.string()),
         ("return_object_id", pa.string()),
@@ -457,7 +467,7 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
             )
         checkpoint_indices = sorted(result.checkpoints.keys() | result.checkpoint_files.keys())
         manifest = {
-            "schema_version": 11,
+            "schema_version": 12,
             "cache_key": payload["cache_key"],
             "dataset_id": dataset["dataset_id"],
             "data_revision": dataset["data_revision"],

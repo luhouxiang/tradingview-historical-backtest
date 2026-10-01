@@ -2,8 +2,8 @@ import { execFileSync } from 'node:child_process'
 import { expect, test } from '@playwright/test'
 
 for (const scenario of [
-  { name: 'trend', candidateId: 'divergence-e50a47b5dd0005c7bf74', windowStart: 26000, windowEnd: 29000 },
-  { name: 'external range', candidateId: 'divergence-5dbf3fe09c0552b5ca0e', windowStart: 28000, windowEnd: 31000 },
+  { name: 'trend', candidateId: 'divergence-5088fba348f062409d13', windowStart: 47500, windowEnd: 50500 },
+  { name: 'external range', candidateId: 'divergence-326ff5603933181264a5', windowStart: 28000, windowEnd: 31000 },
 ]) test(`AOL9 saved ${scenario.name} candidate highlights its real comparison segments`, async ({ page }) => {
   test.skip(!process.env.TVBT_15S_CACHE || !process.env.TVBT_15S_BARS, 'requires the verified 15S AOL9 cache')
   const fixture = JSON.parse(execFileSync('D:/ProgramData/anaconda3/envs/pydev3.14/python.exe', ['-c', `
@@ -95,5 +95,5 @@ print(json.dumps({'candidate':candidate,'segments':segments,'bars':bars}))
     return Number.isFinite(x1) && Number.isFinite(x2) && x1 >= 0 && x1 <= 1600 && x2 >= 0 && x2 <= 1600
   }))).toBe(true)
   expect(errors).toEqual([])
-  await page.screenshot({ path: `../trading-data/acceptance/divergence-15s-19-3-${scenario.name === 'trend' ? 'abc' : 'ac'}.png` })
+  await page.screenshot({ path: `../trading-data/acceptance/divergence-15s-20-0-${scenario.name === 'trend' ? 'abc' : 'ac'}.png` })
 })

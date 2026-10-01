@@ -1358,6 +1358,19 @@ export interface components {
             comparison_reference_object_id: string | null;
             comparison_current_object_id: string | null;
             comparison_rule: string | null;
+            /** @enum {string|null} */
+            strength_profile?: "legacy_macd_area_v1" | "price_displacement_speed_v1" | null;
+            /** @enum {string|null} */
+            strength_relation?: "weaker" | "stronger" | "equal" | "conflict" | "unknown" | null;
+            /** @enum {string|null} */
+            strength_trigger?: "price_time_joint_weakening" | "baseline_span_below_80pct" | null;
+            price_displacement_reference_i64?: number | null;
+            price_displacement_current_i64?: number | null;
+            observed_intervals_reference?: number | null;
+            observed_intervals_current?: number | null;
+            baseline_span_reference_i64?: number | null;
+            baseline_span_current_i64?: number | null;
+            baseline_span_below_80pct?: boolean | null;
             new_extreme_satisfied: boolean | null;
             departure_object_id: string | null;
             return_object_id: string | null;

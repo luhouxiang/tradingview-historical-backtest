@@ -1940,6 +1940,16 @@ components:
         comparison_reference_object_id: {type: [string, "null"]}
         comparison_current_object_id: {type: [string, "null"]}
         comparison_rule: {type: [string, "null"]}
+        strength_profile: {type: [string, "null"], enum: [legacy_macd_area_v1, price_displacement_speed_v1, null]}
+        strength_relation: {type: [string, "null"], enum: [weaker, stronger, equal, conflict, unknown, null]}
+        strength_trigger: {type: [string, "null"], enum: [price_time_joint_weakening, baseline_span_below_80pct, null]}
+        price_displacement_reference_i64: {type: [integer, "null"]}
+        price_displacement_current_i64: {type: [integer, "null"]}
+        observed_intervals_reference: {type: [integer, "null"], minimum: 1}
+        observed_intervals_current: {type: [integer, "null"], minimum: 1}
+        baseline_span_reference_i64: {type: [integer, "null"]}
+        baseline_span_current_i64: {type: [integer, "null"]}
+        baseline_span_below_80pct: {type: [boolean, "null"]}
         new_extreme_satisfied: {type: [boolean, "null"]}
         departure_object_id: {type: [string, "null"]}
         return_object_id: {type: [string, "null"]}

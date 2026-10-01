@@ -129,6 +129,7 @@ def main() -> None:
         output / "divergences.parquet",
         columns=[
             "divergence_profile",
+            "object_id",
             "status",
             "signal_type",
             "relative_dir",
@@ -139,6 +140,16 @@ def main() -> None:
             "b_center_id",
             "macd_area_reference",
             "macd_area_current",
+            "strength_profile",
+            "strength_relation",
+            "strength_trigger",
+            "price_displacement_reference_i64",
+            "price_displacement_current_i64",
+            "observed_intervals_reference",
+            "observed_intervals_current",
+            "baseline_span_reference_i64",
+            "baseline_span_current_i64",
+            "baseline_span_below_80pct",
             "new_extreme_satisfied",
             "reference_center_ordinal",
             "bar_index",
@@ -156,7 +167,7 @@ def main() -> None:
         row["object_id"]: row
         for row in pq.read_table(
             output / "segments.parquet",
-            columns=["object_id", "start_bar_index", "direction"],
+            columns=["object_id", "start_bar_index", "end_bar_index", "direction"],
         ).to_pylist()
     }
     centers = {
@@ -169,6 +180,36 @@ def main() -> None:
     for signal in divergences:
         if signal["known_at_bar_index"] < signal["bar_index"]:
             raise AssertionError("divergence is known before its theoretical bar")
+        if signal["status"] != "invalidated":
+            if signal["strength_profile"] != "price_displacement_speed_v1":
+                raise AssertionError("active divergence is not backed by price-time strength")
+            if any(
+                signal[name] is None or signal[name] <= 0
+                for name in (
+                    "price_displacement_reference_i64",
+                    "price_displacement_current_i64",
+                    "observed_intervals_reference",
+                    "observed_intervals_current",
+                )
+            ):
+                raise AssertionError("active divergence lacks positive price-time measurements")
+            if signal["strength_trigger"] == "price_time_joint_weakening":
+                if signal["strength_relation"] != "weaker":
+                    raise AssertionError("price-time trigger contradicts strength relation")
+            elif signal["strength_trigger"] == "baseline_span_below_80pct":
+                reference_span = signal["baseline_span_reference_i64"]
+                current_span = signal["baseline_span_current_i64"]
+                if (
+                    reference_span is None
+                    or current_span is None
+                    or reference_span <= 0
+                    or current_span <= 0
+                    or 5 * current_span >= 4 * reference_span
+                    or signal["baseline_span_below_80pct"] is not True
+                ):
+                    raise AssertionError("80% trigger lacks strict comparable price spans")
+            else:
+                raise AssertionError("active divergence has no valid price-time trigger")
         if signal["divergence_profile"] == "segment_trend_candidate" and (
             signal["c_contains_type3"] is True and signal["c_meets_sublevel"] is True
         ):
@@ -191,7 +232,6 @@ def main() -> None:
                     and centers[signal["a_center_id"]]["unit_kind"] == "SEGMENT"
                     and centers[signal["b_center_id"]]["unit_kind"] == "SEGMENT"
                     and centers[signal["b_center_id"]]["relative_dir"] == expected_direction
-                    and signal["macd_area_current"] < signal["macd_area_reference"]
                     and signal["new_extreme_satisfied"] is True
                 ):
                     raise AssertionError("trend candidate lacks its a/A/b/B/c structural evidence")
@@ -225,6 +265,49 @@ def main() -> None:
                 "divergence_profiles": dict(
                     Counter(signal["divergence_profile"] for signal in divergences)
                 ),
+                "strength_triggers": dict(
+                    Counter(
+                        signal["strength_trigger"]
+                        for signal in divergences
+                        if signal["status"] != "invalidated"
+                    )
+                ),
+                "macd_not_weaker_but_price_time_triggered": sum(
+                    signal["status"] != "invalidated"
+                    and signal["macd_area_reference"] is not None
+                    and signal["macd_area_current"] is not None
+                    and signal["macd_area_current"] >= signal["macd_area_reference"]
+                    for signal in divergences
+                ),
+                "strict_80pct_examples": [
+                    {
+                        "object_id": signal["object_id"],
+                        "bar_index": signal["bar_index"],
+                        "status": signal["status"],
+                        "profile": signal["divergence_profile"],
+                        "reference_span_i64": signal["baseline_span_reference_i64"],
+                        "current_span_i64": signal["baseline_span_current_i64"],
+                        "strength_relation": signal["strength_relation"],
+                        "a_start": segments[signal["a_object_id"]]["start_bar_index"],
+                        "c_end": segments[signal["comparison_current_object_id"]]["end_bar_index"],
+                    }
+                    for signal in divergences
+                    if signal["status"] != "invalidated"
+                    and signal["strength_trigger"] == "baseline_span_below_80pct"
+                ][:5],
+                "trend_candidate_examples": [
+                    {
+                        "object_id": signal["object_id"],
+                        "bar_index": signal["bar_index"],
+                        "c_contains_type3": signal["c_contains_type3"],
+                        "c_meets_sublevel": signal["c_meets_sublevel"],
+                        "a_start": segments[signal["a_object_id"]]["start_bar_index"],
+                        "c_end": segments[signal["comparison_current_object_id"]]["end_bar_index"],
+                    }
+                    for signal in divergences
+                    if signal["status"] == "candidate"
+                    and signal["divergence_profile"] == "segment_trend_candidate"
+                ][:5],
                 "status": "verified",
             },
             ensure_ascii=False,

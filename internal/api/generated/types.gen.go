@@ -609,6 +609,78 @@ func (e CalculationResultsObjectsDivergencesStrength) Valid() bool {
 	}
 }
 
+// Defines values for CalculationResultsObjectsDivergencesStrengthProfile.
+const (
+	CalculationResultsObjectsDivergencesStrengthProfileLegacyMacdAreaV1         CalculationResultsObjectsDivergencesStrengthProfile = "legacy_macd_area_v1"
+	CalculationResultsObjectsDivergencesStrengthProfileLessThannil              CalculationResultsObjectsDivergencesStrengthProfile = "<nil>"
+	CalculationResultsObjectsDivergencesStrengthProfilePriceDisplacementSpeedV1 CalculationResultsObjectsDivergencesStrengthProfile = "price_displacement_speed_v1"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsDivergencesStrengthProfile enum.
+func (e CalculationResultsObjectsDivergencesStrengthProfile) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsDivergencesStrengthProfileLegacyMacdAreaV1:
+		return true
+	case CalculationResultsObjectsDivergencesStrengthProfileLessThannil:
+		return true
+	case CalculationResultsObjectsDivergencesStrengthProfilePriceDisplacementSpeedV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsDivergencesStrengthRelation.
+const (
+	CalculationResultsObjectsDivergencesStrengthRelationConflict    CalculationResultsObjectsDivergencesStrengthRelation = "conflict"
+	CalculationResultsObjectsDivergencesStrengthRelationEqual       CalculationResultsObjectsDivergencesStrengthRelation = "equal"
+	CalculationResultsObjectsDivergencesStrengthRelationLessThannil CalculationResultsObjectsDivergencesStrengthRelation = "<nil>"
+	CalculationResultsObjectsDivergencesStrengthRelationStronger    CalculationResultsObjectsDivergencesStrengthRelation = "stronger"
+	CalculationResultsObjectsDivergencesStrengthRelationUnknown     CalculationResultsObjectsDivergencesStrengthRelation = "unknown"
+	CalculationResultsObjectsDivergencesStrengthRelationWeaker      CalculationResultsObjectsDivergencesStrengthRelation = "weaker"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsDivergencesStrengthRelation enum.
+func (e CalculationResultsObjectsDivergencesStrengthRelation) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsDivergencesStrengthRelationConflict:
+		return true
+	case CalculationResultsObjectsDivergencesStrengthRelationEqual:
+		return true
+	case CalculationResultsObjectsDivergencesStrengthRelationLessThannil:
+		return true
+	case CalculationResultsObjectsDivergencesStrengthRelationStronger:
+		return true
+	case CalculationResultsObjectsDivergencesStrengthRelationUnknown:
+		return true
+	case CalculationResultsObjectsDivergencesStrengthRelationWeaker:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsDivergencesStrengthTrigger.
+const (
+	CalculationResultsObjectsDivergencesStrengthTriggerBaselineSpanBelow80pct  CalculationResultsObjectsDivergencesStrengthTrigger = "baseline_span_below_80pct"
+	CalculationResultsObjectsDivergencesStrengthTriggerLessThannil             CalculationResultsObjectsDivergencesStrengthTrigger = "<nil>"
+	CalculationResultsObjectsDivergencesStrengthTriggerPriceTimeJointWeakening CalculationResultsObjectsDivergencesStrengthTrigger = "price_time_joint_weakening"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsDivergencesStrengthTrigger enum.
+func (e CalculationResultsObjectsDivergencesStrengthTrigger) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsDivergencesStrengthTriggerBaselineSpanBelow80pct:
+		return true
+	case CalculationResultsObjectsDivergencesStrengthTriggerLessThannil:
+		return true
+	case CalculationResultsObjectsDivergencesStrengthTriggerPriceTimeJointWeakening:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CalculationResultsObjectsFractalsFeatureProfile.
 const (
 	CalculationResultsObjectsFractalsFeatureProfileProcessedBarOhlcV1 CalculationResultsObjectsFractalsFeatureProfile = "processed_bar_ohlc_v1"
@@ -1203,6 +1275,78 @@ func (e CalculationResultsObjectsTradePointsStrength) Valid() bool {
 	case CalculationResultsObjectsTradePointsStrengthStrongest:
 		return true
 	case CalculationResultsObjectsTradePointsStrengthWeakest:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsTradePointsStrengthProfile.
+const (
+	CalculationResultsObjectsTradePointsStrengthProfileLegacyMacdAreaV1         CalculationResultsObjectsTradePointsStrengthProfile = "legacy_macd_area_v1"
+	CalculationResultsObjectsTradePointsStrengthProfileLessThannil              CalculationResultsObjectsTradePointsStrengthProfile = "<nil>"
+	CalculationResultsObjectsTradePointsStrengthProfilePriceDisplacementSpeedV1 CalculationResultsObjectsTradePointsStrengthProfile = "price_displacement_speed_v1"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsTradePointsStrengthProfile enum.
+func (e CalculationResultsObjectsTradePointsStrengthProfile) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsTradePointsStrengthProfileLegacyMacdAreaV1:
+		return true
+	case CalculationResultsObjectsTradePointsStrengthProfileLessThannil:
+		return true
+	case CalculationResultsObjectsTradePointsStrengthProfilePriceDisplacementSpeedV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsTradePointsStrengthRelation.
+const (
+	CalculationResultsObjectsTradePointsStrengthRelationConflict    CalculationResultsObjectsTradePointsStrengthRelation = "conflict"
+	CalculationResultsObjectsTradePointsStrengthRelationEqual       CalculationResultsObjectsTradePointsStrengthRelation = "equal"
+	CalculationResultsObjectsTradePointsStrengthRelationLessThannil CalculationResultsObjectsTradePointsStrengthRelation = "<nil>"
+	CalculationResultsObjectsTradePointsStrengthRelationStronger    CalculationResultsObjectsTradePointsStrengthRelation = "stronger"
+	CalculationResultsObjectsTradePointsStrengthRelationUnknown     CalculationResultsObjectsTradePointsStrengthRelation = "unknown"
+	CalculationResultsObjectsTradePointsStrengthRelationWeaker      CalculationResultsObjectsTradePointsStrengthRelation = "weaker"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsTradePointsStrengthRelation enum.
+func (e CalculationResultsObjectsTradePointsStrengthRelation) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsTradePointsStrengthRelationConflict:
+		return true
+	case CalculationResultsObjectsTradePointsStrengthRelationEqual:
+		return true
+	case CalculationResultsObjectsTradePointsStrengthRelationLessThannil:
+		return true
+	case CalculationResultsObjectsTradePointsStrengthRelationStronger:
+		return true
+	case CalculationResultsObjectsTradePointsStrengthRelationUnknown:
+		return true
+	case CalculationResultsObjectsTradePointsStrengthRelationWeaker:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CalculationResultsObjectsTradePointsStrengthTrigger.
+const (
+	CalculationResultsObjectsTradePointsStrengthTriggerBaselineSpanBelow80pct  CalculationResultsObjectsTradePointsStrengthTrigger = "baseline_span_below_80pct"
+	CalculationResultsObjectsTradePointsStrengthTriggerLessThannil             CalculationResultsObjectsTradePointsStrengthTrigger = "<nil>"
+	CalculationResultsObjectsTradePointsStrengthTriggerPriceTimeJointWeakening CalculationResultsObjectsTradePointsStrengthTrigger = "price_time_joint_weakening"
+)
+
+// Valid indicates whether the value is a known member of the CalculationResultsObjectsTradePointsStrengthTrigger enum.
+func (e CalculationResultsObjectsTradePointsStrengthTrigger) Valid() bool {
+	switch e {
+	case CalculationResultsObjectsTradePointsStrengthTriggerBaselineSpanBelow80pct:
+		return true
+	case CalculationResultsObjectsTradePointsStrengthTriggerLessThannil:
+		return true
+	case CalculationResultsObjectsTradePointsStrengthTriggerPriceTimeJointWeakening:
 		return true
 	default:
 		return false
@@ -2133,6 +2277,78 @@ func (e ChanObjectsDivergencesStrength) Valid() bool {
 	}
 }
 
+// Defines values for ChanObjectsDivergencesStrengthProfile.
+const (
+	ChanObjectsDivergencesStrengthProfileLegacyMacdAreaV1         ChanObjectsDivergencesStrengthProfile = "legacy_macd_area_v1"
+	ChanObjectsDivergencesStrengthProfileLessThannil              ChanObjectsDivergencesStrengthProfile = "<nil>"
+	ChanObjectsDivergencesStrengthProfilePriceDisplacementSpeedV1 ChanObjectsDivergencesStrengthProfile = "price_displacement_speed_v1"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsDivergencesStrengthProfile enum.
+func (e ChanObjectsDivergencesStrengthProfile) Valid() bool {
+	switch e {
+	case ChanObjectsDivergencesStrengthProfileLegacyMacdAreaV1:
+		return true
+	case ChanObjectsDivergencesStrengthProfileLessThannil:
+		return true
+	case ChanObjectsDivergencesStrengthProfilePriceDisplacementSpeedV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsDivergencesStrengthRelation.
+const (
+	ChanObjectsDivergencesStrengthRelationConflict    ChanObjectsDivergencesStrengthRelation = "conflict"
+	ChanObjectsDivergencesStrengthRelationEqual       ChanObjectsDivergencesStrengthRelation = "equal"
+	ChanObjectsDivergencesStrengthRelationLessThannil ChanObjectsDivergencesStrengthRelation = "<nil>"
+	ChanObjectsDivergencesStrengthRelationStronger    ChanObjectsDivergencesStrengthRelation = "stronger"
+	ChanObjectsDivergencesStrengthRelationUnknown     ChanObjectsDivergencesStrengthRelation = "unknown"
+	ChanObjectsDivergencesStrengthRelationWeaker      ChanObjectsDivergencesStrengthRelation = "weaker"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsDivergencesStrengthRelation enum.
+func (e ChanObjectsDivergencesStrengthRelation) Valid() bool {
+	switch e {
+	case ChanObjectsDivergencesStrengthRelationConflict:
+		return true
+	case ChanObjectsDivergencesStrengthRelationEqual:
+		return true
+	case ChanObjectsDivergencesStrengthRelationLessThannil:
+		return true
+	case ChanObjectsDivergencesStrengthRelationStronger:
+		return true
+	case ChanObjectsDivergencesStrengthRelationUnknown:
+		return true
+	case ChanObjectsDivergencesStrengthRelationWeaker:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsDivergencesStrengthTrigger.
+const (
+	ChanObjectsDivergencesStrengthTriggerBaselineSpanBelow80pct  ChanObjectsDivergencesStrengthTrigger = "baseline_span_below_80pct"
+	ChanObjectsDivergencesStrengthTriggerLessThannil             ChanObjectsDivergencesStrengthTrigger = "<nil>"
+	ChanObjectsDivergencesStrengthTriggerPriceTimeJointWeakening ChanObjectsDivergencesStrengthTrigger = "price_time_joint_weakening"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsDivergencesStrengthTrigger enum.
+func (e ChanObjectsDivergencesStrengthTrigger) Valid() bool {
+	switch e {
+	case ChanObjectsDivergencesStrengthTriggerBaselineSpanBelow80pct:
+		return true
+	case ChanObjectsDivergencesStrengthTriggerLessThannil:
+		return true
+	case ChanObjectsDivergencesStrengthTriggerPriceTimeJointWeakening:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ChanObjectsFractalsFeatureProfile.
 const (
 	ChanObjectsFractalsFeatureProfileProcessedBarOhlcV1 ChanObjectsFractalsFeatureProfile = "processed_bar_ohlc_v1"
@@ -2733,6 +2949,78 @@ func (e ChanObjectsTradePointsStrength) Valid() bool {
 	}
 }
 
+// Defines values for ChanObjectsTradePointsStrengthProfile.
+const (
+	ChanObjectsTradePointsStrengthProfileLegacyMacdAreaV1         ChanObjectsTradePointsStrengthProfile = "legacy_macd_area_v1"
+	ChanObjectsTradePointsStrengthProfileLessThannil              ChanObjectsTradePointsStrengthProfile = "<nil>"
+	ChanObjectsTradePointsStrengthProfilePriceDisplacementSpeedV1 ChanObjectsTradePointsStrengthProfile = "price_displacement_speed_v1"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsTradePointsStrengthProfile enum.
+func (e ChanObjectsTradePointsStrengthProfile) Valid() bool {
+	switch e {
+	case ChanObjectsTradePointsStrengthProfileLegacyMacdAreaV1:
+		return true
+	case ChanObjectsTradePointsStrengthProfileLessThannil:
+		return true
+	case ChanObjectsTradePointsStrengthProfilePriceDisplacementSpeedV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsTradePointsStrengthRelation.
+const (
+	ChanObjectsTradePointsStrengthRelationConflict    ChanObjectsTradePointsStrengthRelation = "conflict"
+	ChanObjectsTradePointsStrengthRelationEqual       ChanObjectsTradePointsStrengthRelation = "equal"
+	ChanObjectsTradePointsStrengthRelationLessThannil ChanObjectsTradePointsStrengthRelation = "<nil>"
+	ChanObjectsTradePointsStrengthRelationStronger    ChanObjectsTradePointsStrengthRelation = "stronger"
+	ChanObjectsTradePointsStrengthRelationUnknown     ChanObjectsTradePointsStrengthRelation = "unknown"
+	ChanObjectsTradePointsStrengthRelationWeaker      ChanObjectsTradePointsStrengthRelation = "weaker"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsTradePointsStrengthRelation enum.
+func (e ChanObjectsTradePointsStrengthRelation) Valid() bool {
+	switch e {
+	case ChanObjectsTradePointsStrengthRelationConflict:
+		return true
+	case ChanObjectsTradePointsStrengthRelationEqual:
+		return true
+	case ChanObjectsTradePointsStrengthRelationLessThannil:
+		return true
+	case ChanObjectsTradePointsStrengthRelationStronger:
+		return true
+	case ChanObjectsTradePointsStrengthRelationUnknown:
+		return true
+	case ChanObjectsTradePointsStrengthRelationWeaker:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanObjectsTradePointsStrengthTrigger.
+const (
+	ChanObjectsTradePointsStrengthTriggerBaselineSpanBelow80pct  ChanObjectsTradePointsStrengthTrigger = "baseline_span_below_80pct"
+	ChanObjectsTradePointsStrengthTriggerLessThannil             ChanObjectsTradePointsStrengthTrigger = "<nil>"
+	ChanObjectsTradePointsStrengthTriggerPriceTimeJointWeakening ChanObjectsTradePointsStrengthTrigger = "price_time_joint_weakening"
+)
+
+// Valid indicates whether the value is a known member of the ChanObjectsTradePointsStrengthTrigger enum.
+func (e ChanObjectsTradePointsStrengthTrigger) Valid() bool {
+	switch e {
+	case ChanObjectsTradePointsStrengthTriggerBaselineSpanBelow80pct:
+		return true
+	case ChanObjectsTradePointsStrengthTriggerLessThannil:
+		return true
+	case ChanObjectsTradePointsStrengthTriggerPriceTimeJointWeakening:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ChanSignalPointBoundaryProfile.
 const (
 	ChanSignalPointBoundaryProfileLessThannil         ChanSignalPointBoundaryProfile = "<nil>"
@@ -3141,6 +3429,78 @@ func (e ChanSignalPointStrength) Valid() bool {
 	case ChanSignalPointStrengthStrongest:
 		return true
 	case ChanSignalPointStrengthWeakest:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanSignalPointStrengthProfile.
+const (
+	ChanSignalPointStrengthProfileLegacyMacdAreaV1         ChanSignalPointStrengthProfile = "legacy_macd_area_v1"
+	ChanSignalPointStrengthProfileLessThannil              ChanSignalPointStrengthProfile = "<nil>"
+	ChanSignalPointStrengthProfilePriceDisplacementSpeedV1 ChanSignalPointStrengthProfile = "price_displacement_speed_v1"
+)
+
+// Valid indicates whether the value is a known member of the ChanSignalPointStrengthProfile enum.
+func (e ChanSignalPointStrengthProfile) Valid() bool {
+	switch e {
+	case ChanSignalPointStrengthProfileLegacyMacdAreaV1:
+		return true
+	case ChanSignalPointStrengthProfileLessThannil:
+		return true
+	case ChanSignalPointStrengthProfilePriceDisplacementSpeedV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanSignalPointStrengthRelation.
+const (
+	ChanSignalPointStrengthRelationConflict    ChanSignalPointStrengthRelation = "conflict"
+	ChanSignalPointStrengthRelationEqual       ChanSignalPointStrengthRelation = "equal"
+	ChanSignalPointStrengthRelationLessThannil ChanSignalPointStrengthRelation = "<nil>"
+	ChanSignalPointStrengthRelationStronger    ChanSignalPointStrengthRelation = "stronger"
+	ChanSignalPointStrengthRelationUnknown     ChanSignalPointStrengthRelation = "unknown"
+	ChanSignalPointStrengthRelationWeaker      ChanSignalPointStrengthRelation = "weaker"
+)
+
+// Valid indicates whether the value is a known member of the ChanSignalPointStrengthRelation enum.
+func (e ChanSignalPointStrengthRelation) Valid() bool {
+	switch e {
+	case ChanSignalPointStrengthRelationConflict:
+		return true
+	case ChanSignalPointStrengthRelationEqual:
+		return true
+	case ChanSignalPointStrengthRelationLessThannil:
+		return true
+	case ChanSignalPointStrengthRelationStronger:
+		return true
+	case ChanSignalPointStrengthRelationUnknown:
+		return true
+	case ChanSignalPointStrengthRelationWeaker:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ChanSignalPointStrengthTrigger.
+const (
+	ChanSignalPointStrengthTriggerBaselineSpanBelow80pct  ChanSignalPointStrengthTrigger = "baseline_span_below_80pct"
+	ChanSignalPointStrengthTriggerLessThannil             ChanSignalPointStrengthTrigger = "<nil>"
+	ChanSignalPointStrengthTriggerPriceTimeJointWeakening ChanSignalPointStrengthTrigger = "price_time_joint_weakening"
+)
+
+// Valid indicates whether the value is a known member of the ChanSignalPointStrengthTrigger enum.
+func (e ChanSignalPointStrengthTrigger) Valid() bool {
+	switch e {
+	case ChanSignalPointStrengthTriggerBaselineSpanBelow80pct:
+		return true
+	case ChanSignalPointStrengthTriggerLessThannil:
+		return true
+	case ChanSignalPointStrengthTriggerPriceTimeJointWeakening:
 		return true
 	default:
 		return false
@@ -4122,6 +4482,78 @@ func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesStrength) Vali
 	}
 }
 
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthProfile.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthProfileLegacyMacdAreaV1         GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthProfile = "legacy_macd_area_v1"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthProfileLessThannil              GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthProfile = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthProfilePriceDisplacementSpeedV1 GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthProfile = "price_displacement_speed_v1"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthProfile enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthProfile) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthProfileLegacyMacdAreaV1:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthProfileLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthProfilePriceDisplacementSpeedV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelation.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelationConflict    GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelation = "conflict"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelationEqual       GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelation = "equal"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelationLessThannil GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelation = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelationStronger    GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelation = "stronger"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelationUnknown     GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelation = "unknown"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelationWeaker      GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelation = "weaker"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelation enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelation) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelationConflict:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelationEqual:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelationLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelationStronger:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelationUnknown:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelationWeaker:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthTrigger.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthTriggerBaselineSpanBelow80pct  GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthTrigger = "baseline_span_below_80pct"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthTriggerLessThannil             GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthTrigger = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthTriggerPriceTimeJointWeakening GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthTrigger = "price_time_joint_weakening"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthTrigger enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthTrigger) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthTriggerBaselineSpanBelow80pct:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthTriggerLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthTriggerPriceTimeJointWeakening:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetCalculationResults200JSONResponseBodyObjectsFractalsFeatureProfile.
 const (
 	GetCalculationResults200JSONResponseBodyObjectsFractalsFeatureProfileProcessedBarOhlcV1 GetCalculationResults200JSONResponseBodyObjectsFractalsFeatureProfile = "processed_bar_ohlc_v1"
@@ -4716,6 +5148,78 @@ func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsStrength) Vali
 	case GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthStrongest:
 		return true
 	case GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthWeakest:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthProfile.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthProfileLegacyMacdAreaV1         GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthProfile = "legacy_macd_area_v1"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthProfileLessThannil              GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthProfile = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthProfilePriceDisplacementSpeedV1 GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthProfile = "price_displacement_speed_v1"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthProfile enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthProfile) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthProfileLegacyMacdAreaV1:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthProfileLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthProfilePriceDisplacementSpeedV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelation.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelationConflict    GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelation = "conflict"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelationEqual       GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelation = "equal"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelationLessThannil GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelation = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelationStronger    GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelation = "stronger"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelationUnknown     GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelation = "unknown"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelationWeaker      GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelation = "weaker"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelation enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelation) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelationConflict:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelationEqual:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelationLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelationStronger:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelationUnknown:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelationWeaker:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthTrigger.
+const (
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthTriggerBaselineSpanBelow80pct  GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthTrigger = "baseline_span_below_80pct"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthTriggerLessThannil             GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthTrigger = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthTriggerPriceTimeJointWeakening GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthTrigger = "price_time_joint_weakening"
+)
+
+// Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthTrigger enum.
+func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthTrigger) Valid() bool {
+	switch e {
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthTriggerBaselineSpanBelow80pct:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthTriggerLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthTriggerPriceTimeJointWeakening:
 		return true
 	default:
 		return false
@@ -5366,66 +5870,76 @@ type CalculationResults struct {
 			ZnTwiceI64          int                                                       `json:"zn_twice_i64"`
 		} `json:"center_monitors"`
 		Divergences []struct {
-			ACenterId                   *string                                                   `json:"a_center_id,omitempty"`
-			AObjectId                   *string                                                   `json:"a_object_id,omitempty"`
-			BCenterId                   *string                                                   `json:"b_center_id,omitempty"`
-			BObjectId                   *string                                                   `json:"b_object_id,omitempty"`
-			BarIndex                    int                                                       `json:"bar_index"`
-			BoundaryProfile             *CalculationResultsObjectsDivergencesBoundaryProfile      `json:"boundary_profile"`
-			BoundaryRelation            *CalculationResultsObjectsDivergencesBoundaryRelation     `json:"boundary_relation"`
-			CContainsType3              *bool                                                     `json:"c_contains_type3,omitempty"`
-			CMeetsSublevel              *bool                                                     `json:"c_meets_sublevel,omitempty"`
-			CProofKnownAtBarIndex       *int                                                      `json:"c_proof_known_at_bar_index,omitempty"`
-			CSublevelCenterIds          *[]string                                                 `json:"c_sublevel_center_ids,omitempty"`
-			CSublevelProfile            *CalculationResultsObjectsDivergencesCSublevelProfile     `json:"c_sublevel_profile,omitempty"`
-			CType3DepartureId           *string                                                   `json:"c_type3_departure_id,omitempty"`
-			CType3RetestId              *string                                                   `json:"c_type3_retest_id,omitempty"`
-			CatalogAlgorithmId          *CalculationResultsObjectsDivergencesCatalogAlgorithmId   `json:"catalog_algorithm_id"`
-			CatalogEvent                *CalculationResultsObjectsDivergencesCatalogEvent         `json:"catalog_event"`
-			CenterChainProfile          *CalculationResultsObjectsDivergencesCenterChainProfile   `json:"center_chain_profile"`
-			ComparisonCurrentObjectId   *string                                                   `json:"comparison_current_object_id"`
-			ComparisonReferenceObjectId *string                                                   `json:"comparison_reference_object_id"`
-			ComparisonRule              *string                                                   `json:"comparison_rule"`
-			ConfirmationLatencyBars     int                                                       `json:"confirmation_latency_bars"`
-			Confirmed                   bool                                                      `json:"confirmed"`
-			ConfirmedAtBarIndex         *int                                                      `json:"confirmed_at_bar_index"`
-			DepartureObjectId           *string                                                   `json:"departure_object_id"`
-			DivergenceKind              *CalculationResultsObjectsDivergencesDivergenceKind       `json:"divergence_kind"`
-			DivergenceProfile           *CalculationResultsObjectsDivergencesDivergenceProfile    `json:"divergence_profile,omitempty"`
-			EvidenceProfile             CalculationResultsObjectsDivergencesEvidenceProfile       `json:"evidence_profile"`
-			FollowThroughObjectId       *string                                                   `json:"follow_through_object_id"`
-			FollowThroughStatus         CalculationResultsObjectsDivergencesFollowThroughStatus   `json:"follow_through_status"`
-			FormationDir                *CalculationResultsObjectsDivergencesFormationDir         `json:"formation_dir,omitempty"`
-			InvalidationReason          *string                                                   `json:"invalidation_reason"`
-			KnownAtBarIndex             int                                                       `json:"known_at_bar_index"`
-			LevelId                     *string                                                   `json:"level_id"`
-			LowerLevelTurnObjectId      *string                                                   `json:"lower_level_turn_object_id"`
-			MacdAreaCurrent             *float32                                                  `json:"macd_area_current"`
-			MacdAreaRatio               *float32                                                  `json:"macd_area_ratio,omitempty"`
-			MacdAreaReference           *float32                                                  `json:"macd_area_reference"`
-			MacdDeaCurrentExtreme       *float32                                                  `json:"macd_dea_current_extreme,omitempty"`
-			MacdDeaReferenceExtreme     *float32                                                  `json:"macd_dea_reference_extreme,omitempty"`
-			MacdDiffCurrentExtreme      *float32                                                  `json:"macd_diff_current_extreme,omitempty"`
-			MacdDiffReferenceExtreme    *float32                                                  `json:"macd_diff_reference_extreme,omitempty"`
-			MacdExtremeRelation         *CalculationResultsObjectsDivergencesMacdExtremeRelation  `json:"macd_extreme_relation,omitempty"`
-			MacdParameterProfile        *CalculationResultsObjectsDivergencesMacdParameterProfile `json:"macd_parameter_profile,omitempty"`
-			NewExtremeSatisfied         *bool                                                     `json:"new_extreme_satisfied"`
-			ObjectId                    string                                                    `json:"object_id"`
-			ObjectRevision              int                                                       `json:"object_revision"`
-			OlderCenterCount            *int                                                      `json:"older_center_count"`
-			PriceI64                    int                                                       `json:"price_i64"`
-			ReferenceCenterOrdinal      *int                                                      `json:"reference_center_ordinal"`
-			ReferenceObjectId           *string                                                   `json:"reference_object_id"`
-			RelativeDir                 *CalculationResultsObjectsDivergencesRelativeDir          `json:"relative_dir,omitempty"`
-			ReturnDepthToCoreI64        *int                                                      `json:"return_depth_to_core_i64"`
-			ReturnDepthToOuterI64       *int                                                      `json:"return_depth_to_outer_i64"`
-			ReturnObjectId              *string                                                   `json:"return_object_id"`
-			ReturnOrdinal               *int                                                      `json:"return_ordinal"`
-			SignalClass                 *CalculationResultsObjectsDivergencesSignalClass          `json:"signal_class"`
-			SignalType                  CalculationResultsObjectsDivergencesSignalType            `json:"signal_type"`
-			Status                      interface{}                                               `json:"status"`
-			Strength                    *CalculationResultsObjectsDivergencesStrength             `json:"strength"`
-			Time                        int                                                       `json:"time"`
+			ACenterId                     *string                                                   `json:"a_center_id,omitempty"`
+			AObjectId                     *string                                                   `json:"a_object_id,omitempty"`
+			BCenterId                     *string                                                   `json:"b_center_id,omitempty"`
+			BObjectId                     *string                                                   `json:"b_object_id,omitempty"`
+			BarIndex                      int                                                       `json:"bar_index"`
+			BaselineSpanBelow80pct        *bool                                                     `json:"baseline_span_below_80pct,omitempty"`
+			BaselineSpanCurrentI64        *int                                                      `json:"baseline_span_current_i64,omitempty"`
+			BaselineSpanReferenceI64      *int                                                      `json:"baseline_span_reference_i64,omitempty"`
+			BoundaryProfile               *CalculationResultsObjectsDivergencesBoundaryProfile      `json:"boundary_profile"`
+			BoundaryRelation              *CalculationResultsObjectsDivergencesBoundaryRelation     `json:"boundary_relation"`
+			CContainsType3                *bool                                                     `json:"c_contains_type3,omitempty"`
+			CMeetsSublevel                *bool                                                     `json:"c_meets_sublevel,omitempty"`
+			CProofKnownAtBarIndex         *int                                                      `json:"c_proof_known_at_bar_index,omitempty"`
+			CSublevelCenterIds            *[]string                                                 `json:"c_sublevel_center_ids,omitempty"`
+			CSublevelProfile              *CalculationResultsObjectsDivergencesCSublevelProfile     `json:"c_sublevel_profile,omitempty"`
+			CType3DepartureId             *string                                                   `json:"c_type3_departure_id,omitempty"`
+			CType3RetestId                *string                                                   `json:"c_type3_retest_id,omitempty"`
+			CatalogAlgorithmId            *CalculationResultsObjectsDivergencesCatalogAlgorithmId   `json:"catalog_algorithm_id"`
+			CatalogEvent                  *CalculationResultsObjectsDivergencesCatalogEvent         `json:"catalog_event"`
+			CenterChainProfile            *CalculationResultsObjectsDivergencesCenterChainProfile   `json:"center_chain_profile"`
+			ComparisonCurrentObjectId     *string                                                   `json:"comparison_current_object_id"`
+			ComparisonReferenceObjectId   *string                                                   `json:"comparison_reference_object_id"`
+			ComparisonRule                *string                                                   `json:"comparison_rule"`
+			ConfirmationLatencyBars       int                                                       `json:"confirmation_latency_bars"`
+			Confirmed                     bool                                                      `json:"confirmed"`
+			ConfirmedAtBarIndex           *int                                                      `json:"confirmed_at_bar_index"`
+			DepartureObjectId             *string                                                   `json:"departure_object_id"`
+			DivergenceKind                *CalculationResultsObjectsDivergencesDivergenceKind       `json:"divergence_kind"`
+			DivergenceProfile             *CalculationResultsObjectsDivergencesDivergenceProfile    `json:"divergence_profile,omitempty"`
+			EvidenceProfile               CalculationResultsObjectsDivergencesEvidenceProfile       `json:"evidence_profile"`
+			FollowThroughObjectId         *string                                                   `json:"follow_through_object_id"`
+			FollowThroughStatus           CalculationResultsObjectsDivergencesFollowThroughStatus   `json:"follow_through_status"`
+			FormationDir                  *CalculationResultsObjectsDivergencesFormationDir         `json:"formation_dir,omitempty"`
+			InvalidationReason            *string                                                   `json:"invalidation_reason"`
+			KnownAtBarIndex               int                                                       `json:"known_at_bar_index"`
+			LevelId                       *string                                                   `json:"level_id"`
+			LowerLevelTurnObjectId        *string                                                   `json:"lower_level_turn_object_id"`
+			MacdAreaCurrent               *float32                                                  `json:"macd_area_current"`
+			MacdAreaRatio                 *float32                                                  `json:"macd_area_ratio,omitempty"`
+			MacdAreaReference             *float32                                                  `json:"macd_area_reference"`
+			MacdDeaCurrentExtreme         *float32                                                  `json:"macd_dea_current_extreme,omitempty"`
+			MacdDeaReferenceExtreme       *float32                                                  `json:"macd_dea_reference_extreme,omitempty"`
+			MacdDiffCurrentExtreme        *float32                                                  `json:"macd_diff_current_extreme,omitempty"`
+			MacdDiffReferenceExtreme      *float32                                                  `json:"macd_diff_reference_extreme,omitempty"`
+			MacdExtremeRelation           *CalculationResultsObjectsDivergencesMacdExtremeRelation  `json:"macd_extreme_relation,omitempty"`
+			MacdParameterProfile          *CalculationResultsObjectsDivergencesMacdParameterProfile `json:"macd_parameter_profile,omitempty"`
+			NewExtremeSatisfied           *bool                                                     `json:"new_extreme_satisfied"`
+			ObjectId                      string                                                    `json:"object_id"`
+			ObjectRevision                int                                                       `json:"object_revision"`
+			ObservedIntervalsCurrent      *int                                                      `json:"observed_intervals_current,omitempty"`
+			ObservedIntervalsReference    *int                                                      `json:"observed_intervals_reference,omitempty"`
+			OlderCenterCount              *int                                                      `json:"older_center_count"`
+			PriceDisplacementCurrentI64   *int                                                      `json:"price_displacement_current_i64,omitempty"`
+			PriceDisplacementReferenceI64 *int                                                      `json:"price_displacement_reference_i64,omitempty"`
+			PriceI64                      int                                                       `json:"price_i64"`
+			ReferenceCenterOrdinal        *int                                                      `json:"reference_center_ordinal"`
+			ReferenceObjectId             *string                                                   `json:"reference_object_id"`
+			RelativeDir                   *CalculationResultsObjectsDivergencesRelativeDir          `json:"relative_dir,omitempty"`
+			ReturnDepthToCoreI64          *int                                                      `json:"return_depth_to_core_i64"`
+			ReturnDepthToOuterI64         *int                                                      `json:"return_depth_to_outer_i64"`
+			ReturnObjectId                *string                                                   `json:"return_object_id"`
+			ReturnOrdinal                 *int                                                      `json:"return_ordinal"`
+			SignalClass                   *CalculationResultsObjectsDivergencesSignalClass          `json:"signal_class"`
+			SignalType                    CalculationResultsObjectsDivergencesSignalType            `json:"signal_type"`
+			Status                        interface{}                                               `json:"status"`
+			Strength                      *CalculationResultsObjectsDivergencesStrength             `json:"strength"`
+			StrengthProfile               *CalculationResultsObjectsDivergencesStrengthProfile      `json:"strength_profile,omitempty"`
+			StrengthRelation              *CalculationResultsObjectsDivergencesStrengthRelation     `json:"strength_relation,omitempty"`
+			StrengthTrigger               *CalculationResultsObjectsDivergencesStrengthTrigger      `json:"strength_trigger,omitempty"`
+			Time                          int                                                       `json:"time"`
 		} `json:"divergences"`
 		Fractals []struct {
 			AuxStrength               interface{}                                     `json:"aux_strength"`
@@ -5578,66 +6092,76 @@ type CalculationResults struct {
 			Status                     interface{}                                   `json:"status"`
 		} `json:"segments"`
 		TradePoints []struct {
-			ACenterId                   *string                                                   `json:"a_center_id,omitempty"`
-			AObjectId                   *string                                                   `json:"a_object_id,omitempty"`
-			BCenterId                   *string                                                   `json:"b_center_id,omitempty"`
-			BObjectId                   *string                                                   `json:"b_object_id,omitempty"`
-			BarIndex                    int                                                       `json:"bar_index"`
-			BoundaryProfile             *CalculationResultsObjectsTradePointsBoundaryProfile      `json:"boundary_profile"`
-			BoundaryRelation            *CalculationResultsObjectsTradePointsBoundaryRelation     `json:"boundary_relation"`
-			CContainsType3              *bool                                                     `json:"c_contains_type3,omitempty"`
-			CMeetsSublevel              *bool                                                     `json:"c_meets_sublevel,omitempty"`
-			CProofKnownAtBarIndex       *int                                                      `json:"c_proof_known_at_bar_index,omitempty"`
-			CSublevelCenterIds          *[]string                                                 `json:"c_sublevel_center_ids,omitempty"`
-			CSublevelProfile            *CalculationResultsObjectsTradePointsCSublevelProfile     `json:"c_sublevel_profile,omitempty"`
-			CType3DepartureId           *string                                                   `json:"c_type3_departure_id,omitempty"`
-			CType3RetestId              *string                                                   `json:"c_type3_retest_id,omitempty"`
-			CatalogAlgorithmId          *CalculationResultsObjectsTradePointsCatalogAlgorithmId   `json:"catalog_algorithm_id"`
-			CatalogEvent                *CalculationResultsObjectsTradePointsCatalogEvent         `json:"catalog_event"`
-			CenterChainProfile          *CalculationResultsObjectsTradePointsCenterChainProfile   `json:"center_chain_profile"`
-			ComparisonCurrentObjectId   *string                                                   `json:"comparison_current_object_id"`
-			ComparisonReferenceObjectId *string                                                   `json:"comparison_reference_object_id"`
-			ComparisonRule              *string                                                   `json:"comparison_rule"`
-			ConfirmationLatencyBars     int                                                       `json:"confirmation_latency_bars"`
-			Confirmed                   bool                                                      `json:"confirmed"`
-			ConfirmedAtBarIndex         *int                                                      `json:"confirmed_at_bar_index"`
-			DepartureObjectId           *string                                                   `json:"departure_object_id"`
-			DivergenceKind              *CalculationResultsObjectsTradePointsDivergenceKind       `json:"divergence_kind"`
-			DivergenceProfile           *CalculationResultsObjectsTradePointsDivergenceProfile    `json:"divergence_profile,omitempty"`
-			EvidenceProfile             CalculationResultsObjectsTradePointsEvidenceProfile       `json:"evidence_profile"`
-			FollowThroughObjectId       *string                                                   `json:"follow_through_object_id"`
-			FollowThroughStatus         CalculationResultsObjectsTradePointsFollowThroughStatus   `json:"follow_through_status"`
-			FormationDir                *CalculationResultsObjectsTradePointsFormationDir         `json:"formation_dir,omitempty"`
-			InvalidationReason          *string                                                   `json:"invalidation_reason"`
-			KnownAtBarIndex             int                                                       `json:"known_at_bar_index"`
-			LevelId                     *string                                                   `json:"level_id"`
-			LowerLevelTurnObjectId      *string                                                   `json:"lower_level_turn_object_id"`
-			MacdAreaCurrent             *float32                                                  `json:"macd_area_current"`
-			MacdAreaRatio               *float32                                                  `json:"macd_area_ratio,omitempty"`
-			MacdAreaReference           *float32                                                  `json:"macd_area_reference"`
-			MacdDeaCurrentExtreme       *float32                                                  `json:"macd_dea_current_extreme,omitempty"`
-			MacdDeaReferenceExtreme     *float32                                                  `json:"macd_dea_reference_extreme,omitempty"`
-			MacdDiffCurrentExtreme      *float32                                                  `json:"macd_diff_current_extreme,omitempty"`
-			MacdDiffReferenceExtreme    *float32                                                  `json:"macd_diff_reference_extreme,omitempty"`
-			MacdExtremeRelation         *CalculationResultsObjectsTradePointsMacdExtremeRelation  `json:"macd_extreme_relation,omitempty"`
-			MacdParameterProfile        *CalculationResultsObjectsTradePointsMacdParameterProfile `json:"macd_parameter_profile,omitempty"`
-			NewExtremeSatisfied         *bool                                                     `json:"new_extreme_satisfied"`
-			ObjectId                    string                                                    `json:"object_id"`
-			ObjectRevision              int                                                       `json:"object_revision"`
-			OlderCenterCount            *int                                                      `json:"older_center_count"`
-			PriceI64                    int                                                       `json:"price_i64"`
-			ReferenceCenterOrdinal      *int                                                      `json:"reference_center_ordinal"`
-			ReferenceObjectId           *string                                                   `json:"reference_object_id"`
-			RelativeDir                 *CalculationResultsObjectsTradePointsRelativeDir          `json:"relative_dir,omitempty"`
-			ReturnDepthToCoreI64        *int                                                      `json:"return_depth_to_core_i64"`
-			ReturnDepthToOuterI64       *int                                                      `json:"return_depth_to_outer_i64"`
-			ReturnObjectId              *string                                                   `json:"return_object_id"`
-			ReturnOrdinal               *int                                                      `json:"return_ordinal"`
-			SignalClass                 *CalculationResultsObjectsTradePointsSignalClass          `json:"signal_class"`
-			SignalType                  CalculationResultsObjectsTradePointsSignalType            `json:"signal_type"`
-			Status                      interface{}                                               `json:"status"`
-			Strength                    *CalculationResultsObjectsTradePointsStrength             `json:"strength"`
-			Time                        int                                                       `json:"time"`
+			ACenterId                     *string                                                   `json:"a_center_id,omitempty"`
+			AObjectId                     *string                                                   `json:"a_object_id,omitempty"`
+			BCenterId                     *string                                                   `json:"b_center_id,omitempty"`
+			BObjectId                     *string                                                   `json:"b_object_id,omitempty"`
+			BarIndex                      int                                                       `json:"bar_index"`
+			BaselineSpanBelow80pct        *bool                                                     `json:"baseline_span_below_80pct,omitempty"`
+			BaselineSpanCurrentI64        *int                                                      `json:"baseline_span_current_i64,omitempty"`
+			BaselineSpanReferenceI64      *int                                                      `json:"baseline_span_reference_i64,omitempty"`
+			BoundaryProfile               *CalculationResultsObjectsTradePointsBoundaryProfile      `json:"boundary_profile"`
+			BoundaryRelation              *CalculationResultsObjectsTradePointsBoundaryRelation     `json:"boundary_relation"`
+			CContainsType3                *bool                                                     `json:"c_contains_type3,omitempty"`
+			CMeetsSublevel                *bool                                                     `json:"c_meets_sublevel,omitempty"`
+			CProofKnownAtBarIndex         *int                                                      `json:"c_proof_known_at_bar_index,omitempty"`
+			CSublevelCenterIds            *[]string                                                 `json:"c_sublevel_center_ids,omitempty"`
+			CSublevelProfile              *CalculationResultsObjectsTradePointsCSublevelProfile     `json:"c_sublevel_profile,omitempty"`
+			CType3DepartureId             *string                                                   `json:"c_type3_departure_id,omitempty"`
+			CType3RetestId                *string                                                   `json:"c_type3_retest_id,omitempty"`
+			CatalogAlgorithmId            *CalculationResultsObjectsTradePointsCatalogAlgorithmId   `json:"catalog_algorithm_id"`
+			CatalogEvent                  *CalculationResultsObjectsTradePointsCatalogEvent         `json:"catalog_event"`
+			CenterChainProfile            *CalculationResultsObjectsTradePointsCenterChainProfile   `json:"center_chain_profile"`
+			ComparisonCurrentObjectId     *string                                                   `json:"comparison_current_object_id"`
+			ComparisonReferenceObjectId   *string                                                   `json:"comparison_reference_object_id"`
+			ComparisonRule                *string                                                   `json:"comparison_rule"`
+			ConfirmationLatencyBars       int                                                       `json:"confirmation_latency_bars"`
+			Confirmed                     bool                                                      `json:"confirmed"`
+			ConfirmedAtBarIndex           *int                                                      `json:"confirmed_at_bar_index"`
+			DepartureObjectId             *string                                                   `json:"departure_object_id"`
+			DivergenceKind                *CalculationResultsObjectsTradePointsDivergenceKind       `json:"divergence_kind"`
+			DivergenceProfile             *CalculationResultsObjectsTradePointsDivergenceProfile    `json:"divergence_profile,omitempty"`
+			EvidenceProfile               CalculationResultsObjectsTradePointsEvidenceProfile       `json:"evidence_profile"`
+			FollowThroughObjectId         *string                                                   `json:"follow_through_object_id"`
+			FollowThroughStatus           CalculationResultsObjectsTradePointsFollowThroughStatus   `json:"follow_through_status"`
+			FormationDir                  *CalculationResultsObjectsTradePointsFormationDir         `json:"formation_dir,omitempty"`
+			InvalidationReason            *string                                                   `json:"invalidation_reason"`
+			KnownAtBarIndex               int                                                       `json:"known_at_bar_index"`
+			LevelId                       *string                                                   `json:"level_id"`
+			LowerLevelTurnObjectId        *string                                                   `json:"lower_level_turn_object_id"`
+			MacdAreaCurrent               *float32                                                  `json:"macd_area_current"`
+			MacdAreaRatio                 *float32                                                  `json:"macd_area_ratio,omitempty"`
+			MacdAreaReference             *float32                                                  `json:"macd_area_reference"`
+			MacdDeaCurrentExtreme         *float32                                                  `json:"macd_dea_current_extreme,omitempty"`
+			MacdDeaReferenceExtreme       *float32                                                  `json:"macd_dea_reference_extreme,omitempty"`
+			MacdDiffCurrentExtreme        *float32                                                  `json:"macd_diff_current_extreme,omitempty"`
+			MacdDiffReferenceExtreme      *float32                                                  `json:"macd_diff_reference_extreme,omitempty"`
+			MacdExtremeRelation           *CalculationResultsObjectsTradePointsMacdExtremeRelation  `json:"macd_extreme_relation,omitempty"`
+			MacdParameterProfile          *CalculationResultsObjectsTradePointsMacdParameterProfile `json:"macd_parameter_profile,omitempty"`
+			NewExtremeSatisfied           *bool                                                     `json:"new_extreme_satisfied"`
+			ObjectId                      string                                                    `json:"object_id"`
+			ObjectRevision                int                                                       `json:"object_revision"`
+			ObservedIntervalsCurrent      *int                                                      `json:"observed_intervals_current,omitempty"`
+			ObservedIntervalsReference    *int                                                      `json:"observed_intervals_reference,omitempty"`
+			OlderCenterCount              *int                                                      `json:"older_center_count"`
+			PriceDisplacementCurrentI64   *int                                                      `json:"price_displacement_current_i64,omitempty"`
+			PriceDisplacementReferenceI64 *int                                                      `json:"price_displacement_reference_i64,omitempty"`
+			PriceI64                      int                                                       `json:"price_i64"`
+			ReferenceCenterOrdinal        *int                                                      `json:"reference_center_ordinal"`
+			ReferenceObjectId             *string                                                   `json:"reference_object_id"`
+			RelativeDir                   *CalculationResultsObjectsTradePointsRelativeDir          `json:"relative_dir,omitempty"`
+			ReturnDepthToCoreI64          *int                                                      `json:"return_depth_to_core_i64"`
+			ReturnDepthToOuterI64         *int                                                      `json:"return_depth_to_outer_i64"`
+			ReturnObjectId                *string                                                   `json:"return_object_id"`
+			ReturnOrdinal                 *int                                                      `json:"return_ordinal"`
+			SignalClass                   *CalculationResultsObjectsTradePointsSignalClass          `json:"signal_class"`
+			SignalType                    CalculationResultsObjectsTradePointsSignalType            `json:"signal_type"`
+			Status                        interface{}                                               `json:"status"`
+			Strength                      *CalculationResultsObjectsTradePointsStrength             `json:"strength"`
+			StrengthProfile               *CalculationResultsObjectsTradePointsStrengthProfile      `json:"strength_profile,omitempty"`
+			StrengthRelation              *CalculationResultsObjectsTradePointsStrengthRelation     `json:"strength_relation,omitempty"`
+			StrengthTrigger               *CalculationResultsObjectsTradePointsStrengthTrigger      `json:"strength_trigger,omitempty"`
+			Time                          int                                                       `json:"time"`
 		} `json:"trade_points"`
 	} `json:"objects,omitempty"`
 	RequestId  string                 `json:"request_id"`
@@ -5720,6 +6244,15 @@ type CalculationResultsObjectsDivergencesSignalType string
 // CalculationResultsObjectsDivergencesStrength defines model for CalculationResults.Objects.Divergences.Strength.
 type CalculationResultsObjectsDivergencesStrength string
 
+// CalculationResultsObjectsDivergencesStrengthProfile defines model for CalculationResults.Objects.Divergences.StrengthProfile.
+type CalculationResultsObjectsDivergencesStrengthProfile string
+
+// CalculationResultsObjectsDivergencesStrengthRelation defines model for CalculationResults.Objects.Divergences.StrengthRelation.
+type CalculationResultsObjectsDivergencesStrengthRelation string
+
+// CalculationResultsObjectsDivergencesStrengthTrigger defines model for CalculationResults.Objects.Divergences.StrengthTrigger.
+type CalculationResultsObjectsDivergencesStrengthTrigger string
+
 // CalculationResultsObjectsFractalsFeatureProfile defines model for CalculationResults.Objects.Fractals.FeatureProfile.
 type CalculationResultsObjectsFractalsFeatureProfile string
 
@@ -5797,6 +6330,15 @@ type CalculationResultsObjectsTradePointsSignalType string
 
 // CalculationResultsObjectsTradePointsStrength defines model for CalculationResults.Objects.TradePoints.Strength.
 type CalculationResultsObjectsTradePointsStrength string
+
+// CalculationResultsObjectsTradePointsStrengthProfile defines model for CalculationResults.Objects.TradePoints.StrengthProfile.
+type CalculationResultsObjectsTradePointsStrengthProfile string
+
+// CalculationResultsObjectsTradePointsStrengthRelation defines model for CalculationResults.Objects.TradePoints.StrengthRelation.
+type CalculationResultsObjectsTradePointsStrengthRelation string
+
+// CalculationResultsObjectsTradePointsStrengthTrigger defines model for CalculationResults.Objects.TradePoints.StrengthTrigger.
+type CalculationResultsObjectsTradePointsStrengthTrigger string
 
 // CapitalConfig defines model for CapitalConfig.
 type CapitalConfig struct {
@@ -6210,66 +6752,76 @@ type ChanObjects struct {
 		ZnTwiceI64          int                                         `json:"zn_twice_i64"`
 	} `json:"center_monitors"`
 	Divergences []struct {
-		ACenterId                   *string                                     `json:"a_center_id,omitempty"`
-		AObjectId                   *string                                     `json:"a_object_id,omitempty"`
-		BCenterId                   *string                                     `json:"b_center_id,omitempty"`
-		BObjectId                   *string                                     `json:"b_object_id,omitempty"`
-		BarIndex                    int                                         `json:"bar_index"`
-		BoundaryProfile             *ChanObjectsDivergencesBoundaryProfile      `json:"boundary_profile"`
-		BoundaryRelation            *ChanObjectsDivergencesBoundaryRelation     `json:"boundary_relation"`
-		CContainsType3              *bool                                       `json:"c_contains_type3,omitempty"`
-		CMeetsSublevel              *bool                                       `json:"c_meets_sublevel,omitempty"`
-		CProofKnownAtBarIndex       *int                                        `json:"c_proof_known_at_bar_index,omitempty"`
-		CSublevelCenterIds          *[]string                                   `json:"c_sublevel_center_ids,omitempty"`
-		CSublevelProfile            *ChanObjectsDivergencesCSublevelProfile     `json:"c_sublevel_profile,omitempty"`
-		CType3DepartureId           *string                                     `json:"c_type3_departure_id,omitempty"`
-		CType3RetestId              *string                                     `json:"c_type3_retest_id,omitempty"`
-		CatalogAlgorithmId          *ChanObjectsDivergencesCatalogAlgorithmId   `json:"catalog_algorithm_id"`
-		CatalogEvent                *ChanObjectsDivergencesCatalogEvent         `json:"catalog_event"`
-		CenterChainProfile          *ChanObjectsDivergencesCenterChainProfile   `json:"center_chain_profile"`
-		ComparisonCurrentObjectId   *string                                     `json:"comparison_current_object_id"`
-		ComparisonReferenceObjectId *string                                     `json:"comparison_reference_object_id"`
-		ComparisonRule              *string                                     `json:"comparison_rule"`
-		ConfirmationLatencyBars     int                                         `json:"confirmation_latency_bars"`
-		Confirmed                   bool                                        `json:"confirmed"`
-		ConfirmedAtBarIndex         *int                                        `json:"confirmed_at_bar_index"`
-		DepartureObjectId           *string                                     `json:"departure_object_id"`
-		DivergenceKind              *ChanObjectsDivergencesDivergenceKind       `json:"divergence_kind"`
-		DivergenceProfile           *ChanObjectsDivergencesDivergenceProfile    `json:"divergence_profile,omitempty"`
-		EvidenceProfile             ChanObjectsDivergencesEvidenceProfile       `json:"evidence_profile"`
-		FollowThroughObjectId       *string                                     `json:"follow_through_object_id"`
-		FollowThroughStatus         ChanObjectsDivergencesFollowThroughStatus   `json:"follow_through_status"`
-		FormationDir                *ChanObjectsDivergencesFormationDir         `json:"formation_dir,omitempty"`
-		InvalidationReason          *string                                     `json:"invalidation_reason"`
-		KnownAtBarIndex             int                                         `json:"known_at_bar_index"`
-		LevelId                     *string                                     `json:"level_id"`
-		LowerLevelTurnObjectId      *string                                     `json:"lower_level_turn_object_id"`
-		MacdAreaCurrent             *float32                                    `json:"macd_area_current"`
-		MacdAreaRatio               *float32                                    `json:"macd_area_ratio,omitempty"`
-		MacdAreaReference           *float32                                    `json:"macd_area_reference"`
-		MacdDeaCurrentExtreme       *float32                                    `json:"macd_dea_current_extreme,omitempty"`
-		MacdDeaReferenceExtreme     *float32                                    `json:"macd_dea_reference_extreme,omitempty"`
-		MacdDiffCurrentExtreme      *float32                                    `json:"macd_diff_current_extreme,omitempty"`
-		MacdDiffReferenceExtreme    *float32                                    `json:"macd_diff_reference_extreme,omitempty"`
-		MacdExtremeRelation         *ChanObjectsDivergencesMacdExtremeRelation  `json:"macd_extreme_relation,omitempty"`
-		MacdParameterProfile        *ChanObjectsDivergencesMacdParameterProfile `json:"macd_parameter_profile,omitempty"`
-		NewExtremeSatisfied         *bool                                       `json:"new_extreme_satisfied"`
-		ObjectId                    string                                      `json:"object_id"`
-		ObjectRevision              int                                         `json:"object_revision"`
-		OlderCenterCount            *int                                        `json:"older_center_count"`
-		PriceI64                    int                                         `json:"price_i64"`
-		ReferenceCenterOrdinal      *int                                        `json:"reference_center_ordinal"`
-		ReferenceObjectId           *string                                     `json:"reference_object_id"`
-		RelativeDir                 *ChanObjectsDivergencesRelativeDir          `json:"relative_dir,omitempty"`
-		ReturnDepthToCoreI64        *int                                        `json:"return_depth_to_core_i64"`
-		ReturnDepthToOuterI64       *int                                        `json:"return_depth_to_outer_i64"`
-		ReturnObjectId              *string                                     `json:"return_object_id"`
-		ReturnOrdinal               *int                                        `json:"return_ordinal"`
-		SignalClass                 *ChanObjectsDivergencesSignalClass          `json:"signal_class"`
-		SignalType                  ChanObjectsDivergencesSignalType            `json:"signal_type"`
-		Status                      interface{}                                 `json:"status"`
-		Strength                    *ChanObjectsDivergencesStrength             `json:"strength"`
-		Time                        int                                         `json:"time"`
+		ACenterId                     *string                                     `json:"a_center_id,omitempty"`
+		AObjectId                     *string                                     `json:"a_object_id,omitempty"`
+		BCenterId                     *string                                     `json:"b_center_id,omitempty"`
+		BObjectId                     *string                                     `json:"b_object_id,omitempty"`
+		BarIndex                      int                                         `json:"bar_index"`
+		BaselineSpanBelow80pct        *bool                                       `json:"baseline_span_below_80pct,omitempty"`
+		BaselineSpanCurrentI64        *int                                        `json:"baseline_span_current_i64,omitempty"`
+		BaselineSpanReferenceI64      *int                                        `json:"baseline_span_reference_i64,omitempty"`
+		BoundaryProfile               *ChanObjectsDivergencesBoundaryProfile      `json:"boundary_profile"`
+		BoundaryRelation              *ChanObjectsDivergencesBoundaryRelation     `json:"boundary_relation"`
+		CContainsType3                *bool                                       `json:"c_contains_type3,omitempty"`
+		CMeetsSublevel                *bool                                       `json:"c_meets_sublevel,omitempty"`
+		CProofKnownAtBarIndex         *int                                        `json:"c_proof_known_at_bar_index,omitempty"`
+		CSublevelCenterIds            *[]string                                   `json:"c_sublevel_center_ids,omitempty"`
+		CSublevelProfile              *ChanObjectsDivergencesCSublevelProfile     `json:"c_sublevel_profile,omitempty"`
+		CType3DepartureId             *string                                     `json:"c_type3_departure_id,omitempty"`
+		CType3RetestId                *string                                     `json:"c_type3_retest_id,omitempty"`
+		CatalogAlgorithmId            *ChanObjectsDivergencesCatalogAlgorithmId   `json:"catalog_algorithm_id"`
+		CatalogEvent                  *ChanObjectsDivergencesCatalogEvent         `json:"catalog_event"`
+		CenterChainProfile            *ChanObjectsDivergencesCenterChainProfile   `json:"center_chain_profile"`
+		ComparisonCurrentObjectId     *string                                     `json:"comparison_current_object_id"`
+		ComparisonReferenceObjectId   *string                                     `json:"comparison_reference_object_id"`
+		ComparisonRule                *string                                     `json:"comparison_rule"`
+		ConfirmationLatencyBars       int                                         `json:"confirmation_latency_bars"`
+		Confirmed                     bool                                        `json:"confirmed"`
+		ConfirmedAtBarIndex           *int                                        `json:"confirmed_at_bar_index"`
+		DepartureObjectId             *string                                     `json:"departure_object_id"`
+		DivergenceKind                *ChanObjectsDivergencesDivergenceKind       `json:"divergence_kind"`
+		DivergenceProfile             *ChanObjectsDivergencesDivergenceProfile    `json:"divergence_profile,omitempty"`
+		EvidenceProfile               ChanObjectsDivergencesEvidenceProfile       `json:"evidence_profile"`
+		FollowThroughObjectId         *string                                     `json:"follow_through_object_id"`
+		FollowThroughStatus           ChanObjectsDivergencesFollowThroughStatus   `json:"follow_through_status"`
+		FormationDir                  *ChanObjectsDivergencesFormationDir         `json:"formation_dir,omitempty"`
+		InvalidationReason            *string                                     `json:"invalidation_reason"`
+		KnownAtBarIndex               int                                         `json:"known_at_bar_index"`
+		LevelId                       *string                                     `json:"level_id"`
+		LowerLevelTurnObjectId        *string                                     `json:"lower_level_turn_object_id"`
+		MacdAreaCurrent               *float32                                    `json:"macd_area_current"`
+		MacdAreaRatio                 *float32                                    `json:"macd_area_ratio,omitempty"`
+		MacdAreaReference             *float32                                    `json:"macd_area_reference"`
+		MacdDeaCurrentExtreme         *float32                                    `json:"macd_dea_current_extreme,omitempty"`
+		MacdDeaReferenceExtreme       *float32                                    `json:"macd_dea_reference_extreme,omitempty"`
+		MacdDiffCurrentExtreme        *float32                                    `json:"macd_diff_current_extreme,omitempty"`
+		MacdDiffReferenceExtreme      *float32                                    `json:"macd_diff_reference_extreme,omitempty"`
+		MacdExtremeRelation           *ChanObjectsDivergencesMacdExtremeRelation  `json:"macd_extreme_relation,omitempty"`
+		MacdParameterProfile          *ChanObjectsDivergencesMacdParameterProfile `json:"macd_parameter_profile,omitempty"`
+		NewExtremeSatisfied           *bool                                       `json:"new_extreme_satisfied"`
+		ObjectId                      string                                      `json:"object_id"`
+		ObjectRevision                int                                         `json:"object_revision"`
+		ObservedIntervalsCurrent      *int                                        `json:"observed_intervals_current,omitempty"`
+		ObservedIntervalsReference    *int                                        `json:"observed_intervals_reference,omitempty"`
+		OlderCenterCount              *int                                        `json:"older_center_count"`
+		PriceDisplacementCurrentI64   *int                                        `json:"price_displacement_current_i64,omitempty"`
+		PriceDisplacementReferenceI64 *int                                        `json:"price_displacement_reference_i64,omitempty"`
+		PriceI64                      int                                         `json:"price_i64"`
+		ReferenceCenterOrdinal        *int                                        `json:"reference_center_ordinal"`
+		ReferenceObjectId             *string                                     `json:"reference_object_id"`
+		RelativeDir                   *ChanObjectsDivergencesRelativeDir          `json:"relative_dir,omitempty"`
+		ReturnDepthToCoreI64          *int                                        `json:"return_depth_to_core_i64"`
+		ReturnDepthToOuterI64         *int                                        `json:"return_depth_to_outer_i64"`
+		ReturnObjectId                *string                                     `json:"return_object_id"`
+		ReturnOrdinal                 *int                                        `json:"return_ordinal"`
+		SignalClass                   *ChanObjectsDivergencesSignalClass          `json:"signal_class"`
+		SignalType                    ChanObjectsDivergencesSignalType            `json:"signal_type"`
+		Status                        interface{}                                 `json:"status"`
+		Strength                      *ChanObjectsDivergencesStrength             `json:"strength"`
+		StrengthProfile               *ChanObjectsDivergencesStrengthProfile      `json:"strength_profile,omitempty"`
+		StrengthRelation              *ChanObjectsDivergencesStrengthRelation     `json:"strength_relation,omitempty"`
+		StrengthTrigger               *ChanObjectsDivergencesStrengthTrigger      `json:"strength_trigger,omitempty"`
+		Time                          int                                         `json:"time"`
 	} `json:"divergences"`
 	Fractals []struct {
 		AuxStrength               interface{}                       `json:"aux_strength"`
@@ -6422,66 +6974,76 @@ type ChanObjects struct {
 		Status                     interface{}                     `json:"status"`
 	} `json:"segments"`
 	TradePoints []struct {
-		ACenterId                   *string                                     `json:"a_center_id,omitempty"`
-		AObjectId                   *string                                     `json:"a_object_id,omitempty"`
-		BCenterId                   *string                                     `json:"b_center_id,omitempty"`
-		BObjectId                   *string                                     `json:"b_object_id,omitempty"`
-		BarIndex                    int                                         `json:"bar_index"`
-		BoundaryProfile             *ChanObjectsTradePointsBoundaryProfile      `json:"boundary_profile"`
-		BoundaryRelation            *ChanObjectsTradePointsBoundaryRelation     `json:"boundary_relation"`
-		CContainsType3              *bool                                       `json:"c_contains_type3,omitempty"`
-		CMeetsSublevel              *bool                                       `json:"c_meets_sublevel,omitempty"`
-		CProofKnownAtBarIndex       *int                                        `json:"c_proof_known_at_bar_index,omitempty"`
-		CSublevelCenterIds          *[]string                                   `json:"c_sublevel_center_ids,omitempty"`
-		CSublevelProfile            *ChanObjectsTradePointsCSublevelProfile     `json:"c_sublevel_profile,omitempty"`
-		CType3DepartureId           *string                                     `json:"c_type3_departure_id,omitempty"`
-		CType3RetestId              *string                                     `json:"c_type3_retest_id,omitempty"`
-		CatalogAlgorithmId          *ChanObjectsTradePointsCatalogAlgorithmId   `json:"catalog_algorithm_id"`
-		CatalogEvent                *ChanObjectsTradePointsCatalogEvent         `json:"catalog_event"`
-		CenterChainProfile          *ChanObjectsTradePointsCenterChainProfile   `json:"center_chain_profile"`
-		ComparisonCurrentObjectId   *string                                     `json:"comparison_current_object_id"`
-		ComparisonReferenceObjectId *string                                     `json:"comparison_reference_object_id"`
-		ComparisonRule              *string                                     `json:"comparison_rule"`
-		ConfirmationLatencyBars     int                                         `json:"confirmation_latency_bars"`
-		Confirmed                   bool                                        `json:"confirmed"`
-		ConfirmedAtBarIndex         *int                                        `json:"confirmed_at_bar_index"`
-		DepartureObjectId           *string                                     `json:"departure_object_id"`
-		DivergenceKind              *ChanObjectsTradePointsDivergenceKind       `json:"divergence_kind"`
-		DivergenceProfile           *ChanObjectsTradePointsDivergenceProfile    `json:"divergence_profile,omitempty"`
-		EvidenceProfile             ChanObjectsTradePointsEvidenceProfile       `json:"evidence_profile"`
-		FollowThroughObjectId       *string                                     `json:"follow_through_object_id"`
-		FollowThroughStatus         ChanObjectsTradePointsFollowThroughStatus   `json:"follow_through_status"`
-		FormationDir                *ChanObjectsTradePointsFormationDir         `json:"formation_dir,omitempty"`
-		InvalidationReason          *string                                     `json:"invalidation_reason"`
-		KnownAtBarIndex             int                                         `json:"known_at_bar_index"`
-		LevelId                     *string                                     `json:"level_id"`
-		LowerLevelTurnObjectId      *string                                     `json:"lower_level_turn_object_id"`
-		MacdAreaCurrent             *float32                                    `json:"macd_area_current"`
-		MacdAreaRatio               *float32                                    `json:"macd_area_ratio,omitempty"`
-		MacdAreaReference           *float32                                    `json:"macd_area_reference"`
-		MacdDeaCurrentExtreme       *float32                                    `json:"macd_dea_current_extreme,omitempty"`
-		MacdDeaReferenceExtreme     *float32                                    `json:"macd_dea_reference_extreme,omitempty"`
-		MacdDiffCurrentExtreme      *float32                                    `json:"macd_diff_current_extreme,omitempty"`
-		MacdDiffReferenceExtreme    *float32                                    `json:"macd_diff_reference_extreme,omitempty"`
-		MacdExtremeRelation         *ChanObjectsTradePointsMacdExtremeRelation  `json:"macd_extreme_relation,omitempty"`
-		MacdParameterProfile        *ChanObjectsTradePointsMacdParameterProfile `json:"macd_parameter_profile,omitempty"`
-		NewExtremeSatisfied         *bool                                       `json:"new_extreme_satisfied"`
-		ObjectId                    string                                      `json:"object_id"`
-		ObjectRevision              int                                         `json:"object_revision"`
-		OlderCenterCount            *int                                        `json:"older_center_count"`
-		PriceI64                    int                                         `json:"price_i64"`
-		ReferenceCenterOrdinal      *int                                        `json:"reference_center_ordinal"`
-		ReferenceObjectId           *string                                     `json:"reference_object_id"`
-		RelativeDir                 *ChanObjectsTradePointsRelativeDir          `json:"relative_dir,omitempty"`
-		ReturnDepthToCoreI64        *int                                        `json:"return_depth_to_core_i64"`
-		ReturnDepthToOuterI64       *int                                        `json:"return_depth_to_outer_i64"`
-		ReturnObjectId              *string                                     `json:"return_object_id"`
-		ReturnOrdinal               *int                                        `json:"return_ordinal"`
-		SignalClass                 *ChanObjectsTradePointsSignalClass          `json:"signal_class"`
-		SignalType                  ChanObjectsTradePointsSignalType            `json:"signal_type"`
-		Status                      interface{}                                 `json:"status"`
-		Strength                    *ChanObjectsTradePointsStrength             `json:"strength"`
-		Time                        int                                         `json:"time"`
+		ACenterId                     *string                                     `json:"a_center_id,omitempty"`
+		AObjectId                     *string                                     `json:"a_object_id,omitempty"`
+		BCenterId                     *string                                     `json:"b_center_id,omitempty"`
+		BObjectId                     *string                                     `json:"b_object_id,omitempty"`
+		BarIndex                      int                                         `json:"bar_index"`
+		BaselineSpanBelow80pct        *bool                                       `json:"baseline_span_below_80pct,omitempty"`
+		BaselineSpanCurrentI64        *int                                        `json:"baseline_span_current_i64,omitempty"`
+		BaselineSpanReferenceI64      *int                                        `json:"baseline_span_reference_i64,omitempty"`
+		BoundaryProfile               *ChanObjectsTradePointsBoundaryProfile      `json:"boundary_profile"`
+		BoundaryRelation              *ChanObjectsTradePointsBoundaryRelation     `json:"boundary_relation"`
+		CContainsType3                *bool                                       `json:"c_contains_type3,omitempty"`
+		CMeetsSublevel                *bool                                       `json:"c_meets_sublevel,omitempty"`
+		CProofKnownAtBarIndex         *int                                        `json:"c_proof_known_at_bar_index,omitempty"`
+		CSublevelCenterIds            *[]string                                   `json:"c_sublevel_center_ids,omitempty"`
+		CSublevelProfile              *ChanObjectsTradePointsCSublevelProfile     `json:"c_sublevel_profile,omitempty"`
+		CType3DepartureId             *string                                     `json:"c_type3_departure_id,omitempty"`
+		CType3RetestId                *string                                     `json:"c_type3_retest_id,omitempty"`
+		CatalogAlgorithmId            *ChanObjectsTradePointsCatalogAlgorithmId   `json:"catalog_algorithm_id"`
+		CatalogEvent                  *ChanObjectsTradePointsCatalogEvent         `json:"catalog_event"`
+		CenterChainProfile            *ChanObjectsTradePointsCenterChainProfile   `json:"center_chain_profile"`
+		ComparisonCurrentObjectId     *string                                     `json:"comparison_current_object_id"`
+		ComparisonReferenceObjectId   *string                                     `json:"comparison_reference_object_id"`
+		ComparisonRule                *string                                     `json:"comparison_rule"`
+		ConfirmationLatencyBars       int                                         `json:"confirmation_latency_bars"`
+		Confirmed                     bool                                        `json:"confirmed"`
+		ConfirmedAtBarIndex           *int                                        `json:"confirmed_at_bar_index"`
+		DepartureObjectId             *string                                     `json:"departure_object_id"`
+		DivergenceKind                *ChanObjectsTradePointsDivergenceKind       `json:"divergence_kind"`
+		DivergenceProfile             *ChanObjectsTradePointsDivergenceProfile    `json:"divergence_profile,omitempty"`
+		EvidenceProfile               ChanObjectsTradePointsEvidenceProfile       `json:"evidence_profile"`
+		FollowThroughObjectId         *string                                     `json:"follow_through_object_id"`
+		FollowThroughStatus           ChanObjectsTradePointsFollowThroughStatus   `json:"follow_through_status"`
+		FormationDir                  *ChanObjectsTradePointsFormationDir         `json:"formation_dir,omitempty"`
+		InvalidationReason            *string                                     `json:"invalidation_reason"`
+		KnownAtBarIndex               int                                         `json:"known_at_bar_index"`
+		LevelId                       *string                                     `json:"level_id"`
+		LowerLevelTurnObjectId        *string                                     `json:"lower_level_turn_object_id"`
+		MacdAreaCurrent               *float32                                    `json:"macd_area_current"`
+		MacdAreaRatio                 *float32                                    `json:"macd_area_ratio,omitempty"`
+		MacdAreaReference             *float32                                    `json:"macd_area_reference"`
+		MacdDeaCurrentExtreme         *float32                                    `json:"macd_dea_current_extreme,omitempty"`
+		MacdDeaReferenceExtreme       *float32                                    `json:"macd_dea_reference_extreme,omitempty"`
+		MacdDiffCurrentExtreme        *float32                                    `json:"macd_diff_current_extreme,omitempty"`
+		MacdDiffReferenceExtreme      *float32                                    `json:"macd_diff_reference_extreme,omitempty"`
+		MacdExtremeRelation           *ChanObjectsTradePointsMacdExtremeRelation  `json:"macd_extreme_relation,omitempty"`
+		MacdParameterProfile          *ChanObjectsTradePointsMacdParameterProfile `json:"macd_parameter_profile,omitempty"`
+		NewExtremeSatisfied           *bool                                       `json:"new_extreme_satisfied"`
+		ObjectId                      string                                      `json:"object_id"`
+		ObjectRevision                int                                         `json:"object_revision"`
+		ObservedIntervalsCurrent      *int                                        `json:"observed_intervals_current,omitempty"`
+		ObservedIntervalsReference    *int                                        `json:"observed_intervals_reference,omitempty"`
+		OlderCenterCount              *int                                        `json:"older_center_count"`
+		PriceDisplacementCurrentI64   *int                                        `json:"price_displacement_current_i64,omitempty"`
+		PriceDisplacementReferenceI64 *int                                        `json:"price_displacement_reference_i64,omitempty"`
+		PriceI64                      int                                         `json:"price_i64"`
+		ReferenceCenterOrdinal        *int                                        `json:"reference_center_ordinal"`
+		ReferenceObjectId             *string                                     `json:"reference_object_id"`
+		RelativeDir                   *ChanObjectsTradePointsRelativeDir          `json:"relative_dir,omitempty"`
+		ReturnDepthToCoreI64          *int                                        `json:"return_depth_to_core_i64"`
+		ReturnDepthToOuterI64         *int                                        `json:"return_depth_to_outer_i64"`
+		ReturnObjectId                *string                                     `json:"return_object_id"`
+		ReturnOrdinal                 *int                                        `json:"return_ordinal"`
+		SignalClass                   *ChanObjectsTradePointsSignalClass          `json:"signal_class"`
+		SignalType                    ChanObjectsTradePointsSignalType            `json:"signal_type"`
+		Status                        interface{}                                 `json:"status"`
+		Strength                      *ChanObjectsTradePointsStrength             `json:"strength"`
+		StrengthProfile               *ChanObjectsTradePointsStrengthProfile      `json:"strength_profile,omitempty"`
+		StrengthRelation              *ChanObjectsTradePointsStrengthRelation     `json:"strength_relation,omitempty"`
+		StrengthTrigger               *ChanObjectsTradePointsStrengthTrigger      `json:"strength_trigger,omitempty"`
+		Time                          int                                         `json:"time"`
 	} `json:"trade_points"`
 }
 
@@ -6559,6 +7121,15 @@ type ChanObjectsDivergencesSignalType string
 
 // ChanObjectsDivergencesStrength defines model for ChanObjects.Divergences.Strength.
 type ChanObjectsDivergencesStrength string
+
+// ChanObjectsDivergencesStrengthProfile defines model for ChanObjects.Divergences.StrengthProfile.
+type ChanObjectsDivergencesStrengthProfile string
+
+// ChanObjectsDivergencesStrengthRelation defines model for ChanObjects.Divergences.StrengthRelation.
+type ChanObjectsDivergencesStrengthRelation string
+
+// ChanObjectsDivergencesStrengthTrigger defines model for ChanObjects.Divergences.StrengthTrigger.
+type ChanObjectsDivergencesStrengthTrigger string
 
 // ChanObjectsFractalsFeatureProfile defines model for ChanObjects.Fractals.FeatureProfile.
 type ChanObjectsFractalsFeatureProfile string
@@ -6638,6 +7209,15 @@ type ChanObjectsTradePointsSignalType string
 // ChanObjectsTradePointsStrength defines model for ChanObjects.TradePoints.Strength.
 type ChanObjectsTradePointsStrength string
 
+// ChanObjectsTradePointsStrengthProfile defines model for ChanObjects.TradePoints.StrengthProfile.
+type ChanObjectsTradePointsStrengthProfile string
+
+// ChanObjectsTradePointsStrengthRelation defines model for ChanObjects.TradePoints.StrengthRelation.
+type ChanObjectsTradePointsStrengthRelation string
+
+// ChanObjectsTradePointsStrengthTrigger defines model for ChanObjects.TradePoints.StrengthTrigger.
+type ChanObjectsTradePointsStrengthTrigger string
+
 // ChanProcessedBar defines model for ChanProcessedBar.
 type ChanProcessedBar struct {
 	CatalogEvent       interface{} `json:"catalog_event"`
@@ -6663,66 +7243,76 @@ type ChanProcessedBar struct {
 
 // ChanSignalPoint defines model for ChanSignalPoint.
 type ChanSignalPoint struct {
-	ACenterId                   *string                              `json:"a_center_id,omitempty"`
-	AObjectId                   *string                              `json:"a_object_id,omitempty"`
-	BCenterId                   *string                              `json:"b_center_id,omitempty"`
-	BObjectId                   *string                              `json:"b_object_id,omitempty"`
-	BarIndex                    int                                  `json:"bar_index"`
-	BoundaryProfile             *ChanSignalPointBoundaryProfile      `json:"boundary_profile"`
-	BoundaryRelation            *ChanSignalPointBoundaryRelation     `json:"boundary_relation"`
-	CContainsType3              *bool                                `json:"c_contains_type3,omitempty"`
-	CMeetsSublevel              *bool                                `json:"c_meets_sublevel,omitempty"`
-	CProofKnownAtBarIndex       *int                                 `json:"c_proof_known_at_bar_index,omitempty"`
-	CSublevelCenterIds          *[]string                            `json:"c_sublevel_center_ids,omitempty"`
-	CSublevelProfile            *ChanSignalPointCSublevelProfile     `json:"c_sublevel_profile,omitempty"`
-	CType3DepartureId           *string                              `json:"c_type3_departure_id,omitempty"`
-	CType3RetestId              *string                              `json:"c_type3_retest_id,omitempty"`
-	CatalogAlgorithmId          *ChanSignalPointCatalogAlgorithmId   `json:"catalog_algorithm_id"`
-	CatalogEvent                *ChanSignalPointCatalogEvent         `json:"catalog_event"`
-	CenterChainProfile          *ChanSignalPointCenterChainProfile   `json:"center_chain_profile"`
-	ComparisonCurrentObjectId   *string                              `json:"comparison_current_object_id"`
-	ComparisonReferenceObjectId *string                              `json:"comparison_reference_object_id"`
-	ComparisonRule              *string                              `json:"comparison_rule"`
-	ConfirmationLatencyBars     int                                  `json:"confirmation_latency_bars"`
-	Confirmed                   bool                                 `json:"confirmed"`
-	ConfirmedAtBarIndex         *int                                 `json:"confirmed_at_bar_index"`
-	DepartureObjectId           *string                              `json:"departure_object_id"`
-	DivergenceKind              *ChanSignalPointDivergenceKind       `json:"divergence_kind"`
-	DivergenceProfile           *ChanSignalPointDivergenceProfile    `json:"divergence_profile,omitempty"`
-	EvidenceProfile             ChanSignalPointEvidenceProfile       `json:"evidence_profile"`
-	FollowThroughObjectId       *string                              `json:"follow_through_object_id"`
-	FollowThroughStatus         ChanSignalPointFollowThroughStatus   `json:"follow_through_status"`
-	FormationDir                *ChanSignalPointFormationDir         `json:"formation_dir,omitempty"`
-	InvalidationReason          *string                              `json:"invalidation_reason"`
-	KnownAtBarIndex             int                                  `json:"known_at_bar_index"`
-	LevelId                     *string                              `json:"level_id"`
-	LowerLevelTurnObjectId      *string                              `json:"lower_level_turn_object_id"`
-	MacdAreaCurrent             *float32                             `json:"macd_area_current"`
-	MacdAreaRatio               *float32                             `json:"macd_area_ratio,omitempty"`
-	MacdAreaReference           *float32                             `json:"macd_area_reference"`
-	MacdDeaCurrentExtreme       *float32                             `json:"macd_dea_current_extreme,omitempty"`
-	MacdDeaReferenceExtreme     *float32                             `json:"macd_dea_reference_extreme,omitempty"`
-	MacdDiffCurrentExtreme      *float32                             `json:"macd_diff_current_extreme,omitempty"`
-	MacdDiffReferenceExtreme    *float32                             `json:"macd_diff_reference_extreme,omitempty"`
-	MacdExtremeRelation         *ChanSignalPointMacdExtremeRelation  `json:"macd_extreme_relation,omitempty"`
-	MacdParameterProfile        *ChanSignalPointMacdParameterProfile `json:"macd_parameter_profile,omitempty"`
-	NewExtremeSatisfied         *bool                                `json:"new_extreme_satisfied"`
-	ObjectId                    string                               `json:"object_id"`
-	ObjectRevision              int                                  `json:"object_revision"`
-	OlderCenterCount            *int                                 `json:"older_center_count"`
-	PriceI64                    int                                  `json:"price_i64"`
-	ReferenceCenterOrdinal      *int                                 `json:"reference_center_ordinal"`
-	ReferenceObjectId           *string                              `json:"reference_object_id"`
-	RelativeDir                 *ChanSignalPointRelativeDir          `json:"relative_dir,omitempty"`
-	ReturnDepthToCoreI64        *int                                 `json:"return_depth_to_core_i64"`
-	ReturnDepthToOuterI64       *int                                 `json:"return_depth_to_outer_i64"`
-	ReturnObjectId              *string                              `json:"return_object_id"`
-	ReturnOrdinal               *int                                 `json:"return_ordinal"`
-	SignalClass                 *ChanSignalPointSignalClass          `json:"signal_class"`
-	SignalType                  ChanSignalPointSignalType            `json:"signal_type"`
-	Status                      interface{}                          `json:"status"`
-	Strength                    *ChanSignalPointStrength             `json:"strength"`
-	Time                        int                                  `json:"time"`
+	ACenterId                     *string                              `json:"a_center_id,omitempty"`
+	AObjectId                     *string                              `json:"a_object_id,omitempty"`
+	BCenterId                     *string                              `json:"b_center_id,omitempty"`
+	BObjectId                     *string                              `json:"b_object_id,omitempty"`
+	BarIndex                      int                                  `json:"bar_index"`
+	BaselineSpanBelow80pct        *bool                                `json:"baseline_span_below_80pct,omitempty"`
+	BaselineSpanCurrentI64        *int                                 `json:"baseline_span_current_i64,omitempty"`
+	BaselineSpanReferenceI64      *int                                 `json:"baseline_span_reference_i64,omitempty"`
+	BoundaryProfile               *ChanSignalPointBoundaryProfile      `json:"boundary_profile"`
+	BoundaryRelation              *ChanSignalPointBoundaryRelation     `json:"boundary_relation"`
+	CContainsType3                *bool                                `json:"c_contains_type3,omitempty"`
+	CMeetsSublevel                *bool                                `json:"c_meets_sublevel,omitempty"`
+	CProofKnownAtBarIndex         *int                                 `json:"c_proof_known_at_bar_index,omitempty"`
+	CSublevelCenterIds            *[]string                            `json:"c_sublevel_center_ids,omitempty"`
+	CSublevelProfile              *ChanSignalPointCSublevelProfile     `json:"c_sublevel_profile,omitempty"`
+	CType3DepartureId             *string                              `json:"c_type3_departure_id,omitempty"`
+	CType3RetestId                *string                              `json:"c_type3_retest_id,omitempty"`
+	CatalogAlgorithmId            *ChanSignalPointCatalogAlgorithmId   `json:"catalog_algorithm_id"`
+	CatalogEvent                  *ChanSignalPointCatalogEvent         `json:"catalog_event"`
+	CenterChainProfile            *ChanSignalPointCenterChainProfile   `json:"center_chain_profile"`
+	ComparisonCurrentObjectId     *string                              `json:"comparison_current_object_id"`
+	ComparisonReferenceObjectId   *string                              `json:"comparison_reference_object_id"`
+	ComparisonRule                *string                              `json:"comparison_rule"`
+	ConfirmationLatencyBars       int                                  `json:"confirmation_latency_bars"`
+	Confirmed                     bool                                 `json:"confirmed"`
+	ConfirmedAtBarIndex           *int                                 `json:"confirmed_at_bar_index"`
+	DepartureObjectId             *string                              `json:"departure_object_id"`
+	DivergenceKind                *ChanSignalPointDivergenceKind       `json:"divergence_kind"`
+	DivergenceProfile             *ChanSignalPointDivergenceProfile    `json:"divergence_profile,omitempty"`
+	EvidenceProfile               ChanSignalPointEvidenceProfile       `json:"evidence_profile"`
+	FollowThroughObjectId         *string                              `json:"follow_through_object_id"`
+	FollowThroughStatus           ChanSignalPointFollowThroughStatus   `json:"follow_through_status"`
+	FormationDir                  *ChanSignalPointFormationDir         `json:"formation_dir,omitempty"`
+	InvalidationReason            *string                              `json:"invalidation_reason"`
+	KnownAtBarIndex               int                                  `json:"known_at_bar_index"`
+	LevelId                       *string                              `json:"level_id"`
+	LowerLevelTurnObjectId        *string                              `json:"lower_level_turn_object_id"`
+	MacdAreaCurrent               *float32                             `json:"macd_area_current"`
+	MacdAreaRatio                 *float32                             `json:"macd_area_ratio,omitempty"`
+	MacdAreaReference             *float32                             `json:"macd_area_reference"`
+	MacdDeaCurrentExtreme         *float32                             `json:"macd_dea_current_extreme,omitempty"`
+	MacdDeaReferenceExtreme       *float32                             `json:"macd_dea_reference_extreme,omitempty"`
+	MacdDiffCurrentExtreme        *float32                             `json:"macd_diff_current_extreme,omitempty"`
+	MacdDiffReferenceExtreme      *float32                             `json:"macd_diff_reference_extreme,omitempty"`
+	MacdExtremeRelation           *ChanSignalPointMacdExtremeRelation  `json:"macd_extreme_relation,omitempty"`
+	MacdParameterProfile          *ChanSignalPointMacdParameterProfile `json:"macd_parameter_profile,omitempty"`
+	NewExtremeSatisfied           *bool                                `json:"new_extreme_satisfied"`
+	ObjectId                      string                               `json:"object_id"`
+	ObjectRevision                int                                  `json:"object_revision"`
+	ObservedIntervalsCurrent      *int                                 `json:"observed_intervals_current,omitempty"`
+	ObservedIntervalsReference    *int                                 `json:"observed_intervals_reference,omitempty"`
+	OlderCenterCount              *int                                 `json:"older_center_count"`
+	PriceDisplacementCurrentI64   *int                                 `json:"price_displacement_current_i64,omitempty"`
+	PriceDisplacementReferenceI64 *int                                 `json:"price_displacement_reference_i64,omitempty"`
+	PriceI64                      int                                  `json:"price_i64"`
+	ReferenceCenterOrdinal        *int                                 `json:"reference_center_ordinal"`
+	ReferenceObjectId             *string                              `json:"reference_object_id"`
+	RelativeDir                   *ChanSignalPointRelativeDir          `json:"relative_dir,omitempty"`
+	ReturnDepthToCoreI64          *int                                 `json:"return_depth_to_core_i64"`
+	ReturnDepthToOuterI64         *int                                 `json:"return_depth_to_outer_i64"`
+	ReturnObjectId                *string                              `json:"return_object_id"`
+	ReturnOrdinal                 *int                                 `json:"return_ordinal"`
+	SignalClass                   *ChanSignalPointSignalClass          `json:"signal_class"`
+	SignalType                    ChanSignalPointSignalType            `json:"signal_type"`
+	Status                        interface{}                          `json:"status"`
+	Strength                      *ChanSignalPointStrength             `json:"strength"`
+	StrengthProfile               *ChanSignalPointStrengthProfile      `json:"strength_profile,omitempty"`
+	StrengthRelation              *ChanSignalPointStrengthRelation     `json:"strength_relation,omitempty"`
+	StrengthTrigger               *ChanSignalPointStrengthTrigger      `json:"strength_trigger,omitempty"`
+	Time                          int                                  `json:"time"`
 }
 
 // ChanSignalPointBoundaryProfile defines model for ChanSignalPoint.BoundaryProfile.
@@ -6775,6 +7365,15 @@ type ChanSignalPointSignalType string
 
 // ChanSignalPointStrength defines model for ChanSignalPoint.Strength.
 type ChanSignalPointStrength string
+
+// ChanSignalPointStrengthProfile defines model for ChanSignalPoint.StrengthProfile.
+type ChanSignalPointStrengthProfile string
+
+// ChanSignalPointStrengthRelation defines model for ChanSignalPoint.StrengthRelation.
+type ChanSignalPointStrengthRelation string
+
+// ChanSignalPointStrengthTrigger defines model for ChanSignalPoint.StrengthTrigger.
+type ChanSignalPointStrengthTrigger string
 
 // CommissionConfig defines model for CommissionConfig.
 type CommissionConfig struct {
@@ -9161,6 +9760,15 @@ type GetCalculationResults200JSONResponseBodyObjectsDivergencesSignalType string
 // GetCalculationResults200JSONResponseBodyObjectsDivergencesStrength defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsDivergencesStrength string
 
+// GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthProfile defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthProfile string
+
+// GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelation defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthRelation string
+
+// GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthTrigger defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsDivergencesStrengthTrigger string
+
 // GetCalculationResults200JSONResponseBodyObjectsFractalsFeatureProfile defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsFractalsFeatureProfile string
 
@@ -9238,6 +9846,15 @@ type GetCalculationResults200JSONResponseBodyObjectsTradePointsSignalType string
 
 // GetCalculationResults200JSONResponseBodyObjectsTradePointsStrength defines parameters for GetCalculationResults.
 type GetCalculationResults200JSONResponseBodyObjectsTradePointsStrength string
+
+// GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthProfile defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthProfile string
+
+// GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelation defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthRelation string
+
+// GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthTrigger defines parameters for GetCalculationResults.
+type GetCalculationResults200JSONResponseBodyObjectsTradePointsStrengthTrigger string
 
 // IngestClientLogsJSONBody defines parameters for IngestClientLogs.
 type IngestClientLogsJSONBody struct {

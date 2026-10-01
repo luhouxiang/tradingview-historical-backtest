@@ -47,6 +47,79 @@ MacdExtremeRelation = Literal[
 
 
 @dataclass(frozen=True)
+class DivergenceContext:
+    """A structural comparison opportunity, independent of its strength model."""
+
+    kind: DivergenceKind
+    reference: LineLike
+    current: LineLike
+    current_index: int
+    reference_object_id: str
+    known_at_bar_index: int
+    require_new_extreme: bool
+    follow_through_object_id: str | None
+
+
+@dataclass(frozen=True)
+class LegacyStrengthEvidence:
+    """The exact 19.3.2 MACD-area judgment; never a trade signal itself."""
+
+    relation: Literal["weaker", "not_weaker", "unknown"]
+    reason: str | None
+    reference_area: float | None
+    current_area: float | None
+    diff_reference: float | None
+    diff_current: float | None
+    dea_reference: float | None
+    dea_current: float | None
+    extreme_relation: MacdExtremeRelation
+
+
+PriceTimeRelation = Literal["weaker", "stronger", "equal", "conflict", "unknown"]
+
+
+@dataclass(frozen=True)
+class PriceTimeStrengthEvidence:
+    """Indicator-free, integer-exact movement comparison in observed-bar units.
+
+    ``baseline_span_below_80pct`` is a separately visible decision override,
+    not a modification of the displacement/speed relation.
+    """
+
+    profile: Literal["price_displacement_speed_v1"]
+    relation: PriceTimeRelation
+    reason: str | None
+    reference_displacement_i64: int | None
+    current_displacement_i64: int | None
+    reference_intervals: int | None
+    current_intervals: int | None
+    reference_baseline_span_i64: int | None
+    current_baseline_span_i64: int | None
+    baseline_span_below_80pct: bool | None
+    effective_weaker: bool
+
+
+@dataclass(frozen=True)
+class ComparisonAudit:
+    """Research-only comparison; not a ChanSignal and never a trade origin."""
+
+    kind: DivergenceKind
+    reference_object_id: str
+    current_object_id: str
+    center_object_id: str
+    current_end_bar_index: int
+    known_at_bar_index: int
+    strength_relation: Literal["weaker", "not_weaker", "unknown"]
+    reference_area: float | None
+    current_area: float | None
+    price_span_passed: bool | None
+    new_extreme_satisfied: bool
+    accepted_by_legacy: bool
+    reason: str | None
+    price_time: PriceTimeStrengthEvidence | None = None
+
+
+@dataclass(frozen=True)
 class StructuralCenter:
     """Signal-facing projection of the authoritative local-center decomposition."""
 
@@ -129,6 +202,16 @@ class ChanSignal:
     comparison_reference_object_id: str | None = None
     comparison_current_object_id: str | None = None
     comparison_rule: str | None = None
+    strength_profile: str | None = None
+    strength_relation: PriceTimeRelation | None = None
+    strength_trigger: str | None = None
+    price_displacement_reference_i64: int | None = None
+    price_displacement_current_i64: int | None = None
+    observed_intervals_reference: int | None = None
+    observed_intervals_current: int | None = None
+    baseline_span_reference_i64: int | None = None
+    baseline_span_current_i64: int | None = None
+    baseline_span_below_80pct: bool | None = None
     new_extreme_satisfied: bool | None = None
     departure_object_id: str | None = None
     return_object_id: str | None = None
@@ -338,6 +421,180 @@ def _macd_extreme_relation(
     return "neither_weaker"
 
 
+def compare_legacy_strength(
+    context: DivergenceContext,
+    histogram: Mapping[int, float],
+    area_cache: MutableMapping[MacdAreaKey, float] | None = None,
+    *,
+    diff: Mapping[int, float] | None = None,
+    dea: Mapping[int, float] | None = None,
+) -> LegacyStrengthEvidence:
+    """Measure legacy MACD strength without creating a divergence or trade point."""
+    reference, current = context.reference, context.current
+    if reference.direction != current.direction:
+        return LegacyStrengthEvidence(
+            "unknown", "direction_mismatch", None, None, None, None, None, None, "unavailable"
+        )
+    reference_area = _macd_area(reference, histogram, area_cache)
+    current_area = _macd_area(current, histogram, area_cache)
+    diff_reference = _directional_extreme(reference, diff)
+    diff_current = _directional_extreme(current, diff)
+    dea_reference = _directional_extreme(reference, dea)
+    dea_current = _directional_extreme(current, dea)
+    extreme_relation = _macd_extreme_relation(
+        current.direction, diff_reference, diff_current, dea_reference, dea_current
+    )
+    if reference_area is None or current_area is None:
+        relation: Literal["weaker", "not_weaker", "unknown"] = "unknown"
+        reason = "missing_macd_histogram"
+    elif reference_area <= 0.0 or current_area <= 0.0:
+        relation = "unknown"
+        reason = "nonpositive_macd_area"
+    elif current_area >= reference_area:
+        relation = "not_weaker"
+        reason = "macd_area_not_contracting"
+    else:
+        relation = "weaker"
+        reason = None
+    return LegacyStrengthEvidence(
+        relation,
+        reason,
+        reference_area,
+        current_area,
+        diff_reference,
+        diff_current,
+        dea_reference,
+        dea_current,
+        extreme_relation,
+    )
+
+
+def compare_price_time_strength(
+    context: DivergenceContext,
+    raw_positions: Mapping[int, int],
+    *,
+    reference_baseline_i64: int | None = None,
+    current_baseline_i64: int | None = None,
+    certified_complete_positions: bool = False,
+) -> PriceTimeStrengthEvidence:
+    """Compare endpoint displacement and speed over actual observed K intervals.
+
+    ``raw_positions`` must be built from the complete, ordered raw-bar stream
+    available at ``context.known_at_bar_index``. Missing endpoint positions,
+    incomplete movements, or non-positive measurements stay unknown. The
+    optional 80% override uses actual-range-to-center-baseline spans, which
+    are deliberately distinct from endpoint displacement.
+    """
+
+    reference, current = context.reference, context.current
+    empty = (None, None, None, None, None, None, None)
+
+    def unknown(reason: str) -> PriceTimeStrengthEvidence:
+        return PriceTimeStrengthEvidence(
+            "price_displacement_speed_v1", "unknown", reason, *empty, False
+        )
+
+    if reference.direction != current.direction or current.direction not in {"up", "down"}:
+        return unknown("direction_mismatch")
+    if (
+        reference.start.bar_index >= reference.end.bar_index
+        or current.start.bar_index >= current.end.bar_index
+        or reference.known_at_bar_index > context.known_at_bar_index
+        or current.known_at_bar_index > context.known_at_bar_index
+        or current.end.bar_index > context.known_at_bar_index
+    ):
+        return unknown("incomplete_movement")
+    anchors = (
+        reference.start.bar_index,
+        reference.end.bar_index,
+        current.start.bar_index,
+        current.end.bar_index,
+    )
+    if any(anchor not in raw_positions for anchor in anchors):
+        return unknown("missing_raw_position")
+    observed_positions = None if certified_complete_positions else set(raw_positions.values())
+    reference_intervals = (
+        raw_positions[reference.end.bar_index] - raw_positions[reference.start.bar_index]
+    )
+    current_intervals = (
+        raw_positions[current.end.bar_index] - raw_positions[current.start.bar_index]
+    )
+    if observed_positions is not None and any(
+        position not in observed_positions
+        for start, end in (
+            (raw_positions[reference.start.bar_index], raw_positions[reference.end.bar_index]),
+            (raw_positions[current.start.bar_index], raw_positions[current.end.bar_index]),
+        )
+        for position in range(start, end + 1)
+    ):
+        return unknown("incomplete_raw_window")
+    sign = 1 if current.direction == "up" else -1
+    reference_displacement = sign * (reference.end.price_i64 - reference.start.price_i64)
+    current_displacement = sign * (current.end.price_i64 - current.start.price_i64)
+    if (
+        reference_intervals <= 0
+        or current_intervals <= 0
+        or reference_displacement <= 0
+        or current_displacement <= 0
+    ):
+        return PriceTimeStrengthEvidence(
+            "price_displacement_speed_v1",
+            "unknown",
+            "nonpositive_measurement",
+            reference_displacement,
+            current_displacement,
+            reference_intervals,
+            current_intervals,
+            None,
+            None,
+            None,
+            False,
+        )
+
+    displacement_cmp = (current_displacement > reference_displacement) - (
+        current_displacement < reference_displacement
+    )
+    current_speed_numerator = current_displacement * reference_intervals
+    reference_speed_numerator = reference_displacement * current_intervals
+    speed_cmp = (current_speed_numerator > reference_speed_numerator) - (
+        current_speed_numerator < reference_speed_numerator
+    )
+    if displacement_cmp <= 0 and speed_cmp <= 0 and (displacement_cmp or speed_cmp):
+        relation: PriceTimeRelation = "weaker"
+    elif displacement_cmp >= 0 and speed_cmp >= 0 and (displacement_cmp or speed_cmp):
+        relation = "stronger"
+    elif displacement_cmp == speed_cmp == 0:
+        relation = "equal"
+    else:
+        relation = "conflict"
+
+    reference_span: int | None = None
+    current_span: int | None = None
+    below_80pct: bool | None = None
+    if reference_baseline_i64 is not None and current_baseline_i64 is not None:
+        if current.direction == "up":
+            reference_span = _high(reference) - reference_baseline_i64
+            current_span = _high(current) - current_baseline_i64
+        else:
+            reference_span = reference_baseline_i64 - _low(reference)
+            current_span = current_baseline_i64 - _low(current)
+        if reference_span > 0 and current_span > 0:
+            below_80pct = 5 * current_span < 4 * reference_span
+    return PriceTimeStrengthEvidence(
+        "price_displacement_speed_v1",
+        relation,
+        None,
+        reference_displacement,
+        current_displacement,
+        reference_intervals,
+        current_intervals,
+        reference_span,
+        current_span,
+        below_80pct,
+        relation == "weaker" or below_80pct is True,
+    )
+
+
 def _divergence(
     kind: DivergenceKind,
     reference: LineLike,
@@ -352,36 +609,108 @@ def _divergence(
     follow_through_object_id: str | None = None,
     diff: Mapping[int, float] | None = None,
     dea: Mapping[int, float] | None = None,
+    reference_baseline_i64: int | None = None,
+    current_baseline_i64: int | None = None,
+    legacy_new_extreme_satisfied: bool | None = None,
+    comparison_audit: list[ComparisonAudit] | None = None,
+    raw_positions: Mapping[int, int] | None = None,
+    certified_complete_positions: bool = False,
+    strength_profile: Literal["legacy_macd_area_v1", "price_displacement_speed_v1"] = (
+        "legacy_macd_area_v1"
+    ),
 ) -> ChanSignal | None:
     """比较参考段和当前段，若当前段力度收缩则生成背驰。"""
-    if reference.direction != current.direction:
+    context = DivergenceContext(
+        kind,
+        reference,
+        current,
+        current_index,
+        reference_object_id,
+        known_at_bar_index,
+        require_new_extreme,
+        follow_through_object_id,
+    )
+    strength = compare_legacy_strength(context, histogram, area_cache, diff=diff, dea=dea)
+    price_time = (
+        compare_price_time_strength(
+            context,
+            raw_positions,
+            reference_baseline_i64=reference_baseline_i64,
+            current_baseline_i64=current_baseline_i64,
+            certified_complete_positions=certified_complete_positions,
+        )
+        if raw_positions is not None
+        and (comparison_audit is not None or strength_profile == "price_displacement_speed_v1")
+        else None
+    )
+    price_span_passed = (
+        _center_baseline_span_contracts(
+            reference,
+            current,
+            current.direction,
+            reference_baseline_i64,
+            current_baseline_i64,
+        )
+        if reference_baseline_i64 is not None and current_baseline_i64 is not None
+        else None
+    )
+    new_extreme = (
+        _high(current) > _high(reference)
+        if current.direction == "up"
+        else _low(current) < _low(reference)
+    )
+    structural_extreme_passed = (new_extreme or not require_new_extreme) and (
+        legacy_new_extreme_satisfied is not False
+    )
+    legacy_accepted = (
+        strength.relation == "weaker"
+        and price_span_passed is not False
+        and structural_extreme_passed
+    )
+    accepted = (
+        price_time is not None and price_time.effective_weaker and structural_extreme_passed
+        if strength_profile == "price_displacement_speed_v1"
+        else legacy_accepted
+    )
+    if comparison_audit is not None:
+        comparison_audit.append(
+            ComparisonAudit(
+                kind,
+                reference.object_id,
+                current.object_id,
+                reference_object_id,
+                current.end.bar_index,
+                known_at_bar_index,
+                strength.relation,
+                strength.reference_area,
+                strength.current_area,
+                price_span_passed,
+                new_extreme
+                if legacy_new_extreme_satisfied is None
+                else legacy_new_extreme_satisfied,
+                legacy_accepted,
+                "center_baseline_span_not_contracting"
+                if price_span_passed is False
+                else strength.reason
+                if strength.relation != "weaker"
+                else "new_extreme_missing"
+                if (require_new_extreme and not new_extreme)
+                or legacy_new_extreme_satisfied is False
+                else None,
+                price_time,
+            )
+        )
+    if not accepted:
         return None
-    reference_area = _macd_area(reference, histogram, area_cache)
-    current_area = _macd_area(current, histogram, area_cache)
-    if (
-        reference_area is None
-        or current_area is None
-        or reference_area <= 0.0
-        or current_area <= 0.0
-        or current_area >= reference_area
-    ):
-        return None
+    emitted_price_time = price_time if strength_profile == "price_displacement_speed_v1" else None
+    reference_area = strength.reference_area
+    current_area = strength.current_area
     if current.direction == "up":
-        new_extreme = _high(current) > _high(reference)
-        if require_new_extreme and not new_extreme:
-            return None
         signal_type: SignalType = "top_divergence"
         price = _high(current)
     else:
-        new_extreme = _low(current) < _low(reference)
-        if require_new_extreme and not new_extreme:
-            return None
         signal_type = "bottom_divergence"
         price = _low(current)
-    diff_reference = _directional_extreme(reference, diff)
-    diff_current = _directional_extreme(current, diff)
-    dea_reference = _directional_extreme(reference, dea)
-    dea_current = _directional_extreme(current, dea)
     return ChanSignal(
         signal_type=signal_type,
         divergence_kind=kind,
@@ -394,14 +723,16 @@ def _divergence(
         reference_object_id=reference_object_id,
         macd_area_reference=reference_area,
         macd_area_current=current_area,
-        macd_area_ratio=current_area / reference_area,
-        macd_diff_reference_extreme=diff_reference,
-        macd_diff_current_extreme=diff_current,
-        macd_dea_reference_extreme=dea_reference,
-        macd_dea_current_extreme=dea_current,
-        macd_extreme_relation=_macd_extreme_relation(
-            current.direction, diff_reference, diff_current, dea_reference, dea_current
+        macd_area_ratio=(
+            current_area / reference_area
+            if reference_area is not None and reference_area > 0 and current_area is not None
+            else None
         ),
+        macd_diff_reference_extreme=strength.diff_reference,
+        macd_diff_current_extreme=strength.diff_current,
+        macd_dea_reference_extreme=strength.dea_reference,
+        macd_dea_current_extreme=strength.dea_current,
+        macd_extreme_relation=strength.extreme_relation,
         macd_parameter_profile=(
             "macd_12_26_9_histogram_x2" if diff is not None and dea is not None else None
         ),
@@ -409,9 +740,47 @@ def _divergence(
         comparison_reference_object_id=reference.object_id,
         comparison_current_object_id=current.object_id,
         comparison_rule=(
-            "macd_same_direction_area_contraction_with_new_extreme"
+            "price_displacement_speed_or_baseline_span_below_80pct_v1"
+            if strength_profile == "price_displacement_speed_v1"
+            else "macd_same_direction_area_contraction_with_new_extreme"
             if require_new_extreme
             else "macd_same_direction_area_contraction"
+        ),
+        strength_profile=(
+            strength_profile if strength_profile == "price_displacement_speed_v1" else None
+        ),
+        strength_relation=emitted_price_time.relation if emitted_price_time is not None else None,
+        strength_trigger=(
+            "price_time_joint_weakening"
+            if emitted_price_time is not None and emitted_price_time.relation == "weaker"
+            else "baseline_span_below_80pct"
+            if emitted_price_time is not None and emitted_price_time.baseline_span_below_80pct
+            else None
+        ),
+        price_displacement_reference_i64=(
+            emitted_price_time.reference_displacement_i64
+            if emitted_price_time is not None
+            else None
+        ),
+        price_displacement_current_i64=(
+            emitted_price_time.current_displacement_i64 if emitted_price_time is not None else None
+        ),
+        observed_intervals_reference=(
+            emitted_price_time.reference_intervals if emitted_price_time is not None else None
+        ),
+        observed_intervals_current=(
+            emitted_price_time.current_intervals if emitted_price_time is not None else None
+        ),
+        baseline_span_reference_i64=(
+            emitted_price_time.reference_baseline_span_i64
+            if emitted_price_time is not None
+            else None
+        ),
+        baseline_span_current_i64=(
+            emitted_price_time.current_baseline_span_i64 if emitted_price_time is not None else None
+        ),
+        baseline_span_below_80pct=(
+            emitted_price_time.baseline_span_below_80pct if emitted_price_time is not None else None
         ),
         new_extreme_satisfied=new_extreme,
         follow_through_object_id=follow_through_object_id,
@@ -508,6 +877,12 @@ def chan_divergences(
     dea: Mapping[int, float] | None = None,
     bi_lines: Sequence[LineLike] = (),
     bi_centers: Sequence[BiCenterEvidence] | Callable[[], Sequence[BiCenterEvidence]] = (),
+    comparison_audit: list[ComparisonAudit] | None = None,
+    raw_positions: Mapping[int, int] | None = None,
+    certified_complete_positions: bool = False,
+    strength_profile: Literal["legacy_macd_area_v1", "price_displacement_speed_v1"] = (
+        "legacy_macd_area_v1"
+    ),
 ) -> list[ChanSignal]:
     """Classify segment-level trend, external range and center oscillation separately.
 
@@ -538,6 +913,10 @@ def chan_divergences(
                 require_new_extreme=False,
                 diff=diff,
                 dea=dea,
+                comparison_audit=comparison_audit,
+                raw_positions=raw_positions,
+                certified_complete_positions=certified_complete_positions,
+                strength_profile=strength_profile,
             )
             if value is not None:
                 value = replace(
@@ -570,13 +949,7 @@ def chan_divergences(
                 segments, center.base_index, segments[center.exit_index].direction
             )
             c_index = center.exit_index
-            if a_index is not None and _center_baseline_span_contracts(
-                segments[a_index],
-                segments[c_index],
-                segments[c_index].direction,
-                segments[a_index].start.price_i64,
-                center.zd_i64 if segments[c_index].direction == "up" else center.zg_i64,
-            ):
+            if a_index is not None:
                 value = _divergence(
                     "consolidation",
                     segments[a_index],
@@ -590,6 +963,14 @@ def chan_divergences(
                     follow_through_object_id=segments[c_index + 1].object_id,
                     diff=diff,
                     dea=dea,
+                    reference_baseline_i64=segments[a_index].start.price_i64,
+                    current_baseline_i64=(
+                        center.zd_i64 if segments[c_index].direction == "up" else center.zg_i64
+                    ),
+                    comparison_audit=comparison_audit,
+                    raw_positions=raw_positions,
+                    certified_complete_positions=certified_complete_positions,
+                    strength_profile=strength_profile,
                 )
                 if value is not None:
                     result.append(
@@ -597,7 +978,11 @@ def chan_divergences(
                             value,
                             status="confirmed" if center_position == 0 else "candidate",
                             divergence_profile="external_range",
-                            comparison_rule="macd_area_and_center_baseline_price_span_contraction",
+                            comparison_rule=(
+                                "price_displacement_speed_or_baseline_span_below_80pct_v1"
+                                if strength_profile == "price_displacement_speed_v1"
+                                else "macd_area_and_center_baseline_price_span_contraction"
+                            ),
                             formation_dir=center.formation_dir,
                             relative_dir=center.relative_dir,
                             a_object_id=segments[a_index].object_id,
@@ -654,13 +1039,6 @@ def chan_divergences(
             or not _trend_legs_advance(
                 segments[a_index], segments[reference_index], segments[current_index], direction
             )
-            or not _center_baseline_span_contracts(
-                segments[reference_index],
-                segments[current_index],
-                direction,
-                first.zd_i64 if direction == "up" else first.zg_i64,
-                second.zd_i64 if direction == "up" else second.zg_i64,
-            )
         ):
             continue
         prior_extreme = (
@@ -673,8 +1051,6 @@ def chan_divergences(
             if direction == "up"
             else _low(segments[current_index]) < prior_extreme
         )
-        if not new_extreme:
-            continue
         value = _divergence(
             "trend",
             segments[reference_index],
@@ -688,6 +1064,13 @@ def chan_divergences(
             follow_through_object_id=segments[current_index + 1].object_id,
             diff=diff,
             dea=dea,
+            reference_baseline_i64=first.zd_i64 if direction == "up" else first.zg_i64,
+            current_baseline_i64=second.zd_i64 if direction == "up" else second.zg_i64,
+            legacy_new_extreme_satisfied=new_extreme,
+            comparison_audit=comparison_audit,
+            raw_positions=raw_positions,
+            certified_complete_positions=certified_complete_positions,
+            strength_profile=strength_profile,
         )
         if value is not None:
             proof_centers, proof_departure, proof_retest, proof_time = _trend_c_sublevel_proof(
@@ -712,7 +1095,11 @@ def chan_divergences(
                 a_center_id=center_ids[index - 1],
                 b_center_id=center_ids[index],
                 new_extreme_satisfied=True,
-                comparison_rule="macd_area_center_baseline_price_span_and_trend_new_extreme",
+                comparison_rule=(
+                    "price_displacement_speed_or_baseline_span_below_80pct_v1"
+                    if strength_profile == "price_displacement_speed_v1"
+                    else "macd_area_center_baseline_price_span_and_trend_new_extreme"
+                ),
                 c_contains_type3=proof_retest is not None if proof_checked else None,
                 c_meets_sublevel=len(proof_centers) >= 2 if proof_checked else None,
                 c_sublevel_profile="bi_two_confirmed_centers_type3_v1" if proof_checked else None,
@@ -743,6 +1130,12 @@ def chan_forming_divergences(
     *,
     diff: Mapping[int, float] | None = None,
     dea: Mapping[int, float] | None = None,
+    comparison_audit: list[ComparisonAudit] | None = None,
+    raw_positions: Mapping[int, int] | None = None,
+    certified_complete_positions: bool = False,
+    strength_profile: Literal["legacy_macd_area_v1", "price_displacement_speed_v1"] = (
+        "legacy_macd_area_v1"
+    ),
 ) -> list[ChanSignal]:
     """Monitor an unconfirmed outward leg without treating it as a center unit.
 
@@ -773,13 +1166,7 @@ def chan_forming_divergences(
     known_at = forming_segment.known_at_bar_index
     if center.base_index > 0:
         a_index = _contiguous_preceding_same_direction(segments, center.base_index, direction)
-        if a_index is not None and _center_baseline_span_contracts(
-            segments[a_index],
-            forming_segment,
-            direction,
-            segments[a_index].start.price_i64,
-            center.zd_i64 if direction == "up" else center.zg_i64,
-        ):
+        if a_index is not None:
             value = _divergence(
                 "consolidation",
                 segments[a_index],
@@ -792,6 +1179,12 @@ def chan_forming_divergences(
                 require_new_extreme=False,
                 diff=diff,
                 dea=dea,
+                reference_baseline_i64=segments[a_index].start.price_i64,
+                current_baseline_i64=center.zd_i64 if direction == "up" else center.zg_i64,
+                comparison_audit=comparison_audit,
+                raw_positions=raw_positions,
+                certified_complete_positions=certified_complete_positions,
+                strength_profile=strength_profile,
             )
             if value is not None:
                 result.append(
@@ -799,7 +1192,11 @@ def chan_forming_divergences(
                         value,
                         status="forming",
                         divergence_profile="external_range",
-                        comparison_rule="macd_area_and_center_baseline_price_span_contraction",
+                        comparison_rule=(
+                            "price_displacement_speed_or_baseline_span_below_80pct_v1"
+                            if strength_profile == "price_displacement_speed_v1"
+                            else "macd_area_and_center_baseline_price_span_contraction"
+                        ),
                         formation_dir=center.formation_dir,
                         relative_dir=center.relative_dir,
                         a_object_id=segments[a_index].object_id,
@@ -837,14 +1234,6 @@ def chan_forming_divergences(
     b_index = first.exit_index
     if not _trend_legs_advance(segments[a_index], segments[b_index], forming_segment, direction):
         return result
-    if not _center_baseline_span_contracts(
-        segments[b_index],
-        forming_segment,
-        direction,
-        first.zd_i64 if direction == "up" else first.zg_i64,
-        second.zd_i64 if direction == "up" else second.zg_i64,
-    ):
-        return result
     prior_extreme = (
         max(_high(line) for line in segments[a_index:])
         if direction == "up"
@@ -855,8 +1244,6 @@ def chan_forming_divergences(
         if direction == "up"
         else _low(forming_segment) < prior_extreme
     )
-    if not new_extreme:
-        return result
     value = _divergence(
         "trend",
         segments[b_index],
@@ -869,6 +1256,13 @@ def chan_forming_divergences(
         require_new_extreme=False,
         diff=diff,
         dea=dea,
+        reference_baseline_i64=first.zd_i64 if direction == "up" else first.zg_i64,
+        current_baseline_i64=second.zd_i64 if direction == "up" else second.zg_i64,
+        legacy_new_extreme_satisfied=new_extreme,
+        comparison_audit=comparison_audit,
+        raw_positions=raw_positions,
+        certified_complete_positions=certified_complete_positions,
+        strength_profile=strength_profile,
     )
     if value is not None:
         relative_direction: Literal["UP", "DOWN"] = "UP" if direction == "up" else "DOWN"
@@ -884,7 +1278,11 @@ def chan_forming_divergences(
                 a_center_id=center_ids[-2],
                 b_center_id=center_ids[-1],
                 new_extreme_satisfied=True,
-                comparison_rule="macd_area_center_baseline_price_span_and_trend_new_extreme",
+                comparison_rule=(
+                    "price_displacement_speed_or_baseline_span_below_80pct_v1"
+                    if strength_profile == "price_displacement_speed_v1"
+                    else "macd_area_center_baseline_price_span_and_trend_new_extreme"
+                ),
                 c_contains_type3=None,
                 c_meets_sublevel=None,
                 follow_through_status="pending",

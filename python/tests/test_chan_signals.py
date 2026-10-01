@@ -8,14 +8,17 @@ from tvbt.chan.engine import ChanEngine
 from tvbt.chan.signals import (
     BiCenterEvidence,
     ChanSignal,
+    DivergenceContext,
     StructuralCenter,
     _center_baseline_span_contracts,
+    _divergence,
     _macd_extreme_relation,
     _trend_c_sublevel_proof,
     chan_divergences,
     chan_first_point_candidates,
     chan_forming_divergences,
     chan_trade_points,
+    compare_price_time_strength,
 )
 
 
@@ -177,6 +180,205 @@ def line_known_at(index: int, start: int, end: int, known_at_bar_index: int) -> 
     return Line(value.object_id, value.start, value.end, value.direction, known_at_bar_index)
 
 
+@pytest.mark.parametrize(
+    ("current_end", "current_end_position", "expected"),
+    [
+        (160, 7, "weaker"),
+        (160, 5, "conflict"),
+        (200, 6, "equal"),
+        (240, 5, "stronger"),
+    ],
+)
+def test_price_time_strength_uses_observed_intervals_and_exact_comparison(
+    current_end: int, current_end_position: int, expected: str
+) -> None:
+    reference = Line("b", Endpoint(10, 0, 100), Endpoint(20, 0, 200), "up", 20)
+    current = Line("c", Endpoint(30, 0, 100), Endpoint(40, 0, current_end), "up", 40)
+    context = DivergenceContext("trend", reference, current, 2, "center", 40, False, None)
+    positions = {10: 0, 15: 1, 20: 2, 25: 3, 30: 4, 40: current_end_position}
+    positions.update({30 + position: position for position in range(5, current_end_position)})
+    evidence = compare_price_time_strength(context, positions)
+    assert evidence.relation == expected
+    assert evidence.reference_displacement_i64 == 100
+    assert evidence.current_displacement_i64 == current_end - 100
+    assert evidence.reference_intervals == 2
+    assert evidence.current_intervals == current_end_position - 4
+    assert evidence.effective_weaker is (expected == "weaker")
+
+
+def test_price_time_strength_80pct_baseline_override_is_strict_and_auditable() -> None:
+    reference = Line("b", Endpoint(10, 0, 100), Endpoint(20, 0, 200), "up", 20)
+    current = Line("c", Endpoint(30, 0, 200), Endpoint(40, 0, 260), "up", 40)
+    context = DivergenceContext("trend", reference, current, 2, "center", 40, False, None)
+    positions = {10: 0, 15: 1, 20: 2, 25: 3, 30: 4, 40: 5}
+    evidence = compare_price_time_strength(
+        context,
+        positions,
+        reference_baseline_i64=100,
+        current_baseline_i64=200,
+    )
+    assert evidence.relation == "conflict"
+    assert (evidence.reference_baseline_span_i64, evidence.current_baseline_span_i64) == (
+        100,
+        60,
+    )
+    assert evidence.baseline_span_below_80pct is True
+    assert evidence.effective_weaker is True
+    equal_boundary = compare_price_time_strength(
+        context,
+        positions,
+        reference_baseline_i64=100,
+        current_baseline_i64=180,
+    )
+    assert equal_boundary.current_baseline_span_i64 == 80
+    assert equal_boundary.baseline_span_below_80pct is False
+    assert equal_boundary.effective_weaker is False
+    down_reference = Line("down-b", Endpoint(10, 0, 200), Endpoint(20, 0, 100), "down", 20)
+    down_current = Line("down-c", Endpoint(30, 0, 200), Endpoint(40, 0, 140), "down", 40)
+    down_context = replace(context, reference=down_reference, current=down_current)
+    down = compare_price_time_strength(
+        down_context,
+        positions,
+        reference_baseline_i64=200,
+        current_baseline_i64=200,
+    )
+    assert down.relation == "conflict"
+    assert down.baseline_span_below_80pct is True
+    assert down.effective_weaker is True
+
+
+def test_price_time_strength_missing_observation_or_late_confirmation_is_unknown() -> None:
+    reference = Line("b", Endpoint(10, 0, 100), Endpoint(20, 0, 200), "up", 20)
+    current = Line("c", Endpoint(30, 0, 200), Endpoint(40, 0, 260), "up", 41)
+    context = DivergenceContext("trend", reference, current, 2, "center", 40, False, None)
+    positions = {10: 0, 15: 1, 20: 2, 25: 3, 30: 4, 40: 5}
+    assert compare_price_time_strength(context, positions).reason == "incomplete_movement"
+    ready = replace(context, known_at_bar_index=41)
+    assert compare_price_time_strength(ready, {10: 0, 20: 2, 30: 4}).reason == (
+        "missing_raw_position"
+    )
+    assert compare_price_time_strength(ready, {10: 0, 20: 2, 30: 3, 40: 4}).reason == (
+        "incomplete_raw_window"
+    )
+
+
+def test_price_time_strength_downward_and_large_integer_cross_products() -> None:
+    reference = Line(
+        "b",
+        Endpoint(10, 0, 10**20),
+        Endpoint(20, 0, 10**20 - 10**18),
+        "down",
+        20,
+    )
+    current = Line(
+        "c",
+        Endpoint(30, 0, 10**20),
+        Endpoint(40, 0, 10**20 - 7 * 10**17),
+        "down",
+        40,
+    )
+    context = DivergenceContext("trend", reference, current, 2, "center", 40, False, None)
+    positions = {index: index for index in range(41)}
+    evidence = compare_price_time_strength(
+        context,
+        positions,
+        reference_baseline_i64=10**20,
+        current_baseline_i64=10**20,
+    )
+    assert evidence.relation == "weaker"
+    assert evidence.baseline_span_below_80pct is True
+    assert evidence.reference_displacement_i64 == 10**18
+    assert evidence.current_displacement_i64 == 7 * 10**17
+
+
+def test_price_time_profile_emits_without_macd_and_80pct_overrides_speed_conflict() -> None:
+    reference = Line("b", Endpoint(10, 0, 100), Endpoint(20, 0, 200), "up", 20)
+    current = Line("c", Endpoint(30, 0, 200), Endpoint(40, 0, 260), "up", 40)
+    positions = {10: 0, 15: 1, 20: 2, 25: 3, 30: 4, 40: 5}
+    signal = _divergence(
+        "consolidation",
+        reference,
+        current,
+        2,
+        "center",
+        40,
+        {},
+        require_new_extreme=False,
+        reference_baseline_i64=100,
+        current_baseline_i64=200,
+        raw_positions=positions,
+        strength_profile="price_displacement_speed_v1",
+    )
+    assert signal is not None
+    assert signal.strength_relation == "conflict"
+    assert signal.strength_trigger == "baseline_span_below_80pct"
+    assert signal.baseline_span_below_80pct is True
+    assert signal.macd_area_reference is None
+    assert signal.macd_area_current is None
+    opposite_macd = _divergence(
+        "consolidation",
+        reference,
+        current,
+        2,
+        "center",
+        40,
+        {index: float(index) for index in range(41)},
+        require_new_extreme=False,
+        reference_baseline_i64=100,
+        current_baseline_i64=200,
+        raw_positions=positions,
+        strength_profile="price_displacement_speed_v1",
+    )
+    assert opposite_macd is not None
+    assert (
+        opposite_macd.signal_type,
+        opposite_macd.bar_index,
+        opposite_macd.known_at_bar_index,
+        opposite_macd.strength_relation,
+        opposite_macd.strength_trigger,
+    ) == (
+        signal.signal_type,
+        signal.bar_index,
+        signal.known_at_bar_index,
+        signal.strength_relation,
+        signal.strength_trigger,
+    )
+    assert (
+        _divergence(
+            "consolidation",
+            reference,
+            current,
+            2,
+            "center",
+            40,
+            {},
+            require_new_extreme=False,
+            reference_baseline_i64=100,
+            current_baseline_i64=180,
+            raw_positions=positions,
+            strength_profile="price_displacement_speed_v1",
+        )
+        is None
+    )
+    assert (
+        _divergence(
+            "consolidation",
+            reference,
+            current,
+            2,
+            "center",
+            40,
+            {},
+            require_new_extreme=False,
+            reference_baseline_i64=100,
+            current_baseline_i64=200,
+            raw_positions={10: 0, 20: 2, 30: 4, 40: 5},
+            strength_profile="price_displacement_speed_v1",
+        )
+        is None
+    )
+
+
 def center(
     base: int,
     end: int,
@@ -251,9 +453,23 @@ def test_trend_divergence_compares_b_and_c_but_does_not_invent_standard_proof() 
         for value in chan_divergences(segments[:11], centers, ["center-1", "center-2"], histogram)
         if value.divergence_kind == "trend"
     ]
+    comparison_audit = []
     divergences = chan_divergences(
+        segments,
+        centers,
+        ["center-1", "center-2"],
+        histogram,
+        diff=diff,
+        dea=dea,
+        comparison_audit=comparison_audit,
+        raw_positions={index: index for index in range(13)},
+    )
+    assert divergences == chan_divergences(
         segments, centers, ["center-1", "center-2"], histogram, diff=diff, dea=dea
     )
+    assert any(row.kind == "trend" and row.accepted_by_legacy for row in comparison_audit)
+    price_time_trend = next(row.price_time for row in comparison_audit if row.kind == "trend")
+    assert price_time_trend is not None
     trend = [value for value in divergences if value.divergence_kind == "trend"]
     assert len(trend) == 1
     for unresolved in ("UNKNOWN", "OVERLAP", "DOWN"):
@@ -296,13 +512,44 @@ def test_trend_divergence_compares_b_and_c_but_does_not_invent_standard_proof() 
 
     # MACD still contracts and c still makes a new high, but 16-9 == 12-5.
     equal_span_center = replace(centers[1], zd_i64=9)
+    equal_span_audit = []
     assert not [
         value
         for value in chan_divergences(
-            segments, [centers[0], equal_span_center], ["center-1", "center-2"], histogram
+            segments,
+            [centers[0], equal_span_center],
+            ["center-1", "center-2"],
+            histogram,
+            comparison_audit=equal_span_audit,
         )
         if value.divergence_kind == "trend"
     ]
+    rejected_trend = [row for row in equal_span_audit if row.kind == "trend"]
+    assert len(rejected_trend) == 1
+    assert rejected_trend[0].reference_object_id == "segment-6"
+    assert rejected_trend[0].current_object_id == "segment-10"
+    assert rejected_trend[0].strength_relation == "weaker"
+    assert rejected_trend[0].price_span_passed is False
+    assert rejected_trend[0].accepted_by_legacy is False
+    assert rejected_trend[0].reason == "center_baseline_span_not_contracting"
+    no_macd_audit = []
+    assert not [
+        value
+        for value in chan_divergences(
+            segments,
+            centers,
+            ["center-1", "center-2"],
+            {},
+            comparison_audit=no_macd_audit,
+            raw_positions={index: index for index in range(13)},
+        )
+        if value.divergence_kind == "trend"
+    ]
+    missing_macd_trend = [row for row in no_macd_audit if row.kind == "trend"]
+    assert len(missing_macd_trend) == 1
+    assert missing_macd_trend[0].strength_relation == "unknown"
+    assert missing_macd_trend[0].accepted_by_legacy is False
+    assert missing_macd_trend[0].price_time == price_time_trend
     assert not [
         value
         for value in chan_forming_divergences(
@@ -440,24 +687,27 @@ def test_forming_external_range_divergence_is_provisional_and_can_disappear() ->
     assert chan_forming_divergences(confirmed, centers, ["B"], forming, histogram) == []
 
 
-def test_forming_divergence_revision_is_emitted_when_strength_recovers(
+def test_forming_divergence_revision_is_emitted_when_price_strength_recovers(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     runtime = ChanEngine()
     runtime._segment_lines = [line(0, 0, 10), line(1, 10, 4), line(2, 4, 8), line(3, 8, 5)]
     forming = line(4, 5, 9)
-    monkeypatch.setattr(runtime, "_forming_segment_observation", lambda: forming)
+    forming_value = [forming]
+    monkeypatch.setattr(runtime, "_forming_segment_observation", lambda: forming_value[0])
     monkeypatch.setattr(
         runtime, "_segment_structural_centers", lambda: ([active_center(1, 3, 4, 8)], ["B"])
     )
     runtime._macd_histogram = {index: 0.0 for index in range(6)}
     runtime._macd_histogram.update({0: 10.0, 1: 10.0, 4: 2.0, 5: 2.0})
+    runtime._raw_position_by_bar_index = {index: index for index in range(6)}
     runtime._refresh_forming_divergences(5)
     current = runtime.emitter.current("divergence")
     assert len(current) == 1
     assert current[0]["status"] == "forming"
     assert current[0]["known_at_bar_index"] == 5
     runtime._macd_histogram.update({4: 12.0, 5: 12.0})
+    forming_value[0] = line(4, 5, 16)
     runtime._refresh_forming_divergences(6)
     revised = runtime.emitter.current("divergence")
     assert len(revised) == 1
@@ -472,6 +722,7 @@ def test_forming_divergence_revision_is_emitted_when_strength_recovers(
     )
     prefix._macd_histogram = {index: 0.0 for index in range(6)}
     prefix._macd_histogram.update({0: 10.0, 1: 10.0, 4: 2.0, 5: 2.0})
+    prefix._raw_position_by_bar_index = {index: index for index in range(6)}
     prefix._refresh_forming_divergences(5)
     assert [event.row() for event in prefix.emitter.events] == [
         event.row() for event in runtime.emitter.events if event.known_at_bar_index <= 5
