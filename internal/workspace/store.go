@@ -77,18 +77,27 @@ type SeriesSource struct {
 }
 
 type CategoryVisibility struct {
-	ProcessedBars  *bool `json:"processed_bars,omitempty"`
-	Fractals       bool  `json:"fractals"`
-	Bi             bool  `json:"bi"`
-	BiStates       *bool `json:"bi_states,omitempty"`
-	Segments       *bool `json:"segments,omitempty"`
-	LocalCenters   bool  `json:"local_centers"`
-	LevelCenters   *bool `json:"level_centers,omitempty"`
-	LevelMovements *bool `json:"level_movements,omitempty"`
-	MovementStates *bool `json:"movement_states,omitempty"`
-	CenterMonitors *bool `json:"center_monitors,omitempty"`
-	Divergences    *bool `json:"divergences,omitempty"`
-	TradePoints    *bool `json:"trade_points,omitempty"`
+	ProcessedBars                *bool `json:"processed_bars,omitempty"`
+	Fractals                     bool  `json:"fractals"`
+	Bi                           bool  `json:"bi"`
+	BiStates                     *bool `json:"bi_states,omitempty"`
+	Segments                     *bool `json:"segments,omitempty"`
+	BiCenters                    *bool `json:"bi_centers,omitempty"`
+	SegmentCenters               *bool `json:"segment_centers,omitempty"`
+	CenterObjects                *bool `json:"center_objects,omitempty"`
+	BiBoundaryConfirmations      *bool `json:"bi_boundary_confirmations,omitempty"`
+	SegmentBoundaryConfirmations *bool `json:"segment_boundary_confirmations,omitempty"`
+	LocalCenters                 *bool `json:"local_centers,omitempty"` // read-only migration from pre-15F layouts
+	MovementStates               *bool `json:"movement_states,omitempty"`
+	CenterMonitors               *bool `json:"center_monitors,omitempty"`
+	Divergences                  *bool `json:"divergences,omitempty"`
+	FirstTradePoints             *bool `json:"first_trade_points,omitempty"`
+	SecondTradePoints            *bool `json:"second_trade_points,omitempty"`
+	ThirdTradePoints             *bool `json:"third_trade_points,omitempty"`
+	ClassFirstTradePoints        *bool `json:"class_first_trade_points,omitempty"`
+	ClassSecondTradePoints       *bool `json:"class_second_trade_points,omitempty"`
+	ClassThirdTradePoints        *bool `json:"class_third_trade_points,omitempty"`
+	TradePoints                  *bool `json:"trade_points,omitempty"` // read-only migration from pre-15G layouts
 }
 
 type StrategySource struct {
@@ -108,21 +117,31 @@ type StrategySource struct {
 }
 
 type DynamicCategoryVisibility struct {
-	ProcessedBars  bool `json:"processed_bars"`
-	Fractals       bool `json:"fractals"`
-	Bi             bool `json:"bi"`
-	BiStates       bool `json:"bi_states"`
-	Segments       bool `json:"segments"`
-	LocalCenters   bool `json:"local_centers"`
-	LevelCenters   bool `json:"level_centers"`
-	LevelMovements bool `json:"level_movements"`
-	MovementStates bool `json:"movement_states"`
-	CenterMonitors bool `json:"center_monitors"`
-	Divergences    bool `json:"divergences"`
-	TradePoints    bool `json:"trade_points"`
+	ProcessedBars                bool  `json:"processed_bars"`
+	Fractals                     bool  `json:"fractals"`
+	Bi                           bool  `json:"bi"`
+	BiStates                     bool  `json:"bi_states"`
+	Segments                     bool  `json:"segments"`
+	BiCenters                    bool  `json:"bi_centers"`
+	SegmentCenters               bool  `json:"segment_centers"`
+	CenterObjects                *bool `json:"center_objects,omitempty"`
+	BiBoundaryConfirmations      *bool `json:"bi_boundary_confirmations"`
+	SegmentBoundaryConfirmations *bool `json:"segment_boundary_confirmations"`
+	LocalCenters                 bool  `json:"local_centers,omitempty"` // read-only migration from pre-15F config
+	MovementStates               bool  `json:"movement_states"`
+	CenterMonitors               bool  `json:"center_monitors"`
+	Divergences                  bool  `json:"divergences"`
+	FirstTradePoints             bool  `json:"first_trade_points"`
+	SecondTradePoints            bool  `json:"second_trade_points"`
+	ThirdTradePoints             bool  `json:"third_trade_points"`
+	ClassFirstTradePoints        *bool `json:"class_first_trade_points,omitempty"`
+	ClassSecondTradePoints       *bool `json:"class_second_trade_points,omitempty"`
+	ClassThirdTradePoints        *bool `json:"class_third_trade_points,omitempty"`
+	TradePoints                  *bool `json:"trade_points,omitempty"` // read-only migration from pre-15G config
 }
 
 type StrategySourcePreference struct {
+	LocalCenterMode    string                    `json:"local_center_mode,omitempty"` // read-only migration
 	DatasetID          string                    `json:"dataset_id"`
 	DataRevision       string                    `json:"data_revision"`
 	SourceID           string                    `json:"source_id"`
@@ -202,6 +221,8 @@ type Store struct {
 
 func NewStore(guard *storage.PathGuard) *Store { return &Store{guard: guard} }
 
+func boolPointer(value bool) *bool { return &value }
+
 func (s *Store) GetLayout(profileID, layoutID string) (Layout, error) {
 	if !validID(profileID) || !validID(layoutID) {
 		return Layout{}, ErrInvalid
@@ -240,7 +261,34 @@ func (s *Store) GetStrategySourceConfig(profileID string) (StrategySourceConfig,
 	}
 	path, _ := s.guard.Resolve(fmt.Sprintf("workspaces/%s/strategy-source-config.json", profileID))
 	var document StrategySourceConfig
-	return document, read(path, &document)
+	if err := read(path, &document); err != nil {
+		return document, err
+	}
+	for index := range document.StrategySources {
+		source := &document.StrategySources[index]
+		if !source.CategoryVisibility.BiCenters && !source.CategoryVisibility.SegmentCenters && source.CategoryVisibility.LocalCenters {
+			if source.LocalCenterMode == "SEGMENT" {
+				source.CategoryVisibility.SegmentCenters = true
+			} else {
+				source.CategoryVisibility.BiCenters = true
+			}
+		}
+		source.LocalCenterMode = ""
+		source.CategoryVisibility.LocalCenters = false
+		if source.CategoryVisibility.BiBoundaryConfirmations == nil {
+			source.CategoryVisibility.BiBoundaryConfirmations = boolPointer(true)
+		}
+		if source.CategoryVisibility.SegmentBoundaryConfirmations == nil {
+			source.CategoryVisibility.SegmentBoundaryConfirmations = boolPointer(true)
+		}
+		if source.CategoryVisibility.TradePoints != nil {
+			source.CategoryVisibility.FirstTradePoints = *source.CategoryVisibility.TradePoints
+			source.CategoryVisibility.SecondTradePoints = *source.CategoryVisibility.TradePoints
+			source.CategoryVisibility.ThirdTradePoints = *source.CategoryVisibility.TradePoints
+			source.CategoryVisibility.TradePoints = nil
+		}
+	}
+	return document, nil
 }
 
 func (s *Store) PutStrategySourceConfig(profileID string, expected int, document StrategySourceConfig) (StrategySourceConfig, error) {
@@ -249,7 +297,17 @@ func (s *Store) PutStrategySourceConfig(profileID string, expected int, document
 	}
 	sha256Pattern := regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
 	seen := make(map[string]bool, len(document.StrategySources))
-	for _, source := range document.StrategySources {
+	for index := range document.StrategySources {
+		source := &document.StrategySources[index]
+		source.LocalCenterMode = ""
+		source.CategoryVisibility.LocalCenters = false
+		if source.CategoryVisibility.BiBoundaryConfirmations == nil {
+			source.CategoryVisibility.BiBoundaryConfirmations = boolPointer(true)
+		}
+		if source.CategoryVisibility.SegmentBoundaryConfirmations == nil {
+			source.CategoryVisibility.SegmentBoundaryConfirmations = boolPointer(true)
+		}
+		source.CategoryVisibility.TradePoints = nil
 		key := source.DatasetID + "\x00" + source.DataRevision + "\x00" + source.SourceID
 		if !validDatasetID(source.DatasetID) || !sha256Pattern.MatchString(source.DataRevision) || !validID(source.SourceID) || seen[key] {
 			return StrategySourceConfig{}, ErrInvalid

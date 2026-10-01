@@ -245,25 +245,36 @@ func TestChanCacheHitAndSemanticRangeRead(t *testing.T) {
 	confirmedAt := int64(14)
 	bodyEndBarIndex := int64(20)
 	bodyEndTime := int64(2000)
+	bodyDD := int64(90)
+	bodyGG := int64(110)
 	processedBars := []ChanProcessedBar{{ObjectID: "processed-bar-1", NormalizedIndex: 1, StartBarIndex: 14, StartTime: 1400, EndBarIndex: 16, EndTime: 1600, OpenI64: 105, HighI64: 108, LowI64: 98, CloseI64: 100, HighSourceBarIndex: 14, LowSourceBarIndex: 16, Direction: "down", SourceBarIndices: []int64{14, 15, 16}, Status: "sealed", SealedAtBarIndex: &confirmedAt, CatalogEvent: "processed_bar_revision", KnownAtBarIndex: 16, ObjectRevision: 2}}
 	fractals := []ChanFractal{{ObjectID: "fractal-1", BarIndex: 10, Time: 1000, PriceI64: 110, ZoneLowI64: 100, ZoneHighI64: 110, ExtremeSourceBarIndex: 10, FractalType: "top", Status: "confirmed", AuxStrength: "unclassified", StrengthReason: "lesson_82_numeric_profile_not_matched", CatalogAlgorithmID: "ALG-GEO-002", StrengthSemanticNamespace: "auxiliary", Confirmed: true, ConfirmedAtBarIndex: &confirmedAt, KnownAtBarIndex: 12, ObjectRevision: 1}}
 	lines := []ChanLineObject{{ObjectID: "bi-1", StartBarIndex: 10, StartTime: 1000, StartPriceI64: 110, StartExtremeSourceBarIndex: 10, EndBarIndex: 20, EndTime: 2000, EndPriceI64: 90, EndExtremeSourceBarIndex: 20, Direction: "down", Status: "confirmed", CatalogAlgorithmID: "ALG-GEO-003", Confirmed: true, ConfirmedAtBarIndex: &confirmedAt, KnownAtBarIndex: 14, ObjectRevision: 2}}
 	direction := "down"
 	anchorID := "fractal-1"
 	biStates := []ChanBiState{{ObjectID: "bi-state-current", BarIndex: 20, Time: 2000, PriceI64: 90, State: "DOWN_EXTENDING", Direction: &direction, AnchorFractalID: &anchorID, Trigger: "bi_confirmed", CatalogAlgorithmID: "ALG-GEO-003", KnownAtBarIndex: 20, ObjectRevision: 3}}
-	localCenter := []ChanLocalCenter{{ObjectID: "local-center-1", StreamKey: "TEST.A1.1m|1m|BI|stroke|17.0.0|anchor", RuleVersion: "local_center_boundary_v1", UnitKind: "BI", StructuralLevel: "stroke", SeedIDs: []string{"bi-1", "bi-2", "bi-3"}, ZDI64: 95, ZGI64: 105, SeedStartBarIndex: 10, SeedStartTime: 1000, SeedEndBarIndex: 20, SeedEndTime: 2000, FormedAtBarIndex: 14, BodyStartBarIndex: 10, BodyStartTime: 1000, BodyEndBarIndex: &bodyEndBarIndex, BodyEndTime: &bodyEndTime, ObservedStartBarIndex: 10, ObservedStartTime: 1000, ObservedEndBarIndex: 20, ObservedEndTime: 2000, ObservedLowI64: 90, ObservedHighI64: 110, Status: "CLOSED", BreakConfirmedAtBarIndex: &confirmedAt, LeftContextIncomplete: true, SourceRevision: "revision-1", KnownAtBarIndex: 14, ObjectRevision: 1}}
+	localCenter := []ChanLocalCenter{{ObjectID: "local-center-1", StreamKey: "TEST.A1.1m|1m|BI|stroke|17.0.0|anchor", RuleVersion: "local_center_boundary_v1", UnitKind: "BI", StructuralLevel: "stroke", SeedIDs: []string{"bi-1", "bi-2", "bi-3"}, ZDI64: 95, ZGI64: 105, DDI64: &bodyDD, GGI64: &bodyGG, ComparisonDDI64: &bodyDD, ComparisonGGI64: &bodyGG, SeedStartBarIndex: 10, SeedStartTime: 1000, SeedEndBarIndex: 20, SeedEndTime: 2000, FormedAtBarIndex: 14, BodyStartBarIndex: 10, BodyStartTime: 1000, BodyEndBarIndex: &bodyEndBarIndex, BodyEndTime: &bodyEndTime, ObservedStartBarIndex: 10, ObservedStartTime: 1000, ObservedEndBarIndex: 20, ObservedEndTime: 2000, ObservedLowI64: 90, ObservedHighI64: 110, Status: "CLOSED", BreakConfirmedAtBarIndex: &confirmedAt, LeftContextIncomplete: true, SourceRevision: "revision-1", KnownAtBarIndex: 14, ObjectRevision: 1}}
 	connections := []ChanCenterConnection{{ObjectID: "connection-1", StreamKey: "TEST.A1.1m|1m|BI|stroke|17.0.0|anchor", RuleVersion: "local_center_boundary_v1", UnitKind: "BI", StructuralLevel: "stroke", FromCenterID: "local-center-1", OrderedUnitIDs: []string{"bi-3"}, ExitUnitID: "bi-3", FirstRetestID: "bi-4", StartBarIndex: 18, StartTime: 1800, EndBarIndex: 20, EndTime: 2000, ConfirmedAtBarIndex: 20, SourceRevision: "revision-1", KnownAtBarIndex: 20, ObjectRevision: 1}}
 	auditEvents := []ChanCenterAuditEvent{{ObjectID: "audit-1", EventType: "SEED_FOUND", CenterID: "local-center-1", UnitIDs: []string{"bi-1", "bi-2", "bi-3"}, ZDI64: 95, ZGI64: 105, EventBarIndex: 20, EventTime: 2000, RuleVersion: "local_center_boundary_v1", SourceFile: "python/src/tvbt/chan/local_center.py", SourceLine: 1, KnownAtBarIndex: 20, ObjectRevision: 1}}
 	levelID := "L0"
 	catalogEvent := "B1_confirmed"
 	catalogAlgorithmID := "ALG-SIG-001"
 	lowerTurnID := "segment-turn-1"
-	signals := []ChanSignalPoint{{ObjectID: "signal-1", BarIndex: 20, Time: 2000, PriceI64: 90, SignalType: "buy_1", Status: "confirmed", LevelID: &levelID, LowerLevelTurnObjectID: &lowerTurnID, CatalogEvent: &catalogEvent, CatalogAlgorithmID: &catalogAlgorithmID, Confirmed: true, ConfirmedAtBarIndex: &confirmedAt, KnownAtBarIndex: 20, ObjectRevision: 1}}
+	divergenceProfile := "segment_trend_candidate"
+	formationDir := "DOWN"
+	relativeDir := "UP"
+	centerA := "center-a"
+	centerB := "center-b"
+	areaRatio := 0.5
+	extremeRelation := "both_weaker"
+	noProof := false
+	proofProfile := "bi_two_confirmed_centers_type3_v1"
+	departureID := "bi-departure"
+	retestID := "bi-retest"
+	signals := []ChanSignalPoint{{ObjectID: "signal-1", BarIndex: 20, Time: 2000, PriceI64: 90, SignalType: "buy_1", Status: "confirmed", LevelID: &levelID, LowerLevelTurnObjectID: &lowerTurnID, CatalogEvent: &catalogEvent, CatalogAlgorithmID: &catalogAlgorithmID, DivergenceProfile: &divergenceProfile, FormationDir: &formationDir, RelativeDir: &relativeDir, ACenterID: &centerA, BCenterID: &centerB, MACDAreaRatio: &areaRatio, MACDExtremeRelation: &extremeRelation, CContainsType3: &noProof, CMeetsSublevel: &noProof, CSublevelProfile: &proofProfile, CSublevelCenterIDs: []string{"bi-center-1"}, CType3DepartureID: &departureID, CType3RetestID: &retestID, CProofKnownAtBarIndex: &confirmedAt, Confirmed: true, ConfirmedAtBarIndex: &confirmedAt, KnownAtBarIndex: 20, ObjectRevision: 1}}
 	breakoutWarning := "rising_wedge_below_b"
 	monitors := []ChanCenterMonitor{{ObjectID: "monitor-1", BarIndex: 20, Time: 2000, ZI64: 100, ZnI64: 101, ZTwiceI64: 201, ZnTwiceI64: 203, CoreLowI64: 90, CoreHighI64: 111, RangeHighI64: 113, RangeLowI64: 90, ComponentOrdinal: 3, ComponentDirection: "up", RelativePosition: "above", OscillationBias: "strong", BreakoutWarning: &breakoutWarning, CatalogAlgorithmID: "ALG-AUX-004", SemanticNamespace: "auxiliary", EvidenceLevel: "AUXILIARY", LevelMappingProfile: "segment_center_components_v1", StandardSignal: false, ExecutionAllowed: false, ConfirmsThirdPoint: false, AnalysisLevel: "segment", ReferenceObjectID: "local-center-1", Confirmed: true, ConfirmedAtBarIndex: &confirmedAt, KnownAtBarIndex: 20, ObjectRevision: 1}}
-	levelCenters := []ChanLevelCenter{{ObjectID: "level-center-1", LevelID: "L1", ParentLevelID: "L0", StartBarIndex: 18, StartTime: 1800, EndBarIndex: 30, EndTime: 3000, ZDI64: 95, ZGI64: 105, DDI64: 90, GGI64: 110, ComponentKind: "segment", ComponentObjectIDs: []string{"segment-1"}, SourceCenterIDs: []string{"local-center-1"}, Status: "promoted", PromotionReason: "nine_component_extension", CatalogEvent: "center_promoted", CatalogAlgorithmID: "ALG-GEO-005", Confirmed: true, ConfirmedAtBarIndex: &confirmedAt, KnownAtBarIndex: 20, ObjectRevision: 1}}
-	levelMovements := []ChanLevelMovement{{ObjectID: "level-movement-1", LevelID: "L0", StartBarIndex: 18, StartTime: 1800, EndBarIndex: 30, EndTime: 3000, LowI64: 90, HighI64: 110, ComponentCenterIDs: []string{"local-center-1"}, Classification: "consolidation", Status: "candidate", CatalogEvent: "movement_candidate", CatalogAlgorithmID: "ALG-GEO-006", KnownAtBarIndex: 20, ObjectRevision: 1}}
-	for name, value := range map[string]any{"processed_bars.parquet": processedBars, "fractals.parquet": fractals, "bi.parquet": lines, "bi_states.parquet": biStates, "segments.parquet": lines, "local_centers.parquet": localCenter, "center_connections.parquet": connections, "center_audit_events.parquet": auditEvents, "level_centers.parquet": levelCenters, "level_movements.parquet": levelMovements, "movement_states.parquet": []ChanMovementState{}, "center_monitors.parquet": monitors, "divergences.parquet": signals, "trade_points.parquet": signals, "events.parquet": []chanEventTestRow{}} {
+	for name, value := range map[string]any{"processed_bars.parquet": processedBars, "fractals.parquet": fractals, "bi.parquet": lines, "bi_states.parquet": biStates, "segments.parquet": lines, "local_centers.parquet": localCenter, "center_connections.parquet": connections, "center_audit_events.parquet": auditEvents, "movement_states.parquet": []ChanMovementState{}, "center_monitors.parquet": monitors, "divergences.parquet": signals, "trade_points.parquet": signals, "events.parquet": []chanEventTestRow{}} {
 		var err error
 		switch rows := value.(type) {
 		case []ChanProcessedBar:
@@ -286,10 +297,6 @@ func TestChanCacheHitAndSemanticRangeRead(t *testing.T) {
 			err = parquet.WriteFile(filepath.Join(directory, name), rows)
 		case []ChanBiState:
 			err = parquet.WriteFile(filepath.Join(directory, name), rows)
-		case []ChanLevelCenter:
-			err = parquet.WriteFile(filepath.Join(directory, name), rows)
-		case []ChanLevelMovement:
-			err = parquet.WriteFile(filepath.Join(directory, name), rows)
 		case []chanEventTestRow:
 			err = parquet.WriteFile(filepath.Join(directory, name), rows)
 		}
@@ -309,14 +316,25 @@ func TestChanCacheHitAndSemanticRangeRead(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.ResultKind != "chan" || result.Objects == nil || len(result.Objects.ProcessedBars) != 1 || len(result.Objects.Fractals) != 0 || len(result.Objects.Bi) != 1 || len(result.Objects.BiStates) != 1 || len(result.Objects.Segments) != 1 || len(result.Objects.LocalCenters) != 1 || len(result.Objects.CenterConnections) != 1 || len(result.Objects.CenterAuditEvents) != 1 || len(result.Objects.LevelCenters) != 1 || len(result.Objects.LevelMovements) != 1 || len(result.Objects.CenterMonitors) != 1 || len(result.Objects.Divergences) != 1 || len(result.Objects.TradePoints) != 1 || result.Coverage.ReturnedCount != 12 {
+	if result.ResultKind != "chan" || result.Objects == nil || len(result.Objects.ProcessedBars) != 1 || len(result.Objects.Fractals) != 0 || len(result.Objects.Bi) != 1 || len(result.Objects.BiStates) != 1 || len(result.Objects.Segments) != 1 || len(result.Objects.LocalCenters) != 1 || len(result.Objects.CenterConnections) != 1 || len(result.Objects.CenterAuditEvents) != 1 || len(result.Objects.CenterMonitors) != 1 || len(result.Objects.Divergences) != 1 || len(result.Objects.TradePoints) != 1 || result.Coverage.ReturnedCount != 10 {
 		t.Fatalf("unexpected Chan range result: %#v", result)
 	}
 	if result.Objects.TradePoints[0].Status != "confirmed" || result.Objects.TradePoints[0].LowerLevelTurnObjectID == nil || *result.Objects.TradePoints[0].LowerLevelTurnObjectID != lowerTurnID {
 		t.Fatalf("unexpected first-point lifecycle result: %#v", result.Objects.TradePoints[0])
 	}
+	divergence := result.Objects.Divergences[0]
+	if divergence.DivergenceProfile == nil || *divergence.DivergenceProfile != divergenceProfile || divergence.FormationDir == nil || *divergence.FormationDir != formationDir || divergence.RelativeDir == nil || *divergence.RelativeDir != relativeDir || divergence.ACenterID == nil || *divergence.ACenterID != centerA || divergence.BCenterID == nil || *divergence.BCenterID != centerB || divergence.MACDAreaRatio == nil || *divergence.MACDAreaRatio != areaRatio || divergence.MACDExtremeRelation == nil || *divergence.MACDExtremeRelation != extremeRelation || divergence.CContainsType3 == nil || *divergence.CContainsType3 || divergence.CMeetsSublevel == nil || *divergence.CMeetsSublevel {
+		t.Fatalf("divergence evidence was not preserved across the Go cache API: %#v", divergence)
+	}
+	if divergence.CSublevelProfile == nil || *divergence.CSublevelProfile != proofProfile || len(divergence.CSublevelCenterIDs) != 1 || divergence.CSublevelCenterIDs[0] != "bi-center-1" || divergence.CType3DepartureID == nil || *divergence.CType3DepartureID != departureID || divergence.CType3RetestID == nil || *divergence.CType3RetestID != retestID || divergence.CProofKnownAtBarIndex == nil || *divergence.CProofKnownAtBarIndex != confirmedAt {
+		t.Fatalf("BI sublevel proof was not preserved across the Go cache API: %#v", divergence)
+	}
 	if result.Objects.Bi[0].StartExtremeSourceBarIndex != 10 || result.Objects.Bi[0].EndExtremeSourceBarIndex != 20 {
 		t.Fatalf("unexpected Chan extreme source indexes: %#v", result.Objects.Bi[0])
+	}
+	center := result.Objects.LocalCenters[0]
+	if center.DDI64 == nil || *center.DDI64 != bodyDD || center.GGI64 == nil || *center.GGI64 != bodyGG || center.ComparisonDDI64 == nil || *center.ComparisonDDI64 != bodyDD || center.ComparisonGGI64 == nil || *center.ComparisonGGI64 != bodyGG || center.ComparisonExcludedEntryID != nil {
+		t.Fatalf("center comparison range was not preserved: %#v", center)
 	}
 	if len(result.Objects.ProcessedBars[0].SourceBarIndices) != 3 || result.Objects.BiStates[0].State != "DOWN_EXTENDING" {
 		t.Fatalf("online geometry lifecycle was not preserved: %#v %#v", result.Objects.ProcessedBars[0], result.Objects.BiStates[0])

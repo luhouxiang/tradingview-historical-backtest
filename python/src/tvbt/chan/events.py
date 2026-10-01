@@ -16,8 +16,6 @@ OBJECT_TYPES = frozenset(
         "local_center",
         "center_connection",
         "center_audit_event",
-        "level_center",
-        "level_movement",
         "movement_state",
         "center_monitor",
         "divergence",

@@ -1,6 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { DatasetMeta } from '../types/api'
+import type { ChanCalculationResults, ChanLocalCenter, DatasetMeta, SeriesSource, StrategySource } from '../types/api'
+import { ChanPrimitive } from '../chart/chanPrimitive'
 import ChartGroup from './ChartGroup.vue'
 
 const chartMocks = vi.hoisted(() => {
@@ -27,7 +28,7 @@ const chartMocks = vi.hoisted(() => {
     addSeries: vi.fn((_definition: unknown, _options: unknown, index: number) => [candle, macd, volume][index]),
     addCustomSeries: vi.fn((_definition: unknown, _options: unknown, index: number) => index === 2 ? volume : macd),
     panes: vi.fn(() => panes), timeScale: vi.fn(() => timeScale), removeSeries: vi.fn(), swapPanes: vi.fn(), remove: vi.fn(),
-    subscribeCrosshairMove: vi.fn(), unsubscribeCrosshairMove: vi.fn(),
+    subscribeCrosshairMove: vi.fn(), unsubscribeCrosshairMove: vi.fn(), subscribeClick: vi.fn(), unsubscribeClick: vi.fn(),
   }
   return { candle, macd, volume, macdScale, volumeScale, panes, timeScale, chart, createChart: vi.fn(() => chart) }
 })
@@ -53,6 +54,41 @@ function dataset(): DatasetMeta {
   }
 }
 
+function rangeSources(): { indicatorSources: SeriesSource[]; strategySources: StrategySource[] } {
+  const base = {
+    algorithm_version: '18.0.0', source_hash: `sha256:${'c'.repeat(64)}`, input_schema: 'bars.v1', causal: true,
+    parameter_schema: { type: 'object', additionalProperties: false, required: [], properties: {} },
+    warmup: { kind: 'formula', expression: '0' },
+  }
+  return {
+    indicatorSources: [{
+      source_type: 'SeriesSource', source_id: 'macd', job_id: 'job-macd', status: 'completed', parameters: {},
+      definition: { ...base, kind: 'indicator', algorithm_id: 'macd', name: 'MACD',
+        outputs: [{ name: 'histogram', display_name: 'MACD', pane: 'indicator', series_type: 'histogram' }] },
+    }],
+    strategySources: [{
+      source_type: 'StrategySource', source_id: 'chan', job_id: 'job-chan', status: 'completed', parameters: {}, visible: true,
+      category_visibility: { processed_bars: false, fractals: false, bi: false, bi_states: false,
+        segments: true, bi_centers: false, segment_centers: false, bi_boundary_confirmations: false, segment_boundary_confirmations: false, divergences: false, first_trade_points: false, second_trade_points: false, third_trade_points: false },
+      definition: { ...base, kind: 'chan', algorithm_id: 'chan_engineering', name: '缠论',
+        outputs: [{ name: 'segments', display_name: '线段', pane: 'main', series_type: 'semantic_objects', object_type: 'segment' }] },
+    }],
+  } as { indicatorSources: SeriesSource[]; strategySources: StrategySource[] }
+}
+
+function rangeResult(job: string, from: number, to: number) {
+  if (to - from + 1 > 5000) throw new Error('INVALID_RANGE')
+  if (job === 'job-macd') {
+    const indices = Array.from({ length: to - from + 1 }, (_, i) => from + i)
+    return { result_kind: 'indicator', bar_index: indices, values: { histogram: indices.map((i) => i + 1) } }
+  }
+  return { result_kind: 'chan', objects: {
+    processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [{ object_id: `segment-${from}`, object_revision: 1 }],
+    local_centers: [], center_connections: [], center_audit_events: [],
+    movement_states: [{ object_id: 'state-spanning-pages', object_revision: 1 }], center_monitors: [], divergences: [], trade_points: [],
+  } }
+}
+
 describe('ChartGroup', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -62,6 +98,53 @@ describe('ChartGroup', () => {
       checksum: `sha256:${'b'.repeat(64)}`,
       bars: { bar_index: [0, 1], timestamp_utc: [1_700_000_000_000, 1_700_000_300_000], open_i64: [10, 11], high_i64: [12, 13], low_i64: [9, 10], close_i64: [11, 10], volume: [3, 4], open_interest: [null, 5] },
     }))
+  })
+
+  it('emits a clicked class trade marker for the shared object-tree selection path', () => {
+    const signal = { object_id: 'class-buy-1', signal_type: 'class_buy_1' } as never
+    const hit = vi.spyOn(ChanPrimitive.prototype, 'signalForHit').mockReturnValue(signal)
+    const wrapper = mount(ChartGroup, { props: { dataset: null } })
+    const onClick = chartMocks.chart.subscribeClick.mock.calls.at(-1)?.[0] as ((value: object) => void) | undefined
+    expect(onClick).toBeTypeOf('function')
+    onClick?.({ hoveredObjectId: 'trade-point:class-buy-1' })
+    expect(wrapper.emitted('select:signal')?.at(-1)).toEqual([signal])
+    wrapper.unmount()
+    hit.mockRestore()
+  })
+
+  it('highlights the reference and current segments of a selected divergence independently of the segment layer', async () => {
+    const reference = { object_id: 'segment-reference', start_bar_index: 0, end_bar_index: 1,
+      start_time: 1_700_000_000_000, end_time: 1_700_000_300_000, start_price_i64: 11, end_price_i64: 13 } as never
+    const current = { object_id: 'segment-current', start_bar_index: 1, end_bar_index: 2,
+      start_time: 1_700_000_300_000, end_time: 1_700_000_600_000, start_price_i64: 12, end_price_i64: 10 } as never
+    const signal = { object_id: 'divergence-1', object_type: 'divergence', bar_index: 1,
+      time: 1_700_000_300_000, price_i64: 12, confirmed_at_bar_index: 2, known_at_bar_index: 2,
+      object_revision: 1, label: '盘整顶背驰', signal: {
+        comparison_reference_object_id: 'segment-reference', comparison_current_object_id: 'segment-current',
+      } } as never
+    const wrapper = mount(ChartGroup, { props: { dataset: dataset(), selectedSignal: signal,
+      selectedDivergenceSegments: { reference, current } } })
+    await flushPromises()
+    expect(wrapper.findAll('[data-divergence-segment]')).toHaveLength(2)
+    expect(wrapper.get('[data-divergence-segment="reference"]').attributes('data-segment-id')).toBe('segment-reference')
+    expect(wrapper.get('[data-divergence-segment="current"]').text()).toContain('背驰段 c K1–K2')
+    const a = { object_id: 'segment-a', start_bar_index: -1, end_bar_index: 0,
+      start_time: 1_699_999_700_000, end_time: 1_700_000_000_000,
+      start_price_i64: 10, end_price_i64: 11 } as never
+    const trendSignal = { object_id: 'trend-divergence', object_type: 'divergence', bar_index: 1,
+      time: 1_700_000_300_000, price_i64: 12, confirmed_at_bar_index: 2, known_at_bar_index: 2,
+      object_revision: 1, label: '趋势顶背驰候选', signal: {
+        divergence_kind: 'trend', a_object_id: 'segment-a',
+        comparison_reference_object_id: 'segment-reference', comparison_current_object_id: 'segment-current',
+      } } as never
+    await wrapper.setProps({ selectedSignal: trendSignal,
+      selectedDivergenceSegments: { a, reference, current } })
+    expect(wrapper.findAll('[data-divergence-segment]')).toHaveLength(3)
+    expect(wrapper.get('[data-divergence-segment="a"]').attributes('data-segment-id')).toBe('segment-a')
+    expect(wrapper.get('[data-divergence-segment="a"]').text()).toContain('起始段 a')
+    await wrapper.setProps({ selectedSignal: null })
+    expect(wrapper.findAll('[data-divergence-segment]')).toHaveLength(0)
+    wrapper.unmount()
   })
 
   it('uses one chart instance with price, MACD placeholder, and custom volume panes at 6:1:1', () => {
@@ -101,6 +184,32 @@ describe('ChartGroup', () => {
     expect(chartMocks.volumeScale.applyOptions).toHaveBeenCalledWith({ autoScale: true, scaleMargins: { top: 0.15, bottom: 0.02 } })
     expect(wrapper.get('[data-pane-id="volume"]').text()).toContain('成交量 4')
     expect(chartMocks.timeScale.setVisibleLogicalRange).toHaveBeenCalledWith({ from: 0, to: 7 })
+    wrapper.unmount()
+  })
+
+  it('centers a keyboard-selected historical bar and clears only its temporary highlight on chart input', async () => {
+    const meta = dataset()
+    meta.coverage.last_bar_index = 500
+    apiMocks.getBars.mockImplementation(async (_dataset: string, _revision: string, generation: string, options: { tail?: number }) => {
+      const index = options.tail ? 500 : 357
+      return {
+        request_id: 'req', dataset_id: meta.dataset_id, data_revision: revision, generation_id: generation,
+        price_scale: 1, coverage: { first_bar_index: index, last_bar_index: index },
+        has_more_before: index > 0, has_more_after: index < 500, checksum: `sha256:${'b'.repeat(64)}`,
+        bars: { bar_index: [index], timestamp_utc: [1_700_000_000_000 + index * 300_000],
+          open_i64: [10], high_i64: [12], low_i64: [9], close_i64: [11], volume: [3], open_interest: [null] },
+      }
+    })
+    const wrapper = mount(ChartGroup, { props: { dataset: meta } })
+    await flushPromises()
+    await (wrapper.vm as unknown as { focusBar: (index: number) => Promise<void> }).focusBar(357)
+    await flushPromises()
+    expect(apiMocks.getBars).toHaveBeenLastCalledWith(meta.dataset_id, revision, expect.stringMatching(/^gen-/),
+      { beforeBarIndex: 478, limit: 241 })
+    expect(chartMocks.timeScale.setVisibleLogicalRange).toHaveBeenLastCalledWith({ from: -40, to: 40 })
+    expect(wrapper.get('[data-keyboard-bar-focus="357"]').text()).toContain('K线357')
+    await wrapper.get('.chart-host').trigger('pointerdown')
+    expect(wrapper.find('[data-keyboard-bar-focus]').exists()).toBe(false)
     wrapper.unmount()
   })
 
@@ -256,10 +365,11 @@ describe('ChartGroup', () => {
     expect(chartMocks.chart.addSeries).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ color: '#e0e3eb' }), 1)
     expect(chartMocks.chart.addSeries).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ color: '#f2d600' }), 1)
     expect(chartMocks.chart.addCustomSeries).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ autoscaleInfoProvider: expect.any(Function) }), 1)
-    expect(chartMocks.macd.createPriceLine).toHaveBeenCalledWith(expect.objectContaining({ price: 0, title: '0' }))
+    expect(chartMocks.macd.createPriceLine).not.toHaveBeenCalled()
     const diffOptions = chartMocks.chart.addSeries.mock.calls.find((call) => (call[1] as { color?: string })?.color === '#e0e3eb')?.[1] as { autoscaleInfoProvider: (base: () => object) => object }
+    expect(diffOptions).toEqual(expect.objectContaining({ lastValueVisible: false }))
     expect(diffOptions.autoscaleInfoProvider(() => ({ priceRange: { minValue: -3, maxValue: 5 } }))).toEqual({
-      priceRange: { minValue: -5, maxValue: 5 }, margins: { above: 6, below: 6 },
+      priceRange: { minValue: -3, maxValue: 6 }, margins: { above: 6, below: 6 },
     })
     expect(chartMocks.macd.setData).toHaveBeenCalledWith([
       { time: 1_700_000_000, value: -0.5, color: '#00b8a9' },
@@ -324,6 +434,57 @@ describe('ChartGroup', () => {
     wrapper.unmount()
   })
 
+  it.each([false, true])('filters centers consistently for historical/replay mode (replay=%s)', async (replay) => {
+    const objects = {
+      processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [],
+      local_centers: [
+        { object_id: 'bi-center', unit_kind: 'BI', structural_level: 'stroke' },
+        { object_id: 'segment-center', unit_kind: 'SEGMENT', structural_level: 'segment' },
+      ] as ChanLocalCenter[],
+      center_connections: [], center_audit_events: [],
+      movement_states: [], center_monitors: [], divergences: [], trade_points: [],
+    } satisfies ChanCalculationResults['objects']
+    apiMocks.getCalculationResults.mockResolvedValue({ result_kind: 'chan', objects })
+    const source = rangeSources().strategySources[0]!
+    source.category_visibility.bi_centers = false
+    source.category_visibility.segment_centers = true
+    const setData = vi.spyOn(ChanPrimitive.prototype, 'setData')
+    const wrapper = mount(ChartGroup, { props: {
+      dataset: dataset(), strategySources: [source], replayObjects: replay ? objects : null,
+      replayCursor: replay ? 1 : null,
+    } })
+    await flushPromises()
+    expect(setData.mock.calls.at(-1)?.[0].local_centers.map(c => c.object_id)).toEqual(['segment-center'])
+    expect(wrapper.get('[data-pane-id="price"]').text()).toContain('实体中枢 1')
+    expect(apiMocks.createCalculation).not.toHaveBeenCalled()
+    wrapper.unmount()
+    setData.mockRestore()
+  })
+
+  it('keeps a boundary-confirmation layer drawable when its center layer is hidden', async () => {
+    const objects = {
+      processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [],
+      local_centers: [{ object_id: 'bi-center', unit_kind: 'BI', structural_level: 'stroke' }] as ChanLocalCenter[],
+      center_connections: [], center_audit_events: [],
+      movement_states: [], center_monitors: [], divergences: [], trade_points: [],
+    } satisfies ChanCalculationResults['objects']
+    apiMocks.getCalculationResults.mockResolvedValue({ result_kind: 'chan', objects })
+    const source = rangeSources().strategySources[0]!
+    source.category_visibility.bi_centers = false
+    source.category_visibility.segment_centers = false
+    source.category_visibility.bi_boundary_confirmations = true
+    source.category_visibility.segment_boundary_confirmations = false
+    const setData = vi.spyOn(ChanPrimitive.prototype, 'setData')
+    const wrapper = mount(ChartGroup, { props: { dataset: dataset(), strategySources: [source] } })
+    await flushPromises()
+
+    expect(setData.mock.calls.at(-1)?.[0].local_centers.map(center => center.object_id)).toEqual(['bi-center'])
+    expect(setData.mock.calls.at(-1)?.[2]?.get('bi-center')).toEqual({ center: false, boundaryConfirmation: true })
+    expect(wrapper.get('[data-pane-id="price"]').text()).toContain('实体中枢 0')
+    wrapper.unmount()
+    setData.mockRestore()
+  })
+
   it('queries a completed StrategySource into the single Chan primitive without recalculation', async () => {
     apiMocks.getCalculationResults.mockResolvedValue({
       result_kind: 'chan', objects: {
@@ -331,13 +492,13 @@ describe('ChartGroup', () => {
         fractals: [],
         bi: [{ object_id: 'bi-1', start_time: 1_700_000_000_000, start_price_i64: 10, end_time: 1_700_000_300_000, end_price_i64: 12, confirmed: true }],
         segments: [{ object_id: 'segment-1', start_time: 1_700_000_000_000, start_price_i64: 10, end_time: 1_700_000_300_000, end_price_i64: 12, confirmed: true }],
-        bi_states: [], local_centers: [], center_connections: [], center_audit_events: [], level_centers: [], level_movements: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [],
+        bi_states: [], local_centers: [], center_connections: [], center_audit_events: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [],
       },
       coverage: { first_bar_index: 0, last_bar_index: 1, returned_count: 2 },
     })
     const source = {
       source_type: 'StrategySource' as const, source_id: 'strategy-1', job_id: 'job-chan', status: 'completed' as const,
-      visible: true, category_visibility: { fractals: false, bi: true, segments: true, local_centers: true, divergences: true, trade_points: true }, parameters: { min_fractal_gap: 5 },
+      visible: true, category_visibility: { fractals: false, bi: true, segments: true, bi_centers: true, segment_centers: true, bi_boundary_confirmations: true, segment_boundary_confirmations: true, divergences: true, first_trade_points: true, second_trade_points: true, third_trade_points: true }, parameters: { min_fractal_gap: 5 },
       definition: {
         kind: 'chan' as const, algorithm_id: 'chan_standard', algorithm_version: '1.0.0', source_hash: `sha256:${'c'.repeat(64)}`,
         name: '标准缠论', input_schema: 'bars.v1' as const, causal: true as const,
@@ -355,8 +516,104 @@ describe('ChartGroup', () => {
     wrapper.unmount()
   })
 
+  it('loads the complete zoomed-out viewport after left prefetch, including segments, movement states and MACD', async () => {
+    const meta = dataset()
+    meta.coverage = { ...meta.coverage, bar_count: 6000, last_bar_index: 5999 }
+    apiMocks.getBars.mockImplementation(async (_dataset: string, _revision: string, generation: string, options: { tail?: number; beforeBarIndex?: number; limit?: number }) => {
+      const end = options.tail ? 5999 : options.beforeBarIndex! - 1
+      const start = Math.max(0, end - (options.tail ?? options.limit!) + 1)
+      const indices = Array.from({ length: end - start + 1 }, (_, i) => start + i)
+      return {
+        dataset_id: meta.dataset_id, data_revision: revision, generation_id: generation,
+        checksum: `sha256:${'b'.repeat(64)}`, coverage: { first_bar_index: start, last_bar_index: end },
+        bars: { bar_index: indices, timestamp_utc: indices.map((i) => 1_700_000_000_000 + i * 300_000),
+          open_i64: indices.map(() => 10), high_i64: indices.map(() => 12), low_i64: indices.map(() => 9),
+          close_i64: indices.map(() => 11), volume: indices.map(() => 3), open_interest: indices.map(() => null) },
+      }
+    })
+    apiMocks.getCalculationResults.mockImplementation(async (job, from, to) => rangeResult(job, from, to))
+    const setChan = vi.spyOn(ChanPrimitive.prototype, 'setData')
+    const wrapper = mount(ChartGroup, { props: { dataset: meta, ...rangeSources() } })
+    await flushPromises()
+    vi.useFakeTimers()
+    const handler = chartMocks.timeScale.subscribeVisibleLogicalRangeChange.mock.calls[0][0]
+    for (const count of [3000, 4500]) {
+      const range = { from: 0, to: count - 1 }
+      chartMocks.timeScale.getVisibleLogicalRange.mockReturnValue(range)
+      handler(range)
+      await vi.advanceTimersByTimeAsync(350)
+      await flushPromises()
+    }
+    expect(wrapper.get('.chart-group').attributes('data-cache-bar-count')).toBe('6000')
+    apiMocks.getCalculationResults.mockClear()
+    handler({ from: 0, to: 5999 })
+    await vi.advanceTimersByTimeAsync(200)
+    await flushPromises()
+    expect(apiMocks.getCalculationResults.mock.calls).toEqual(expect.arrayContaining([
+      ['job-macd', 0, 4999], ['job-macd', 5000, 5999],
+      ['job-chan', 0, 4999], ['job-chan', 5000, 5999],
+    ]))
+    expect(chartMocks.macd.setData.mock.lastCall?.[0]).toHaveLength(6000)
+    expect(setChan.mock.lastCall?.[0].segments.map((s) => s.object_id)).toEqual(['segment-0', 'segment-5000'])
+    expect(setChan.mock.lastCall?.[0].movement_states).toHaveLength(1)
+    expect(wrapper.find('.chart-error').exists()).toBe(false)
+    expect(apiMocks.createCalculation).not.toHaveBeenCalled()
+    wrapper.unmount()
+    setChan.mockRestore()
+    vi.useRealTimers()
+  })
+
+  it('does not let a slow old viewport overwrite newer indicators or Chan objects', async () => {
+    apiMocks.getCalculationResults.mockImplementation(async (job, from, to) => rangeResult(job, from, to))
+    const setChan = vi.spyOn(ChanPrimitive.prototype, 'setData')
+    const wrapper = mount(ChartGroup, { props: { dataset: dataset(), ...rangeSources() } })
+    await flushPromises()
+    const pending: Array<() => void> = []
+    apiMocks.getCalculationResults.mockImplementation((job, from, to) => to === 0
+      ? new Promise((resolve) => pending.push(() => resolve(rangeResult(job, from, to))))
+      : Promise.resolve(rangeResult(job, from, to)))
+    vi.useFakeTimers()
+    const handler = chartMocks.timeScale.subscribeVisibleLogicalRangeChange.mock.calls[0][0]
+    handler({ from: 0, to: 0 })
+    await vi.advanceTimersByTimeAsync(150)
+    expect(pending).toHaveLength(2)
+    handler({ from: 0, to: 1 })
+    await vi.advanceTimersByTimeAsync(150)
+    await flushPromises()
+    const chanCalls = setChan.mock.calls.length
+    const indicatorCalls = chartMocks.macd.setData.mock.calls.length
+    pending.forEach((resolve) => resolve())
+    await flushPromises()
+    expect(setChan).toHaveBeenCalledTimes(chanCalls)
+    expect(chartMocks.macd.setData).toHaveBeenCalledTimes(indicatorCalls)
+    expect(chartMocks.macd.setData.mock.lastCall?.[0]).toHaveLength(2)
+    wrapper.unmount()
+    setChan.mockRestore()
+    vi.useRealTimers()
+  })
+
+  it('shows a range error instead of silently leaving old overlays, and clears it after retry', async () => {
+    apiMocks.getCalculationResults.mockImplementation(async (job, from, to) => rangeResult(job, from, to))
+    const wrapper = mount(ChartGroup, { props: { dataset: dataset(), ...rangeSources() } })
+    await flushPromises()
+    vi.useFakeTimers()
+    apiMocks.getCalculationResults.mockRejectedValue(new Error('offline'))
+    const handler = chartMocks.timeScale.subscribeVisibleLogicalRangeChange.mock.calls[0][0]
+    handler({ from: 0, to: 1 })
+    await vi.advanceTimersByTimeAsync(150)
+    await flushPromises()
+    expect(wrapper.get('.chart-error').text()).toContain('指标/缠论范围加载失败')
+    apiMocks.getCalculationResults.mockImplementation(async (job, from, to) => rangeResult(job, from, to))
+    handler({ from: 0, to: 1 })
+    await vi.advanceTimersByTimeAsync(150)
+    await flushPromises()
+    expect(wrapper.find('.chart-error').exists()).toBe(false)
+    wrapper.unmount()
+    vi.useRealTimers()
+  })
+
   it('hides future bars when replay cursor moves without creating calculations', async () => {
-    const wrapper = mount(ChartGroup, { props: { dataset: dataset(), replayCursor: 0, replayObjects: { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], local_centers: [], center_connections: [], center_audit_events: [], level_centers: [], level_movements: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] } } })
+    const wrapper = mount(ChartGroup, { props: { dataset: dataset(), replayCursor: 0, replayObjects: { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], local_centers: [], center_connections: [], center_audit_events: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] } } })
     await flushPromises()
     expect(chartMocks.candle.setData).toHaveBeenLastCalledWith([
       expect.objectContaining({ time: 1_700_000_000, open: 10, high: 12, low: 9, close: 11 }),
@@ -647,6 +904,75 @@ describe('ChartGroup', () => {
     )
     expect(wrapper.get('.chart-group').attributes('data-cache-bar-count')).toBe('243')
     vi.useRealTimers()
+    wrapper.unmount()
+  })
+
+  it('loads both compared segments when locking a historical divergence', async () => {
+    apiMocks.getBars.mockImplementation(async (_dataset: string, _revision: string, generation: string, options: { tail?: number; beforeBarIndex?: number; limit?: number }) => {
+      const indices = options.tail ? [3000, 5999]
+        : Array.from({ length: options.limit ?? 0 }, (_, index) => (options.beforeBarIndex ?? 0) - (options.limit ?? 0) + index)
+      return {
+        request_id: 'req', dataset_id: 'SHFE.AO2609.5m', data_revision: revision, generation_id: generation,
+        price_scale: 1, coverage: { first_bar_index: indices[0], last_bar_index: indices.at(-1) },
+        has_more_before: true, has_more_after: true, checksum: `sha256:${'b'.repeat(64)}`,
+        bars: { bar_index: indices, timestamp_utc: indices.map((index) => 1_700_000_000_000 + index * 300_000),
+          open_i64: indices, high_i64: indices.map((index) => index + 2), low_i64: indices.map((index) => index - 1),
+          close_i64: indices, volume: indices, open_interest: indices.map(() => null) },
+      }
+    })
+    const wideDataset = dataset()
+    wideDataset.coverage = { ...wideDataset.coverage, bar_count: 6000, last_bar_index: 5999 }
+    const a = { object_id: 'segment-a', start_bar_index: 300, end_bar_index: 450,
+      start_time: 1_700_090_000_000, end_time: 1_700_135_000_000, start_price_i64: 105, end_price_i64: 92 } as never
+    const reference = { object_id: 'segment-reference', start_bar_index: 500, end_bar_index: 700,
+      start_time: 1_700_150_000_000, end_time: 1_700_210_000_000, start_price_i64: 100, end_price_i64: 90 } as never
+    const current = { object_id: 'segment-current', start_bar_index: 900, end_bar_index: 1000,
+      start_time: 1_700_270_000_000, end_time: 1_700_300_000_000, start_price_i64: 95, end_price_i64: 85 } as never
+    const signal = { object_id: 'divergence-1', object_type: 'divergence', bar_index: 1000,
+      time: 1_700_300_000_000, price_i64: 85, confirmed_at_bar_index: 1020, known_at_bar_index: 1020,
+      object_revision: 1, signal: { divergence_kind: 'trend', a_object_id: 'segment-a', comparison_reference_object_id: 'segment-reference',
+        comparison_current_object_id: 'segment-current' } } as never
+    const wrapper = mount(ChartGroup, { props: { dataset: wideDataset, selectedSignal: signal,
+      selectedDivergenceSegments: { a, reference, current } } })
+    await flushPromises()
+    await (wrapper.vm as unknown as { focusSignal: (value: typeof signal) => Promise<void> }).focusSignal(signal)
+    expect(apiMocks.getBars).toHaveBeenLastCalledWith('SHFE.AO2609.5m', revision, expect.stringMatching(/^gen-/),
+      { beforeBarIndex: 1101, limit: 881 })
+    expect(chartMocks.timeScale.setVisibleLogicalRange).toHaveBeenLastCalledWith({ from: 0, to: 880 })
+    expect(wrapper.findAll('[data-divergence-segment]')).toHaveLength(3)
+    wrapper.unmount()
+  })
+
+  it('discloses evidence that exceeds one bounded K-line focus request', async () => {
+    apiMocks.getBars.mockImplementation(async (_dataset: string, _revision: string, generation: string, options: { tail?: number; beforeBarIndex?: number; limit?: number }) => {
+      const indices = options.tail ? [7000, 9999]
+        : Array.from({ length: options.limit ?? 0 }, (_, index) => (options.beforeBarIndex ?? 0) - (options.limit ?? 0) + index)
+      return {
+        request_id: 'req', dataset_id: 'SHFE.AO2609.5m', data_revision: revision, generation_id: generation,
+        price_scale: 1, coverage: { first_bar_index: indices[0], last_bar_index: indices.at(-1) },
+        has_more_before: true, has_more_after: true, checksum: `sha256:${'b'.repeat(64)}`,
+        bars: { bar_index: indices, timestamp_utc: indices.map((index) => 1_700_000_000_000 + index * 300_000),
+          open_i64: indices, high_i64: indices.map((index) => index + 2), low_i64: indices.map((index) => index - 1),
+          close_i64: indices, volume: indices, open_interest: indices.map(() => null) },
+      }
+    })
+    const wideDataset = dataset()
+    wideDataset.coverage = { ...wideDataset.coverage, bar_count: 10_000, last_bar_index: 9999 }
+    const signal = { object_id: 'wide-trend', object_type: 'divergence', bar_index: 6000,
+      time: 1_701_800_000_000, price_i64: 6000, confirmed_at_bar_index: 6020,
+      known_at_bar_index: 6020, object_revision: 1,
+      signal: { divergence_kind: 'trend', a_object_id: 'segment-a',
+        comparison_reference_object_id: 'segment-b', comparison_current_object_id: 'segment-c' } } as never
+    const a = { object_id: 'segment-a', start_bar_index: 0 } as never
+    const reference = { object_id: 'segment-b', start_bar_index: 1000 } as never
+    const current = { object_id: 'segment-c', end_bar_index: 6000 } as never
+    const wrapper = mount(ChartGroup, { props: { dataset: wideDataset, selectedSignal: signal,
+      selectedDivergenceSegments: { a, reference, current } } })
+    await flushPromises()
+    await (wrapper.vm as unknown as { focusSignal: (value: typeof signal) => Promise<void> }).focusSignal(signal)
+    expect(wrapper.get('.chart-notice').text()).toContain('证据跨度超过单次 5000 根')
+    await wrapper.setProps({ selectedSignal: null })
+    expect(wrapper.find('.chart-notice').exists()).toBe(false)
     wrapper.unmount()
   })
 

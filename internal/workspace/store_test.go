@@ -121,7 +121,7 @@ func TestStrategySourceConfigUsesDedicatedAtomicFile(t *testing.T) {
 		SchemaVersion: 1, ProfileID: "default", Revision: 1,
 		StrategySources: []StrategySourcePreference{{
 			DatasetID: "SHFE.AO2609.5m", DataRevision: "sha256:" + repeat("1", 64), SourceID: "strategy-default-chan", Visible: true,
-			CategoryVisibility: DynamicCategoryVisibility{ProcessedBars: false, Bi: true, BiStates: true, Segments: true, LocalCenters: true, MovementStates: true, CenterMonitors: true, Divergences: true, TradePoints: true},
+			CategoryVisibility: DynamicCategoryVisibility{ProcessedBars: false, Bi: true, BiStates: true, Segments: true, BiCenters: true, SegmentCenters: true, CenterObjects: boolPointer(true), BiBoundaryConfirmations: boolPointer(true), SegmentBoundaryConfirmations: boolPointer(true), MovementStates: true, CenterMonitors: true, Divergences: true, FirstTradePoints: true, SecondTradePoints: true, ThirdTradePoints: true, ClassFirstTradePoints: boolPointer(false), ClassSecondTradePoints: boolPointer(true), ClassThirdTradePoints: boolPointer(false)},
 		}},
 	}
 	saved, err := store.PutStrategySourceConfig("default", 0, document)
@@ -134,13 +134,36 @@ func TestStrategySourceConfigUsesDedicatedAtomicFile(t *testing.T) {
 		t.Fatalf("dedicated dynamic config is invalid: %s %v", data, err)
 	}
 	read, err := store.GetStrategySourceConfig("default")
-	if err != nil || !read.StrategySources[0].CategoryVisibility.Bi || !read.StrategySources[0].CategoryVisibility.BiStates {
+	if visibility := read.StrategySources[0].CategoryVisibility; err != nil || !visibility.Bi || !visibility.BiStates || !visibility.BiCenters || !visibility.SegmentCenters || visibility.CenterObjects == nil || !*visibility.CenterObjects || visibility.BiBoundaryConfirmations == nil || !*visibility.BiBoundaryConfirmations || visibility.SegmentBoundaryConfirmations == nil || !*visibility.SegmentBoundaryConfirmations || !visibility.FirstTradePoints || !visibility.SecondTradePoints || !visibility.ThirdTradePoints || visibility.ClassFirstTradePoints == nil || *visibility.ClassFirstTradePoints || visibility.ClassSecondTradePoints == nil || !*visibility.ClassSecondTradePoints || visibility.ClassThirdTradePoints == nil || *visibility.ClassThirdTradePoints {
 		t.Fatalf("read strategy source config: %#v %v", read, err)
 	}
 	_, err = store.PutStrategySourceConfig("default", 0, document)
 	var conflict *ConflictError
 	if !errors.As(err, &conflict) || conflict.CurrentRevision != 1 {
 		t.Fatalf("expected current revision 1, got %v", err)
+	}
+}
+
+func TestStrategySourceConfigMigratesLegacyTradePointVisibility(t *testing.T) {
+	guard, _ := storage.NewPathGuard(t.TempDir())
+	store := NewStore(guard)
+	legacyVisible := true
+	document := StrategySourceConfig{
+		SchemaVersion: 1, ProfileID: "default", Revision: 1,
+		StrategySources: []StrategySourcePreference{{
+			DatasetID: "SHFE.AO2609.5m", DataRevision: "sha256:" + repeat("1", 64), SourceID: "strategy-default-chan", Visible: true,
+			CategoryVisibility: DynamicCategoryVisibility{TradePoints: &legacyVisible},
+		}},
+	}
+	path, _ := guard.Resolve("workspaces/default/strategy-source-config.json")
+	if err := write(path, document); err != nil {
+		t.Fatalf("write legacy strategy source config: %v", err)
+	}
+
+	read, err := store.GetStrategySourceConfig("default")
+	visibility := read.StrategySources[0].CategoryVisibility
+	if err != nil || !visibility.FirstTradePoints || !visibility.SecondTradePoints || !visibility.ThirdTradePoints || visibility.TradePoints != nil || visibility.BiBoundaryConfirmations == nil || !*visibility.BiBoundaryConfirmations || visibility.SegmentBoundaryConfirmations == nil || !*visibility.SegmentBoundaryConfirmations {
+		t.Fatalf("legacy trade-point visibility was not migrated: %#v %v", visibility, err)
 	}
 }
 

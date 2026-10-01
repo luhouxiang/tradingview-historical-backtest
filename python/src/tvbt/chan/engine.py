@@ -7,7 +7,6 @@ from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
 from tvbt.chan.events import EventEmitter
-from tvbt.chan.level_graph import GraphCenter, build_level_graph
 from tvbt.chan.local_center import RULE_VERSION as LOCAL_CENTER_RULE_VERSION
 from tvbt.chan.local_center import (
     CenterAuditEvent,
@@ -16,6 +15,7 @@ from tvbt.chan.local_center import (
     CenterUnit,
     LocalCenter,
     LocalCenterAccumulator,
+    classify_center_relative_direction,
     compare_center_boundaries,
 )
 from tvbt.chan.reference import (
@@ -23,10 +23,12 @@ from tvbt.chan.reference import (
     ReferenceSegmentAccumulator,
 )
 from tvbt.chan.signals import (
+    BiCenterEvidence,
     ChanSignal,
     StructuralCenter,
     chan_divergences,
     chan_first_point_candidates,
+    chan_forming_divergences,
     chan_trade_points,
 )
 from tvbt.chan.zn import classify_zn_components
@@ -237,7 +239,9 @@ class LineObject:
     range_high_i64: int | None = None
     range_low_source_bar_index: int | None = None
     range_high_source_bar_index: int | None = None
-    range_profile: Literal["endpoint_extrema_v1", "constituent_bi_union_v1"] = "endpoint_extrema_v1"
+    range_profile: Literal[
+        "endpoint_extrema_v1", "constituent_bi_union_v1", "forming_observed_bars_v1"
+    ] = "endpoint_extrema_v1"
 
     def __post_init__(self) -> None:
         endpoint_low = min(self.start.price_i64, self.end.price_i64)
@@ -315,7 +319,7 @@ class ChanEngine:
     """逐 K 线因果缠论引擎，负责分型、笔、线段、中枢和信号事件生成。"""
 
     # 算法版本参与缓存键；任何语义变化都必须升级版本，禁止复用旧缓存。
-    algorithm_version = "17.0.0"
+    algorithm_version = "19.3.0"
 
     def __init__(
         self,
@@ -375,6 +379,8 @@ class ChanEngine:
         self._macd_dea: float | None = None
         # 每根原始 K 线的 MACD 柱值，按国内常用 2 * (DIFF - DEA) 语义保存。
         self._macd_histogram: dict[int, float] = {}
+        self._macd_diff_by_bar: dict[int, float] = {}
+        self._macd_dea_by_bar: dict[int, float] = {}
         # 已确认线段的 MACD 面积缓存，键包含实际端点，端点修订时不会误复用。
         self._macd_area_cache: dict[tuple[str, int, int, str], float] = {}
         # 因果事件收集器，统一管理 upsert/delete 和当前对象快照。
@@ -412,6 +418,7 @@ class ChanEngine:
         candidate_changed = self._refresh_fractal_candidate(bar.bar_index)
         bi_candidate_changed = self._refresh_bi_candidate(bar.bar_index)
         self._publish_local_center_previews(bar.bar_index)
+        self._refresh_forming_divergences(bar.bar_index)
         if not self.fractals and self._fractal_candidate is None:
             trigger = "initial"
         elif resolved is not None:
@@ -981,6 +988,12 @@ class ChanEngine:
                 f"range=[{range_low},{range_high}]"
             )
 
+    @staticmethod
+    def _segment_component_bi(bi: list[LineObject], segment: ReferenceSegment) -> list[LineObject]:
+        if not (0 <= segment.start_index < segment.end_index < len(bi)):
+            raise AssertionError("segment must end at the start of an existing next bi")
+        return bi[segment.start_index : segment.end_index]
+
     def _update_structures(self, known_at_bar_index: int, changed_bi_index: int) -> None:
         """从首次变化笔位置更新线段、实体中枢、背驰和买卖点。"""
         segment_specs = self._segment_accumulator.update(
@@ -1001,7 +1014,10 @@ class ChanEngine:
                 self.bi[segment.start_index].object_id,
                 "up" if segment.up else "down",
             )
-            component_bi = self.bi[segment.start_index : segment.end_index + 1]
+            # end_index anchors the segment at the *start* of that bi.  The bi
+            # itself belongs to the following segment and can extend well past
+            # this segment's end bar; including it leaks the next leg's range.
+            component_bi = self._segment_component_bi(self.bi, segment)
             range_low_line = min(
                 component_bi,
                 key=lambda line: (
@@ -1021,6 +1037,14 @@ class ChanEngine:
             range_low_i64 = range_low_line.range_low_i64
             range_high_i64 = range_high_line.range_high_i64
             assert range_low_i64 is not None and range_high_i64 is not None
+            low_source = range_low_line.range_low_source_bar_index
+            high_source = range_high_line.range_high_source_bar_index
+            assert low_source is not None and high_source is not None
+            if not (
+                segment.start_bar_index <= low_source <= segment.end_bar_index
+                and segment.start_bar_index <= high_source <= segment.end_bar_index
+            ):
+                raise AssertionError("segment range source must lie within its bar interval")
             value = (
                 object_id,
                 {
@@ -1114,41 +1138,14 @@ class ChanEngine:
             return
 
         segment_centers, segment_center_ids = self._segment_structural_centers()
-        graph_centers: list[GraphCenter] = []
         # 走势状态事件：记录中枢震荡、盘整和中枢迁移。
         movement_state_values: list[tuple[str, dict[str, Any], int]] = []
         # Z/Zn 监控事件：跟踪各线段相对中枢中轴的位置、强弱和越界/楔形预警。
         center_monitor_values: list[tuple[str, dict[str, Any], int]] = []
-        previous_center: tuple[StructuralCenter, str, int, int] | None = None
+        previous_center: tuple[StructuralCenter, str] | None = None
         for center, object_id in zip(segment_centers, segment_center_ids, strict=True):
             components = segment_lines[center.base_index : center.end_index + 1]
-            dd_i64 = min(
-                line.range_low_i64 for line in components if line.range_low_i64 is not None
-            )
-            gg_i64 = max(
-                line.range_high_i64 for line in components if line.range_high_i64 is not None
-            )
             z_i64 = (center.zd_i64 + center.zg_i64) // 2
-            graph_centers.append(
-                GraphCenter(
-                    object_id=object_id,
-                    level_id="L0",
-                    start_bar_index=center.start_bar_index,
-                    start_time=center.start_time,
-                    end_bar_index=center.end_bar_index,
-                    end_time=center.end_time,
-                    zd_i64=center.zd_i64,
-                    zg_i64=center.zg_i64,
-                    dd_i64=dd_i64,
-                    gg_i64=gg_i64,
-                    component_kind="segment",
-                    component_object_ids=tuple(line.object_id for line in components),
-                    component_known_at=tuple(line.known_at_bar_index for line in components),
-                    status=center.status,
-                    confirmed_at_bar_index=center.known_at_bar_index,
-                    known_at_bar_index=center.known_at_bar_index,
-                )
-            )
             phase = "centre_oscillation" if len(components) > 3 else "consolidation"
             movement_state_values.append(
                 (
@@ -1170,9 +1167,16 @@ class ChanEngine:
                 )
             )
             if previous_center is not None:
-                prior, prior_id, prior_dd, prior_gg = previous_center
-                # 新中枢整体脱离前一中枢完整振荡包络时，标记同级别中枢迁移。
-                migration = "up" if dd_i64 > prior_gg else "down" if gg_i64 < prior_dd else None
+                prior, prior_id = previous_center
+                # The same core-and-comparison-envelope verdict drives both
+                # the center object and its migration state event.
+                migration = (
+                    "up"
+                    if center.relative_dir == "UP"
+                    else "down"
+                    if center.relative_dir == "DOWN"
+                    else None
+                )
                 if migration is not None:
                     movement_state_values.append(
                         (
@@ -1193,7 +1197,7 @@ class ChanEngine:
                             center.known_at_bar_index,
                         )
                     )
-            previous_center = (center, object_id, dd_i64, gg_i64)
+            previous_center = (center, object_id)
 
             for observation in classify_zn_components(
                 core_low_i64=center.zd_i64,
@@ -1235,13 +1239,16 @@ class ChanEngine:
                     )
                 )
 
-        level_graph = build_level_graph(graph_centers)
         divergence_specs = chan_divergences(
             segment_lines,
             segment_centers,
             segment_center_ids,
             self._macd_histogram,
             self._macd_area_cache,
+            diff=self._macd_diff_by_bar,
+            dea=self._macd_dea_by_bar,
+            bi_lines=self.bi,
+            bi_centers=self._bi_sublevel_centers,
         )
         divergence_values: list[tuple[str, dict[str, Any], int]] = []
         divergence_objects: list[tuple[str, ChanSignal]] = []
@@ -1257,44 +1264,40 @@ class ChanEngine:
             divergence_values.append(
                 (object_id, _signal_payload(signal), signal.known_at_bar_index)
             )
+        # Defer provisional revisions to the common end-of-bar path. A forced
+        # structural rescan must not emit them before fractal/BI state events.
+        finalized_ids = {object_id for object_id, _, _ in divergence_values}
+        for previous in self.emitter.current("divergence"):
+            object_id = str(previous["object_id"])
+            if previous.get("status") != "forming" or object_id in finalized_ids:
+                continue
+            payload = {
+                key: value
+                for key, value in previous.items()
+                if key not in {"object_id", "object_revision", "known_at_bar_index"}
+            }
+            divergence_values.append((object_id, payload, int(previous["known_at_bar_index"])))
 
         trade_point_by_id: dict[str, tuple[str, dict[str, Any], int]] = {}
-        level_sources: list[tuple[str, list[StructuralCenter], list[str]]] = [
-            ("L0", segment_centers, segment_center_ids)
-        ]
-        promoted_indices = [
-            index
-            for index, center in enumerate(graph_centers)
-            if len(center.component_object_ids) >= 9
-        ]
-        if promoted_indices:
-            level_sources.append(
-                (
-                    "L1",
-                    [segment_centers[index] for index in promoted_indices],
-                    [segment_center_ids[index] for index in promoted_indices],
-                )
+        for signal in chan_first_point_candidates(
+            segment_lines,
+            segment_centers,
+            segment_center_ids,
+            self._macd_histogram,
+            self._macd_area_cache,
+            level_id="L0",
+        ):
+            object_id = _stable_id(
+                "trade-point",
+                signal.signal_type,
+                signal.level_id,
+                segment_lines[signal.segment_index].object_id,
             )
-        for level_id, source_centers, source_ids in level_sources:
-            for signal in chan_first_point_candidates(
-                segment_lines,
-                source_centers,
-                source_ids,
-                self._macd_histogram,
-                self._macd_area_cache,
-                level_id=level_id,
-            ):
-                object_id = _stable_id(
-                    "trade-point",
-                    signal.signal_type,
-                    signal.level_id,
-                    segment_lines[signal.segment_index].object_id,
-                )
-                trade_point_by_id[object_id] = (
-                    object_id,
-                    _signal_payload(signal),
-                    signal.known_at_bar_index,
-                )
+            trade_point_by_id[object_id] = (
+                object_id,
+                _signal_payload(signal),
+                signal.known_at_bar_index,
+            )
         # 买卖点：消费 SEGMENT 实体中枢投影和背驰对象。
         for signal in chan_trade_points(
             segment_lines, segment_centers, segment_center_ids, divergence_objects
@@ -1313,11 +1316,13 @@ class ChanEngine:
         trade_point_values = self._retain_invalidated_first_points(
             list(trade_point_by_id.values()), known_at_bar_index
         )
-        self._sync_objects("level_center", list(level_graph.centers), known_at_bar_index)
-        self._sync_objects("level_movement", list(level_graph.movements), known_at_bar_index)
         self._sync_objects("movement_state", movement_state_values, known_at_bar_index)
         self._sync_objects("center_monitor", center_monitor_values, known_at_bar_index)
-        self._sync_objects("divergence", divergence_values, known_at_bar_index)
+        self._sync_objects(
+            "divergence",
+            self._retain_invalidated_divergences(divergence_values, known_at_bar_index),
+            known_at_bar_index,
+        )
         self._sync_objects("trade_point", trade_point_values, known_at_bar_index)
         logger.debug(
             "chan.structures.updated",
@@ -1329,8 +1334,6 @@ class ChanEngine:
                 "bi_count": len(self.bi),
                 "segment_count": len(segments),
                 "local_segment_center_count": len(segment_centers),
-                "level_center_count": len(level_graph.centers),
-                "level_movement_count": len(level_graph.movements),
                 "movement_state_count": len(movement_state_values),
                 "center_monitor_count": len(center_monitor_values),
                 "divergence_count": len(divergence_values),
@@ -1495,12 +1498,28 @@ class ChanEngine:
             )
             self._local_center_preview_ids[unit_kind] = preview.id
 
+    @staticmethod
+    def _comparison_components(
+        components: list[LineObject],
+        *,
+        unit_kind: Literal["BI", "SEGMENT"],
+        first_seed_id: str,
+        previous_exit_id: str | None,
+    ) -> tuple[list[LineObject], str | None]:
+        """Omit a shared SEGMENT entry only from migration DD/GG, not construction."""
+        if unit_kind != "SEGMENT" or previous_exit_id != first_seed_id:
+            return components, None
+        if len(components) < 3 or components[0].object_id != first_seed_id:
+            raise AssertionError("shared entry must lead a three-segment center body")
+        return components[1:], first_seed_id
+
     def _local_center_payload(
         self,
         center: LocalCenter,
         lines: dict[str, LineObject],
         bar_by_time: dict[int, int],
         previous_center: LocalCenter | None = None,
+        previous_previous_center: LocalCenter | None = None,
     ) -> dict[str, Any]:
         first_seed = lines[center.seed_ids[0]]
         last_seed = lines[center.seed_ids[-1]]
@@ -1508,28 +1527,78 @@ class ChanEngine:
             None if previous_center is None else compare_center_boundaries(previous_center, center)
         )
         ordered_lines = sorted(lines.values(), key=lambda item: item.start.time)
-        components = [
-            line
-            for line in ordered_lines
-            if line.start.time >= center.body_start
-            and (
-                (center.body_end is None and line.end.time <= center.observed_end)
-                or (center.body_end is not None and line.start.time < center.body_end)
-            )
-        ]
+
+        def body_components(item: LocalCenter) -> list[LineObject]:
+            return [
+                line
+                for line in ordered_lines
+                if line.start.time >= item.body_start
+                and (
+                    (item.body_end is None and line.end.time <= item.observed_end)
+                    or (item.body_end is not None and line.start.time < item.body_end)
+                )
+            ]
+
+        components = body_components(center)
+        comparison_components, excluded_entry_id = self._comparison_components(
+            components,
+            unit_kind=center.unit_kind,
+            first_seed_id=center.seed_ids[0],
+            previous_exit_id=None if previous_center is None else previous_center.exit_id,
+        )
         body_end_time = center.body_end or center.observed_end
         body_end_bar_index = bar_by_time[body_end_time]
         outer_low = min(line.range_low_i64 for line in components if line.range_low_i64 is not None)
         outer_high = max(
             line.range_high_i64 for line in components if line.range_high_i64 is not None
         )
+        comparison_low = min(
+            line.range_low_i64 for line in comparison_components if line.range_low_i64 is not None
+        )
+        comparison_high = max(
+            line.range_high_i64 for line in comparison_components if line.range_high_i64 is not None
+        )
+        relative_dir: Literal["UP", "DOWN", "OVERLAP", "UNKNOWN"] = "UNKNOWN"
+        if previous_center is not None:
+            previous_components = body_components(previous_center)
+            previous_components, _ = self._comparison_components(
+                previous_components,
+                unit_kind=previous_center.unit_kind,
+                first_seed_id=previous_center.seed_ids[0],
+                previous_exit_id=(
+                    None if previous_previous_center is None else previous_previous_center.exit_id
+                ),
+            )
+            previous_low = min(
+                line.range_low_i64 for line in previous_components if line.range_low_i64 is not None
+            )
+            previous_high = max(
+                line.range_high_i64
+                for line in previous_components
+                if line.range_high_i64 is not None
+            )
+            relative_dir = classify_center_relative_direction(
+                previous_center.zd_tick,
+                previous_center.zg_tick,
+                previous_low,
+                previous_high,
+                center.zd_tick,
+                center.zg_tick,
+                comparison_low,
+                comparison_high,
+                previous_confirmed=previous_center.status == "CLOSED",
+            )
         return {
             "stream_key": center.stream_key,
             "rule_version": center.rule_version,
             "previous_center_id": None if relation is None else relation.previous_center_id,
+            "formation_dir": "UP" if first_seed.direction == "up" else "DOWN",
+            "relative_dir": relative_dir,
             "core_relation": None if relation is None else relation.core_relation,
             "higher_level_review_required": (
-                False if relation is None else relation.higher_level_review_required
+                relation is not None
+                and relation.core_relation in {"CORE_ABOVE", "CORE_BELOW"}
+                and relative_dir == "OVERLAP"
             ),
             "trend_status": "UNVERIFIED",
             "unit_kind": center.unit_kind,
@@ -1541,6 +1610,9 @@ class ChanEngine:
             "z_i64": (center.zd_tick + center.zg_tick) * self.price_tick_i64 // 2,
             "dd_i64": outer_low,
             "gg_i64": outer_high,
+            "comparison_dd_i64": comparison_low,
+            "comparison_gg_i64": comparison_high,
+            "comparison_excluded_entry_id": excluded_entry_id,
             "start_bar_index": first_seed.start.bar_index,
             "start_time": center.body_start,
             "end_bar_index": body_end_bar_index,
@@ -1661,6 +1733,7 @@ class ChanEngine:
                         by_id,
                         bar_by_time,
                         None if index == 0 else decomposition.centers[index - 1],
+                        None if index < 2 else decomposition.centers[index - 2],
                     ),
                     center.break_confirmed_at or center.formed_at,
                 )
@@ -1730,8 +1803,16 @@ class ChanEngine:
         if accumulator is None:
             return [], []
         positions = {line.object_id: index for index, line in enumerate(self._segment_lines)}
+
+        def envelope(components: list[LineObject]) -> tuple[int, int]:
+            return (
+                min(line.range_low_i64 for line in components if line.range_low_i64 is not None),
+                max(line.range_high_i64 for line in components if line.range_high_i64 is not None),
+            )
+
         centers: list[StructuralCenter] = []
         center_ids: list[str] = []
+        previous_center: LocalCenter | None = None
         for center in accumulator.result().centers:
             if any(seed_id not in positions for seed_id in center.seed_ids):
                 continue
@@ -1748,6 +1829,31 @@ class ChanEngine:
                 )
             )
             end_line = self._segment_lines[end_index]
+            current_components = self._segment_lines[base_index : end_index + 1]
+            comparison_components, excluded_entry_id = self._comparison_components(
+                current_components,
+                unit_kind="SEGMENT",
+                first_seed_id=center.seed_ids[0],
+                previous_exit_id=None if previous_center is None else previous_center.exit_id,
+            )
+            current_dd, current_gg = envelope(comparison_components)
+            relative_dir: Literal["UP", "DOWN", "OVERLAP", "UNKNOWN"] = "UNKNOWN"
+            if centers:
+                previous_projected = centers[-1]
+                previous_dd = previous_projected.comparison_dd_i64
+                previous_gg = previous_projected.comparison_gg_i64
+                assert previous_dd is not None and previous_gg is not None
+                relative_dir = classify_center_relative_direction(
+                    previous_projected.zd_i64,
+                    previous_projected.zg_i64,
+                    previous_dd,
+                    previous_gg,
+                    center.zd_tick * self.price_tick_i64,
+                    center.zg_tick * self.price_tick_i64,
+                    current_dd,
+                    current_gg,
+                    previous_confirmed=previous_projected.status == "left",
+                )
             centers.append(
                 StructuralCenter(
                     base_index=base_index,
@@ -1769,10 +1875,166 @@ class ChanEngine:
                         else "confirmed"
                     ),
                     leave_direction=center.break_direction,
+                    formation_dir=(
+                        "UP" if self._segment_lines[base_index].direction == "up" else "DOWN"
+                    ),
+                    relative_dir=relative_dir,
+                    previous_center_id=None if previous_center is None else previous_center.id,
+                    comparison_dd_i64=current_dd,
+                    comparison_gg_i64=current_gg,
+                    comparison_excluded_entry_id=excluded_entry_id,
                 )
             )
             center_ids.append(center.id)
+            previous_center = center
         return centers, center_ids
+
+    def _bi_sublevel_centers(self) -> list[BiCenterEvidence]:
+        """Expose only causally closed BI centers to segment-c proof."""
+        accumulator = self._local_center_accumulators.get("BI")
+        if accumulator is None:
+            return []
+        bars_by_time = {
+            point.time: point.bar_index for line in self.bi for point in (line.start, line.end)
+        }
+        result: list[BiCenterEvidence] = []
+        for center in accumulator.result().centers:
+            if (
+                center.status != "CLOSED"
+                or center.body_end is None
+                or center.body_start not in bars_by_time
+                or center.body_end not in bars_by_time
+                or center.break_confirmed_at is None
+            ):
+                continue
+            result.append(
+                BiCenterEvidence(
+                    object_id=center.id,
+                    start_bar_index=bars_by_time[center.body_start],
+                    end_bar_index=bars_by_time[center.body_end],
+                    known_at_bar_index=center.break_confirmed_at,
+                )
+            )
+        return result
+
+    def _forming_segment_observation(self) -> LineObject | None:
+        """Extend the scanner's candidate leg with only bars observed so far."""
+        if not self._segment_lines or not self._segment_specs:
+            return None
+        last_confirmed = self._segment_lines[-1]
+        candidates = [
+            segment
+            for segment in self._segment_specs
+            if not segment.confirmed and segment.start_bar_index == last_confirmed.end.bar_index
+        ]
+        if not candidates:
+            return None
+        candidate = max(candidates, key=lambda segment: segment.end_bar_index)
+        current = self.raw_bars[-1]
+        if candidate.start_bar_index >= current.bar_index:
+            return None
+        start_offset = candidate.start_bar_index - self.raw_bars[0].bar_index
+        observed = self.raw_bars[start_offset:]
+        if not observed or observed[0].bar_index != candidate.start_bar_index:
+            return None
+        low_bar = min(observed, key=lambda bar: (bar.low_i64, bar.bar_index))
+        high_bar = max(observed, key=lambda bar: (bar.high_i64, -bar.bar_index))
+        direction: Literal["up", "down"] = "up" if candidate.up else "down"
+        object_id = _stable_id("segment", self.bi[candidate.start_index].object_id, direction)
+        start = Fractal(
+            f"{object_id}-forming-start",
+            "bottom" if candidate.up else "top",
+            candidate.start_index,
+            candidate.start_bar_index,
+            candidate.start_time,
+            candidate.start_price_i64,
+            current.bar_index,
+            current.bar_index,
+        )
+        end = Fractal(
+            f"{object_id}-forming-observed",
+            "top" if candidate.up else "bottom",
+            candidate.end_index,
+            current.bar_index,
+            current.time,
+            current.close_i64,
+            current.bar_index,
+            current.bar_index,
+        )
+        return LineObject(
+            object_id,
+            start,
+            end,
+            direction,
+            current.bar_index,
+            current.bar_index,
+            low_bar.low_i64,
+            high_bar.high_i64,
+            low_bar.bar_index,
+            high_bar.bar_index,
+            "forming_observed_bars_v1",
+        )
+
+    def _forming_signal_values(
+        self,
+        centers: list[StructuralCenter] | None = None,
+        center_ids: list[str] | None = None,
+    ) -> list[tuple[str, dict[str, Any], int]]:
+        line = self._forming_segment_observation()
+        if line is None:
+            return []
+        if centers is None or center_ids is None:
+            centers, center_ids = self._segment_structural_centers()
+        signals = chan_forming_divergences(
+            self._segment_lines,
+            centers,
+            center_ids,
+            line,
+            self._macd_histogram,
+            diff=self._macd_diff_by_bar,
+            dea=self._macd_dea_by_bar,
+        )
+        return [
+            (
+                _stable_id(
+                    "divergence", signal.divergence_kind, line.object_id, signal.reference_object_id
+                ),
+                _signal_payload(signal),
+                signal.known_at_bar_index,
+            )
+            for signal in signals
+        ]
+
+    def _refresh_forming_divergences(self, known_at_bar_index: int) -> None:
+        """Revise provisional evidence at each bar without changing confirmed centers."""
+        current_forming = {
+            str(row["object_id"]): row
+            for row in self.emitter.current("divergence")
+            if row.get("status") == "forming"
+        }
+        desired = {object_id: payload for object_id, payload, _ in self._forming_signal_values()}
+        for object_id, previous in current_forming.items():
+            if object_id in desired:
+                continue
+            payload = {
+                key: value
+                for key, value in previous.items()
+                if key not in {"object_id", "object_revision", "known_at_bar_index"}
+            }
+            payload.update(
+                status="invalidated",
+                invalidation_reason="forming_leg_revised_or_strength_recovered",
+                confirmed=False,
+                confirmed_at_bar_index=None,
+            )
+            self.emitter.upsert(known_at_bar_index, "divergence", object_id, payload)
+        for object_id, payload in desired.items():
+            old_forming = current_forming.get(object_id)
+            if old_forming is not None and all(
+                old_forming.get(key) == value for key, value in payload.items()
+            ):
+                continue
+            self.emitter.upsert(known_at_bar_index, "divergence", object_id, payload)
 
     @staticmethod
     def _common_prefix_length(left: list[Any], right: list[Any]) -> int:
@@ -1849,6 +2111,34 @@ class ChanEngine:
             values.append((object_id, payload, known_at_bar_index))
         return values
 
+    def _retain_invalidated_divergences(
+        self,
+        values: list[tuple[str, dict[str, Any], int]],
+        known_at_bar_index: int,
+    ) -> list[tuple[str, dict[str, Any], int]]:
+        """Keep a revised-away divergence as an explicit causal invalidation."""
+        desired = {object_id for object_id, _, _ in values}
+        for previous in self.emitter.current("divergence"):
+            object_id = str(previous["object_id"])
+            if object_id in desired:
+                continue
+            payload = {
+                key: value
+                for key, value in previous.items()
+                if key not in {"object_id", "object_revision", "known_at_bar_index"}
+            }
+            if payload.get("status") != "invalidated":
+                payload.update(
+                    {
+                        "status": "invalidated",
+                        "invalidation_reason": "decomposition_or_strength_revised",
+                        "confirmed": False,
+                        "confirmed_at_bar_index": None,
+                    }
+                )
+            values.append((object_id, payload, known_at_bar_index))
+        return values
+
     def result_rows(self) -> dict[str, list[dict[str, Any]]]:
         """导出当前对象快照，按各对象的图形起点排序，供 Parquet 写入或 API 返回。"""
         return {
@@ -1885,14 +2175,6 @@ class ChanEngine:
                     item["event_bar_index"],
                     item["object_id"],
                 ),
-            ),
-            "level_centers": sorted(
-                self.emitter.current("level_center"),
-                key=lambda item: (item["start_bar_index"], item["level_id"]),
-            ),
-            "level_movements": sorted(
-                self.emitter.current("level_movement"),
-                key=lambda item: (item["start_bar_index"], item["level_id"]),
             ),
             "movement_states": sorted(
                 self.emitter.current("movement_state"), key=lambda item: item["start_bar_index"]
@@ -2002,6 +2284,8 @@ class ChanEngine:
             diff = self._macd_fast - self._macd_slow
             self._macd_dea = (2.0 / 10.0) * diff + (8.0 / 10.0) * self._macd_dea
         diff = self._macd_fast - self._macd_slow
+        self._macd_diff_by_bar[bar.bar_index] = diff
+        self._macd_dea_by_bar[bar.bar_index] = self._macd_dea
         self._macd_histogram[bar.bar_index] = 2.0 * (diff - self._macd_dea)
 
 
@@ -2013,6 +2297,27 @@ def _signal_payload(signal: ChanSignal) -> dict[str, Any]:
         "price_i64": signal.price_i64,
         "signal_type": signal.signal_type,
         "divergence_kind": signal.divergence_kind,
+        "divergence_profile": signal.divergence_profile,
+        "formation_dir": signal.formation_dir,
+        "relative_dir": signal.relative_dir,
+        "a_object_id": signal.a_object_id,
+        "b_object_id": signal.b_object_id,
+        "a_center_id": signal.a_center_id,
+        "b_center_id": signal.b_center_id,
+        "macd_area_ratio": signal.macd_area_ratio,
+        "macd_diff_reference_extreme": signal.macd_diff_reference_extreme,
+        "macd_diff_current_extreme": signal.macd_diff_current_extreme,
+        "macd_dea_reference_extreme": signal.macd_dea_reference_extreme,
+        "macd_dea_current_extreme": signal.macd_dea_current_extreme,
+        "macd_extreme_relation": signal.macd_extreme_relation,
+        "macd_parameter_profile": signal.macd_parameter_profile,
+        "c_contains_type3": signal.c_contains_type3,
+        "c_meets_sublevel": signal.c_meets_sublevel,
+        "c_sublevel_profile": signal.c_sublevel_profile,
+        "c_sublevel_center_ids": list(signal.c_sublevel_center_ids),
+        "c_type3_departure_id": signal.c_type3_departure_id,
+        "c_type3_retest_id": signal.c_type3_retest_id,
+        "c_proof_known_at_bar_index": signal.c_proof_known_at_bar_index,
         "signal_class": signal.signal_class,
         "strength": signal.strength,
         "reference_object_id": signal.reference_object_id,

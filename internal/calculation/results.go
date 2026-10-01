@@ -233,6 +233,13 @@ type ChanBiState struct {
 
 type ChanLocalCenter struct {
 	PreviousCenterID          *string  `json:"previous_center_id" parquet:"previous_center_id,optional"`
+	FormationDir              *string  `json:"formation_dir,omitempty" parquet:"formation_dir,optional"`
+	RelativeDir               *string  `json:"relative_dir,omitempty" parquet:"relative_dir,optional"`
+	DDI64                     *int64   `json:"dd_i64,omitempty" parquet:"dd_i64,optional"`
+	GGI64                     *int64   `json:"gg_i64,omitempty" parquet:"gg_i64,optional"`
+	ComparisonDDI64           *int64   `json:"comparison_dd_i64,omitempty" parquet:"comparison_dd_i64,optional"`
+	ComparisonGGI64           *int64   `json:"comparison_gg_i64,omitempty" parquet:"comparison_gg_i64,optional"`
+	ComparisonExcludedEntryID *string  `json:"comparison_excluded_entry_id,omitempty" parquet:"comparison_excluded_entry_id,optional"`
 	CoreRelation              *string  `json:"core_relation" parquet:"core_relation,optional"`
 	HigherLevelReviewRequired bool     `json:"higher_level_review_required" parquet:"higher_level_review_required"`
 	TrendStatus               string   `json:"trend_status" parquet:"trend_status"`
@@ -337,56 +344,6 @@ type ChanMovementState struct {
 	ObjectRevision      int64   `json:"object_revision" parquet:"object_revision"`
 }
 
-type ChanLevelCenter struct {
-	ObjectID             string   `json:"object_id" parquet:"object_id"`
-	LevelID              string   `json:"level_id" parquet:"level_id"`
-	ParentLevelID        string   `json:"parent_level_id" parquet:"parent_level_id"`
-	StartBarIndex        int64    `json:"start_bar_index" parquet:"start_bar_index"`
-	StartTime            int64    `json:"start_time" parquet:"start_time"`
-	EndBarIndex          int64    `json:"end_bar_index" parquet:"end_bar_index"`
-	EndTime              int64    `json:"end_time" parquet:"end_time"`
-	ZDI64                int64    `json:"zd_i64" parquet:"zd_i64"`
-	ZGI64                int64    `json:"zg_i64" parquet:"zg_i64"`
-	DDI64                int64    `json:"dd_i64" parquet:"dd_i64"`
-	GGI64                int64    `json:"gg_i64" parquet:"gg_i64"`
-	ComponentKind        string   `json:"component_kind" parquet:"component_kind"`
-	ComponentObjectIDs   []string `json:"component_object_ids" parquet:"component_object_ids"`
-	SourceCenterIDs      []string `json:"source_center_ids" parquet:"source_center_ids"`
-	Status               string   `json:"status" parquet:"status"`
-	PromotionReason      string   `json:"promotion_reason" parquet:"promotion_reason"`
-	PromotedFromCenterID *string  `json:"promoted_from_center_id" parquet:"promoted_from_center_id,optional"`
-	CatalogEvent         string   `json:"catalog_event" parquet:"catalog_event"`
-	CatalogAlgorithmID   string   `json:"catalog_algorithm_id" parquet:"catalog_algorithm_id"`
-	Confirmed            bool     `json:"confirmed" parquet:"confirmed"`
-	ConfirmedAtBarIndex  *int64   `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index,optional"`
-	KnownAtBarIndex      int64    `json:"known_at_bar_index" parquet:"known_at_bar_index"`
-	ObjectRevision       int64    `json:"object_revision" parquet:"object_revision"`
-}
-
-type ChanLevelMovement struct {
-	ObjectID                string   `json:"object_id" parquet:"object_id"`
-	LevelID                 string   `json:"level_id" parquet:"level_id"`
-	StartBarIndex           int64    `json:"start_bar_index" parquet:"start_bar_index"`
-	StartTime               int64    `json:"start_time" parquet:"start_time"`
-	EndBarIndex             int64    `json:"end_bar_index" parquet:"end_bar_index"`
-	EndTime                 int64    `json:"end_time" parquet:"end_time"`
-	LowI64                  int64    `json:"low_i64" parquet:"low_i64"`
-	HighI64                 int64    `json:"high_i64" parquet:"high_i64"`
-	ComponentCenterIDs      []string `json:"component_center_ids" parquet:"component_center_ids"`
-	Classification          string   `json:"classification" parquet:"classification"`
-	Direction               *string  `json:"direction" parquet:"direction,optional"`
-	Status                  string   `json:"status" parquet:"status"`
-	PreviousClassification  *string  `json:"previous_classification" parquet:"previous_classification,optional"`
-	ReclassificationReason  *string  `json:"reclassification_reason" parquet:"reclassification_reason,optional"`
-	ParentCenterCandidateID *string  `json:"parent_center_candidate_id" parquet:"parent_center_candidate_id,optional"`
-	CatalogEvent            string   `json:"catalog_event" parquet:"catalog_event"`
-	CatalogAlgorithmID      string   `json:"catalog_algorithm_id" parquet:"catalog_algorithm_id"`
-	Confirmed               bool     `json:"confirmed" parquet:"confirmed"`
-	ConfirmedAtBarIndex     *int64   `json:"confirmed_at_bar_index" parquet:"confirmed_at_bar_index,optional"`
-	KnownAtBarIndex         int64    `json:"known_at_bar_index" parquet:"known_at_bar_index"`
-	ObjectRevision          int64    `json:"object_revision" parquet:"object_revision"`
-}
-
 type ChanCenterMonitor struct {
 	ObjectID            string  `json:"object_id" parquet:"object_id"`
 	BarIndex            int64   `json:"bar_index" parquet:"bar_index"`
@@ -426,6 +383,27 @@ type ChanSignalPoint struct {
 	PriceI64                    int64    `json:"price_i64" parquet:"price_i64"`
 	SignalType                  string   `json:"signal_type" parquet:"signal_type"`
 	DivergenceKind              *string  `json:"divergence_kind" parquet:"divergence_kind,optional"`
+	DivergenceProfile           *string  `json:"divergence_profile,omitempty" parquet:"divergence_profile,optional"`
+	FormationDir                *string  `json:"formation_dir,omitempty" parquet:"formation_dir,optional"`
+	RelativeDir                 *string  `json:"relative_dir,omitempty" parquet:"relative_dir,optional"`
+	AObjectID                   *string  `json:"a_object_id,omitempty" parquet:"a_object_id,optional"`
+	BObjectID                   *string  `json:"b_object_id,omitempty" parquet:"b_object_id,optional"`
+	ACenterID                   *string  `json:"a_center_id,omitempty" parquet:"a_center_id,optional"`
+	BCenterID                   *string  `json:"b_center_id,omitempty" parquet:"b_center_id,optional"`
+	MACDAreaRatio               *float64 `json:"macd_area_ratio,omitempty" parquet:"macd_area_ratio,optional"`
+	MACDDiffReferenceExtreme    *float64 `json:"macd_diff_reference_extreme,omitempty" parquet:"macd_diff_reference_extreme,optional"`
+	MACDDiffCurrentExtreme      *float64 `json:"macd_diff_current_extreme,omitempty" parquet:"macd_diff_current_extreme,optional"`
+	MACDDEAReferenceExtreme     *float64 `json:"macd_dea_reference_extreme,omitempty" parquet:"macd_dea_reference_extreme,optional"`
+	MACDDEACurrentExtreme       *float64 `json:"macd_dea_current_extreme,omitempty" parquet:"macd_dea_current_extreme,optional"`
+	MACDExtremeRelation         *string  `json:"macd_extreme_relation,omitempty" parquet:"macd_extreme_relation,optional"`
+	MACDParameterProfile        *string  `json:"macd_parameter_profile,omitempty" parquet:"macd_parameter_profile,optional"`
+	CContainsType3              *bool    `json:"c_contains_type3,omitempty" parquet:"c_contains_type3,optional"`
+	CMeetsSublevel              *bool    `json:"c_meets_sublevel,omitempty" parquet:"c_meets_sublevel,optional"`
+	CSublevelProfile            *string  `json:"c_sublevel_profile,omitempty" parquet:"c_sublevel_profile,optional"`
+	CSublevelCenterIDs          []string `json:"c_sublevel_center_ids,omitempty" parquet:"c_sublevel_center_ids,optional"`
+	CType3DepartureID           *string  `json:"c_type3_departure_id,omitempty" parquet:"c_type3_departure_id,optional"`
+	CType3RetestID              *string  `json:"c_type3_retest_id,omitempty" parquet:"c_type3_retest_id,optional"`
+	CProofKnownAtBarIndex       *int64   `json:"c_proof_known_at_bar_index,omitempty" parquet:"c_proof_known_at_bar_index,optional"`
 	SignalClass                 *string  `json:"signal_class" parquet:"signal_class,optional"`
 	Strength                    *string  `json:"strength" parquet:"strength,optional"`
 	ReferenceObjectID           *string  `json:"reference_object_id" parquet:"reference_object_id,optional"`
@@ -470,8 +448,6 @@ type ChanObjects struct {
 	LocalCenters      []ChanLocalCenter      `json:"local_centers"`
 	CenterConnections []ChanCenterConnection `json:"center_connections"`
 	CenterAuditEvents []ChanCenterAuditEvent `json:"center_audit_events"`
-	LevelCenters      []ChanLevelCenter      `json:"level_centers"`
-	LevelMovements    []ChanLevelMovement    `json:"level_movements"`
 	MovementStates    []ChanMovementState    `json:"movement_states"`
 	CenterMonitors    []ChanCenterMonitor    `json:"center_monitors"`
 	Divergences       []ChanSignalPoint      `json:"divergences"`
@@ -511,14 +487,6 @@ func readChanResults(directory, jobID, cacheKey string, meta manifest, from, to 
 	if err != nil {
 		return Results{}, err
 	}
-	levelCenters, err := parquet.ReadFile[ChanLevelCenter](filepath.Join(directory, "level_centers.parquet"))
-	if err != nil {
-		return Results{}, err
-	}
-	levelMovements, err := parquet.ReadFile[ChanLevelMovement](filepath.Join(directory, "level_movements.parquet"))
-	if err != nil {
-		return Results{}, err
-	}
 	movementStates, err := parquet.ReadFile[ChanMovementState](filepath.Join(directory, "movement_states.parquet"))
 	if err != nil {
 		return Results{}, err
@@ -544,14 +512,12 @@ func readChanResults(directory, jobID, cacheKey string, meta manifest, from, to 
 		LocalCenters:      filterLocalCenters(localCenters, from, to),
 		CenterConnections: filterCenterConnections(centerConnections, from, to),
 		CenterAuditEvents: filterCenterAuditEvents(centerAuditEvents, from, to),
-		LevelCenters:      filterLevelCenters(levelCenters, from, to),
-		LevelMovements:    filterLevelMovements(levelMovements, from, to),
 		MovementStates:    filterMovementStates(movementStates, from, to),
 		CenterMonitors:    filterCenterMonitors(centerMonitors, from, to),
 		Divergences:       filterSignalPoints(divergences, from, to),
 		TradePoints:       filterSignalPoints(tradePoints, from, to),
 	}
-	returned := len(objects.ProcessedBars) + len(objects.Fractals) + len(objects.Bi) + len(objects.BiStates) + len(objects.Segments) + len(objects.LocalCenters) + len(objects.CenterConnections) + len(objects.CenterAuditEvents) + len(objects.LevelCenters) + len(objects.LevelMovements) + len(objects.MovementStates) + len(objects.CenterMonitors) + len(objects.Divergences) + len(objects.TradePoints)
+	returned := len(objects.ProcessedBars) + len(objects.Fractals) + len(objects.Bi) + len(objects.BiStates) + len(objects.Segments) + len(objects.LocalCenters) + len(objects.CenterConnections) + len(objects.CenterAuditEvents) + len(objects.MovementStates) + len(objects.CenterMonitors) + len(objects.Divergences) + len(objects.TradePoints)
 	checksumPayload, _ := json.Marshal(objects)
 	digest := sha256.Sum256(checksumPayload)
 	return Results{
@@ -583,26 +549,6 @@ func filterBiStates(values []ChanBiState, from, to int64) []ChanBiState {
 
 func filterMovementStates(values []ChanMovementState, from, to int64) []ChanMovementState {
 	result := make([]ChanMovementState, 0)
-	for _, value := range values {
-		if value.EndBarIndex >= from && value.StartBarIndex <= to {
-			result = append(result, value)
-		}
-	}
-	return result
-}
-
-func filterLevelCenters(values []ChanLevelCenter, from, to int64) []ChanLevelCenter {
-	result := make([]ChanLevelCenter, 0)
-	for _, value := range values {
-		if value.EndBarIndex >= from && value.StartBarIndex <= to {
-			result = append(result, value)
-		}
-	}
-	return result
-}
-
-func filterLevelMovements(values []ChanLevelMovement, from, to int64) []ChanLevelMovement {
-	result := make([]ChanLevelMovement, 0)
 	for _, value := range values {
 		if value.EndBarIndex >= from && value.StartBarIndex <= to {
 			result = append(result, value)

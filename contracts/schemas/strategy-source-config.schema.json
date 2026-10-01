@@ -24,20 +24,27 @@
           "category_visibility": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["fractals", "bi", "segments", "local_centers", "movement_states", "center_monitors", "divergences", "trade_points"],
+            "required": ["fractals", "bi", "segments", "bi_centers", "segment_centers", "bi_boundary_confirmations", "segment_boundary_confirmations", "movement_states", "center_monitors", "divergences", "first_trade_points", "second_trade_points", "third_trade_points"],
             "properties": {
               "processed_bars": {"type": "boolean"},
               "fractals": {"type": "boolean"},
               "bi": {"type": "boolean"},
                 "bi_states": {"type": "boolean"},
-                "level_centers": {"type": "boolean"},
-                "level_movements": {"type": "boolean"},
               "segments": {"type": "boolean"},
-              "local_centers": {"type": "boolean"},
+              "bi_centers": {"type": "boolean"},
+              "segment_centers": {"type": "boolean"},
+              "center_objects": {"type": "boolean"},
+              "bi_boundary_confirmations": {"type": "boolean"},
+              "segment_boundary_confirmations": {"type": "boolean"},
               "movement_states": {"type": "boolean"},
               "center_monitors": {"type": "boolean"},
               "divergences": {"type": "boolean"},
-              "trade_points": {"type": "boolean"}
+              "first_trade_points": {"type": "boolean"},
+              "second_trade_points": {"type": "boolean"},
+              "third_trade_points": {"type": "boolean"},
+              "class_first_trade_points": {"type": "boolean"},
+              "class_second_trade_points": {"type": "boolean"},
+              "class_third_trade_points": {"type": "boolean"}
             }
           }
         }

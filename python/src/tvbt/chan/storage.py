@@ -125,6 +125,13 @@ LOCAL_CENTER_SCHEMA = pa.schema(
     [
         ("object_id", pa.string()),
         ("previous_center_id", pa.string()),
+        ("formation_dir", pa.string()),
+        ("relative_dir", pa.string()),
+        ("dd_i64", pa.int64()),
+        ("gg_i64", pa.int64()),
+        ("comparison_dd_i64", pa.int64()),
+        ("comparison_gg_i64", pa.int64()),
+        ("comparison_excluded_entry_id", pa.string()),
         ("core_relation", pa.string()),
         ("higher_level_review_required", pa.bool_()),
         ("trend_status", pa.string()),
@@ -232,58 +239,6 @@ MOVEMENT_STATE_SCHEMA = pa.schema(
         ("object_revision", pa.int64()),
     ]
 )
-LEVEL_CENTER_SCHEMA = pa.schema(
-    [
-        ("object_id", pa.string()),
-        ("level_id", pa.string()),
-        ("parent_level_id", pa.string()),
-        ("start_bar_index", pa.int64()),
-        ("start_time", pa.int64()),
-        ("end_bar_index", pa.int64()),
-        ("end_time", pa.int64()),
-        ("zd_i64", pa.int64()),
-        ("zg_i64", pa.int64()),
-        ("dd_i64", pa.int64()),
-        ("gg_i64", pa.int64()),
-        ("component_kind", pa.string()),
-        ("component_object_ids", pa.list_(pa.string())),
-        ("source_center_ids", pa.list_(pa.string())),
-        ("status", pa.string()),
-        ("promotion_reason", pa.string()),
-        ("promoted_from_center_id", pa.string()),
-        ("catalog_event", pa.string()),
-        ("catalog_algorithm_id", pa.string()),
-        ("confirmed", pa.bool_()),
-        ("confirmed_at_bar_index", pa.int64()),
-        ("known_at_bar_index", pa.int64()),
-        ("object_revision", pa.int64()),
-    ]
-)
-LEVEL_MOVEMENT_SCHEMA = pa.schema(
-    [
-        ("object_id", pa.string()),
-        ("level_id", pa.string()),
-        ("start_bar_index", pa.int64()),
-        ("start_time", pa.int64()),
-        ("end_bar_index", pa.int64()),
-        ("end_time", pa.int64()),
-        ("low_i64", pa.int64()),
-        ("high_i64", pa.int64()),
-        ("component_center_ids", pa.list_(pa.string())),
-        ("classification", pa.string()),
-        ("direction", pa.string()),
-        ("status", pa.string()),
-        ("previous_classification", pa.string()),
-        ("reclassification_reason", pa.string()),
-        ("parent_center_candidate_id", pa.string()),
-        ("catalog_event", pa.string()),
-        ("catalog_algorithm_id", pa.string()),
-        ("confirmed", pa.bool_()),
-        ("confirmed_at_bar_index", pa.int64()),
-        ("known_at_bar_index", pa.int64()),
-        ("object_revision", pa.int64()),
-    ]
-)
 # Z/Zn 监视对象：逐组件记录相对中枢中轴的位置、强弱和越界/楔形预警。
 CENTER_MONITOR_SCHEMA = pa.schema(
     [
@@ -327,6 +282,27 @@ SIGNAL_SCHEMA = pa.schema(
         ("price_i64", pa.int64()),
         ("signal_type", pa.string()),
         ("divergence_kind", pa.string()),
+        ("divergence_profile", pa.string()),
+        ("formation_dir", pa.string()),
+        ("relative_dir", pa.string()),
+        ("a_object_id", pa.string()),
+        ("b_object_id", pa.string()),
+        ("a_center_id", pa.string()),
+        ("b_center_id", pa.string()),
+        ("macd_area_ratio", pa.float64()),
+        ("macd_diff_reference_extreme", pa.float64()),
+        ("macd_diff_current_extreme", pa.float64()),
+        ("macd_dea_reference_extreme", pa.float64()),
+        ("macd_dea_current_extreme", pa.float64()),
+        ("macd_extreme_relation", pa.string()),
+        ("macd_parameter_profile", pa.string()),
+        ("c_contains_type3", pa.bool_()),
+        ("c_meets_sublevel", pa.bool_()),
+        ("c_sublevel_profile", pa.string()),
+        ("c_sublevel_center_ids", pa.list_(pa.string())),
+        ("c_type3_departure_id", pa.string()),
+        ("c_type3_retest_id", pa.string()),
+        ("c_proof_known_at_bar_index", pa.int64()),
         ("signal_class", pa.string()),
         ("strength", pa.string()),
         ("reference_object_id", pa.string()),
@@ -399,8 +375,6 @@ class ChanResult:
     local_centers: list[dict[str, Any]] = field(default_factory=list)
     center_connections: list[dict[str, Any]] = field(default_factory=list)
     center_audit_events: list[dict[str, Any]] = field(default_factory=list)
-    level_centers: list[dict[str, Any]] = field(default_factory=list)
-    level_movements: list[dict[str, Any]] = field(default_factory=list)
     movement_states: list[dict[str, Any]] = field(default_factory=list)
     center_monitors: list[dict[str, Any]] = field(default_factory=list)
     divergences: list[dict[str, Any]] = field(default_factory=list)
@@ -452,8 +426,6 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
                 result.center_audit_events,
                 CENTER_AUDIT_EVENT_SCHEMA,
             ),
-            "level_centers": (result.level_centers, LEVEL_CENTER_SCHEMA),
-            "level_movements": (result.level_movements, LEVEL_MOVEMENT_SCHEMA),
             "movement_states": (result.movement_states, MOVEMENT_STATE_SCHEMA),
             "center_monitors": (result.center_monitors, CENTER_MONITOR_SCHEMA),
             "divergences": (result.divergences, SIGNAL_SCHEMA),
@@ -485,7 +457,7 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
             )
         checkpoint_indices = sorted(result.checkpoints.keys() | result.checkpoint_files.keys())
         manifest = {
-            "schema_version": 6,
+            "schema_version": 11,
             "cache_key": payload["cache_key"],
             "dataset_id": dataset["dataset_id"],
             "data_revision": dataset["data_revision"],
@@ -508,8 +480,6 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
                 "local_centers": len(result.local_centers),
                 "center_connections": len(result.center_connections),
                 "center_audit_events": len(result.center_audit_events),
-                "level_centers": len(result.level_centers),
-                "level_movements": len(result.level_movements),
                 "movement_states": len(result.movement_states),
                 "center_monitors": len(result.center_monitors),
                 "divergences": len(result.divergences),

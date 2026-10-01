@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from tvbt.chan.engine import ChanEngine, ChanParameters, Fractal, LineObject, RawBar
-from tvbt.chan.reference import ReferenceSegmentAccumulator
+from tvbt.chan.reference import ReferenceSegment, ReferenceSegmentAccumulator
 
 
 def bar(index: int, high: int, low: int) -> RawBar:
@@ -33,6 +33,24 @@ def test_raw_bar_rejects_open_or_close_outside_high_low_range() -> None:
         runtime.update(RawBar(0, 1_700_000_000_000, 11, 10, 0, 5))
     with pytest.raises(ValueError, match="close is outside"):
         runtime.update(RawBar(0, 1_700_000_000_000, 5, 10, 0, -1))
+
+
+def test_revised_away_divergence_gets_causal_invalidation_revision() -> None:
+    runtime = engine()
+    runtime.emitter.upsert(
+        10,
+        "divergence",
+        "candidate-1",
+        {"bar_index": 7, "status": "candidate", "confirmed": False},
+    )
+    retained = runtime._retain_invalidated_divergences([], 12)
+    runtime._sync_objects("divergence", retained, 12)
+    current = runtime.emitter.current("divergence")
+    assert len(current) == 1
+    assert current[0]["status"] == "invalidated"
+    assert current[0]["invalidation_reason"] == "decomposition_or_strength_revised"
+    assert current[0]["known_at_bar_index"] == 12
+    assert current[0]["object_revision"] == 2
 
 
 def wave_bars(count: int = 25) -> list[RawBar]:
@@ -480,6 +498,66 @@ def test_algo_ui_segment_golden_for_aol9_prefix_is_exact() -> None:
         for value in segments
     ] == [(141, 237, 2706, 2826, "up")]
     assert all(left["direction"] != right["direction"] for left, right in pairwise(segments))
+    assert all(
+        value["start_bar_index"] <= value["range_low_source_bar_index"] <= value["end_bar_index"]
+        and value["start_bar_index"]
+        <= value["range_high_source_bar_index"]
+        <= value["end_bar_index"]
+        for value in segments
+    )
+
+
+def test_segment_actual_range_excludes_bi_starting_at_end_pivot() -> None:
+    """终点索引指向下一笔；下一笔的后续低点不能倒灌进上一段。"""
+    first = Fractal("p0", "bottom", 0, 25677, 0, 3191, 0, 0)
+    pivot = Fractal("p1", "top", 1, 25699, 1, 3251, 1, 1)
+    future = Fractal("p2", "bottom", 2, 25756, 2, 3155, 2, 2)
+    bi = [
+        LineObject("first", first, pivot, "up", 1, 1),
+        LineObject("next", pivot, future, "down", 2, 2),
+    ]
+    segment = ReferenceSegment(start_index=0, end_index=1)
+    components = ChanEngine._segment_component_bi(bi, segment)
+    assert [line.object_id for line in components] == ["first"]
+    assert min(line.range_low_i64 for line in components) == 3191
+    assert max(line.range_high_i64 for line in components) == 3251
+
+
+def test_forming_segment_observation_uses_current_bar_not_stale_candidate_endpoint() -> None:
+    runtime = engine()
+    start = Fractal("start", "bottom", 0, 0, 0, 8, 0, 0)
+    pivot = Fractal("pivot", "top", 1, 2, 2, 10, 2, 2)
+    runtime.bi = [LineObject("bi-0", start, pivot, "up", 2, 2)]
+    runtime._segment_lines = [LineObject("prior", start, pivot, "up", 2, 2)]
+    runtime._segment_specs = [
+        ReferenceSegment(
+            start_index=0,
+            end_index=1,
+            up=True,
+            confirmed=False,
+            known_at_bar_index=3,
+            start_bar_index=2,
+            end_bar_index=3,
+            start_time=2,
+            end_time=3,
+            start_price_i64=10,
+            end_price_i64=11,
+        )
+    ]
+    runtime.raw_bars = [
+        RawBar(0, 1, 8, 9, 7, 8),
+        RawBar(1, 2, 8, 10, 8, 9),
+        RawBar(2, 3, 10, 10, 9, 10),
+        RawBar(3, 4, 10, 11, 10, 11),
+        RawBar(4, 5, 11, 13, 10, 12),
+    ]
+    forming = runtime._forming_segment_observation()
+    assert forming is not None
+    assert forming.start.bar_index == 2
+    assert forming.end.bar_index == 4
+    assert forming.range_high_i64 == 13
+    assert forming.range_high_source_bar_index == 4
+    assert forming.range_profile == "forming_observed_bars_v1"
 
 
 def test_segment_local_centers_and_third_points_are_causal_on_aol9() -> None:
@@ -522,8 +600,6 @@ def test_segment_local_centers_and_third_points_are_causal_on_aol9() -> None:
         for value in segment_centers
     )
     assert result["movement_states"]
-    assert result["level_movements"]
-    assert all(value["level_id"].startswith("L") for value in result["level_movements"])
     assert result["center_monitors"]
     assert all(
         value["known_at_bar_index"] >= value["confirmed_at_bar_index"]

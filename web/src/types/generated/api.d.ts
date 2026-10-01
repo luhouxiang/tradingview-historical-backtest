@@ -954,7 +954,7 @@ export interface components {
                 /** @enum {unknown} */
                 series_type: "line" | "histogram" | "semantic_objects";
                 /** @enum {unknown} */
-                object_type?: "processed_bar" | "fractal" | "bi" | "bi_state" | "segment" | "local_center" | "center_connection" | "center_audit_event" | "level_center" | "level_movement" | "movement_state" | "center_monitor" | "divergence" | "trade_point" | "strategy_state" | "stage_signal" | "trade_signal" | "chart_event" | "risk_decision";
+                object_type?: "processed_bar" | "fractal" | "bi" | "bi_state" | "segment" | "local_center" | "center_connection" | "center_audit_event" | "movement_state" | "center_monitor" | "divergence" | "trade_point" | "strategy_state" | "stage_signal" | "trade_signal" | "chart_event" | "risk_decision";
             }[];
             warmup: {
                 /** @constant */
@@ -1016,8 +1016,6 @@ export interface components {
             local_centers: components["schemas"]["ChanLocalCenter"][];
             center_connections: components["schemas"]["ChanCenterConnection"][];
             center_audit_events: components["schemas"]["ChanCenterAuditEvent"][];
-            level_centers: components["schemas"]["ChanLevelCenter"][];
-            level_movements: components["schemas"]["ChanLevelMovement"][];
             movement_states: components["schemas"]["ChanMovementState"][];
             center_monitors: components["schemas"]["ChanCenterMonitor"][];
             divergences: components["schemas"]["ChanSignalPoint"][];
@@ -1136,6 +1134,20 @@ export interface components {
             /** @constant */
             rule_version: "local_center_boundary_v1";
             previous_center_id?: string | null;
+            /** @enum {string} */
+            formation_dir?: "UP" | "DOWN";
+            /** @enum {string} */
+            relative_dir?: "UP" | "DOWN" | "OVERLAP" | "UNKNOWN";
+            /** @description Complete center-body low including any shared first seed; audit only. */
+            dd_i64?: number;
+            /** @description Complete center-body high including any shared first seed; audit only. */
+            gg_i64?: number;
+            /** @description Low used for same-level center migration; a SEGMENT first seed shared with the prior exit is excluded. */
+            comparison_dd_i64?: number;
+            /** @description High used for same-level center migration; a SEGMENT first seed shared with the prior exit is excluded. */
+            comparison_gg_i64?: number;
+            /** @description Shared first seed omitted only from comparison DD/GG */
+            comparison_excluded_entry_id?: string | null;
             /** @enum {string|null} */
             core_relation?: "CORE_ABOVE" | "CORE_BELOW" | "CORE_TOUCH_OR_OVERLAP" | null;
             higher_level_review_required?: boolean;
@@ -1247,65 +1259,6 @@ export interface components {
             known_at_bar_index: number;
             object_revision: number;
         };
-        ChanLevelCenter: {
-            object_id: string;
-            level_id: string;
-            parent_level_id: string;
-            start_bar_index: number;
-            start_time: number;
-            end_bar_index: number;
-            end_time: number;
-            zd_i64: number;
-            zg_i64: number;
-            dd_i64: number;
-            gg_i64: number;
-            /** @enum {unknown} */
-            component_kind: "segment" | "sublevel_movement";
-            component_object_ids: string[];
-            source_center_ids: string[];
-            /** @enum {unknown} */
-            status: "candidate" | "confirmed" | "extended" | "terminated" | "promoted" | "superseded";
-            /** @enum {unknown} */
-            promotion_reason: "nine_component_extension" | "overlapping_fluctuation_ranges";
-            promoted_from_center_id: string | null;
-            /** @enum {unknown} */
-            catalog_event: "center_candidate" | "center_confirmed" | "center_extended" | "center_promoted" | "center_terminated";
-            /** @constant */
-            catalog_algorithm_id: "ALG-GEO-005";
-            confirmed: boolean;
-            confirmed_at_bar_index: number | null;
-            known_at_bar_index: number;
-            object_revision: number;
-        };
-        ChanLevelMovement: {
-            object_id: string;
-            level_id: string;
-            start_bar_index: number;
-            start_time: number;
-            end_bar_index: number;
-            end_time: number;
-            low_i64: number;
-            high_i64: number;
-            component_center_ids: string[];
-            /** @enum {unknown} */
-            classification: "consolidation" | "uptrend" | "downtrend" | "higher_level_center_candidate";
-            /** @enum {string|null} */
-            direction: "up" | "down" | null;
-            /** @enum {unknown} */
-            status: "candidate" | "confirmed" | "reclassified" | "invalidated";
-            /** @enum {string|null} */
-            previous_classification: "consolidation" | "uptrend" | "downtrend" | "higher_level_center_candidate" | null;
-            reclassification_reason: string | null;
-            parent_center_candidate_id: string | null;
-            /** @enum {unknown} */
-            catalog_event: "movement_candidate" | "movement_confirmed" | "movement_reclassified";
-            /** @constant */
-            catalog_algorithm_id: "ALG-GEO-006";
-            confirmed: boolean;
-            confirmed_at_bar_index: number | null;
-            known_at_bar_index: number;
-            object_revision: number;
-        };
         ChanCenterMonitor: {
             object_id: string;
             bar_index: number;
@@ -1356,7 +1309,34 @@ export interface components {
             /** @enum {string} */
             signal_type: "bottom_divergence" | "top_divergence" | "buy_1" | "buy_2" | "buy_3" | "sell_1" | "sell_2" | "sell_3" | "class_buy_1" | "class_buy_2" | "class_buy_3" | "class_sell_1" | "class_sell_2" | "class_sell_3";
             /** @enum {string|null} */
-            divergence_kind: "trend" | "consolidation" | null;
+            divergence_kind: "trend" | "consolidation" | "center_oscillation" | null;
+            /** @enum {string|null} */
+            divergence_profile?: "segment_trend_candidate" | "standard_trend" | "external_range" | "center_oscillation" | null;
+            /** @enum {string|null} */
+            formation_dir?: "UP" | "DOWN" | null;
+            /** @enum {string|null} */
+            relative_dir?: "UP" | "DOWN" | "OVERLAP" | "UNKNOWN" | null;
+            a_object_id?: string | null;
+            b_object_id?: string | null;
+            a_center_id?: string | null;
+            b_center_id?: string | null;
+            macd_area_ratio?: number | null;
+            macd_diff_reference_extreme?: number | null;
+            macd_diff_current_extreme?: number | null;
+            macd_dea_reference_extreme?: number | null;
+            macd_dea_current_extreme?: number | null;
+            /** @enum {string|null} */
+            macd_extreme_relation?: "both_weaker" | "diff_only" | "dea_only" | "neither_weaker" | "unavailable" | null;
+            /** @enum {string|null} */
+            macd_parameter_profile?: "macd_12_26_9_histogram_x2" | null;
+            c_contains_type3?: boolean | null;
+            c_meets_sublevel?: boolean | null;
+            /** @enum {string|null} */
+            c_sublevel_profile?: "bi_two_confirmed_centers_type3_v1" | null;
+            c_sublevel_center_ids?: string[];
+            c_type3_departure_id?: string | null;
+            c_type3_retest_id?: string | null;
+            c_proof_known_at_bar_index?: number | null;
             /** @enum {string|null} */
             signal_class: "standard" | "class_like" | null;
             /** @enum {string|null} */
@@ -1365,7 +1345,7 @@ export interface components {
             macd_area_reference: number | null;
             macd_area_current: number | null;
             /** @enum {unknown} */
-            status: "candidate" | "confirmed" | "invalidated";
+            status: "forming" | "candidate" | "confirmed" | "invalidated";
             invalidation_reason: string | null;
             level_id: string | null;
             lower_level_turn_object_id: string | null;
@@ -2844,14 +2824,21 @@ export interface components {
                     fractals: boolean;
                     bi: boolean;
                     bi_states?: boolean;
-                    level_centers?: boolean;
-                    level_movements?: boolean;
                     segments?: boolean;
-                    local_centers: boolean;
+                    bi_centers: boolean;
+                    segment_centers: boolean;
+                    center_objects?: boolean;
+                    bi_boundary_confirmations?: boolean;
+                    segment_boundary_confirmations?: boolean;
                     movement_states?: boolean;
                     center_monitors?: boolean;
                     divergences?: boolean;
-                    trade_points?: boolean;
+                    first_trade_points?: boolean;
+                    second_trade_points?: boolean;
+                    third_trade_points?: boolean;
+                    class_first_trade_points?: boolean;
+                    class_second_trade_points?: boolean;
+                    class_third_trade_points?: boolean;
                 };
             }[];
             /** Format: date-time */
@@ -2894,14 +2881,21 @@ export interface components {
                     fractals: boolean;
                     bi: boolean;
                     bi_states?: boolean;
-                    level_centers?: boolean;
-                    level_movements?: boolean;
                     segments: boolean;
-                    local_centers: boolean;
+                    bi_centers: boolean;
+                    segment_centers: boolean;
+                    center_objects?: boolean;
+                    bi_boundary_confirmations: boolean;
+                    segment_boundary_confirmations: boolean;
                     movement_states: boolean;
                     center_monitors: boolean;
                     divergences: boolean;
-                    trade_points: boolean;
+                    first_trade_points: boolean;
+                    second_trade_points: boolean;
+                    third_trade_points: boolean;
+                    class_first_trade_points?: boolean;
+                    class_second_trade_points?: boolean;
+                    class_third_trade_points?: boolean;
                 };
             }[];
             /** Format: date-time */

@@ -125,7 +125,7 @@ def test_chan_cache_writes_typed_tables_checkpoints_and_success_last(tmp_path: P
         == pq.read_table(directory / "bi.parquet").schema.names
     )
     manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["schema_version"] == 6
+    assert manifest["schema_version"] == 11
     assert manifest["counts"]["events"] == 1
     assert manifest["files"]["processed_bars"]["path"] == "processed_bars.parquet"
     assert manifest["files"]["bi_states"]["path"] == "bi_states.parquet"
@@ -135,8 +135,6 @@ def test_chan_cache_writes_typed_tables_checkpoints_and_success_last(tmp_path: P
     assert manifest["files"]["center_connections"]["path"] == "center_connections.parquet"
     assert manifest["files"]["center_audit_events"]["path"] == "center_audit_events.parquet"
     assert manifest["files"]["movement_states"]["path"] == "movement_states.parquet"
-    assert manifest["files"]["level_centers"]["path"] == "level_centers.parquet"
-    assert manifest["files"]["level_movements"]["path"] == "level_movements.parquet"
     assert manifest["files"]["center_monitors"]["path"] == "center_monitors.parquet"
     assert manifest["files"]["divergences"]["path"] == "divergences.parquet"
     assert manifest["files"]["trade_points"]["path"] == "trade_points.parquet"
@@ -149,6 +147,7 @@ def test_chan_cache_writes_typed_tables_checkpoints_and_success_last(tmp_path: P
     assert "comparison_reference_object_id" in signal_columns
     assert "return_depth_to_core_i64" in signal_columns
     assert "confirmation_latency_bars" in signal_columns
+    assert "macd_extreme_relation" in signal_columns
     assert manifest["checkpoint"]["last_bar_index"] == 4
     assert all(value["sha256"].startswith("sha256:") for value in manifest["files"].values())
 
@@ -167,3 +166,67 @@ def test_completed_chan_cache_is_reused_without_overwrite(tmp_path: Path) -> Non
     second = write_chan_cache(payload(), guard, result)
     assert second == first
     assert marker.read_bytes() == before
+
+
+def test_divergence_structure_and_macd_evidence_survive_cache_roundtrip(
+    tmp_path: Path,
+) -> None:
+    """The signal evidence used by the object tree must not vanish in Parquet."""
+    guard = PathGuard(tmp_path)
+    result = ChanResult(
+        bar_count=6,
+        first_bar_index=0,
+        last_bar_index=5,
+        merged_bar_count=6,
+        divergences=[
+            {
+                "object_id": "divergence-1",
+                "bar_index": 4,
+                "time": 1_200_000,
+                "price_i64": 123,
+                "signal_type": "top_divergence",
+                "divergence_kind": "trend",
+                "divergence_profile": "segment_trend_candidate",
+                "formation_dir": "DOWN",
+                "relative_dir": "UP",
+                "a_object_id": "segment-a",
+                "b_object_id": "segment-b",
+                "a_center_id": "center-a",
+                "b_center_id": "center-b",
+                "macd_area_reference": 20.0,
+                "macd_area_current": 10.0,
+                "macd_area_ratio": 0.5,
+                "macd_diff_reference_extreme": 5.0,
+                "macd_diff_current_extreme": 3.0,
+                "macd_dea_reference_extreme": 4.0,
+                "macd_dea_current_extreme": 2.0,
+                "macd_parameter_profile": "macd_12_26_9_histogram_x2",
+                "c_contains_type3": False,
+                "c_meets_sublevel": False,
+                "status": "candidate",
+                "known_at_bar_index": 5,
+                "object_revision": 1,
+            }
+        ],
+    )
+    directory = tmp_path / write_chan_cache(payload(), guard, result)
+    stored = pq.read_table(directory / "divergences.parquet").to_pylist()
+    assert len(stored) == 1
+    for field in (
+        "divergence_profile",
+        "formation_dir",
+        "relative_dir",
+        "a_object_id",
+        "b_object_id",
+        "a_center_id",
+        "b_center_id",
+        "macd_area_ratio",
+        "macd_diff_reference_extreme",
+        "macd_diff_current_extreme",
+        "macd_dea_reference_extreme",
+        "macd_dea_current_extreme",
+        "macd_parameter_profile",
+        "c_contains_type3",
+        "c_meets_sublevel",
+    ):
+        assert stored[0][field] == result.divergences[0][field]

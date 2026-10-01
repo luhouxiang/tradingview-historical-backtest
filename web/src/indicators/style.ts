@@ -17,8 +17,6 @@ const chanDefaults: Record<string, Pick<IndicatorOutputStyle, 'color' | 'line_wi
   bi_state: { color: '#26c6da', line_width: 1, line_style: 'dashed' },
   segment: { color: '#f2d600', line_width: 2, line_style: 'solid' },
   local_center: { color: '#42a5f5', line_width: 2, line_style: 'solid' },
-  level_center: { color: '#ff8a65', line_width: 2, line_style: 'dashed' },
-  level_movement: { color: '#ce93d8', line_width: 2, line_style: 'dashed' },
   movement_state: { color: '#ab47bc', line_width: 1, line_style: 'dashed' },
   center_monitor: { color: '#26c6da', line_width: 1, line_style: 'dotted' },
   divergence: { color: '#ff9800', line_width: 1, line_style: 'solid' },
@@ -41,7 +39,7 @@ export function styleableOutputs(source: StyleSource): AlgorithmOutput[] {
     return source.definition.outputs.filter((output) => output.series_type === 'line')
   }
   return source.definition.outputs.filter((output) =>
-    output.object_type === 'processed_bar' || output.object_type === 'fractal' || output.object_type === 'bi' || output.object_type === 'bi_state' || output.object_type === 'segment' || output.object_type === 'local_center' || output.object_type === 'level_center' || output.object_type === 'level_movement' || output.object_type === 'movement_state' || output.object_type === 'center_monitor' || output.object_type === 'divergence' || output.object_type === 'trade_point')
+    output.object_type === 'processed_bar' || output.object_type === 'fractal' || output.object_type === 'bi' || output.object_type === 'bi_state' || output.object_type === 'segment' || output.object_type === 'local_center' || output.object_type === 'movement_state' || output.object_type === 'center_monitor' || output.object_type === 'divergence' || output.object_type === 'trade_point')
 }
 
 function chanVisibility(source: StrategySource, output: AlgorithmOutput): boolean {
@@ -50,13 +48,11 @@ function chanVisibility(source: StrategySource, output: AlgorithmOutput): boolea
   if (output.object_type === 'bi') return source.category_visibility.bi
   if (output.object_type === 'bi_state') return source.category_visibility.bi_states ?? true
   if (output.object_type === 'segment') return source.category_visibility.segments
-  if (output.object_type === 'local_center') return source.category_visibility.local_centers
-  if (output.object_type === 'level_center') return source.category_visibility.level_centers ?? true
-  if (output.object_type === 'level_movement') return source.category_visibility.level_movements ?? true
+  if (output.object_type === 'local_center') return source.category_visibility.bi_centers || source.category_visibility.segment_centers
   if (output.object_type === 'movement_state') return source.category_visibility.movement_states ?? true
   if (output.object_type === 'center_monitor') return source.category_visibility.center_monitors ?? true
   if (output.object_type === 'divergence') return source.category_visibility.divergences
-  if (output.object_type === 'trade_point') return source.category_visibility.trade_points
+  if (output.object_type === 'trade_point') return source.category_visibility.first_trade_points || source.category_visibility.second_trade_points || source.category_visibility.third_trade_points
   return true
 }
 

@@ -13,14 +13,21 @@
         "fractals": false,
         "bi": true,
         "bi_states": true,
-        "level_centers": true,
-        "level_movements": true,
         "segments": true,
-        "local_centers": true,
+        "bi_centers": true,
+        "segment_centers": true,
+        "center_objects": false,
+        "bi_boundary_confirmations": true,
+        "segment_boundary_confirmations": true,
         "movement_states": true,
         "center_monitors": true,
         "divergences": true,
-        "trade_points": true
+        "first_trade_points": true,
+        "second_trade_points": true,
+        "third_trade_points": true,
+        "class_first_trade_points": true,
+        "class_second_trade_points": true,
+        "class_third_trade_points": true
       }
     }
   ],

@@ -708,7 +708,6 @@ def definitions() -> list[dict[str, Any]]:
         second_buy_only_definition(),
         third_buy_only_definition(),
         centre_oscillation_spread_definition(),
-        same_level_decomposition_program_definition(),
         three_level_complete_classification_definition(),
         target_level_rebound_segmented_operation_definition(),
         bottom_top_construction_definition(),
@@ -739,7 +738,6 @@ def definitions() -> list[dict[str, Any]]:
         "second_buy_only": ("second_point", ["ALG-STR-002"]),
         "third_buy_only": ("third_point", ["ALG-STR-003"]),
         "centre_oscillation_spread": ("centre_oscillation", ["ALG-STR-004"]),
-        "same_level_decomposition_program": ("same_level_decomposition", ["ALG-STR-005"]),
         "three_level_complete_classification": ("structure_classification", ["ALG-STR-007"]),
         "target_level_rebound_segmented_operation": ("segmented_operation", ["ALG-STR-008"]),
         "bottom_top_construction": ("bottom_top_construction", ["ALG-STR-009"]),
@@ -1048,10 +1046,6 @@ def run_strategy(
         return _run_third_buy_only(payload, guard, cancelled, last_bar_index=last_bar_index)
     if algorithm["algorithm_id"] == "centre_oscillation_spread":
         return _run_centre_oscillation_spread(
-            payload, guard, cancelled, last_bar_index=last_bar_index
-        )
-    if algorithm["algorithm_id"] == "same_level_decomposition_program":
-        return _run_same_level_decomposition_program(
             payload, guard, cancelled, last_bar_index=last_bar_index
         )
     if algorithm["algorithm_id"] == "three_level_complete_classification":

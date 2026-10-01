@@ -16,6 +16,21 @@ export interface MacdStickData extends CustomData<Time> {
   color: string
 }
 
+// WH6-style major marks do not label sub-5 fluctuations.
+export function macdGuideStep(priceConverter: PriceToCoordinateConverter): number {
+  const zero = priceConverter(0)
+  if (zero === null) return 5
+  let step = 5
+  for (let index = 0; index < 24; index += 1) {
+    const coordinate = priceConverter(step)
+    if (coordinate === null || Math.abs(coordinate - zero) >= 20) break
+    const magnitude = 10 ** Math.floor(Math.log10(step))
+    const digit = step / magnitude
+    step = (digit < 2 ? 2 : digit < 5 ? 5 : 10) * magnitude
+  }
+  return step
+}
+
 class MacdStickRenderer implements ICustomSeriesPaneRenderer {
   private data: PaneRendererCustomData<Time, MacdStickData> | null = null
 
@@ -26,9 +41,36 @@ class MacdStickRenderer implements ICustomSeriesPaneRenderer {
   draw(target: CanvasRenderingTarget2D, priceConverter: PriceToCoordinateConverter): void {
     if (!this.data?.visibleRange) return
     const data = this.data
-    target.useBitmapCoordinateSpace(({ context, horizontalPixelRatio, verticalPixelRatio }) => {
+    target.useBitmapCoordinateSpace(({ context, bitmapSize, horizontalPixelRatio, verticalPixelRatio }) => {
       const zero = priceConverter(0)
       if (zero === null) return
+      const step = macdGuideStep(priceConverter)
+      context.save()
+      context.strokeStyle = '#9f3030'
+      context.fillStyle = '#aeb5c2'
+      context.lineWidth = Math.max(1, horizontalPixelRatio)
+      context.setLineDash([3 * horizontalPixelRatio, 3 * horizontalPixelRatio])
+      const drawGuide = (value: number): void => {
+        const coordinate = priceConverter(value)
+        if (coordinate === null) return
+        const y = Math.round(coordinate * verticalPixelRatio)
+        const labelMargin = Math.round(9 * verticalPixelRatio)
+        if (y < labelMargin || y > bitmapSize.height - labelMargin) return
+        context.beginPath()
+        context.moveTo(0, y + 0.5)
+        context.lineTo(bitmapSize.width, y + 0.5)
+        context.stroke()
+      }
+      drawGuide(0)
+      for (let multiple = 1; multiple <= 20; multiple += 1) {
+        const value = step * multiple
+        const positive = priceConverter(value)
+        const negative = priceConverter(-value)
+        if ((positive === null || positive < 0) && (negative === null || negative > bitmapSize.height / verticalPixelRatio)) break
+        drawGuide(value)
+        drawGuide(-value)
+      }
+      context.restore()
       const from = Math.max(0, data.visibleRange!.from)
       const to = Math.min(data.bars.length, data.visibleRange!.to)
       const baseline = Math.round(zero * verticalPixelRatio)

@@ -1,13 +1,142 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
+import pytest
+
+from tvbt.chan.engine import ChanEngine
 from tvbt.chan.signals import (
+    BiCenterEvidence,
+    ChanSignal,
     StructuralCenter,
+    _macd_extreme_relation,
+    _trend_c_sublevel_proof,
     chan_divergences,
     chan_first_point_candidates,
+    chan_forming_divergences,
     chan_trade_points,
 )
+
+
+def test_trend_c_sublevel_requires_two_closed_bi_centers_and_first_retest() -> None:
+    bi = [
+        Line("bi-departure", Endpoint(20, 20, 90), Endpoint(23, 23, 120), "up", 24),
+        Line("bi-retest", Endpoint(23, 23, 120), Endpoint(26, 26, 110), "down", 27),
+    ]
+    centers = [
+        BiCenterEvidence("bi-center-1", 20, 23, 28),
+        BiCenterEvidence("bi-center-2", 23, 27, 30),
+    ]
+
+    def proof(
+        supplied: list[BiCenterEvidence],
+    ) -> tuple[tuple[str, ...], str | None, str | None, int | None]:
+        return _trend_c_sublevel_proof(
+            bi,
+            supplied,
+            start_bar_index=20,
+            end_bar_index=30,
+            known_at_bar_index=32,
+            direction="up",
+            boundary_i64=100,
+        )
+
+    assert proof(centers) == (
+        ("bi-center-1", "bi-center-2"),
+        "bi-departure",
+        "bi-retest",
+        30,
+    )
+    assert proof(centers[:1])[0] == ("bi-center-1",)
+    assert proof([centers[0], replace(centers[1], known_at_bar_index=33)])[0] == ("bi-center-1",)
+    assert proof([centers[0], replace(centers[1], end_bar_index=31)])[0] == ("bi-center-1",)
+    failed_first_return = [
+        bi[0],
+        replace(bi[1], end=Endpoint(26, 26, 99)),
+        Line("bi-later-departure", Endpoint(26, 26, 99), Endpoint(28, 28, 120), "up", 29),
+        Line("bi-later-retest", Endpoint(28, 28, 120), Endpoint(30, 30, 110), "down", 31),
+    ]
+    assert (
+        _trend_c_sublevel_proof(
+            failed_first_return,
+            centers,
+            start_bar_index=20,
+            end_bar_index=30,
+            known_at_bar_index=32,
+            direction="up",
+            boundary_i64=100,
+        )[2]
+        is None
+    )
+    boundary_touch = [bi[0], replace(bi[1], end=Endpoint(26, 26, 100))]
+    assert (
+        _trend_c_sublevel_proof(
+            boundary_touch,
+            centers,
+            start_bar_index=20,
+            end_bar_index=30,
+            known_at_bar_index=32,
+            direction="up",
+            boundary_i64=100,
+        )[2]
+        == "bi-retest"
+    )
+
+
+def test_trend_candidate_upgrades_only_with_two_bi_centers_and_type3() -> None:
+    segments = [
+        line(0, 0, 10),
+        line(1, 10, 4),
+        line(2, 4, 8),
+        line(3, 8, 5),
+        line(4, 5, 9),
+        line(5, 9, 6),
+        line(6, 6, 12),
+        line(7, 12, 11),
+        line(8, 11, 15),
+        line(9, 15, 11),
+        Line("segment-10", Endpoint(10, 10, 11), Endpoint(20, 20, 16), "up", 20),
+        Line("segment-11", Endpoint(20, 20, 16), Endpoint(21, 21, 14), "down", 21),
+    ]
+    centers = [center(1, 5, 6, 5, 8), replace(center(7, 9, 10, 11, 12), relative_dir="UP")]
+    histogram = {index: 0.0 for index in range(22)}
+    histogram.update({6: 6.0, 7: 6.0, 15: 2.0, 16: 2.0})
+    bi = [
+        Line("bi-departure", Endpoint(10, 10, 11), Endpoint(13, 13, 14), "up", 14),
+        Line("bi-retest", Endpoint(13, 13, 14), Endpoint(16, 16, 13), "down", 17),
+    ]
+    proof_centers = [
+        BiCenterEvidence("bi-center-1", 10, 14, 18),
+        BiCenterEvidence("bi-center-2", 14, 19, 20),
+    ]
+
+    def trend(evidence: list[BiCenterEvidence]) -> list[ChanSignal]:
+        return [
+            value
+            for value in chan_divergences(
+                segments,
+                centers,
+                ["center-1", "center-2"],
+                histogram,
+                bi_lines=bi,
+                bi_centers=evidence,
+            )
+            if value.divergence_kind == "trend"
+        ]
+
+    candidate = trend(proof_centers[:1])[0]
+    assert candidate.status == "candidate"
+    assert candidate.c_contains_type3 is True
+    assert candidate.c_meets_sublevel is False
+    late_center = trend([proof_centers[0], replace(proof_centers[1], known_at_bar_index=22)])[0]
+    assert late_center.status == "candidate"
+    assert late_center.c_sublevel_center_ids == ("bi-center-1",)
+    confirmed = trend(proof_centers)[0]
+    assert confirmed.status == "confirmed"
+    assert confirmed.divergence_profile == "standard_trend"
+    assert confirmed.c_sublevel_center_ids == ("bi-center-1", "bi-center-2")
+    assert confirmed.c_proof_known_at_bar_index == 20
+    assert confirmed.known_at_bar_index == 21
 
 
 @dataclass(frozen=True)
@@ -92,44 +221,74 @@ def active_center(base: int, end: int, zd: int, zg: int) -> StructuralCenter:
     )
 
 
-def test_trend_divergence_compares_b_and_c_and_creates_standard_points() -> None:
-    """测试趋势背驰是否比较 b 段和 c 段并生成标准买卖点。
-
-    预期:两个同向且外包络严格分离的中枢构成趋势,MACD 面积收缩的 c 段
-    生成顶背驰,并进一步生成标准一卖和普通强度二卖。
-    """
+def test_trend_divergence_compares_b_and_c_but_does_not_invent_standard_proof() -> None:
+    """a/A/b/B/c 同向且严格上移时，只能证成线段趋势候选。"""
     segments = [
-        line(0, 10, 4),
-        line(1, 4, 8),
-        line(2, 8, 5),
-        line(3, 5, 9),
-        line(4, 9, 6),
-        line(5, 6, 12),
-        line(6, 12, 10),
-        line(7, 10, 14),
-        line(8, 14, 12),
-        line(9, 12, 15),
-        line(10, 15, 13),
-        line(11, 13, 16),
-        line(12, 16, 14),
-        line(13, 14, 15),
+        line(0, 0, 10),
+        line(1, 10, 4),
+        line(2, 4, 8),
+        line(3, 8, 5),
+        line(4, 5, 9),
+        line(5, 9, 6),
+        line(6, 6, 12),
+        line(7, 12, 11),
+        line(8, 11, 15),
+        line(9, 15, 11),
+        line(10, 11, 16),
+        line(11, 16, 14),
     ]
-    centers = [center(1, 3, 5, 5, 8), center(7, 9, 11, 12, 14)]
-    histogram = {index: 0.0 for index in range(16)}
-    histogram.update({5: 6.0, 6: 6.0, 11: 2.0, 12: 2.0})
+    centers = [center(1, 5, 6, 5, 8), replace(center(7, 9, 10, 11, 12), relative_dir="UP")]
+    histogram = {index: 0.0 for index in range(13)}
+    histogram.update({6: 6.0, 7: 6.0, 10: 2.0, 11: 2.0})
+    diff = {index: 0.0 for index in range(13)}
+    diff.update({6: 4.0, 7: 5.0, 10: 1.0, 11: 2.0})
+    dea = {index: 0.0 for index in range(13)}
+    dea.update({6: 3.0, 7: 3.5, 10: 0.5, 11: 1.0})
 
-    divergences = chan_divergences(segments, centers, ["center-1", "center-2"], histogram)
+    assert not [
+        value
+        for value in chan_divergences(segments[:11], centers, ["center-1", "center-2"], histogram)
+        if value.divergence_kind == "trend"
+    ]
+    divergences = chan_divergences(
+        segments, centers, ["center-1", "center-2"], histogram, diff=diff, dea=dea
+    )
     trend = [value for value in divergences if value.divergence_kind == "trend"]
     assert len(trend) == 1
+    for unresolved in ("UNKNOWN", "OVERLAP", "DOWN"):
+        assert not [
+            value
+            for value in chan_divergences(
+                segments,
+                [centers[0], replace(centers[1], relative_dir=unresolved)],
+                ["center-1", "center-2"],
+                histogram,
+            )
+            if value.divergence_kind == "trend"
+        ]
     assert trend[0].signal_type == "top_divergence"
-    assert trend[0].segment_index == 11
+    assert trend[0].segment_index == 10
     assert trend[0].macd_area_current < trend[0].macd_area_reference
-    assert trend[0].comparison_reference_object_id == "segment-5"
-    assert trend[0].comparison_current_object_id == "segment-11"
-    assert trend[0].comparison_rule == "macd_same_direction_area_contraction_with_new_extreme"
+    assert trend[0].comparison_reference_object_id == "segment-6"
+    assert trend[0].comparison_current_object_id == "segment-10"
+    assert trend[0].comparison_rule == "macd_same_direction_area_contraction_with_trend_new_extreme"
     assert trend[0].new_extreme_satisfied is True
-    assert trend[0].follow_through_object_id == "segment-12"
+    assert trend[0].follow_through_object_id == "segment-11"
     assert trend[0].follow_through_status == "observed"
+    assert trend[0].known_at_bar_index == segments[11].known_at_bar_index
+    assert trend[0].divergence_profile == "segment_trend_candidate"
+    assert trend[0].status == "candidate"
+    assert trend[0].relative_dir == "UP"
+    assert (trend[0].a_object_id, trend[0].b_object_id) == ("segment-0", "segment-6")
+    assert (trend[0].a_center_id, trend[0].b_center_id) == ("center-1", "center-2")
+    assert trend[0].c_contains_type3 is None
+    assert trend[0].c_meets_sublevel is None
+    assert trend[0].macd_diff_reference_extreme == 5.0
+    assert trend[0].macd_diff_current_extreme == 2.0
+    assert trend[0].macd_dea_reference_extreme == 3.5
+    assert trend[0].macd_dea_current_extreme == 1.0
+    assert trend[0].macd_parameter_profile == "macd_12_26_9_histogram_x2"
+    assert trend[0].macd_extreme_relation == "both_weaker"
     assert trend[0].reference_center_ordinal == 2
     assert trend[0].older_center_count == 1
     assert trend[0].center_chain_profile == "confirmed_same_level_centers_known_at_signal_v1"
@@ -137,23 +296,244 @@ def test_trend_divergence_compares_b_and_c_and_creates_standard_points() -> None
     points = chan_trade_points(
         segments, centers, ["center-1", "center-2"], [("trend-div", trend[0])]
     )
-    sell_points = [
-        (value.signal_type, value.segment_index, value.strength)
-        for value in points
-        if value.signal_type.startswith("sell_")
-    ]
-    assert sell_points == [
-        ("sell_1", 11, None),
-        ("sell_2", 13, "normal"),
-    ]
-    first = next(value for value in points if value.signal_type == "sell_1")
-    assert first.status == "confirmed"
-    assert first.catalog_event == "S1_confirmed"
-    assert first.catalog_algorithm_id == "ALG-SIG-001"
-    assert first.lower_level_turn_object_id == "segment-12"
+    assert not [value for value in points if value.signal_type in {"sell_1", "sell_2"}]
 
 
-def test_first_point_candidate_precedes_lower_level_turn_confirmation() -> None:
+@pytest.mark.parametrize(
+    ("direction", "diff_reference", "diff_current", "dea_reference", "dea_current", "expected"),
+    [
+        ("up", 5.0, 2.0, 3.5, 1.0, "both_weaker"),
+        ("down", -5.0, -2.0, -3.5, -1.0, "both_weaker"),
+        ("up", 5.0, 2.0, 3.5, 4.0, "diff_only"),
+        ("down", -5.0, -6.0, -3.5, -1.0, "dea_only"),
+        ("up", 5.0, 5.0, 3.5, 4.0, "neither_weaker"),
+        ("down", -5.0, -5.0, -3.5, -3.5, "neither_weaker"),
+        ("up", None, 2.0, 3.5, 1.0, "unavailable"),
+    ],
+)
+def test_macd_directional_extreme_relation_is_auditable_not_a_signal_gate(
+    direction: str,
+    diff_reference: float | None,
+    diff_current: float | None,
+    dea_reference: float | None,
+    dea_current: float | None,
+    expected: str,
+) -> None:
+    assert (
+        _macd_extreme_relation(direction, diff_reference, diff_current, dea_reference, dea_current)
+        == expected
+    )
+
+
+def test_forming_external_range_divergence_is_provisional_and_can_disappear() -> None:
+    confirmed = [line(0, 0, 10), line(1, 10, 4), line(2, 4, 8), line(3, 8, 5)]
+    forming = line(4, 5, 9)
+    centers = [active_center(1, 3, 4, 8)]
+    histogram = {index: 0.0 for index in range(6)}
+    histogram.update({0: 10.0, 1: 10.0, 4: 2.0, 5: 2.0})
+    result = chan_forming_divergences(confirmed, centers, ["B"], forming, histogram)
+    assert len(result) == 1
+    assert result[0].status == "forming"
+    assert result[0].divergence_kind == "consolidation"
+    assert result[0].divergence_profile == "external_range"
+    assert result[0].relative_dir == "UNKNOWN"
+    assert result[0].follow_through_status == "pending"
+    assert result[0].known_at_bar_index == forming.known_at_bar_index
+    histogram.update({4: 12.0, 5: 12.0})
+    assert chan_forming_divergences(confirmed, centers, ["B"], forming, histogram) == []
+
+
+def test_forming_divergence_revision_is_emitted_when_strength_recovers(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runtime = ChanEngine()
+    runtime._segment_lines = [line(0, 0, 10), line(1, 10, 4), line(2, 4, 8), line(3, 8, 5)]
+    forming = line(4, 5, 9)
+    monkeypatch.setattr(runtime, "_forming_segment_observation", lambda: forming)
+    monkeypatch.setattr(
+        runtime, "_segment_structural_centers", lambda: ([active_center(1, 3, 4, 8)], ["B"])
+    )
+    runtime._macd_histogram = {index: 0.0 for index in range(6)}
+    runtime._macd_histogram.update({0: 10.0, 1: 10.0, 4: 2.0, 5: 2.0})
+    runtime._refresh_forming_divergences(5)
+    current = runtime.emitter.current("divergence")
+    assert len(current) == 1
+    assert current[0]["status"] == "forming"
+    assert current[0]["known_at_bar_index"] == 5
+    runtime._macd_histogram.update({4: 12.0, 5: 12.0})
+    runtime._refresh_forming_divergences(6)
+    revised = runtime.emitter.current("divergence")
+    assert len(revised) == 1
+    assert revised[0]["status"] == "invalidated"
+    assert revised[0]["invalidation_reason"] == "forming_leg_revised_or_strength_recovered"
+    assert revised[0]["known_at_bar_index"] == 6
+    prefix = ChanEngine()
+    prefix._segment_lines = list(runtime._segment_lines)
+    monkeypatch.setattr(prefix, "_forming_segment_observation", lambda: forming)
+    monkeypatch.setattr(
+        prefix, "_segment_structural_centers", lambda: ([active_center(1, 3, 4, 8)], ["B"])
+    )
+    prefix._macd_histogram = {index: 0.0 for index in range(6)}
+    prefix._macd_histogram.update({0: 10.0, 1: 10.0, 4: 2.0, 5: 2.0})
+    prefix._refresh_forming_divergences(5)
+    assert [event.row() for event in prefix.emitter.events] == [
+        event.row() for event in runtime.emitter.events if event.known_at_bar_index <= 5
+    ]
+
+
+def test_forming_trend_candidate_requires_strict_migration_and_new_extreme() -> None:
+    segments = [
+        line(0, 0, 10),
+        line(1, 10, 4),
+        line(2, 4, 8),
+        line(3, 8, 5),
+        line(4, 5, 9),
+        line(5, 9, 6),
+        line(6, 6, 12),
+        line(7, 12, 11),
+        line(8, 11, 15),
+        line(9, 15, 11),
+    ]
+    centers = [center(1, 5, 6, 5, 8), replace(active_center(7, 9, 11, 12), relative_dir="UP")]
+    forming = line(10, 11, 16)
+    histogram = {index: 0.0 for index in range(12)}
+    histogram.update({6: 6.0, 7: 6.0, 10: 2.0, 11: 2.0})
+    result = chan_forming_divergences(segments, centers, ["A", "B"], forming, histogram)
+    assert len(result) == 1
+    assert result[0].status == "forming"
+    assert result[0].divergence_kind == "trend"
+    assert result[0].divergence_profile == "segment_trend_candidate"
+    assert result[0].a_object_id == "segment-0"
+    assert result[0].b_object_id == "segment-6"
+    assert result[0].comparison_current_object_id == "segment-10"
+    assert result[0].new_extreme_satisfied is True
+    assert result[0].c_contains_type3 is None
+    assert result[0].c_meets_sublevel is None
+    assert not [
+        signal
+        for signal in chan_forming_divergences(
+            segments,
+            [centers[0], replace(centers[1], relative_dir="UNKNOWN")],
+            ["A", "B"],
+            forming,
+            histogram,
+        )
+        if signal.divergence_kind == "trend"
+    ]
+    overlap = replace(centers[1], comparison_dd_i64=8, comparison_gg_i64=15)
+    assert not [
+        signal
+        for signal in chan_forming_divergences(
+            segments, [centers[0], overlap], ["A", "B"], forming, histogram
+        )
+        if signal.divergence_kind == "trend"
+    ]
+
+
+def test_third_point_boundary_uses_complete_body_not_migration_envelope() -> None:
+    segments = [
+        line(0, 0, 15),
+        line(1, 15, 11),
+        line(2, 11, 12),
+        line(3, 12, 16),
+        line(4, 16, 13),
+    ]
+    shared = replace(
+        center(0, 2, 3, 10, 11),
+        comparison_dd_i64=11,
+        comparison_gg_i64=12,
+        comparison_excluded_entry_id="segment-0",
+    )
+    points = chan_trade_points(segments, [shared], ["B"], [])
+    third = next(value for value in points if value.signal_type == "buy_3")
+    assert third.boundary_relation == "outside_core"
+    assert third.return_depth_to_outer_i64 == -2
+
+
+def test_trend_candidate_requires_full_envelope_new_extreme_and_complete_macd() -> None:
+    segments = [
+        line(0, 0, 10),
+        line(1, 10, 4),
+        line(2, 4, 8),
+        line(3, 8, 5),
+        line(4, 5, 9),
+        line(5, 9, 6),
+        line(6, 6, 12),
+        line(7, 12, 11),
+        line(8, 11, 15),
+        line(9, 15, 11),
+        line(10, 11, 16),
+        line(11, 16, 14),
+    ]
+    centers = [center(1, 5, 6, 5, 8), replace(center(7, 9, 10, 11, 12), relative_dir="UP")]
+    histogram = {index: 0.0 for index in range(13)}
+    histogram.update({6: 6.0, 7: 6.0, 10: 2.0, 11: 2.0})
+
+    def trend(values: list[Line], macd: dict[int, float]) -> list[object]:
+        return [
+            value
+            for value in chan_divergences(values, centers, ["A", "B"], macd)
+            if value.divergence_kind == "trend"
+        ]
+
+    assert len(trend(segments, histogram)) == 1
+    overlap = list(segments)
+    overlap[7] = line(7, 12, 9)  # B core is separate, but DD touches A's GG.
+    assert trend(overlap, histogram) == []
+    no_extreme = list(segments)
+    no_extreme[10] = line(10, 11, 14)  # Below B's earlier high of 15.
+    assert trend(no_extreme, histogram) == []
+    wrong_a = list(segments)
+    wrong_a[0] = line(0, 10, 0)
+    assert trend(wrong_a, histogram) == []
+    incomplete_macd = dict(histogram)
+    incomplete_macd.pop(10)
+    assert trend(segments, incomplete_macd) == []
+
+
+def test_shared_b_segment_can_seed_b_center_without_blocking_comparison() -> None:
+    """The full shared b/B-first-seed range is audited but not used as B DD/GG."""
+    segments = [
+        line(0, 0, 10),
+        line(1, 10, 4),
+        line(2, 4, 8),
+        line(3, 8, 5),
+        line(4, 5, 9),
+        line(5, 9, 6),
+        line(6, 6, 12),
+        line(7, 12, 11),
+        line(8, 11, 15),
+        line(9, 15, 11),
+        line(10, 11, 16),
+        line(11, 16, 14),
+    ]
+    first = center(1, 5, 6, 5, 8)
+    second = center(6, 9, 10, 11, 12)
+    histogram = {index: 0.0 for index in range(13)}
+    histogram.update({6: 6.0, 7: 6.0, 10: 2.0, 11: 2.0})
+    assert not [
+        signal
+        for signal in chan_divergences(segments, [first, second], ["A", "B"], histogram)
+        if signal.divergence_kind == "trend"
+    ]
+    separated = replace(
+        second,
+        relative_dir="UP",
+        comparison_dd_i64=11,
+        comparison_gg_i64=15,
+        comparison_excluded_entry_id="segment-6",
+    )
+    candidates = [
+        signal
+        for signal in chan_divergences(segments, [first, separated], ["A", "B"], histogram)
+        if signal.divergence_kind == "trend"
+    ]
+    assert len(candidates) == 1
+    assert candidates[0].status == "candidate"
+    assert candidates[0].b_object_id == separated.comparison_excluded_entry_id
+
+
+def test_segment_only_trend_cannot_publish_standard_first_point() -> None:
     segments = [
         line(0, 10, 4),
         line(1, 4, 8),
@@ -173,12 +553,7 @@ def test_first_point_candidate_precedes_lower_level_turn_confirmation() -> None:
 
     candidates = chan_first_point_candidates(segments, centers, ["center-1", "center-2"], histogram)
 
-    assert len(candidates) == 1
-    assert candidates[0].signal_type == "sell_1"
-    assert candidates[0].status == "candidate"
-    assert candidates[0].known_at_bar_index == segments[11].known_at_bar_index
-    assert candidates[0].catalog_event == "S1_candidate"
-    assert candidates[0].lower_level_turn_object_id is None
+    assert candidates == []
 
     confirmed = chan_first_point_candidates(
         [*segments, line(12, 16, 14)],
@@ -187,12 +562,7 @@ def test_first_point_candidate_precedes_lower_level_turn_confirmation() -> None:
         {**histogram, 12: 2.0},
         level_id="L1",
     )
-    assert len(confirmed) == 1
-    assert confirmed[0].status == "confirmed"
-    assert confirmed[0].level_id == "L1"
-    assert confirmed[0].known_at_bar_index == 13
-    assert confirmed[0].lower_level_turn_object_id == "segment-12"
-    assert confirmed[0].catalog_event == "S1_confirmed"
+    assert confirmed == []
 
 
 def test_first_point_candidate_rejects_one_center_overlap_and_nonweaker_force() -> None:
@@ -285,6 +655,9 @@ def test_consolidation_divergence_creates_class_one_and_normal_class_two() -> No
         if value.divergence_kind == "consolidation" and value.segment_index == 5
     ]
     assert [(v.signal_type, v.segment_index) for v in consolidation] == [("bottom_divergence", 5)]
+    assert consolidation[0].divergence_profile == "external_range"
+    assert consolidation[0].relative_dir == "UNKNOWN"
+    assert consolidation[0].macd_area_ratio is not None
     points = chan_trade_points(
         segments, centers, ["center-1"], [("consolidation-div", consolidation[0])]
     )
@@ -324,7 +697,8 @@ def test_active_center_oscillation_emits_confirmed_lower_level_divergence() -> N
             value.known_at_bar_index,
         )
         for value in values
-    ] == [("bottom_divergence", "consolidation", 4, "active-center", 6)]
+    ] == [("bottom_divergence", "center_oscillation", 4, "active-center", 6)]
+    assert values[0].divergence_profile == "center_oscillation"
     assert values[0].known_at_bar_index > values[0].bar_index
 
 
@@ -353,14 +727,35 @@ def test_consolidation_divergence_does_not_require_a_new_extreme() -> None:
     assert [(value.signal_type, value.divergence_kind) for value in exit_values] == [
         ("bottom_divergence", "consolidation")
     ]
+    assert exit_values[0].new_extreme_satisfied is False
 
 
-def test_consolidation_uses_previous_same_direction_not_adjacent_opposite_leg() -> None:
-    """测试盘整背驰参考段是否取前一同向段而非相邻反向段。
+def test_center_third_seed_departure_is_not_external_range_c() -> None:
+    """A seed/exit role overlap must not fabricate an external a+B+c leg."""
+    segments = [
+        line(0, 10, 0),
+        line(1, 0, 8),
+        line(2, 8, 4),
+        line(3, 4, 1),
+        line(4, 1, 6),
+    ]
+    values = chan_divergences(
+        segments,
+        [center(1, 3, 3, 1, 8, "down")],
+        ["center-1"],
+        {0: -8.0, 1: -8.0, 3: -2.0, 4: -2.0},
+    )
+    assert not [value for value in values if value.divergence_profile == "external_range"]
+    assert not chan_trade_points(
+        segments,
+        [center(1, 3, 3, 1, 8, "down")],
+        ["center-1"],
+        [(f"divergence-{index}", value) for index, value in enumerate(values)],
+    )
 
-    预期:单中枢离开段 c 的力度比较对象是中枢前最近同向段 a,
-    不能误用相邻反向段。
-    """
+
+def test_external_range_rejects_noncontiguous_a_leg() -> None:
+    """a 与 B 之间隔着另一段时，不能跳过它拼接 a+B+c。"""
     segments = [
         line(0, 10, 0),
         line(1, 0, 8),
@@ -377,9 +772,26 @@ def test_consolidation_uses_previous_same_direction_not_adjacent_opposite_leg() 
         ["center-1"],
         {0: -8.0, 1: -8.0, 6: -2.0, 7: -2.0},
     )
-    assert [(value.signal_type, value.segment_index) for value in values] == [
-        ("bottom_divergence", 6)
+    assert not [value for value in values if value.divergence_kind == "consolidation"]
+
+
+def test_forming_external_range_does_not_skip_an_opposite_leg_to_find_a() -> None:
+    """The provisional path must keep the same a+B+c ownership rule."""
+    segments = [
+        line(0, 10, 0),
+        line(1, 0, 8),
+        line(2, 8, 2),
+        line(3, 2, 9),
+        line(4, 9, 4),
     ]
+    values = chan_forming_divergences(
+        segments,
+        [active_center(2, 4, 4, 8)],
+        ["center-1"],
+        line(5, 4, 1),
+        {index: (-8.0 if index <= 1 else -2.0) for index in range(7)},
+    )
+    assert not [value for value in values if value.divergence_profile == "external_range"]
 
 
 def test_third_buy_uses_first_return_after_leaving_segment() -> None:
@@ -505,6 +917,9 @@ def test_second_point_new_extreme_requires_consolidation_divergence_confirmation
         9.0,
         3.0,
         1,
+        divergence_profile="standard_trend",
+        c_contains_type3=True,
+        c_meets_sublevel=True,
     )
     points = chan_trade_points(segments, [], [], [("trend-div", first)])
     assert [point.signal_type for point in points] == ["buy_1"]
@@ -568,6 +983,9 @@ def test_weakest_second_point_requires_its_own_consolidation_divergence() -> Non
         9.0,
         3.0,
         1,
+        divergence_profile="standard_trend",
+        c_contains_type3=True,
+        c_meets_sublevel=True,
     )
     retrace = ChanSignal(
         "bottom_divergence",

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="590" viewBox="0 0 1100 590" role="img" aria-labelledby="title desc">
+  <title id="title">盘整背驰与当前程序的类一买示意</title>
+  <desc id="desc">一个线段中枢内有先后两条向下线段 a 和 c。c 的负 MACD 柱面积小于 a，但 c 的低点可以高于 a。项目把此类盘整背驰端点发布为类一买；原文主要在周线以上的大级别讨论类第一类买点。</desc>
+  <rect width="1100" height="590" rx="16" fill="#101622"/>
+  <text x="36" y="43" fill="#f4f7fb" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="25" font-weight="700">图 2　当前程序的类一买：单中枢盘整背驰</text>
+  <text x="36" y="72" fill="#aebbd0" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="15">展示“中枢内两条同向线段”分支；程序还支持 a + 中枢 + c 分支。非真实行情。</text>
+  <rect x="240" y="149" width="495" height="225" fill="#256e9b" fill-opacity=".21" stroke="#5ab6ec" stroke-width="2"/>
+  <text x="259" y="181" fill="#c4eaff" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="18" font-weight="700">同一线段中枢 Z</text>
+  <path d="M83 216 L175 300 L271 175 L373 347 L469 191 L579 318 L690 220 L760 305 L885 183 L1009 222" fill="none" stroke="#f6cf5d" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M271 175 L373 347" fill="none" stroke="#ff9857" stroke-width="7" stroke-linecap="round"/>
+  <path d="M469 191 L579 318" fill="none" stroke="#ff9857" stroke-width="7" stroke-linecap="round"/>
+  <text x="313" y="218" fill="#ffc398" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="19" font-weight="700">a</text>
+  <text x="515" y="229" fill="#ffc398" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="19" font-weight="700">c</text>
+  <circle cx="373" cy="347" r="7" fill="#ff9857"/>
+  <circle cx="579" cy="318" r="8" fill="#ffdb62" stroke="#fff5bf" stroke-width="2"/>
+  <path d="M373 347 L579 347" stroke="#8998ab" stroke-dasharray="5 5"/>
+  <text x="612" y="403" fill="#ffeb9f" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="15">本分支不要求 c 创新低</text>
+  <rect x="790" y="265" width="270" height="119" rx="10" fill="#1b2739" stroke="#4d627c"/>
+  <text x="806" y="295" fill="#eaf2fb" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="16" font-weight="700">类一买锚点：c 的端点</text>
+  <text x="806" y="323" fill="#bdcce0" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="14">须等 c 被归入中枢并确认力度</text>
+  <text x="806" y="349" fill="#bdcce0" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="14">图上低点 ≠ 当时已可交易</text>
+  <path d="M790 318 L591 318" stroke="#91a8c7" stroke-width="1.5" stroke-dasharray="5 5"/>
+  <text x="35" y="439" fill="#d9e4f2" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="16">负 MACD 柱面积（示意）</text>
+  <line x1="245" y1="460" x2="1034" y2="460" stroke="#7a879b" stroke-width="1"/>
+  <g fill="#45c3b8">
+    <rect x="286" y="460" width="12" height="35"/><rect x="306" y="460" width="12" height="51"/>
+    <rect x="326" y="460" width="12" height="63"/><rect x="346" y="460" width="12" height="47"/>
+    <rect x="366" y="460" width="12" height="31"/>
+  </g>
+  <g fill="#45c3b8">
+    <rect x="490" y="460" width="12" height="20"/><rect x="510" y="460" width="12" height="29"/>
+    <rect x="530" y="460" width="12" height="34"/><rect x="550" y="460" width="12" height="25"/>
+    <rect x="570" y="460" width="12" height="17"/>
+  </g>
+  <text x="284" y="548" fill="#87e1d7" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="16">面积 A(a) 较大</text>
+  <text x="489" y="548" fill="#87e1d7" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="16">面积 A(c) 较小</text>
+  <text x="35" y="576" fill="#adbbce" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="13">原文第 27 课特别讨论周线及以上盘整背驰的类第一类买点；项目当前在 5 分钟数据上也使用这个标签。</text>
+</svg>

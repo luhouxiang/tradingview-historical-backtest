@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="590" viewBox="0 0 1100 590" role="img" aria-labelledby="title desc">
+  <title id="title">趋势背驰与当前程序的一买示意</title>
+  <desc id="desc">两个向下排列的线段中枢，前中枢后向下离开线段 b，后中枢后创新低的向下离开线段 c。c 的负 MACD 柱面积小于 b。一买锚在 c 的低点，待后续反向线段确认后才成为已确认信号。</desc>
+  <rect width="1100" height="590" rx="16" fill="#101622"/>
+  <text x="36" y="43" fill="#f4f7fb" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="25" font-weight="700">图 1　当前程序的一买：两中枢下跌 + 趋势背驰</text>
+  <text x="36" y="72" fill="#aebbd0" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="15">概念示意，横轴是时间，纵轴价格向上；并非 AOL9 真实行情</text>
+  <line x1="58" y1="401" x2="1050" y2="401" stroke="#536278" stroke-width="1"/>
+  <rect x="195" y="150" width="190" height="103" fill="#256e9b" fill-opacity=".21" stroke="#5ab6ec" stroke-width="2"/>
+  <rect x="565" y="275" width="190" height="100" fill="#256e9b" fill-opacity=".21" stroke="#5ab6ec" stroke-width="2"/>
+  <text x="208" y="180" fill="#c4eaff" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="17" font-weight="700">前线段中枢 Z₁</text>
+  <text x="578" y="304" fill="#c4eaff" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="17" font-weight="700">后线段中枢 Z₂</text>
+  <path d="M65 120 L150 260 L220 166 L300 248 L370 183 L465 318 L525 255 L615 360 L675 282 L745 358 L820 303 L930 390 L1018 331" fill="none" stroke="#f6cf5d" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M370 183 L465 318" fill="none" stroke="#ff9857" stroke-width="7" stroke-linecap="round"/>
+  <path d="M820 303 L930 390" fill="none" stroke="#ff9857" stroke-width="7" stroke-linecap="round"/>
+  <text x="414" y="220" fill="#ffc398" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="19" font-weight="700">b</text>
+  <text x="871" y="309" fill="#ffc398" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="19" font-weight="700">c</text>
+  <circle cx="465" cy="318" r="7" fill="#ff9857"/>
+  <circle cx="930" cy="390" r="8" fill="#ffdb62" stroke="#fff5bf" stroke-width="2"/>
+  <text x="777" y="380" fill="#ffeb9f" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="15">c 创出较低价格</text>
+  <path d="M810 375 L906 389" fill="none" stroke="#ffeb9f" stroke-width="1.5"/>
+  <rect x="797" y="105" width="263" height="115" rx="10" fill="#1b2739" stroke="#4d627c"/>
+  <text x="813" y="134" fill="#eaf2fb" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="16" font-weight="700">一买理论端点：c 的低点</text>
+  <text x="813" y="162" fill="#bdcce0" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="14">c 完成时先可成为候选</text>
+  <text x="813" y="188" fill="#bdcce0" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="14">后续反向线段确认后才标为已确认</text>
+  <path d="M947 220 L930 380" stroke="#91a8c7" stroke-width="1.5" stroke-dasharray="5 5"/>
+  <text x="35" y="439" fill="#d9e4f2" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="16">负 MACD 柱面积（示意）</text>
+  <line x1="245" y1="460" x2="1034" y2="460" stroke="#7a879b" stroke-width="1"/>
+  <g fill="#45c3b8">
+    <rect x="405" y="460" width="12" height="35"/><rect x="425" y="460" width="12" height="52"/>
+    <rect x="445" y="460" width="12" height="64"/><rect x="465" y="460" width="12" height="48"/>
+    <rect x="485" y="460" width="12" height="30"/>
+  </g>
+  <g fill="#45c3b8">
+    <rect x="851" y="460" width="12" height="19"/><rect x="871" y="460" width="12" height="29"/>
+    <rect x="891" y="460" width="12" height="33"/><rect x="911" y="460" width="12" height="25"/>
+    <rect x="931" y="460" width="12" height="17"/>
+  </g>
+  <text x="406" y="548" fill="#87e1d7" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="16">面积 A(b) 较大</text>
+  <text x="843" y="548" fill="#87e1d7" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="16">面积 A(c) 较小</text>
+  <text x="35" y="576" fill="#adbbce" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="13">程序另要求两中枢的完整价格外包络分离，并用已确认线段计算；“已确认”可能晚于图上低点。</text>
+</svg>

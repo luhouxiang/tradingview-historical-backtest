@@ -327,7 +327,7 @@ def test_production_local_units_use_ticks_but_public_prices_keep_native_fixed_po
         for row in runtime.result_rows()["center_audit_events"]
         if row["event_type"] == "SEARCH_RESTARTED"
     )
-    assert restart["comparison_i64"] == 4  # Unit index, not a price in ticks.
+    assert restart["comparison_i64"] == (3 if unit_kind == "SEGMENT" else 4)
 
 
 def test_tick_conversion_rejects_off_grid_structural_prices_instead_of_rounding() -> None:
@@ -374,6 +374,87 @@ def test_a09_retest_is_replayed_as_new_seed_and_departure_is_connection() -> Non
     assert result.connections[0].first_retest_id == "U4"
     assert result.connections[0].roles_overlap_seed is True
     assert first.first_retest_id in second.seed_ids
+
+
+@pytest.mark.parametrize(
+    ("prices", "direction", "expected_core", "entry_role"),
+    [
+        ([120, 100, 115, 105, 130, 118, 128], "up", (118, 128), "FROM_BELOW"),
+        ([100, 120, 105, 115, 90, 100, 95], "down", (95, 100), "FROM_ABOVE"),
+    ],
+)
+def test_segment_exit_is_next_center_incoming_seed_when_three_segments_overlap(
+    prices: list[int],
+    direction: str,
+    expected_core: tuple[int, int],
+    entry_role: str,
+) -> None:
+    """上移/下移均让旧中枢离开段进入新中枢，仍需三条已确认段交叠。"""
+    stream = _stream(unit_kind="SEGMENT", structural_level="segment")
+    units = _units(prices)
+    complete = decompose_local_centers(units, stream)
+    assert len(complete.centers) == 2
+    previous, current = complete.centers
+    assert previous.break_direction == direction
+    assert previous.exit_id == current.entry_id == current.seed_ids[0] == "U3"
+    assert current.seed_ids == ("U3", "U4", "U5")
+    assert (current.zd_tick, current.zg_tick) == expected_core
+    assert current.local_entry == entry_role
+    assert current.scan_floor == 3
+    if direction == "up":
+        assert current.zd_tick > previous.zg_tick
+    else:
+        assert current.zg_tick < previous.zd_tick
+    assert complete.connections[0].unit_ids == ("U3",)
+    assert complete.connections[0].roles_overlap_seed is True
+    # Core separation alone is insufficient: the shared departure and the
+    # surrounding oscillation envelopes still overlap in this fixture.
+    assert compare_center_boundaries(previous, current).relative_dir == "OVERLAP"
+    accumulator = LocalCenterAccumulator(stream)
+    for count in range(1, len(units) + 1):
+        prefix = accumulator.update(units[:count])
+        assert prefix.centers == decompose_local_centers(units[:count], stream).centers
+    assert accumulator.result().connections == complete.connections
+    bi = decompose_local_centers(units, _stream())
+    assert len(bi.centers) == 1  # BI keeps restarting from the completed retest.
+
+
+def test_relative_center_direction_requires_separated_core_and_envelope() -> None:
+    units = _units([120, 100, 115, 105, 130, 118, 128])
+    previous, current = decompose_local_centers(
+        units, _stream(unit_kind="SEGMENT", structural_level="segment")
+    ).centers
+    assert compare_center_boundaries(previous, current).relative_dir == "OVERLAP"
+    raised = replace(
+        current,
+        zd_tick=previous.observed_high + 1,
+        zg_tick=previous.observed_high + 2,
+        observed_low=previous.observed_high + 1,
+        observed_high=previous.observed_high + 3,
+    )
+    assert compare_center_boundaries(previous, raised).relative_dir == "UP"
+    assert (
+        compare_center_boundaries(replace(previous, status="ACTIVE"), raised).relative_dir
+        == "UNKNOWN"
+    )
+    lowered = replace(
+        current,
+        zd_tick=previous.observed_low - 2,
+        zg_tick=previous.observed_low - 1,
+        observed_low=previous.observed_low - 3,
+        observed_high=previous.observed_low - 1,
+    )
+    assert compare_center_boundaries(previous, lowered).relative_dir == "DOWN"
+
+
+def test_segment_does_not_reuse_an_exit_that_is_also_the_old_third_seed() -> None:
+    units = _units([90, 110, 100, 120, 115, 140, 130, 150, 135])
+    result = decompose_local_centers(
+        units, _stream(unit_kind="SEGMENT", structural_level="segment")
+    )
+    assert len(result.centers) >= 2
+    assert result.centers[0].exit_id == result.centers[0].seed_ids[2]
+    assert result.centers[0].exit_id not in result.centers[1].seed_ids
 
 
 def test_a10_third_seed_can_also_be_departure_without_shortening_body() -> None:
@@ -515,6 +596,46 @@ def test_rejects_non_alternating_or_disconnected_units() -> None:
         )
 
 
+@pytest.mark.parametrize(
+    ("prices", "expected_direction"),
+    [
+        ([120, 100, 115, 105, 140, 125, 135], "UP"),
+        ([100, 120, 105, 115, 80, 95, 85], "DOWN"),
+    ],
+)
+def test_shared_segment_entry_is_excluded_only_from_comparison_envelope(
+    prices: list[int], expected_direction: str
+) -> None:
+    runtime = ChanEngine(stream_symbol="AO", stream_timeframe="5m")
+    runtime._segment_lines = _engine_lines(prices)
+    runtime.raw_bars = [RawBar(20, 20_000, 100, 140, 80, 100)]
+    runtime._update_local_center_objects(20)
+    centers = [
+        row for row in runtime.result_rows()["local_centers"] if row["unit_kind"] == "SEGMENT"
+    ]
+    assert len(centers) == 2
+    first, second = centers
+    assert first["exit_id"] == second["seed_ids"][0]
+    assert second["comparison_excluded_entry_id"] == first["exit_id"]
+    assert first["comparison_excluded_entry_id"] is None
+    assert second["dd_i64"] < first["gg_i64"]
+    if expected_direction == "UP":
+        assert second["comparison_dd_i64"] > first["comparison_gg_i64"]
+    else:
+        assert second["comparison_gg_i64"] < first["comparison_dd_i64"]
+    assert second["relative_dir"] == expected_direction
+    assert second["zd_i64"] < second["zg_i64"]
+    projected, _ = runtime._segment_structural_centers()
+    assert projected[1].relative_dir == expected_direction
+    assert projected[1].comparison_excluded_entry_id == first["exit_id"]
+    sink = pa.BufferOutputStream()
+    pq.write_table(pa.Table.from_pylist(centers, schema=LOCAL_CENTER_SCHEMA), sink)
+    persisted = pq.read_table(pa.BufferReader(sink.getvalue())).to_pylist()
+    assert persisted[1]["comparison_dd_i64"] == second["comparison_dd_i64"]
+    assert persisted[1]["comparison_gg_i64"] == second["comparison_gg_i64"]
+    assert persisted[1]["comparison_excluded_entry_id"] == first["exit_id"]
+
+
 def test_production_engine_projects_local_objects_and_keeps_legacy_entry() -> None:
     lines = _engine_lines([120, 100, 115, 105, 130, 118, 128, 120])
     runtime = ChanEngine(
@@ -530,10 +651,14 @@ def test_production_engine_projects_local_objects_and_keeps_legacy_entry() -> No
     assert len(rows["local_centers"]) == 2
     first, second = rows["local_centers"]
     assert first["previous_center_id"] is None
+    assert first["formation_dir"] in {"UP", "DOWN"}
+    assert first["relative_dir"] == "UNKNOWN"
     assert first["core_relation"] is None
     assert first["higher_level_review_required"] is False
     assert second["previous_center_id"] == first["object_id"]
     assert second["core_relation"] == "CORE_ABOVE"
+    assert second["formation_dir"] in {"UP", "DOWN"}
+    assert second["relative_dir"] == "OVERLAP"
     assert second["higher_level_review_required"] is True
     assert all(row["trend_status"] == "UNVERIFIED" for row in rows["local_centers"])
     sink = pa.BufferOutputStream()
@@ -541,6 +666,8 @@ def test_production_engine_projects_local_objects_and_keeps_legacy_entry() -> No
     persisted = pq.read_table(pa.BufferReader(sink.getvalue())).to_pylist()
     for name in (
         "previous_center_id",
+        "formation_dir",
+        "relative_dir",
         "core_relation",
         "higher_level_review_required",
         "trend_status",

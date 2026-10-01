@@ -38,7 +38,7 @@ async function submit(definition: AlgorithmDefinition, parameters: Record<string
   const source: StrategySource = {
     source_type: 'StrategySource', source_id: sourceId, definition, parameters,
     job_id: accepted.job_id, status: accepted.status, visible: existing?.visible ?? true,
-    category_visibility: existing?.category_visibility ?? { processed_bars: false, fractals: false, bi: true, bi_states: true, segments: true, local_centers: true, level_centers: false, level_movements: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
+    category_visibility: existing?.category_visibility ?? { processed_bars: false, fractals: false, bi: true, bi_states: true, segments: true, bi_centers: true, segment_centers: true, bi_boundary_confirmations: true, segment_boundary_confirmations: true, movement_states: true, center_monitors: true, divergences: true, first_trade_points: true, second_trade_points: true, third_trade_points: true },
   }
   emit('update:sources', existing
     ? props.sources.map((item) => item.source_id === sourceId ? source : item)

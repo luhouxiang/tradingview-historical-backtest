@@ -27,7 +27,7 @@ export class ReplayEventIndex {
       this.position += 1
     }
     this.cursor = cursor
-    const result: ReplayObjects = { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], local_centers: [], center_connections: [], center_audit_events: [], level_centers: [], level_movements: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] }
+    const result: ReplayObjects = { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], local_centers: [], center_connections: [], center_audit_events: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] }
     for (const [key, payload] of this.objects) {
       if (key.startsWith('processed_bar:')) result.processed_bars.push(payload as unknown as ReplayObjects['processed_bars'][number])
       else if (key.startsWith('fractal:')) result.fractals.push(payload as unknown as ReplayObjects['fractals'][number])
@@ -37,8 +37,6 @@ export class ReplayEventIndex {
       else if (key.startsWith('local_center:')) result.local_centers.push(payload as unknown as ReplayObjects['local_centers'][number])
       else if (key.startsWith('center_connection:')) result.center_connections.push(payload as unknown as ReplayObjects['center_connections'][number])
       else if (key.startsWith('center_audit_event:')) result.center_audit_events.push(payload as unknown as ReplayObjects['center_audit_events'][number])
-      else if (key.startsWith('level_center:')) result.level_centers.push(payload as unknown as ReplayObjects['level_centers'][number])
-      else if (key.startsWith('level_movement:')) result.level_movements.push(payload as unknown as ReplayObjects['level_movements'][number])
       else if (key.startsWith('movement_state:')) result.movement_states.push(payload as unknown as ReplayObjects['movement_states'][number])
       else if (key.startsWith('center_monitor:')) result.center_monitors.push(payload as unknown as ReplayObjects['center_monitors'][number])
       else if (key.startsWith('divergence:')) result.divergences.push(payload as unknown as ReplayObjects['divergences'][number])
@@ -52,8 +50,6 @@ export class ReplayEventIndex {
     result.local_centers.sort((left, right) => left.body_start_bar_index - right.body_start_bar_index)
     result.center_connections.sort((left, right) => left.start_bar_index - right.start_bar_index)
     result.center_audit_events.sort((left, right) => left.event_bar_index - right.event_bar_index)
-    result.level_centers.sort((left, right) => left.start_bar_index - right.start_bar_index || left.level_id.localeCompare(right.level_id))
-    result.level_movements.sort((left, right) => left.start_bar_index - right.start_bar_index || left.level_id.localeCompare(right.level_id))
     result.movement_states.sort((left, right) => left.start_bar_index - right.start_bar_index)
     result.center_monitors.sort((left, right) => left.bar_index - right.bar_index)
     result.divergences.sort((left, right) => left.bar_index - right.bar_index)

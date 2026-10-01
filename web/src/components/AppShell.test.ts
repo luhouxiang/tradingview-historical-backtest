@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../api/client'
 import type { AlgorithmDefinition, DatasetMeta } from '../types/api'
 import AppShell from './AppShell.vue'
+import KeyboardInstrumentPicker from './KeyboardInstrumentPicker.vue'
 
 const api = vi.hoisted(() => ({
   getLayout: vi.fn(), getDrawings: vi.fn(), putLayout: vi.fn(), putDrawings: vi.fn(),
@@ -25,6 +26,7 @@ const dataset = {
   price: { price_scale: 1 }, coverage: { first_bar_index: 0, last_bar_index: 100 },
 } as DatasetMeta
 const focusSignalMock = vi.fn()
+const focusBarMock = vi.fn()
 
 class FakeBroadcastChannel {
   static instances: FakeBroadcastChannel[] = []
@@ -36,12 +38,13 @@ class FakeBroadcastChannel {
 
 const ChartStub = defineComponent({
   name: 'ChartGroup',
-  props: { dataset: { type: Object, default: null }, strategySources: { type: Array, default: () => [] }, selectedSignal: { type: Object, default: null } },
+  props: { dataset: { type: Object, default: null }, strategySources: { type: Array, default: () => [] }, selectedSignal: { type: Object, default: null }, selectedDivergenceSegments: { type: Object, default: null } },
   setup(_, { expose }) {
     expose({
       snapshotLayout: () => ({ panes: [{ id: 'price', kind: 'price', weight: 6, minHeight: 240, visible: true, collapsed: false, order: 0 }] }),
       restoreLayout: vi.fn(),
       focusSignal: focusSignalMock,
+      focusBar: focusBarMock,
     })
     return () => h('div', 'chart')
   },
@@ -74,6 +77,18 @@ function chanDefinition(): AlgorithmDefinition {
 
 describe('AppShell', () => {
   afterEach(() => vi.unstubAllGlobals())
+  it('routes the keyboard K-line command to the active chart without changing object selection', async () => {
+    api.getLayout.mockRejectedValue(new ApiError('WORKSPACE_NOT_FOUND', 'missing', 'req-layout'))
+    api.getDrawings.mockRejectedValue(new ApiError('DRAWINGS_NOT_FOUND', 'missing', 'req-drawings'))
+    api.listAlgorithms.mockResolvedValue([])
+    const wrapper = mount(AppShell, { props: { health: 'ok' }, global: { stubs: { ChartGroup: ChartStub, DatasetPanel: true } } })
+    wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', { ...dataset, coverage: { ...dataset.coverage, last_bar_index: 500 } })
+    await flushPromises()
+    wrapper.findComponent(KeyboardInstrumentPicker).vm.$emit('focus-bar', 357)
+    expect(focusBarMock).toHaveBeenCalledWith(357)
+    expect(wrapper.findComponent(ChartStub).props('selectedSignal')).toBeNull()
+    wrapper.unmount()
+  })
   it('cancels the previous dataset calculation and ignores its late poll', async () => {
     api.getLayout.mockRejectedValue(new ApiError('WORKSPACE_NOT_FOUND', 'missing', 'req-layout'))
     api.getDrawings.mockRejectedValue(new ApiError('DRAWINGS_NOT_FOUND', 'missing', 'req-drawings'))
@@ -127,7 +142,7 @@ describe('AppShell', () => {
     api.getStrategySourceConfig.mockRejectedValue(new ApiError('WORKSPACE_NOT_FOUND', 'missing', 'req-strategy-config'))
     api.putStrategySourceConfig.mockImplementation(async (_profile: string, _revision: number, value: object) => ({ ...value, revision: 1 }))
     api.getCalculationResults.mockResolvedValue({
-      result_kind: 'chan', objects: { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], local_centers: [], center_connections: [], center_audit_events: [], level_centers: [], level_movements: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] },
+      result_kind: 'chan', objects: { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], local_centers: [], center_connections: [], center_audit_events: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] },
       coverage: { first_bar_index: 0, last_bar_index: 100, returned_count: 101 },
     })
   })
@@ -167,6 +182,19 @@ describe('AppShell', () => {
           rule_version: 'local_center_boundary_v1', left_context_incomplete: false,
           previous_center_id: 'center-before', core_relation: 'CORE_ABOVE',
           higher_level_review_required: true, trend_status: 'UNVERIFIED',
+        }, {
+          object_id: 'segment-center-current', unit_kind: 'SEGMENT', structural_level: 'segment',
+          seed_ids: ['shared-exit', 'segment-next', 'segment-third'], scan_floor: 30,
+          zd_i64: 125, zg_i64: 135, dd_i64: 105, gg_i64: 140,
+          comparison_dd_i64: 125, comparison_gg_i64: 140,
+          comparison_excluded_entry_id: 'shared-exit',
+          formation_dir: 'UP', relative_dir: 'UP', previous_center_id: 'segment-center-before',
+          core_relation: 'CORE_ABOVE', higher_level_review_required: false,
+          status: 'CLOSED', observed_end_bar_index: 40, observed_end_time: 1700000000000,
+          break_confirmed_at_bar_index: 40, known_at_bar_index: 40, object_revision: 1,
+          entry_id: 'shared-exit', exit_id: 'segment-exit', pending_exit_id: null,
+          first_retest_id: 'segment-retest', rule_version: 'local_center_boundary_v1',
+          left_context_incomplete: false, trend_status: 'UNVERIFIED',
         }],
         center_connections: [
           { object_id: 'connection-in', from_center_id: 'center-before', to_center_id: 'center-current' },
@@ -185,6 +213,9 @@ describe('AppShell', () => {
     wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset)
     await flushPromises()
     await wrapper.get('.right-dock nav').findAll('button').at(3)?.trigger('click')
+    expect(wrapper.find('[data-signal-id="center-current"]').exists()).toBe(false)
+    await wrapper.findAll('.strategy-categories input[type="checkbox"]')[8]?.trigger('change')
+    await flushPromises()
     const bySource = wrapper.findComponent({ name: 'ObjectTreePanel' }).props('signalsBySource') as Record<string, Array<{ hover_detail?: string }>>
     const detail = Object.values(bySource).flat().find((signal) => signal.hover_detail?.includes('center-current'))?.hover_detail
     expect(detail).toContain('前向连接：connection-in（来源中枢：center-before）')
@@ -194,6 +225,9 @@ describe('AppShell', () => {
     expect(detail).toContain('核心关系：核心上移（前中枢：center-before）')
     expect(detail).toContain('趋势：未验证 · 外围波动接触，需高级别递归检查')
     expect(detail).toContain('触边，候选即时失效 · 比较值 115 · K21 · unit-exit → unit-tail（不可交易）')
+    const sharedDetail = Object.values(bySource).flat().find((signal) => signal.hover_detail?.includes('segment-center-current'))?.hover_detail
+    expect(sharedDetail).toContain('比较 DD/GG：125 / 140；完整主体 DD/GG：105 / 140')
+    expect(sharedDetail).toContain('共享进入段 shared-exit 参与三段交叠及 ZD/ZG，但不计入相邻比较 DD/GG')
     wrapper.unmount()
   })
 
@@ -291,7 +325,7 @@ describe('AppShell', () => {
     expect(chart.props('strategySources')).toEqual([
       expect.objectContaining({
         source_type: 'StrategySource', visible: true,
-        category_visibility: { processed_bars: false, fractals: false, bi: true, bi_states: true, segments: true, local_centers: true, level_centers: false, level_movements: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
+        category_visibility: { processed_bars: false, fractals: false, bi: true, bi_states: false, segments: true, bi_centers: true, segment_centers: true, center_objects: false, bi_boundary_confirmations: false, segment_boundary_confirmations: false, movement_states: true, center_monitors: true, divergences: true, first_trade_points: true, second_trade_points: true, third_trade_points: true, class_first_trade_points: true, class_second_trade_points: true, class_third_trade_points: true },
       }),
     ])
   })
@@ -319,9 +353,24 @@ describe('AppShell', () => {
       analysis_level: 'segment', reference_object_id: 'center-1', confirmed: true,
       confirmed_at_bar_index: 71, known_at_bar_index: 71, object_revision: 1,
     }
+    const line = {
+      object_id: 'bi-10-20', start_bar_index: 10, start_time: 1_699_999_000_000, start_price_i64: 2550,
+      start_extreme_source_bar_index: 10, end_bar_index: 20, end_time: 1_699_999_300_000, end_price_i64: 2660,
+      end_extreme_source_bar_index: 20, range_low_i64: 2550, range_high_i64: 2660,
+      range_low_source_bar_index: 10, range_high_source_bar_index: 20, range_profile: 'endpoint_extrema_v1' as const,
+      direction: 'up' as const, status: 'confirmed' as const, invalidation_reason: null,
+      catalog_algorithm_id: 'ALG-GEO-003' as const, confirmed: true, confirmed_at_bar_index: 21,
+      known_at_bar_index: 21, object_revision: 1,
+    }
+    const segment = {
+      ...line, object_id: 'segment-20-40', start_bar_index: 20, start_time: 1_699_999_300_000,
+      start_price_i64: 2660, end_bar_index: 40, end_time: 1_699_999_600_000, end_price_i64: 2580,
+      direction: 'down' as const, range_profile: 'constituent_bi_union_v1' as const,
+      catalog_algorithm_id: 'ALG-GEO-004' as const,
+    }
     api.getCalculationResults.mockResolvedValue({
-      result_kind: 'chan', objects: { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], local_centers: [], center_connections: [], center_audit_events: [], level_centers: [], level_movements: [], movement_states: [], center_monitors: [monitor], divergences: [], trade_points: [signal] },
-      coverage: { first_bar_index: 0, last_bar_index: 100, returned_count: 2 },
+      result_kind: 'chan', objects: { processed_bars: [], fractals: [], bi: [line], bi_states: [], segments: [segment], local_centers: [], center_connections: [], center_audit_events: [], movement_states: [], center_monitors: [monitor], divergences: [], trade_points: [signal] },
+      coverage: { first_bar_index: 0, last_bar_index: 100, returned_count: 4 },
     })
     const wrapper = mount(AppShell, {
       props: { health: 'ok' }, global: { stubs: { ChartGroup: ChartStub, DatasetPanel: true } },
@@ -331,6 +380,15 @@ describe('AppShell', () => {
     await wrapper.findAll('.right-dock nav button')[3]?.trigger('click')
     expect(wrapper.text()).toContain('Zn3 强')
     expect(wrapper.text()).toContain('抬高未破 B·上升楔形预警·不确认三类点')
+    expect(wrapper.text()).not.toContain('向上笔 · 已确认')
+    expect(wrapper.text()).not.toContain('向下线段 · 已确认')
+    expect(wrapper.findAll('.signal-layer-category').map((node) => node.text())).toEqual(expect.arrayContaining(['中枢监控', '一买卖点']))
+    await wrapper.findAll('.strategy-categories input[type="checkbox"]')[3]?.trigger('change')
+    await wrapper.findAll('.strategy-categories input[type="checkbox"]')[5]?.trigger('change')
+    await flushPromises()
+    expect(wrapper.text()).toContain('向上笔 · 已确认')
+    expect(wrapper.text()).toContain('向下线段 · 已确认')
+    expect(wrapper.findAll('.signal-layer-category').map((node) => node.text())).toEqual(expect.arrayContaining(['笔状态', '线段状态']))
     const row = wrapper.get('[data-object-type="ChanSignalObject"]')
     expect(row.text()).toContain('一买')
     await row.trigger('click')
@@ -338,6 +396,64 @@ describe('AppShell', () => {
     expect(wrapper.findComponent(ChartStub).props('selectedSignal')).toEqual(expect.objectContaining({ object_id: 'buy-1' }))
     await row.get('.signal-object-lock').trigger('click')
     expect(focusSignalMock).toHaveBeenCalledWith(expect.objectContaining({ object_id: 'buy-1' }))
+    await wrapper.findAll('.strategy-categories input[type="checkbox"]')[12]?.trigger('change')
+    expect(wrapper.findComponent(ChartStub).props('selectedSignal')).toBeNull()
+    expect(wrapper.find('[data-signal-id="buy-1"]').exists()).toBe(false)
+  })
+
+  it('passes the two source segments to the chart for both tree and triangle selection', async () => {
+    api.getLayout.mockRejectedValue(new ApiError('WORKSPACE_NOT_FOUND', 'missing', 'req-layout'))
+    api.getDrawings.mockRejectedValue(new ApiError('DRAWINGS_NOT_FOUND', 'missing', 'req-drawings'))
+    api.listAlgorithms.mockResolvedValue([chanDefinition()])
+    api.createCalculation.mockResolvedValue({ job_id: 'job-divergence', status: 'completed' })
+    const reference = { object_id: 'segment-reference', start_bar_index: 10, end_bar_index: 20, object_revision: 1 }
+    const current = { object_id: 'segment-current', start_bar_index: 30, end_bar_index: 40, object_revision: 1 }
+    const a = { object_id: 'segment-a', start_bar_index: 0, end_bar_index: 8, object_revision: 1 }
+    const divergence = { object_id: 'divergence-1', bar_index: 40, time: 1_700_000_000_000,
+      price_i64: 100, signal_type: 'bottom_divergence', divergence_kind: 'consolidation',
+      divergence_profile: 'external_range', status: 'confirmed', formation_dir: 'UP', relative_dir: 'UNKNOWN',
+      macd_area_reference: 12, macd_area_current: 6, macd_area_ratio: 0.5,
+      macd_diff_reference_extreme: -3.1, macd_diff_current_extreme: -1.2,
+      macd_dea_reference_extreme: -2.8, macd_dea_current_extreme: -1.0,
+      macd_extreme_relation: 'both_weaker', a_object_id: reference.object_id,
+      comparison_reference_object_id: reference.object_id, comparison_current_object_id: current.object_id,
+      confirmed_at_bar_index: 45, known_at_bar_index: 45, object_revision: 1 }
+    api.getCalculationResults.mockResolvedValue({ result_kind: 'chan', objects: {
+      processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [a, reference, current],
+      local_centers: [], center_connections: [], center_audit_events: [], movement_states: [], center_monitors: [],
+      divergences: [divergence, { ...divergence, object_id: 'forming-1', status: 'forming',
+        confirmed_at_bar_index: null, confirmed: false },
+      { ...divergence, object_id: 'trend-candidate-1', divergence_kind: 'trend',
+        divergence_profile: 'segment_trend_candidate', status: 'candidate',
+        a_object_id: a.object_id, c_contains_type3: true, c_meets_sublevel: false,
+        c_sublevel_profile: 'bi_two_confirmed_centers_type3_v1',
+        c_sublevel_center_ids: ['bi-center-1'], c_type3_departure_id: 'bi-departure',
+        c_type3_retest_id: 'bi-retest', c_proof_known_at_bar_index: null }], trade_points: [],
+    } })
+    const wrapper = mount(AppShell, { props: { health: 'ok' }, global: { stubs: { ChartGroup: ChartStub, DatasetPanel: true } } })
+    wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset)
+    await flushPromises()
+    await wrapper.findAll('.right-dock nav button')[3]?.trigger('click')
+    expect(wrapper.get('[data-signal-id="divergence-1"]').text()).toContain('MACD 同向面积比 0.500')
+    expect(wrapper.get('[data-signal-id="divergence-1"]').text()).toContain('MACD 同向面积 12.00 → 6.00')
+    expect(wrapper.get('[data-signal-id="divergence-1"]').text()).toContain('DIFF 同向极值')
+    expect(wrapper.get('[data-signal-id="divergence-1"]').text()).toContain('DIFF/DEA 极值辅助判断：均减弱')
+    expect(wrapper.get('[data-signal-id="forming-1"]').text()).toContain('形成中')
+    expect(wrapper.get('[data-signal-id="forming-1"]').text()).toContain('后续延伸可撤销')
+    expect(wrapper.get('[data-signal-id="trend-candidate-1"]').text()).toContain('c 内三类点：已证实；次级别结构：已核验不满足')
+    expect(wrapper.get('[data-signal-id="trend-candidate-1"]').text()).toContain('已确认笔中枢 1/2（bi-center-1）')
+    expect(wrapper.get('[data-signal-id="trend-candidate-1"]').text()).toContain('bi-departure → 回试 bi-retest')
+    expect(wrapper.get('[data-signal-id="trend-candidate-1"]').text()).toContain('不能升级为标准趋势背驰')
+    await wrapper.get('[data-signal-id="divergence-1"]').trigger('click')
+    const chart = wrapper.findComponent(ChartStub)
+    expect(chart.props('selectedDivergenceSegments')).toEqual({ reference, current })
+    chart.vm.$emit('select:signal', divergence)
+    await flushPromises()
+    expect(chart.props('selectedSignal')).toMatchObject({ object_type: 'divergence', object_id: 'divergence-1' })
+    expect(chart.props('selectedDivergenceSegments')).toEqual({ reference, current })
+    await wrapper.get('[data-signal-id="trend-candidate-1"]').trigger('click')
+    expect(chart.props('selectedDivergenceSegments')).toEqual({ a, reference, current })
+    wrapper.unmount()
   })
 
   it('recreates defaults when a saved indicator algorithm revision is no longer published', async () => {
@@ -440,7 +556,7 @@ describe('AppShell', () => {
           dataset_id: dataset.dataset_id, data_revision: dataset.data_revision,
           algorithm: { kind: 'chan', algorithm_id: 'chan_engineering', algorithm_version: '1.0.0', source_hash: `sha256:${'b'.repeat(64)}` },
           parameters: { min_stroke_bars: 5 },
-          category_visibility: { fractals: false, bi: true, segments: true, local_centers: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
+          category_visibility: { fractals: false, bi: true, segments: true, bi_centers: true, segment_centers: true, bi_boundary_confirmations: true, segment_boundary_confirmations: true, movement_states: true, center_monitors: true, divergences: true, first_trade_points: true, second_trade_points: true, third_trade_points: true },
         }],
       })
       api.getDrawings.mockRejectedValue(new ApiError('DRAWINGS_NOT_FOUND', 'missing', 'req-drawings'))
@@ -448,7 +564,7 @@ describe('AppShell', () => {
         schema_version: 1, profile_id: 'default', revision: 7, updated_at: '2026-08-01T00:00:00Z',
         strategy_sources: [{
           dataset_id: dataset.dataset_id, data_revision: dataset.data_revision, source_id: 'strategy-default-chan', visible: true,
-          category_visibility: { processed_bars: false, fractals: false, bi: false, bi_states: true, segments: true, local_centers: true, level_centers: false, level_movements: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
+          category_visibility: { processed_bars: false, fractals: false, bi: false, bi_states: true, segments: true, bi_centers: true, segment_centers: true, bi_boundary_confirmations: true, segment_boundary_confirmations: true, movement_states: true, center_monitors: true, divergences: true, first_trade_points: true, second_trade_points: true, third_trade_points: true },
         }],
       })
       api.listAlgorithms.mockResolvedValue([chanDefinition()])
@@ -463,8 +579,9 @@ describe('AppShell', () => {
       wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset, 'automatic')
       await flushPromises()
       const categoryToggles = wrapper.findAll('.strategy-categories input[type="checkbox"]')
-      expect(categoryToggles).toHaveLength(12)
+      expect(categoryToggles).toHaveLength(18)
       expect((categoryToggles[2]?.element as HTMLInputElement).checked).toBe(false)
+      await categoryToggles[7]?.trigger('change')
       await categoryToggles[1]?.trigger('change')
       expect(api.putStrategySourceConfig).not.toHaveBeenCalled()
 
@@ -474,7 +591,7 @@ describe('AppShell', () => {
       expect(api.putStrategySourceConfig).toHaveBeenCalledWith('default', 7, expect.objectContaining({
         strategy_sources: [expect.objectContaining({
           source_id: 'strategy-default-chan',
-          category_visibility: expect.objectContaining({ bi: false, fractals: true, trade_points: true }),
+          category_visibility: expect.objectContaining({ bi: false, fractals: true, segment_centers: false, first_trade_points: true, second_trade_points: true, third_trade_points: true }),
         })],
       }))
       expect(api.putLayout).not.toHaveBeenCalled()
@@ -489,6 +606,16 @@ describe('AppShell', () => {
         })],
       }))
       wrapper.unmount()
+      api.getStrategySourceConfig.mockResolvedValue(api.putStrategySourceConfig.mock.calls.at(-1)?.[2])
+      const reloaded = mount(AppShell, {
+        props: { health: 'ok' }, global: { stubs: { ChartGroup: ChartStub, DatasetPanel: true } },
+      })
+      reloaded.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset, 'automatic')
+      await flushPromises()
+      expect(reloaded.findComponent(ChartStub).props('strategySources')).toEqual(expect.arrayContaining([
+        expect.objectContaining({ category_visibility: expect.objectContaining({ bi_centers: true, segment_centers: false }) }),
+      ]))
+      reloaded.unmount()
     } finally {
       vi.useRealTimers()
     }

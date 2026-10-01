@@ -16,10 +16,12 @@ import {
   type Time,
   type UTCTimestamp,
 } from 'lightweight-charts'
-import { getCalculationResults } from '../api/client'
+import { loadCalculationWindow } from '../chart/calculationWindow'
+import { selectLocalCenterObjects } from '../chart/localCenterDisplay'
+import { selectVisibleTradePoints } from '../chart/tradePointVisibility'
 import { barAtLogicalIndex, formatBarTimeRange } from '../chart/crosshair'
 import { ChartSession, type CachedBar } from '../chart/session'
-import { ChanPrimitive } from '../chart/chanPrimitive'
+import { ChanPrimitive, type LocalCenterPresentation } from '../chart/chanPrimitive'
 import { HollowVolumeSeries } from '../chart/hollowVolumeSeries'
 import { MacdStickSeries } from '../chart/macdStickSeries'
 import { defaultPaneLayout, enforceMinimumHeights, removePane, resizeAdjacent, type PaneLayout } from '../chart/layout'
@@ -27,7 +29,7 @@ import { histogramColor, indicatorLineColor, MARKET_COLORS } from '../chart/mark
 import { chanStyleForRendering, colorWithOpacity, resolvedOutputStyle } from '../indicators/style'
 import { logger } from '../logging/logger'
 import type { ReplayObjects, ReplaySignal } from '../replay/eventIndex'
-import type { ChanCalculationResults, ChanTreeObject, DatasetMeta, SeriesSource, StrategySource } from '../types/api'
+import type { ChanCalculationResults, ChanLineObject, ChanSignalPoint, ChanTreeObject, DatasetMeta, SeriesSource, StrategySource } from '../types/api'
 import { cloneDrawings, LayerManager, type DrawingAnchor, type DrawingObject, type DrawingType, type ProjectedDrawing } from '../drawing/model'
 
 const props = withDefaults(defineProps<{
@@ -40,6 +42,7 @@ const props = withDefaults(defineProps<{
   drawings?: DrawingObject[]
   selectedDrawingId?: string | null
   selectedSignal?: ChanTreeObject | null
+  selectedDivergenceSegments?: { a?: ChanLineObject | null; reference: ChanLineObject | null; current: ChanLineObject | null } | null
   signalLocked?: boolean
   drawingTool?: DrawingType | 'cursor'
   magnet?: boolean
@@ -53,6 +56,7 @@ const props = withDefaults(defineProps<{
   drawings: () => [],
   selectedDrawingId: null,
   selectedSignal: null,
+  selectedDivergenceSegments: null,
   signalLocked: false,
   drawingTool: 'cursor',
   magnet: false,
@@ -62,15 +66,19 @@ const emit = defineEmits<{
   'update:drawings': [drawings: DrawingObject[]]
   'update:selectedDrawingId': [id: string | null]
   'update:drawingTool': [tool: DrawingType | 'cursor']
+  'select:signal': [signal: ChanSignalPoint]
 }>()
 
 const host = ref<HTMLElement | null>(null)
 const panes = ref<PaneLayout[]>(defaultPaneLayout())
 const loading = ref(false)
 const error = ref('')
+const focusNotice = ref('')
+const resultsError = ref('')
 const cacheFirstIndex = ref<number | null>(null)
 const cacheBarCount = ref(0)
 const projectionRevision = ref(0)
+const keyboardFocusBarIndex = ref<number | null>(null)
 const collapsed = ref(new Set<string>())
 const maximized = ref<string | null>(null)
 const chartHeight = ref(800)
@@ -93,7 +101,12 @@ let volume: ISeriesApi<'Custom'> | null = null
 let prefetchBeforeTimer: number | undefined
 let prefetchAfterTimer: number | undefined
 let indicatorTimer: number | undefined
+let indicatorRenderGeneration = 0
+let chanRenderGeneration = 0
+let rangeGeneration = 0
+let disposed = false
 let focusGeneration = 0
+let keyboardFocusGeneration = 0
 let focusInProgress = false
 let prefetchSuppressedUntil = 0
 let dragCleanup: (() => void) | null = null
@@ -170,6 +183,41 @@ const projectedSelectedSignal = computed(() => {
       ? `M ${startX} ${y - 5} l -7 -12 h 14 z`
       : `M ${startX} ${y + 5} l -7 12 h 14 z`,
   }
+})
+const projectedKeyboardFocus = computed(() => {
+  projectionRevision.value
+  if (keyboardFocusBarIndex.value === null || !chart || !candles || !props.dataset) return null
+  const bar = session.bars.find((item) => item.barIndex === keyboardFocusBarIndex.value)
+  if (!bar) return null
+  const x = chart.timeScale().timeToCoordinate(Math.floor(bar.timestampUtc / 1000) as UTCTimestamp)
+  const high = candles.priceToCoordinate(bar.highI64 / props.dataset.price.price_scale)
+  const low = candles.priceToCoordinate(bar.lowI64 / props.dataset.price.price_scale)
+  if (x === null || high === null || low === null) return null
+  const width = host.value?.clientWidth ?? 0
+  if (width > 0 && (x < 0 || x > width)) return null
+  return { x, top: Math.min(high, low) - 4, height: Math.max(12, Math.abs(low - high) + 8), barIndex: bar.barIndex }
+})
+const projectedDivergenceSegments = computed(() => {
+  projectionRevision.value
+  if (props.selectedSignal?.object_type !== 'divergence' || !props.selectedDivergenceSegments || !chart || !candles || !props.dataset) return []
+  return (['a', 'reference', 'current'] as const).flatMap((role) => {
+    const trend = props.selectedSignal?.signal?.divergence_kind === 'trend'
+    if (role === 'a' && !trend) return []
+    const segment = props.selectedDivergenceSegments?.[role]
+    const expectedId = role === 'a'
+      ? props.selectedSignal?.signal?.a_object_id
+      : role === 'reference'
+        ? props.selectedSignal?.signal?.comparison_reference_object_id
+        : props.selectedSignal?.signal?.comparison_current_object_id
+    if (!segment || segment.object_id !== expectedId) return []
+    const startX = chart!.timeScale().timeToCoordinate(Math.floor(segment.start_time / 1000) as UTCTimestamp)
+    const endX = chart!.timeScale().timeToCoordinate(Math.floor(segment.end_time / 1000) as UTCTimestamp)
+    const startY = candles!.priceToCoordinate(segment.start_price_i64 / props.dataset!.price.price_scale)
+    const endY = candles!.priceToCoordinate(segment.end_price_i64 / props.dataset!.price.price_scale)
+    if (startX === null || endX === null || startY === null || endY === null) return []
+    return [{ role, objectId: segment.object_id, startX, startY, endX, endY,
+      label: `${role === 'a' ? '起始段 a' : role === 'reference' ? `参照段 ${trend ? 'b' : 'a'}` : '背驰段 c'} K${segment.start_bar_index}–K${segment.end_bar_index}` }]
+  })
 })
 const projectedThirdBuyEvidence = computed(() => {
   projectionRevision.value
@@ -312,13 +360,13 @@ function formatPrice(value: number | undefined): string {
   return (value / props.dataset.price.price_scale).toFixed(props.dataset.price.price_decimals)
 }
 
-function symmetricAutoscale(baseImplementation: () => AutoscaleInfo | null): AutoscaleInfo | null {
+function macdAutoscale(baseImplementation: () => AutoscaleInfo | null): AutoscaleInfo | null {
   const info = baseImplementation()
   if (!info?.priceRange) return info
-  const extent = Math.max(Math.abs(info.priceRange.minValue), Math.abs(info.priceRange.maxValue), Number.EPSILON)
+  const lowerExtent = Math.max(-info.priceRange.minValue, info.priceRange.maxValue / 2, Number.EPSILON)
   return {
     ...info,
-    priceRange: { minValue: -extent, maxValue: extent },
+    priceRange: { minValue: -lowerExtent, maxValue: lowerExtent * 2 },
     margins: { above: 6, below: 6 },
   }
 }
@@ -531,6 +579,12 @@ function crosshairMoved(parameter: MouseEventParams): void {
   hoveredChanDetail.value = detail && parameter.point ? { text: detail, x: parameter.point.x + 14, y: parameter.point.y + 14 } : null
 }
 
+function chartClicked(parameter: MouseEventParams): void {
+  clearKeyboardFocus()
+  const signal = chanPrimitive.signalForHit(parameter.hoveredObjectId)
+  if (signal) emit('select:signal', signal)
+}
+
 function removeStaleIndicatorSeries(): void {
   if (!chart) return
   const wanted = new Set(props.indicatorSources.flatMap((source) => source.definition.outputs.map((output) => `${source.source_id}:${output.name}`)))
@@ -544,11 +598,14 @@ function removeStaleIndicatorSeries(): void {
 
 async function renderIndicators(fromBarIndex: number, toBarIndex: number): Promise<void> {
   if (!chart || !props.dataset || toBarIndex < fromBarIndex) return
+  const request = ++indicatorRenderGeneration
+  const generation = session.generation
+  const isCurrent = () => !disposed && request === indicatorRenderGeneration && generation === session.generation
   removeStaleIndicatorSeries()
   const times = new Map(session.bars.map((bar) => [bar.barIndex, Math.floor(bar.timestampUtc / 1000) as UTCTimestamp]))
   await Promise.all(props.indicatorSources.filter((source) => source.status === 'completed').map(async (source) => {
-    const result = await getCalculationResults(source.job_id, fromBarIndex, toBarIndex)
-    if (result.result_kind !== 'indicator') return
+    const result = await loadCalculationWindow(source.job_id, fromBarIndex, toBarIndex, isCurrent)
+    if (!result || !isCurrent() || result.result_kind !== 'indicator') return
     source.definition.outputs.forEach((output) => {
       const key = `${source.source_id}:${output.name}`
       let series = indicatorSeries.get(key)
@@ -560,24 +617,18 @@ async function renderIndicators(fromBarIndex: number, toBarIndex: number): Promi
       if (!series) {
         const paneIndex = output.pane === 'main' ? 0 : 1
         series = output.series_type === 'histogram'
-          ? chart?.addCustomSeries(new MacdStickSeries(), { autoscaleInfoProvider: symmetricAutoscale, priceLineVisible: false, lastValueVisible: false }, paneIndex)
+          ? chart?.addCustomSeries(new MacdStickSeries(), { autoscaleInfoProvider: macdAutoscale, priceLineVisible: false, lastValueVisible: false }, paneIndex)
           : chart?.addSeries(LineSeries, {
             color: outputStyle ? colorWithOpacity(outputStyle.color, outputStyle.opacity) : indicatorLineColor(source, output.name),
             lineWidth: outputStyle?.line_width ?? 1,
             lineStyle: chartLineStyle(outputStyle?.line_style ?? 'solid'),
             priceLineVisible: false,
-            ...(output.pane === 'indicator' ? { autoscaleInfoProvider: symmetricAutoscale } : {}),
+            ...(output.pane === 'indicator' ? { autoscaleInfoProvider: macdAutoscale, lastValueVisible: false } : {}),
           }, paneIndex)
         if (series) {
           indicatorSeries.set(key, series)
           if (output.pane === 'indicator') {
             series.priceScale().applyOptions({ autoScale: true, scaleMargins: { top: 0.1, bottom: 0.1 } })
-          }
-          if (output.series_type === 'histogram') {
-            series.createPriceLine({
-              price: 0, color: '#8b2b31', lineWidth: 1, lineStyle: LineStyle.Dashed,
-              lineVisible: true, axisLabelVisible: true, title: '0',
-            })
           }
         }
       }
@@ -608,8 +659,23 @@ async function renderIndicators(fromBarIndex: number, toBarIndex: number): Promi
 
 async function renderChan(fromBarIndex: number, toBarIndex: number): Promise<void> {
   if (!props.dataset || toBarIndex < fromBarIndex) return
+  const request = ++chanRenderGeneration
+  const generation = session.generation
+  const isCurrent = () => !disposed && request === chanRenderGeneration && generation === session.generation
   if (props.replayObjects !== null) {
     const source = props.strategySources.find((value) => value.status === 'completed')
+    const biCenterVisible = source?.category_visibility.bi_centers ?? false
+    const segmentCenterVisible = source?.category_visibility.segment_centers ?? false
+    const biConfirmationVisible = source?.category_visibility.bi_boundary_confirmations ?? true
+    const segmentConfirmationVisible = source?.category_visibility.segment_boundary_confirmations ?? true
+    const localObjects = selectLocalCenterObjects(props.replayObjects, {
+      bi: biCenterVisible || biConfirmationVisible,
+      segment: segmentCenterVisible || segmentConfirmationVisible,
+    })
+    const centerPresentation = new Map<string, LocalCenterPresentation>(localObjects.local_centers.map((center) => [center.object_id, {
+      center: center.unit_kind === 'BI' ? biCenterVisible : segmentCenterVisible,
+      boundaryConfirmation: center.unit_kind === 'BI' ? biConfirmationVisible : segmentConfirmationVisible,
+    }]))
     chanPrimitive.setStyle(chanStyleForRendering(source))
     const filtered: ReplayObjects = {
       processed_bars: source?.visible && (source.category_visibility.processed_bars ?? false) ? props.replayObjects.processed_bars : [],
@@ -617,65 +683,99 @@ async function renderChan(fromBarIndex: number, toBarIndex: number): Promise<voi
       bi: source?.visible && source.category_visibility.bi ? props.replayObjects.bi : [],
       bi_states: source?.visible && (source.category_visibility.bi_states ?? true) ? props.replayObjects.bi_states : [],
       segments: source?.visible && source.category_visibility.segments ? props.replayObjects.segments : [],
-      local_centers: source?.visible && source.category_visibility.local_centers ? props.replayObjects.local_centers : [],
-      center_connections: source?.visible && source.category_visibility.local_centers ? props.replayObjects.center_connections : [],
-      center_audit_events: source?.visible && source.category_visibility.local_centers ? props.replayObjects.center_audit_events : [],
-      level_centers: source?.visible && (source.category_visibility.level_centers ?? true) ? props.replayObjects.level_centers : [],
-      level_movements: source?.visible && (source.category_visibility.level_movements ?? true) ? props.replayObjects.level_movements : [],
+      local_centers: source?.visible ? localObjects.local_centers : [],
+      center_connections: source?.visible ? localObjects.center_connections : [],
+      center_audit_events: source?.visible ? localObjects.center_audit_events : [],
       movement_states: source?.visible && (source.category_visibility.movement_states ?? true) ? props.replayObjects.movement_states : [],
       center_monitors: source?.visible && (source.category_visibility.center_monitors ?? true) ? props.replayObjects.center_monitors : [],
       divergences: source?.visible && source.category_visibility.divergences ? props.replayObjects.divergences : [],
-      trade_points: source?.visible && source.category_visibility.trade_points ? props.replayObjects.trade_points : [],
+      trade_points: source?.visible ? selectVisibleTradePoints(props.replayObjects.trade_points, source.category_visibility) : [],
     }
-    chanPrimitive.setData(filtered, props.dataset.price.price_scale)
-    chanVisibleCounts.value = { bi: filtered.bi.length, segments: filtered.segments.length, localCenters: filtered.local_centers.length, divergences: filtered.divergences.length, tradePoints: filtered.trade_points.length }
+    chanPrimitive.setData(filtered, props.dataset.price.price_scale, centerPresentation)
+    chanVisibleCounts.value = { bi: filtered.bi.length, segments: filtered.segments.length, localCenters: [...centerPresentation.values()].filter((value) => value.center).length, divergences: filtered.divergences.filter((value) => value.status !== 'invalidated').length, tradePoints: filtered.trade_points.length }
     return
   }
   const sources = props.strategySources.filter((source) => source.status === 'completed' && source.visible)
   chanPrimitive.setStyle(chanStyleForRendering(sources[0]))
-  const merged: ChanCalculationResults['objects'] = { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], local_centers: [], center_connections: [], center_audit_events: [], level_centers: [], level_movements: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] }
+  const merged: ChanCalculationResults['objects'] = { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], local_centers: [], center_connections: [], center_audit_events: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] }
+  const centerPresentation = new Map<string, LocalCenterPresentation>()
   await Promise.all(sources.map(async (source) => {
-    const result = await getCalculationResults(source.job_id, fromBarIndex, toBarIndex)
-    if (result.result_kind !== 'chan') return
+    const result = await loadCalculationWindow(source.job_id, fromBarIndex, toBarIndex, isCurrent)
+    if (!result || !isCurrent() || result.result_kind !== 'chan') return
     if (source.category_visibility.processed_bars ?? false) merged.processed_bars.push(...result.objects.processed_bars)
     if (source.category_visibility.fractals) merged.fractals.push(...result.objects.fractals)
     if (source.category_visibility.bi) merged.bi.push(...result.objects.bi)
     if (source.category_visibility.bi_states ?? true) merged.bi_states.push(...result.objects.bi_states)
     if (source.category_visibility.segments) merged.segments.push(...result.objects.segments)
-    if (source.category_visibility.local_centers) {
-      merged.local_centers.push(...result.objects.local_centers)
-      merged.center_connections.push(...result.objects.center_connections)
-      merged.center_audit_events.push(...result.objects.center_audit_events)
+    const biCenterVisible = source.category_visibility.bi_centers
+    const segmentCenterVisible = source.category_visibility.segment_centers
+    const biConfirmationVisible = source.category_visibility.bi_boundary_confirmations ?? true
+    const segmentConfirmationVisible = source.category_visibility.segment_boundary_confirmations ?? true
+    if (biCenterVisible || segmentCenterVisible || biConfirmationVisible || segmentConfirmationVisible) {
+      const localObjects = selectLocalCenterObjects(result.objects, {
+        bi: biCenterVisible || biConfirmationVisible,
+        segment: segmentCenterVisible || segmentConfirmationVisible,
+      })
+      merged.local_centers.push(...localObjects.local_centers)
+      merged.center_connections.push(...localObjects.center_connections)
+      merged.center_audit_events.push(...localObjects.center_audit_events)
+      for (const center of localObjects.local_centers) {
+        centerPresentation.set(center.object_id, {
+          center: center.unit_kind === 'BI' ? biCenterVisible : segmentCenterVisible,
+          boundaryConfirmation: center.unit_kind === 'BI' ? biConfirmationVisible : segmentConfirmationVisible,
+        })
+      }
     }
-    if (source.category_visibility.level_centers ?? true) merged.level_centers.push(...(result.objects.level_centers ?? []))
-    if (source.category_visibility.level_movements ?? true) merged.level_movements.push(...(result.objects.level_movements ?? []))
     if (source.category_visibility.movement_states ?? true) merged.movement_states.push(...result.objects.movement_states)
     if (source.category_visibility.center_monitors ?? true) merged.center_monitors.push(...result.objects.center_monitors)
     if (source.category_visibility.divergences) merged.divergences.push(...result.objects.divergences)
-    if (source.category_visibility.trade_points) merged.trade_points.push(...result.objects.trade_points)
+    merged.trade_points.push(...selectVisibleTradePoints(result.objects.trade_points, source.category_visibility))
   }))
-  chanPrimitive.setData(merged, props.dataset.price.price_scale)
-  chanVisibleCounts.value = { bi: merged.bi.length, segments: merged.segments.length, localCenters: merged.local_centers.length, divergences: merged.divergences.length, tradePoints: merged.trade_points.length }
+  if (!isCurrent()) return
+  chanPrimitive.setData(merged, props.dataset.price.price_scale, centerPresentation)
+  chanVisibleCounts.value = { bi: merged.bi.length, segments: merged.segments.length, localCenters: [...centerPresentation.values()].filter((value) => value.center).length, divergences: merged.divergences.filter((value) => value.status !== 'invalidated').length, tradePoints: merged.trade_points.length }
 }
 
 function scheduleIndicatorRange(range: LogicalRange): void {
+  // Invalidate on interaction, not after the debounce: even a fast old response
+  // must not replace the layers while the next viewport is waiting to load.
+  indicatorRenderGeneration += 1
+  chanRenderGeneration += 1
+  const request = ++rangeGeneration
   window.clearTimeout(indicatorTimer)
-  indicatorTimer = window.setTimeout(() => {
+  indicatorTimer = window.setTimeout(async () => {
     const bars = props.replayCursor === null
       ? session.bars
       : session.bars.filter((bar) => bar.barIndex <= props.replayCursor!)
     if (bars.length === 0) return
-    const first = Math.max(0, Math.floor(range.from))
-    const last = Math.min(bars.length - 1, Math.ceil(range.to))
+    const first = Math.max(0, Math.min(bars.length - 1, Math.floor(range.from)))
+    const last = Math.max(0, Math.min(bars.length - 1, Math.ceil(range.to)))
     const from = bars[first]?.barIndex
     const to = bars[last]?.barIndex
-    if (from !== undefined && to !== undefined) void Promise.all([renderIndicators(from, to), renderChan(from, to)])
+    if (from === undefined || to === undefined) return
+    try {
+      await Promise.all([renderIndicators(from, to), renderChan(from, to)])
+      if (!disposed && request === rangeGeneration) resultsError.value = ''
+    } catch (cause) {
+      if (disposed || request !== rangeGeneration) return
+      resultsError.value = `指标/缠论范围加载失败：${cause instanceof Error ? cause.message : '未知错误'}；请缩放或拖动重试`
+      logger.error('ui.error', 'Calculation viewport load failed', { from_bar_index: from, to_bar_index: to, reason: resultsError.value })
+    }
   }, 150)
 }
 
 async function openDataset(meta: DatasetMeta): Promise<void> {
+  focusGeneration += 1
+  keyboardFocusGeneration += 1
+  keyboardFocusBarIndex.value = null
+  rangeGeneration += 1
+  indicatorRenderGeneration += 1
+  chanRenderGeneration += 1
+  window.clearTimeout(indicatorTimer)
   loading.value = true
   error.value = ''
+  focusNotice.value = ''
+  resultsError.value = ''
   indicatorValuesByBarIndex.clear()
   latestIndicatorValues.value = {}
   hoveredBar.value = null
@@ -703,6 +803,11 @@ async function openDataset(meta: DatasetMeta): Promise<void> {
 
 async function focusSignal(signal: ChanTreeObject): Promise<void> {
   if (!props.dataset || session.meta?.dataset_id !== props.dataset.dataset_id) return
+  if (!signal.object_id.startsWith('keyboard-bar-')) clearKeyboardFocus()
+  rangeGeneration += 1
+  indicatorRenderGeneration += 1
+  chanRenderGeneration += 1
+  window.clearTimeout(indicatorTimer)
   const requestGeneration = ++focusGeneration
   focusInProgress = true
   prefetchSuppressedUntil = Number.POSITIVE_INFINITY
@@ -712,19 +817,34 @@ async function focusSignal(signal: ChanTreeObject): Promise<void> {
   prefetchAfterTimer = undefined
   const currentBars = session.bars
   const currentIndex = currentBars.findIndex((bar) => bar.barIndex === signal.bar_index)
-  const evidenceStart = signal.third_buy_evidence?.source_center_start_bar_index
+  const divergenceSegments = signal.object_type === 'divergence' ? props.selectedDivergenceSegments : null
+  const evidenceStart = divergenceSegments?.a?.start_bar_index
+    ?? divergenceSegments?.reference?.start_bar_index
+    ?? signal.third_buy_evidence?.source_center_start_bar_index
+  const evidenceEnd = divergenceSegments?.current?.end_bar_index
   const evidenceStartLoaded = evidenceStart === undefined
     || currentBars.some((bar) => bar.barIndex === evidenceStart)
+  const evidenceEndLoaded = evidenceEnd === undefined
+    || currentBars.some((bar) => bar.barIndex === evidenceEnd)
   const currentRange = chart?.timeScale().getVisibleLogicalRange()
   loading.value = true
   error.value = ''
+  focusNotice.value = ''
   try {
-    if (currentIndex < 0 || !evidenceStartLoaded) {
+    if (currentIndex < 0 || !evidenceStartLoaded || !evidenceEndLoaded) {
       const confirmationDistance = signal.confirmed_at_bar_index === null ? 0 : Math.abs(signal.confirmed_at_bar_index - signal.bar_index)
       const evidenceDistance = evidenceStart === undefined ? 0 : Math.abs(signal.bar_index - evidenceStart)
       const requiredDistance = Math.max(confirmationDistance, evidenceDistance)
-      const radius = requiredDistance <= 2300 ? Math.max(120, requiredDistance + 30) : 120
-      await session.loadAround(signal.bar_index, radius, true)
+      const firstNeeded = Math.min(signal.bar_index, evidenceStart ?? signal.bar_index)
+      const lastNeeded = Math.max(signal.bar_index, signal.confirmed_at_bar_index ?? signal.bar_index, evidenceEnd ?? signal.bar_index)
+      const fitDivergence = divergenceSegments !== null && lastNeeded - firstNeeded + 162 <= 5000
+      if (divergenceSegments && !fitDivergence) {
+        focusNotice.value = '背驰证据跨度超过单次 5000 根 K 线；仅显示当前已加载的线段，未加载部分不会补画。'
+      }
+      const center = fitDivergence ? Math.floor((firstNeeded + lastNeeded) / 2) : signal.bar_index
+      const radius = fitDivergence ? Math.ceil((lastNeeded - firstNeeded) / 2) + 80
+        : requiredDistance <= 2300 ? Math.max(120, requiredDistance + 30) : 120
+      await session.loadAround(center, radius, true)
       if (requestGeneration !== focusGeneration) return
       renderBars()
     }
@@ -736,9 +856,12 @@ async function focusSignal(signal: ChanTreeObject): Promise<void> {
     const evidenceStartIndex = evidenceStart === undefined
       ? -1
       : bars.findIndex((bar) => bar.barIndex === evidenceStart)
+    const evidenceEndIndex = evidenceEnd === undefined
+      ? -1
+      : bars.findIndex((bar) => bar.barIndex === evidenceEnd)
     if (start < 0) throw new Error('信号对应的 K 线未能加载')
     const contextLeft = Math.max(0, Math.min(start, confirmed < 0 ? start : confirmed, evidenceStartIndex < 0 ? start : evidenceStartIndex) - 80)
-    const contextRight = Math.min(bars.length - 1, Math.max(start, confirmed < 0 ? start : confirmed) + 80)
+    const contextRight = Math.min(bars.length - 1, Math.max(start, confirmed < 0 ? start : confirmed, evidenceEndIndex < 0 ? start : evidenceEndIndex) + 80)
     const fromBarIndex = bars[contextLeft]?.barIndex
     const toBarIndex = bars[contextRight]?.barIndex
     if (fromBarIndex !== undefined && toBarIndex !== undefined) {
@@ -757,7 +880,17 @@ async function focusSignal(signal: ChanTreeObject): Promise<void> {
     const evidenceVisibleSpan = evidenceLogicalIndex === null ? 0
       : 2 * (Math.abs(focusLogicalIndex - evidenceLogicalIndex) + 80)
     const visibleSpan = Math.max(normalVisibleSpan, evidenceVisibleSpan)
-    timeScale?.setVisibleLogicalRange({ from: focusLogicalIndex - visibleSpan / 2, to: focusLogicalIndex + visibleSpan / 2 })
+    if (divergenceSegments && evidenceStartIndex >= 0 && evidenceEndIndex >= 0) {
+      const referenceStartTime = bars[evidenceStartIndex]?.timestampUtc
+      const currentEndTime = bars[evidenceEndIndex]?.timestampUtc
+      const left = referenceStartTime === undefined ? evidenceStartIndex
+        : timeScale?.timeToIndex(Math.floor(referenceStartTime / 1000) as UTCTimestamp) ?? evidenceStartIndex
+      const right = currentEndTime === undefined ? evidenceEndIndex
+        : timeScale?.timeToIndex(Math.floor(currentEndTime / 1000) as UTCTimestamp) ?? evidenceEndIndex
+      timeScale?.setVisibleLogicalRange({ from: Math.min(left, right) - 80, to: Math.max(left, right, confirmed < 0 ? right : confirmed) + 80 })
+    } else {
+      timeScale?.setVisibleLogicalRange({ from: focusLogicalIndex - visibleSpan / 2, to: focusLogicalIndex + visibleSpan / 2 })
+    }
     projectionRevision.value += 1
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : '信号定位失败'
@@ -769,6 +902,33 @@ async function focusSignal(signal: ChanTreeObject): Promise<void> {
       loading.value = false
     }
   }
+}
+
+async function focusBar(barIndex: number): Promise<void> {
+  const meta = props.dataset
+  if (!meta || !Number.isSafeInteger(barIndex)
+    || barIndex < meta.coverage.first_bar_index || barIndex > meta.coverage.last_bar_index) {
+    error.value = 'K 线编号不在当前数据集范围内'
+    return
+  }
+  keyboardFocusBarIndex.value = null
+  const keyboardRequest = ++keyboardFocusGeneration
+  const sessionIdentity = `${meta.dataset_id}:${meta.data_revision}`
+  await focusSignal({
+    object_id: `keyboard-bar-${barIndex}`, bar_index: barIndex, time: 0, price_i64: 0,
+    confirmed_at_bar_index: null, known_at_bar_index: barIndex, object_revision: 1,
+  })
+  if (keyboardRequest !== keyboardFocusGeneration
+    || `${props.dataset?.dataset_id}:${props.dataset?.data_revision}` !== sessionIdentity
+    || `${session.meta?.dataset_id}:${session.meta?.data_revision}` !== sessionIdentity
+    || error.value || !session.bars.some((bar) => bar.barIndex === barIndex)) return
+  keyboardFocusBarIndex.value = barIndex
+  projectionRevision.value += 1
+}
+
+function clearKeyboardFocus(): void {
+  keyboardFocusGeneration += 1
+  keyboardFocusBarIndex.value = null
 }
 
 function enableChartPrefetch(): void {
@@ -955,6 +1115,7 @@ onMounted(() => {
   applyWeights()
   chart.timeScale().subscribeVisibleLogicalRangeChange(visibleRangeChanged)
   chart.subscribeCrosshairMove(crosshairMoved)
+  chart.subscribeClick(chartClicked)
   if (typeof ResizeObserver !== 'undefined') {
     resizeObserver = new ResizeObserver(([entry]) => {
       if (!entry) return
@@ -995,10 +1156,13 @@ watch(() => props.replaySignals, () => {
   projectionRevision.value += 1
 }, { deep: true })
 
+watch(() => props.selectedSignal?.object_id, () => { focusNotice.value = '' })
+
 watch(() => props.drawings, () => projectDrawings(), { deep: true })
 
 defineExpose({
   focusSignal,
+  focusBar,
   snapshotLayout: () => ({
     panes: panes.value.map((pane, order) => ({ ...pane, order, visible: true, collapsed: collapsed.value.has(pane.id) })),
   }),
@@ -1011,6 +1175,10 @@ defineExpose({
 })
 
 onBeforeUnmount(() => {
+  disposed = true
+  rangeGeneration += 1
+  indicatorRenderGeneration += 1
+  chanRenderGeneration += 1
   window.clearTimeout(prefetchBeforeTimer)
   window.clearTimeout(prefetchAfterTimer)
   window.clearTimeout(indicatorTimer)
@@ -1019,6 +1187,7 @@ onBeforeUnmount(() => {
   if (chart) {
     chart.timeScale().unsubscribeVisibleLogicalRangeChange(visibleRangeChanged)
     chart.unsubscribeCrosshairMove(crosshairMoved)
+    chart.unsubscribeClick(chartClicked)
     candles?.detachPrimitive(chanPrimitive)
     chart.remove()
   }
@@ -1029,6 +1198,7 @@ onBeforeUnmount(() => {
   <section
     class="chart-group"
     aria-label="K 线多窗格图表"
+    @pointerdown="clearKeyboardFocus"
     :data-cache-first-index="cacheFirstIndex ?? ''"
     :data-cache-last-index="latestBar?.barIndex ?? ''"
     :data-cache-bar-count="cacheBarCount"
@@ -1104,6 +1274,18 @@ onBeforeUnmount(() => {
         <circle :cx="projectedSelectedSignal.startX" :cy="projectedSelectedSignal.y" r="7" />
         <circle :cx="projectedSelectedSignal.endX" :cy="projectedSelectedSignal.y" r="7" />
       </g>
+      <g v-if="projectedKeyboardFocus" class="keyboard-bar-focus" :data-keyboard-bar-focus="projectedKeyboardFocus.barIndex">
+        <line :x1="projectedKeyboardFocus.x" y1="0" :x2="projectedKeyboardFocus.x" :y2="chartHeight" />
+        <rect :x="projectedKeyboardFocus.x - 7" :y="projectedKeyboardFocus.top" width="14" :height="projectedKeyboardFocus.height" rx="2" />
+        <text :x="projectedKeyboardFocus.x + 10" :y="Math.max(18, projectedKeyboardFocus.top - 8)">K线{{ projectedKeyboardFocus.barIndex }}</text>
+      </g>
+      <g v-for="segment in projectedDivergenceSegments" :key="segment.role" class="divergence-segment-selection"
+        :class="segment.role" :data-divergence-segment="segment.role" :data-segment-id="segment.objectId">
+        <line :x1="segment.startX" :y1="segment.startY" :x2="segment.endX" :y2="segment.endY" />
+        <circle :cx="segment.startX" :cy="segment.startY" r="5" />
+        <circle :cx="segment.endX" :cy="segment.endY" r="5" />
+        <text :x="(segment.startX + segment.endX) / 2" :y="(segment.startY + segment.endY) / 2 - 10">{{ segment.label }}</text>
+      </g>
       <g v-for="item in projectedDrawings" :key="item.drawing.id" class="drawing-object" :data-drawing-id="item.drawing.id" @pointerdown="selectDrawing(item.drawing, $event)">
         <rect
           v-if="item.drawing.type === 'rectangle' && item.points[0] && item.points[1]"
@@ -1146,7 +1328,8 @@ onBeforeUnmount(() => {
       <small>单图表 · 共享时间轴 · 独立纵轴</small>
     </div>
     <div v-if="loading" class="chart-status">正在加载尾部 3000 根…</div>
-    <div v-if="error" class="chart-status chart-error">{{ error }}</div>
+    <div v-if="error || resultsError" class="chart-status chart-error">{{ error || resultsError }}</div>
+    <div v-else-if="focusNotice" class="chart-status chart-notice">{{ focusNotice }}</div>
     <div class="pane-controls" aria-label="窗格控制">
       <div
         v-for="(pane, index) in panes" :key="pane.id" class="pane-control"

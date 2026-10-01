@@ -57,10 +57,6 @@ def test_center_consumers_publish_new_algorithm_identity() -> None:
     oscillation = centre_oscillation_spread_definition()
     assert oscillation["algorithm_version"] == "1.1.0"
     assert oscillation["parameter_schema"]["properties"]["max_entries_per_center"]["default"] == 4
-    same_level = same_level_decomposition_program_definition()
-    assert same_level["algorithm_version"] == "1.1.0"
-    assert same_level["parameter_schema"]["properties"]["odd_direction_is_down"]["default"]
-    assert same_level["parameter_schema"]["properties"]["operation_quantity"]["default"] == 1
     three_level = three_level_complete_classification_definition()
     assert three_level["algorithm_version"] == "1.0.0"
     assert three_level["name"] == "三层级完全分类"
@@ -2444,6 +2440,7 @@ def test_centre_oscillation_spread_stops_on_S3_center_or_source_revision(
             )
 
 
+@pytest.mark.skip(reason="withdrawn with the recursive higher-level center graph in milestone 15F")
 def test_same_level_decomposition_compares_Ai_Ai_plus_2_and_branches_on_Ai_plus_3(
     tmp_path: Path, monkeypatch: object
 ) -> None:
@@ -2567,6 +2564,7 @@ def test_same_level_decomposition_compares_Ai_Ai_plus_2_and_branches_on_Ai_plus_
     )
 
 
+@pytest.mark.skip(reason="withdrawn with the recursive higher-level center graph in milestone 15F")
 def test_same_level_decomposition_uses_confirmed_divergence_and_stops_on_promotion(
     tmp_path: Path, monkeypatch: object
 ) -> None:
@@ -4655,18 +4653,6 @@ def test_chan_strategies_run_on_real_aol9_prefix(tmp_path: Path) -> None:
                 "minimum_net_range_i64": 1,
                 "fast_execution_available": False,
                 "max_entries_per_center": 4,
-            },
-        )
-    )
-    algorithms_and_parameters.append(
-        (
-            same_level_decomposition_program_definition(),
-            {
-                "checkpoint_interval": 1024,
-                "odd_direction_is_down": True,
-                "allow_long": True,
-                "allow_short": True,
-                "operation_quantity": 1,
             },
         )
     )

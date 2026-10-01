@@ -45,7 +45,7 @@ describe('indicator styles', () => {
     const source: StrategySource = {
       source_type: 'StrategySource', source_id: 'strategy-1', definition: definition('chan'),
       parameters: {}, job_id: 'job-1', status: 'completed', visible: true,
-      category_visibility: { fractals: false, bi: true, segments: true, local_centers: true, divergences: true, trade_points: true },
+      category_visibility: { fractals: false, bi: true, segments: true, bi_centers: true, segment_centers: true, bi_boundary_confirmations: true, segment_boundary_confirmations: true, divergences: true, first_trade_points: true, second_trade_points: true, third_trade_points: true },
     }
     const style = completeIndicatorStyle(source)
     expect(style.outputs.fractal).toMatchObject({ color: '#f23645', visible: false })
@@ -71,7 +71,7 @@ describe('indicator styles', () => {
     const source: StrategySource = {
       source_type: 'StrategySource', source_id: 'strategy-1', definition: definition('chan'),
       parameters: {}, job_id: 'job-1', status: 'completed', visible: true,
-      category_visibility: { fractals: false, bi: true, segments: true, local_centers: true, divergences: true, trade_points: true },
+      category_visibility: { fractals: false, bi: true, segments: true, bi_centers: true, segment_centers: true, bi_boundary_confirmations: true, segment_boundary_confirmations: true, divergences: true, first_trade_points: true, second_trade_points: true, third_trade_points: true },
       style: { outputs: {
         bi: { color: '#2962ff', line_width: 2, line_style: 'solid', opacity: 1, visible: false },
         fractal: { color: '#f23645', line_width: 1, line_style: 'solid', opacity: 1, visible: true },

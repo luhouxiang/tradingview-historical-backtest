@@ -175,6 +175,7 @@ class CenterBoundaryRelation:
     current_center_id: str
     core_relation: Literal["CORE_ABOVE", "CORE_BELOW", "CORE_TOUCH_OR_OVERLAP"]
     higher_level_review_required: bool
+    relative_dir: Literal["UP", "DOWN", "OVERLAP", "UNKNOWN"] = "UNKNOWN"
     trend_status: Literal["UNVERIFIED"] = "UNVERIFIED"
 
 
@@ -374,6 +375,27 @@ def _separated_retest(retest: CenterUnit, direction: BreakDirection, center: Loc
     return retest.direction == "up" and retest.high_tick < center.zd_tick
 
 
+def _restart_position(
+    stream: CenterStreamKey, seed_position: int, exit_position: int, retest_position: int
+) -> int:
+    """A segment exit may also enter the next center, but an old seed is never reused."""
+    if stream.unit_kind == "SEGMENT" and exit_position > seed_position + 2:
+        return exit_position
+    return retest_position
+
+
+def _incoming_exit_role(
+    previous: LocalCenter | None, first_seed: CenterUnit
+) -> EntryRole | None:
+    if previous is None or previous.exit_id != first_seed.id:
+        return None
+    if previous.break_direction == "up" and first_seed.direction == "up":
+        return "FROM_BELOW"
+    if previous.break_direction == "down" and first_seed.direction == "down":
+        return "FROM_ABOVE"
+    return None
+
+
 def _with_observation(
     center: LocalCenter, observed: Sequence[CenterUnit], **changes: Any
 ) -> LocalCenter:
@@ -400,6 +422,17 @@ def compare_center_boundaries(
         current.observed_low > previous.observed_high
         or current.observed_high < previous.observed_low
     )
+    relative_dir = classify_center_relative_direction(
+        previous.zd_tick,
+        previous.zg_tick,
+        previous.observed_low,
+        previous.observed_high,
+        current.zd_tick,
+        current.zg_tick,
+        current.observed_low,
+        current.observed_high,
+        previous_confirmed=previous.status == "CLOSED",
+    )
     return CenterBoundaryRelation(
         previous_center_id=previous.id,
         current_center_id=current.id,
@@ -407,7 +440,30 @@ def compare_center_boundaries(
         higher_level_review_required=(
             relation in {"CORE_ABOVE", "CORE_BELOW"} and envelope_touches
         ),
+        relative_dir=relative_dir,
     )
+
+
+def classify_center_relative_direction(
+    previous_zd: int,
+    previous_zg: int,
+    previous_dd: int,
+    previous_gg: int,
+    current_zd: int,
+    current_zg: int,
+    current_dd: int,
+    current_gg: int,
+    *,
+    previous_confirmed: bool,
+) -> Literal["UP", "DOWN", "OVERLAP", "UNKNOWN"]:
+    """Both cores and body oscillation envelopes must separate strictly."""
+    if not previous_confirmed:
+        return "UNKNOWN"
+    if current_zd > previous_zg and current_dd > previous_gg:
+        return "UP"
+    if current_zg < previous_zd and current_gg < previous_dd:
+        return "DOWN"
+    return "OVERLAP"
 
 
 def decompose_local_centers(
@@ -485,6 +541,10 @@ def decompose_local_centers(
         entry_role = _entry_role(predecessor, center)
         if entry_role is not None and predecessor is not None:
             center = replace(center, entry_id=predecessor.id, local_entry=entry_role)
+        if stream.unit_kind == "SEGMENT" and pending_closed is not None:
+            incoming = _incoming_exit_role(pending_closed[0], seed[0])
+            if incoming is not None:
+                center = replace(center, entry_id=seed[0].id, local_entry=incoming)
         events.append(
             _event(
                 "SEED_FOUND",
@@ -592,19 +652,22 @@ def decompose_local_centers(
                         known_at=_confirmed_at(retest),
                     )
                 )
+                restart_position = _restart_position(
+                    stream, seed_position, pair_position, retest_position
+                )
                 events.append(
                     _event(
                         "SEARCH_RESTARTED",
                         center,
-                        [retest],
-                        comparison_value=retest.index,
+                        [units[restart_position]],
+                        comparison_value=units[restart_position].index,
                         event_time=retest.end_time,
                         known_at=_confirmed_at(retest),
                     )
                 )
                 centers.append(center)
                 pending_closed = (center, pair_position)
-                scan_floor_position = retest_position
+                scan_floor_position = restart_position
                 closed = True
                 break
             events.append(
@@ -850,6 +913,11 @@ class LocalCenterAccumulator:
         entry_role = _entry_role(predecessor, center)
         if entry_role is not None and predecessor is not None:
             center = replace(center, entry_id=predecessor.id, local_entry=entry_role)
+        if self.stream.unit_kind == "SEGMENT" and self._pending_closed is not None:
+            previous = self._centers[self._pending_closed[0]]
+            incoming = _incoming_exit_role(previous, seed[0])
+            if incoming is not None:
+                center = replace(center, entry_id=seed[0].id, local_entry=incoming)
         self._append_event(
             _event(
                 "SEED_FOUND",
@@ -867,7 +935,7 @@ class LocalCenterAccumulator:
             return
         previous_position, exit_position = self._pending_closed
         previous = self._centers[previous_position]
-        connection_units = self._units[exit_position:seed_position]
+        connection_units = self._units[exit_position : max(exit_position + 1, seed_position)]
         overlap = (
             previous.roles_overlap_seed
             or previous.first_retest_id in center.seed_ids
@@ -1020,12 +1088,15 @@ class LocalCenterAccumulator:
                     known_at=_confirmed_at(retest),
                 )
             )
+            restart_position = _restart_position(
+                self.stream, self._active_seed_position, self._pair_position, retest_position
+            )
             self._append_event(
                 _event(
                     "SEARCH_RESTARTED",
                     center,
-                    [retest],
-                    comparison_value=retest.index,
+                    [self._units[restart_position]],
+                    comparison_value=self._units[restart_position].index,
                     event_time=retest.end_time,
                     known_at=_confirmed_at(retest),
                 )
@@ -1049,7 +1120,7 @@ class LocalCenterAccumulator:
                 )
             )
             self._pending_closed = (self._active_center_position, exit_position)
-            self._scan_floor_position = retest_position
+            self._scan_floor_position = restart_position
             self._active_center_position = None
             self._active_seed_position = None
             self._pair_position = None

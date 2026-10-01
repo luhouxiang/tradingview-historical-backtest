@@ -1396,7 +1396,7 @@ components:
                   display_name: {type: string, minLength: 1}
                   pane: {enum: [main, indicator]}
                   series_type: {enum: [line, histogram, semantic_objects]}
-                  object_type: {enum: [processed_bar, fractal, bi, bi_state, segment, local_center, center_connection, center_audit_event, level_center, level_movement, movement_state, center_monitor, divergence, trade_point, strategy_state, stage_signal, trade_signal, chart_event, risk_decision]}
+                  object_type: {enum: [processed_bar, fractal, bi, bi_state, segment, local_center, center_connection, center_audit_event, movement_state, center_monitor, divergence, trade_point, strategy_state, stage_signal, trade_signal, chart_event, risk_decision]}
             warmup:
               type: object
               additionalProperties: false
@@ -1516,7 +1516,7 @@ components:
     ChanObjects:
       type: object
       additionalProperties: false
-      required: [processed_bars, fractals, bi, bi_states, segments, local_centers, center_connections, center_audit_events, level_centers, level_movements, movement_states, center_monitors, divergences, trade_points]
+      required: [processed_bars, fractals, bi, bi_states, segments, local_centers, center_connections, center_audit_events, movement_states, center_monitors, divergences, trade_points]
       properties:
         processed_bars:
           type: array
@@ -1542,12 +1542,6 @@ components:
         center_audit_events:
           type: array
           items: {$ref: "#/components/schemas/ChanCenterAuditEvent"}
-        level_centers:
-          type: array
-          items: {$ref: "#/components/schemas/ChanLevelCenter"}
-        level_movements:
-          type: array
-          items: {$ref: "#/components/schemas/ChanLevelMovement"}
         movement_states:
           type: array
           items: {$ref: "#/components/schemas/ChanMovementState"}
@@ -1725,6 +1719,13 @@ components:
         stream_key: {type: string, minLength: 1}
         rule_version: {const: local_center_boundary_v1}
         previous_center_id: {type: [string, "null"]}
+        formation_dir: {type: string, enum: [UP, DOWN]}
+        relative_dir: {type: string, enum: [UP, DOWN, OVERLAP, UNKNOWN]}
+        dd_i64: {type: integer, description: Complete center-body low including any shared first seed; audit only.}
+        gg_i64: {type: integer, description: Complete center-body high including any shared first seed; audit only.}
+        comparison_dd_i64: {type: integer, description: Low used for same-level center migration; a SEGMENT first seed shared with the prior exit is excluded.}
+        comparison_gg_i64: {type: integer, description: High used for same-level center migration; a SEGMENT first seed shared with the prior exit is excluded.}
+        comparison_excluded_entry_id: {type: [string, "null"], description: Shared first seed omitted only from comparison DD/GG, never from the three-segment center core.}
         core_relation: {type: [string, "null"], enum: [CORE_ABOVE, CORE_BELOW, CORE_TOUCH_OR_OVERLAP, null]}
         higher_level_review_required: {type: boolean}
         trend_status: {const: UNVERIFIED}
@@ -1855,71 +1856,6 @@ components:
         known_at_bar_index: {type: integer, minimum: 0}
         object_revision: {type: integer, minimum: 1}
 
-    ChanLevelCenter:
-      type: object
-      additionalProperties: false
-      required: [object_id, level_id, parent_level_id, start_bar_index, start_time, end_bar_index, end_time, zd_i64, zg_i64, dd_i64, gg_i64, component_kind, component_object_ids, source_center_ids, status, promotion_reason, promoted_from_center_id, catalog_event, catalog_algorithm_id, confirmed, confirmed_at_bar_index, known_at_bar_index, object_revision]
-      properties:
-        object_id: {type: string, minLength: 1}
-        level_id: {type: string, pattern: "^L[1-9][0-9]*$"}
-        parent_level_id: {type: string, pattern: "^L[0-9]+$"}
-        start_bar_index: {type: integer, minimum: 0}
-        start_time: {type: integer}
-        end_bar_index: {type: integer, minimum: 0}
-        end_time: {type: integer}
-        zd_i64: {type: integer}
-        zg_i64: {type: integer}
-        dd_i64: {type: integer}
-        gg_i64: {type: integer}
-        component_kind: {enum: [segment, sublevel_movement]}
-        component_object_ids:
-          type: array
-          minItems: 1
-          items: {type: string, minLength: 1}
-        source_center_ids:
-          type: array
-          minItems: 1
-          items: {type: string, minLength: 1}
-        status: {enum: [candidate, confirmed, extended, terminated, promoted, superseded]}
-        promotion_reason: {enum: [nine_component_extension, overlapping_fluctuation_ranges]}
-        promoted_from_center_id: {type: [string, "null"]}
-        catalog_event: {enum: [center_candidate, center_confirmed, center_extended, center_promoted, center_terminated]}
-        catalog_algorithm_id: {const: ALG-GEO-005}
-        confirmed: {type: boolean}
-        confirmed_at_bar_index: {type: [integer, "null"], minimum: 0}
-        known_at_bar_index: {type: integer, minimum: 0}
-        object_revision: {type: integer, minimum: 1}
-
-    ChanLevelMovement:
-      type: object
-      additionalProperties: false
-      required: [object_id, level_id, start_bar_index, start_time, end_bar_index, end_time, low_i64, high_i64, component_center_ids, classification, direction, status, previous_classification, reclassification_reason, parent_center_candidate_id, catalog_event, catalog_algorithm_id, confirmed, confirmed_at_bar_index, known_at_bar_index, object_revision]
-      properties:
-        object_id: {type: string, minLength: 1}
-        level_id: {type: string, pattern: "^L[0-9]+$"}
-        start_bar_index: {type: integer, minimum: 0}
-        start_time: {type: integer}
-        end_bar_index: {type: integer, minimum: 0}
-        end_time: {type: integer}
-        low_i64: {type: integer}
-        high_i64: {type: integer}
-        component_center_ids:
-          type: array
-          minItems: 1
-          items: {type: string, minLength: 1}
-        classification: {enum: [consolidation, uptrend, downtrend, higher_level_center_candidate]}
-        direction: {type: [string, "null"], enum: [up, down, null]}
-        status: {enum: [candidate, confirmed, reclassified, invalidated]}
-        previous_classification: {type: [string, "null"], enum: [consolidation, uptrend, downtrend, higher_level_center_candidate, null]}
-        reclassification_reason: {type: [string, "null"]}
-        parent_center_candidate_id: {type: [string, "null"]}
-        catalog_event: {enum: [movement_candidate, movement_confirmed, movement_reclassified]}
-        catalog_algorithm_id: {const: ALG-GEO-006}
-        confirmed: {type: boolean}
-        confirmed_at_bar_index: {type: [integer, "null"], minimum: 0}
-        known_at_bar_index: {type: integer, minimum: 0}
-        object_revision: {type: integer, minimum: 1}
-
     ChanCenterMonitor:
       type: object
       additionalProperties: false
@@ -1967,13 +1903,34 @@ components:
         time: {type: integer}
         price_i64: {type: integer}
         signal_type: {type: string, enum: [bottom_divergence, top_divergence, buy_1, buy_2, buy_3, sell_1, sell_2, sell_3, class_buy_1, class_buy_2, class_buy_3, class_sell_1, class_sell_2, class_sell_3]}
-        divergence_kind: {type: [string, "null"], enum: [trend, consolidation, null]}
+        divergence_kind: {type: [string, "null"], enum: [trend, consolidation, center_oscillation, null]}
+        divergence_profile: {type: [string, "null"], enum: [segment_trend_candidate, standard_trend, external_range, center_oscillation, null]}
+        formation_dir: {type: [string, "null"], enum: [UP, DOWN, null]}
+        relative_dir: {type: [string, "null"], enum: [UP, DOWN, OVERLAP, UNKNOWN, null]}
+        a_object_id: {type: [string, "null"]}
+        b_object_id: {type: [string, "null"]}
+        a_center_id: {type: [string, "null"]}
+        b_center_id: {type: [string, "null"]}
+        macd_area_ratio: {type: [number, "null"], minimum: 0}
+        macd_diff_reference_extreme: {type: [number, "null"]}
+        macd_diff_current_extreme: {type: [number, "null"]}
+        macd_dea_reference_extreme: {type: [number, "null"]}
+        macd_dea_current_extreme: {type: [number, "null"]}
+        macd_extreme_relation: {type: [string, "null"], enum: [both_weaker, diff_only, dea_only, neither_weaker, unavailable, null]}
+        macd_parameter_profile: {type: [string, "null"], enum: [macd_12_26_9_histogram_x2, null]}
+        c_contains_type3: {type: [boolean, "null"]}
+        c_meets_sublevel: {type: [boolean, "null"]}
+        c_sublevel_profile: {type: [string, "null"], enum: [bi_two_confirmed_centers_type3_v1, null]}
+        c_sublevel_center_ids: {type: array, items: {type: string}}
+        c_type3_departure_id: {type: [string, "null"]}
+        c_type3_retest_id: {type: [string, "null"]}
+        c_proof_known_at_bar_index: {type: [integer, "null"], minimum: 0}
         signal_class: {type: [string, "null"], enum: [standard, class_like, null]}
         strength: {type: [string, "null"], enum: [strongest, normal, weakest, null]}
         reference_object_id: {type: [string, "null"]}
         macd_area_reference: {type: [number, "null"]}
         macd_area_current: {type: [number, "null"]}
-        status: {enum: [candidate, confirmed, invalidated]}
+        status: {enum: [forming, candidate, confirmed, invalidated]}
         invalidation_reason: {type: [string, "null"]}
         level_id: {type: [string, "null"], pattern: "^L[0-9]+$"}
         lower_level_turn_object_id: {type: [string, "null"]}

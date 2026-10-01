@@ -1,19 +1,19 @@
 {
-  "schema_version": 6,
+  "schema_version": 11,
   "cache_key": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
   "dataset_id": "SHFE.AO2609.5m",
   "data_revision": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
   "algorithm": {
     "kind": "chan",
     "algorithm_id": "chan_standard",
-    "algorithm_version": "17.0.0",
+    "algorithm_version": "19.3.0",
     "source_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
   },
   "parameters": {"min_fractal_gap": 5, "checkpoint_interval": 1024, "center_boundary_profile": "local_center_boundary_v1"},
   "calculation_mode": "causal_events",
   "engine_version": "0.1.0",
   "coverage": {"bar_count": 17017, "first_bar_index": 0, "last_bar_index": 17016},
-  "counts": {"merged_bars": 12000, "processed_bars": 12000, "fractals": 5100, "bi": 730, "bi_states": 1, "segments": 81, "local_centers": 12, "center_connections": 10, "center_audit_events": 48, "level_centers": 2, "level_movements": 5, "movement_states": 12, "center_monitors": 48, "divergences": 6, "trade_points": 14, "events": 18200},
+  "counts": {"merged_bars": 12000, "processed_bars": 12000, "fractals": 5100, "bi": 730, "bi_states": 1, "segments": 81, "local_centers": 12, "center_connections": 10, "center_audit_events": 48, "movement_states": 12, "center_monitors": 48, "divergences": 6, "trade_points": 14, "events": 18200},
   "files": {
     "processed_bars": {"path": "processed_bars.parquet", "row_count": 12000, "sha256": "sha256:1212121212121212121212121212121212121212121212121212121212121212"},
     "fractals": {"path": "fractals.parquet", "row_count": 5100, "sha256": "sha256:4444444444444444444444444444444444444444444444444444444444444444"},
@@ -23,14 +23,12 @@
     "local_centers": {"path": "local_centers.parquet", "row_count": 12, "sha256": "sha256:1212121212121212121212121212121212121212121212121212121212121212"},
     "center_connections": {"path": "center_connections.parquet", "row_count": 10, "sha256": "sha256:1313131313131313131313131313131313131313131313131313131313131313"},
     "center_audit_events": {"path": "center_audit_events.parquet", "row_count": 48, "sha256": "sha256:1414141414141414141414141414141414141414141414141414141414141414"},
-    "level_centers": {"path": "level_centers.parquet", "row_count": 2, "sha256": "sha256:1414141414141414141414141414141414141414141414141414141414141414"},
-    "level_movements": {"path": "level_movements.parquet", "row_count": 5, "sha256": "sha256:1515151515151515151515151515151515151515151515151515151515151515"},
     "movement_states": {"path": "movement_states.parquet", "row_count": 12, "sha256": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"},
     "center_monitors": {"path": "center_monitors.parquet", "row_count": 48, "sha256": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"},
     "divergences": {"path": "divergences.parquet", "row_count": 6, "sha256": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
     "trade_points": {"path": "trade_points.parquet", "row_count": 14, "sha256": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"},
     "events": {"path": "events.parquet", "row_count": 6500, "sha256": "sha256:8888888888888888888888888888888888888888888888888888888888888888"}
   },
-  "checkpoint": {"format": "tvbt-chan-checkpoint-v1", "algorithm_version": "17.0.0", "interval_bars": 1024, "count": 17, "last_bar_index": 16383},
+  "checkpoint": {"format": "tvbt-chan-checkpoint-v1", "algorithm_version": "19.3.0", "interval_bars": 1024, "count": 17, "last_bar_index": 16383},
   "created_at": "2026-08-01T00:00:00Z"
 }

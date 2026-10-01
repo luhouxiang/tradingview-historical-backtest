@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+  <title id="title">标准三买与类三买的程序关系</title>
+  <desc id="desc">类三买不是较宽松的三买。程序先确认标准三买，仅当之前最近同向一类点来自盘整背驰时，才在同一点追加类三买生命周期标签。</desc>
+  <rect width="1200" height="680" fill="#111827"/>
+  <text x="48" y="50" fill="#f8fafc" font-family="Microsoft YaHei, sans-serif" font-size="27" font-weight="700">标准三买与类三买：结构与来源是两条判断轴</text>
+  <text x="48" y="84" fill="#94a3b8" font-family="Microsoft YaHei, sans-serif" font-size="17">当前程序的集合关系：类三买 ⊂ 标准三买；标准三买不一定带类三买</text>
+
+  <rect x="55" y="120" width="1090" height="225" rx="14" fill="#172033" stroke="#334155" stroke-width="2"/>
+  <text x="82" y="156" fill="#f8fafc" font-family="Microsoft YaHei, sans-serif" font-size="22" font-weight="700">路径 A：最近同向反转起点是盘整底背驰</text>
+  <rect x="90" y="190" width="210" height="82" rx="10" fill="#78350f" stroke="#f59e0b" stroke-width="2"/>
+  <text x="124" y="222" fill="#fde68a" font-family="Microsoft YaHei, sans-serif" font-size="19" font-weight="700">盘整底背驰</text>
+  <text x="128" y="252" fill="#fcd34d" font-family="Microsoft YaHei, sans-serif" font-size="17">→ 类一买起点</text>
+  <line x1="300" y1="231" x2="440" y2="231" stroke="#64748b" stroke-width="4" marker-end="url(#arrow)"/>
+  <rect x="440" y="190" width="260" height="82" rx="10" fill="#153047" stroke="#38bdf8" stroke-width="2"/>
+  <text x="474" y="222" fill="#bae6fd" font-family="Microsoft YaHei, sans-serif" font-size="18" font-weight="700">中枢向上离开</text>
+  <text x="474" y="252" fill="#7dd3fc" font-family="Microsoft YaHei, sans-serif" font-size="17">首次回试 L ≥ ZG</text>
+  <line x1="700" y1="231" x2="820" y2="231" stroke="#64748b" stroke-width="4" marker-end="url(#arrow)"/>
+  <rect x="820" y="174" width="275" height="114" rx="10" fill="#3f1727" stroke="#fb7185" stroke-width="3"/>
+  <text x="855" y="215" fill="#fecdd3" font-family="Microsoft YaHei, sans-serif" font-size="21" font-weight="700">同一K线、同一价格</text>
+  <text x="850" y="250" fill="#fda4af" font-family="Microsoft YaHei, sans-serif" font-size="20">标准三买 + 类三买</text>
+  <text x="89" y="316" fill="#cbd5e1" font-family="Microsoft YaHei, sans-serif" font-size="16">类三买只增加“生命周期来自类一买”的信息；它复用已经成立的严格三买结构。</text>
+
+  <rect x="55" y="375" width="1090" height="225" rx="14" fill="#172033" stroke="#334155" stroke-width="2"/>
+  <text x="82" y="411" fill="#f8fafc" font-family="Microsoft YaHei, sans-serif" font-size="22" font-weight="700">路径 B：最近同向反转起点是趋势底背驰</text>
+  <rect x="90" y="445" width="210" height="82" rx="10" fill="#123524" stroke="#22c55e" stroke-width="2"/>
+  <text x="124" y="477" fill="#bbf7d0" font-family="Microsoft YaHei, sans-serif" font-size="19" font-weight="700">趋势底背驰</text>
+  <text x="128" y="507" fill="#86efac" font-family="Microsoft YaHei, sans-serif" font-size="17">→ 标准一买起点</text>
+  <line x1="300" y1="486" x2="440" y2="486" stroke="#64748b" stroke-width="4" marker-end="url(#arrow)"/>
+  <rect x="440" y="445" width="260" height="82" rx="10" fill="#153047" stroke="#38bdf8" stroke-width="2"/>
+  <text x="474" y="477" fill="#bae6fd" font-family="Microsoft YaHei, sans-serif" font-size="18" font-weight="700">中枢向上离开</text>
+  <text x="474" y="507" fill="#7dd3fc" font-family="Microsoft YaHei, sans-serif" font-size="17">首次回试 L ≥ ZG</text>
+  <line x1="700" y1="486" x2="820" y2="486" stroke="#64748b" stroke-width="4" marker-end="url(#arrow)"/>
+  <rect x="820" y="445" width="275" height="82" rx="10" fill="#3f1727" stroke="#fb7185" stroke-width="3"/>
+  <text x="895" y="479" fill="#fecdd3" font-family="Microsoft YaHei, sans-serif" font-size="21" font-weight="700">仅标准三买</text>
+  <text x="852" y="509" fill="#fda4af" font-family="Microsoft YaHei, sans-serif" font-size="16">不追加类三买生命周期标签</text>
+  <text x="89" y="570" fill="#cbd5e1" font-family="Microsoft YaHei, sans-serif" font-size="16">所以“标准三买 ⇒ 类三买”在当前定义下不成立；成立的是“类三买 ⇒ 同点标准三买”。</text>
+
+  <text x="58" y="642" fill="#fbbf24" font-family="Microsoft YaHei, sans-serif" font-size="18" font-weight="700">注意：类三买不是更宽松的几何条件，而是标准三买上的来源标签。</text>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#64748b"/>
+    </marker>
+  </defs>
+</svg>

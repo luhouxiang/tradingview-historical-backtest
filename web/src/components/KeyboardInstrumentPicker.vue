@@ -10,7 +10,8 @@ interface Candidate extends InstrumentSearchItem {
   dataset?: DatasetSummary
 }
 
-const emit = defineEmits<{ selected: [dataset: DatasetMeta] }>()
+const props = defineProps<{ dataset?: DatasetMeta | null }>()
+const emit = defineEmits<{ selected: [dataset: DatasetMeta]; 'focus-bar': [barIndex: number] }>()
 
 const open = ref(false)
 const query = ref('')
@@ -21,7 +22,22 @@ const status = ref('')
 const input = ref<HTMLInputElement | null>(null)
 let scanPromise: Promise<void> | null = null
 
-const matches = computed(() => fuzzyInstruments(candidates.value, query.value))
+const barCommand = computed(() => {
+  const value = query.value.trim()
+  if (!/^kk/i.test(value)) return null
+  const endpoint = /^kk(end|beg|begin)$/i.exec(value)?.[1]?.toLowerCase()
+  const match = /^kk(\d+)$/i.exec(value)
+  if (!endpoint && !match) return { barIndex: null, message: '请输入 kk357、kkbeg、kkbegin 或 kkend' }
+  if (!props.dataset) return { barIndex: null, message: '请先加载数据集' }
+  const { first_bar_index: first, last_bar_index: last } = props.dataset.coverage
+  const barIndex = endpoint === 'end' ? last : endpoint ? first : Number(match?.[1])
+  if (!Number.isSafeInteger(barIndex)) return { barIndex: null, message: 'K 线编号过大' }
+  if (barIndex < first || barIndex > last) return { barIndex: null, message: `K 线编号须在 ${first}–${last} 之间` }
+  const message = endpoint === 'end' ? `定位到最后一根 K 线（${barIndex}）`
+    : endpoint ? `定位到第一根 K 线（${barIndex}）` : `定位到 ${barIndex}`
+  return { barIndex, message }
+})
+const matches = computed(() => barCommand.value ? [] : fuzzyInstruments(candidates.value, query.value))
 
 function detectedString(source: SourceFile, key: string): string {
   const value = source.detected?.[key]
@@ -118,6 +134,13 @@ function moveSelection(delta: number): void {
   selectedIndex.value = (selectedIndex.value + delta + matches.value.length) % matches.value.length
 }
 
+function chooseBar(): void {
+  const barIndex = barCommand.value?.barIndex
+  if (barIndex === null || barIndex === undefined || busy.value) return
+  emit('focus-bar', barIndex)
+  close()
+}
+
 async function choose(candidate = matches.value[selectedIndex.value]): Promise<void> {
   if (!candidate || busy.value) return
   busy.value = true
@@ -144,7 +167,11 @@ async function choose(candidate = matches.value[selectedIndex.value]): Promise<v
 function inputKeydown(event: KeyboardEvent): void {
   if (event.key === 'ArrowDown') { event.preventDefault(); moveSelection(1) }
   else if (event.key === 'ArrowUp') { event.preventDefault(); moveSelection(-1) }
-  else if (event.key === 'Enter') { event.preventDefault(); void choose() }
+  else if (event.key === 'Enter') {
+    event.preventDefault()
+    if (barCommand.value) chooseBar()
+    else void choose()
+  }
   else if (event.key === 'Escape') { event.preventDefault(); close() }
 }
 
@@ -176,8 +203,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', globalKeydown))
 <template>
   <aside v-if="open" class="keyboard-picker" aria-label="键盘精灵">
     <header><strong>键盘精灵</strong><button aria-label="关闭键盘精灵" @click="close">×</button></header>
-    <input ref="input" v-model="query" aria-label="标的搜索" autocomplete="off" @keydown="inputKeydown">
+    <input ref="input" v-model="query" aria-label="标的搜索" placeholder="标的 / kk357 / kkbeg / kkend" autocomplete="off" @keydown="inputKeydown">
     <div class="keyboard-picker-results" role="listbox" aria-label="匹配标的">
+      <button v-if="barCommand?.barIndex !== null && barCommand?.barIndex !== undefined" class="selected keyboard-picker-bar-command"
+        role="option" aria-selected="true" @click="chooseBar">
+        <strong>K线{{ barCommand.barIndex }}</strong><span>{{ barCommand.message }}</span><small>Enter 定位</small>
+      </button>
       <button
         v-for="(candidate, index) in matches"
         :key="candidate.id"
@@ -192,8 +223,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', globalKeydown))
         <span>{{ candidate.label || candidate.path.replace(/^.*[\\/]/, '') }}</span>
         <small>{{ candidate.timeframe }} · {{ candidate.status }}</small>
       </button>
-      <div v-if="matches.length === 0 && !status" class="keyboard-picker-empty">无匹配标的</div>
+      <div v-if="barCommand && barCommand.barIndex === null" class="keyboard-picker-empty">{{ barCommand.message }}</div>
+      <div v-else-if="!barCommand && matches.length === 0 && !status" class="keyboard-picker-empty">无匹配标的</div>
     </div>
-    <footer>{{ status || '↑↓ 选择　Enter 加载　Esc 关闭' }}</footer>
+    <footer>{{ barCommand ? (barCommand.barIndex === null ? 'Esc 关闭' : 'Enter 定位　Esc 关闭') : (status || '↑↓ 选择　Enter 加载　Esc 关闭') }}</footer>
   </aside>
 </template>

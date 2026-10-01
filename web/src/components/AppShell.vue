@@ -15,9 +15,11 @@ import { ApiError, cancelCalculation, createCalculation, getCalculation, getCalc
 import { DrawingHistory, LayerManager, type DrawingObject, type DrawingType } from '../drawing/model'
 import { defaultIndicatorSpecs } from '../indicators/defaults'
 import { defaultChanSpec } from '../chan/defaults'
+import { selectLocalCenters } from '../chart/localCenterDisplay'
+import { selectVisibleTradePoints, tradePointCategory } from '../chart/tradePointVisibility'
 import { createBacktestWorkspaceChannel, createBacktestWorkspaceUrl, type BacktestWorkspaceMessage } from '../backtest/workspaceChannel'
 import type { ReplayObjects, ReplaySignal } from '../replay/eventIndex'
-import type { AlgorithmDefinition, BacktestTrade, CalculationRequest, ChanCenterMonitor, ChanLocalCenter, ChanSignalPoint, ChanTreeObject, DatasetMeta, SeriesSource, StrategyRunSource, StrategySource, StrategySourceDynamicConfig, StrategySourcePreference, WorkspaceLayout } from '../types/api'
+import type { AlgorithmDefinition, BacktestTrade, CalculationRequest, ChanCenterMonitor, ChanLayerCategory, ChanLineObject, ChanSignalPoint, ChanTreeObject, DatasetMeta, SeriesSource, StrategyRunSource, StrategySource, StrategySourceDynamicConfig, StrategySourcePreference, WorkspaceLayout } from '../types/api'
 
 defineProps<{ health: string }>()
 
@@ -34,7 +36,18 @@ const strategyRunSources = ref<StrategyRunSource[]>([])
 const drawings = ref<DrawingObject[]>([])
 const selectedDrawingId = ref<string | null>(null)
 const signalObjectsBySource = ref<Record<string, ChanTreeObject[]>>({})
+const segmentEvidenceById = ref<Record<string, ChanLineObject>>({})
 const selectedSignal = ref<ChanTreeObject | null>(null)
+const selectedDivergenceSegments = computed(() => {
+  const signal = selectedSignal.value?.signal
+  if (!signal?.divergence_kind) return null
+  return {
+    ...(signal.divergence_kind === 'trend' && signal.a_object_id && signal.a_object_id !== signal.comparison_reference_object_id
+      ? { a: segmentEvidenceById.value[signal.a_object_id] ?? null } : {}),
+    reference: signal.comparison_reference_object_id ? segmentEvidenceById.value[signal.comparison_reference_object_id] ?? null : null,
+    current: signal.comparison_current_object_id ? segmentEvidenceById.value[signal.comparison_current_object_id] ?? null : null,
+  }
+})
 const selectedSignalOrigin = ref<'strategy' | 'trade' | null>(null)
 const lockedSignalId = ref<string | null>(null)
 const signalLoading = ref(false)
@@ -59,7 +72,12 @@ const chartRef = ref<{
   snapshotLayout: () => { panes: Array<{ id: string; kind: 'price' | 'indicator'; weight: number; minHeight: number; visible: boolean; collapsed: boolean; order: number }> }
   restoreLayout: (value: { panes: Array<{ id: string; kind: 'price' | 'indicator'; weight: number; minHeight: number; collapsed?: boolean }> }) => void
   focusSignal: (signal: ChanTreeObject) => Promise<void>
+  focusBar: (barIndex: number) => Promise<void>
 } | null>(null)
+
+function focusKeyboardBar(barIndex: number): void {
+  void chartRef.value?.focusBar(barIndex)
+}
 const drawingHistory = new DrawingHistory()
 const layerManager = new LayerManager()
 const profileId = 'default'
@@ -191,19 +209,13 @@ function formatTreeTimestamp(timestamp: number, dataset: DatasetMeta): string {
   }).format(new Date(timestamp)).replaceAll('/', '-')
 }
 
-function defaultLocalCenterScope(centers: ChanLocalCenter[]): ChanLocalCenter[] {
-  if (centers.length === 0) return []
-  const unitKind = centers.some((center) => center.unit_kind === 'BI') ? 'BI' : 'SEGMENT'
-  const structuralLevel = [...new Set(centers.filter((center) => center.unit_kind === unitKind).map((center) => center.structural_level))].sort()[0]
-  return centers.filter((center) => center.unit_kind === unitKind && center.structural_level === structuralLevel)
-}
-
 async function loadSignalObjects(): Promise<void> {
   const dataset = selectedDataset.value
-  const sources = strategySources.value.filter((source) => source.status === 'completed')
+  const sources = strategySources.value.filter((source) => source.status === 'completed' && source.visible)
   const generation = ++signalLoadGeneration
   if (!dataset || sources.length === 0) {
     signalObjectsBySource.value = {}
+    segmentEvidenceById.value = {}
     if (selectedSignalOrigin.value !== 'trade') {
       selectedSignal.value = null
       selectedSignalOrigin.value = null
@@ -215,12 +227,23 @@ async function loadSignalObjects(): Promise<void> {
   try {
     const results = await Promise.all(sources.map(async (source) => {
       const signals: ChanTreeObject[] = []
+      const segments: ChanLineObject[] = []
       for (let from = dataset.coverage.first_bar_index; from <= dataset.coverage.last_bar_index; from += 5000) {
         const to = Math.min(dataset.coverage.last_bar_index, from + 4999)
-        if (generation !== signalLoadGeneration) return { source, signals: [] }
+        if (generation !== signalLoadGeneration) return { source, signals: [], segments: [] }
         const result = await getCalculationResults(source.job_id, from, to)
         if (result.result_kind === 'chan') {
-          const localCenters = defaultLocalCenterScope(result.objects.local_centers ?? [])
+          segments.push(...result.objects.segments)
+          const visibility = completeCategoryVisibility(source.category_visibility)
+          const localCenters = selectLocalCenters(result.objects.local_centers ?? [], {
+            bi: visibility.center_objects && visibility.bi_centers,
+            segment: visibility.center_objects && visibility.segment_centers,
+          })
+          const centerContext = selectLocalCenters(result.objects.local_centers ?? [], {
+            bi: visibility.bi_centers || visibility.bi_boundary_confirmations,
+            segment: visibility.segment_centers || visibility.segment_boundary_confirmations,
+          })
+          const centerById = new Map(centerContext.map((center) => [center.object_id, center]))
           const connectionByCenter = new Map((result.objects.center_connections ?? []).map((connection) => [connection.from_center_id, connection]))
           const incomingConnectionByCenter = new Map((result.objects.center_connections ?? [])
             .filter((connection) => connection.to_center_id !== null)
@@ -228,15 +251,31 @@ async function loadSignalObjects(): Promise<void> {
           const confirmationByCenter = new Map((result.objects.center_audit_events ?? []).filter((event) => event.event_type === 'BREAK_CONFIRMED').map((event) => [event.center_id, event]))
           const previewByCenter = new Map((result.objects.center_audit_events ?? []).filter((event) => event.event_type === 'PREVIEW_UPDATED' && event.preview_confirmed === false).map((event) => [event.center_id, event]))
           signals.push(
-            ...result.objects.bi_states.map((state): ChanTreeObject => ({
-              object_id: state.object_id, object_type: 'bi_state',
+            ...(visibility.processed_bars ? result.objects.processed_bars.map((bar): ChanTreeObject => ({
+              object_id: bar.object_id, object_type: 'processed_bar', layer_category: 'processed_bars',
+              bar_index: bar.end_bar_index, time: bar.end_time, price_i64: bar.close_i64,
+              confirmed_at_bar_index: bar.sealed_at_bar_index, known_at_bar_index: bar.known_at_bar_index,
+              object_revision: bar.object_revision, label: `处理后K线 #${bar.normalized_index}`,
+              detail: `${bar.direction === 'up' ? '向上' : bar.direction === 'down' ? '向下' : '方向未定'} · 开${bar.open_i64} 高${bar.high_i64} 低${bar.low_i64} 收${bar.close_i64} · ${bar.status === 'sealed' ? '已封闭' : '形成中'}`,
+            })) : []),
+            ...(visibility.fractals ? result.objects.fractals.map((fractal): ChanTreeObject => ({
+              object_id: fractal.object_id, object_type: 'fractal', layer_category: 'fractals',
+              bar_index: fractal.bar_index, time: fractal.time, price_i64: fractal.price_i64,
+              confirmed_at_bar_index: fractal.confirmed_at_bar_index, known_at_bar_index: fractal.known_at_bar_index,
+              object_revision: fractal.object_revision, label: `${fractal.fractal_type === 'top' ? '顶' : '底'}分型 · ${fractal.status === 'confirmed' ? '已确认' : fractal.status === 'candidate' ? '候选' : '已失效'}`,
+              detail: `区间 ${fractal.zone_low_i64}–${fractal.zone_high_i64}${fractal.invalidation_reason ? ` · ${fractal.invalidation_reason}` : ''}`,
+            })) : []),
+            ...(visibility.bi_states ? result.objects.bi.map((line): ChanTreeObject => treeLine(line, 'bi', 'bi_states')) : []),
+            ...(visibility.bi_states ? result.objects.bi_states.map((state): ChanTreeObject => ({
+              object_id: state.object_id, object_type: 'bi_state', layer_category: 'bi_states',
               bar_index: state.bar_index, time: state.time, price_i64: state.price_i64,
               confirmed_at_bar_index: null, known_at_bar_index: state.known_at_bar_index,
               object_revision: state.object_revision, label: state.state,
               detail: state.trigger,
-            })),
-            ...result.objects.divergences.map((signal) => treeSignal(signal, 'divergence')),
-            ...result.objects.trade_points.map((signal) => treeSignal(signal, 'trade_point')),
+            })) : []),
+            ...(visibility.segment_boundary_confirmations ? result.objects.segments.map((line): ChanTreeObject => treeLine(line, 'segment', 'segment_boundary_confirmations')) : []),
+            ...(visibility.divergences ? result.objects.divergences.map((signal) => treeSignal(signal, 'divergence')) : []),
+            ...selectVisibleTradePoints(result.objects.trade_points, visibility).map((signal) => treeSignal(signal, 'trade_point')),
             ...localCenters.map((center): ChanTreeObject => {
               const connection = connectionByCenter.get(center.object_id)
               const incomingConnection = incomingConnectionByCenter.get(center.object_id)
@@ -246,17 +285,23 @@ async function loadSignalObjects(): Promise<void> {
               const exit = center.exit_id ?? center.pending_exit_id ?? '—'
               const retest = center.first_retest_id ?? '—'
               return {
-                object_id: center.object_id, object_type: 'local_center',
+                object_id: center.object_id, object_type: 'local_center', layer_category: center.unit_kind === 'BI' ? 'bi_centers' : 'segment_centers',
                 bar_index: center.observed_end_bar_index, time: center.observed_end_time,
                 price_i64: Math.trunc((center.zd_i64 + center.zg_i64) / 2),
                 confirmed_at_bar_index: center.break_confirmed_at_bar_index,
                 known_at_bar_index: center.known_at_bar_index, object_revision: center.object_revision,
                 label: `${center.unit_kind === 'BI' ? '笔' : '线段'}实体中枢 · ${center.status === 'ACTIVE' ? '活动' : center.status === 'PENDING_BREAK' ? '候选离开' : '已分界'}`,
-                detail: `ZD ${center.zd_i64} / ZG ${center.zg_i64} · ${center.structural_level}`,
+                detail: `ZD ${center.zd_i64} / ZG ${center.zg_i64} · 形成${center.formation_dir === 'UP' ? '回升' : center.formation_dir === 'DOWN' ? '回调' : '未知'} · 相邻${center.relative_dir === 'UP' ? '上移' : center.relative_dir === 'DOWN' ? '下移' : center.relative_dir === 'OVERLAP' ? '交叠' : '未知'}${center.comparison_excluded_entry_id ? '（共享首段仅参与构成）' : ''}`,
                 hover_detail: [
                   `实体中枢：${center.object_id}`,
                   `模式/层级：${center.unit_kind} / ${center.structural_level}`,
                   `核心关系：${center.core_relation === 'CORE_ABOVE' ? '核心上移' : center.core_relation === 'CORE_BELOW' ? '核心下移' : center.core_relation === 'CORE_TOUCH_OR_OVERLAP' ? '核心触及或重叠' : '无前中枢关系证据'}（前中枢：${center.previous_center_id ?? '—'}）`,
+                  `形成方向：${center.formation_dir === 'UP' ? '回升形成 ↑↓↑' : center.formation_dir === 'DOWN' ? '回调形成 ↓↑↓' : '旧结果未记录'}`,
+                  `相邻中枢：${center.relative_dir === 'UP' ? '比较外围严格上移' : center.relative_dir === 'DOWN' ? '比较外围严格下移' : center.relative_dir === 'OVERLAP' ? '核心或比较外围相接／交叠' : '无可比的前中枢'}（离开与首次回试只作连接证据）`,
+                  `比较 DD/GG：${center.comparison_dd_i64 ?? '未记录'} / ${center.comparison_gg_i64 ?? '未记录'}；完整主体 DD/GG：${center.dd_i64 ?? '未记录'} / ${center.gg_i64 ?? '未记录'}`,
+                  center.comparison_excluded_entry_id
+                    ? `工程口径：共享进入段 ${center.comparison_excluded_entry_id} 参与三段交叠及 ZD/ZG，但不计入相邻比较 DD/GG；完整主体范围保留审计。`
+                    : '相邻比较未排除共享进入段。',
                   `趋势：未验证${center.higher_level_review_required ? ' · 外围波动接触，需高级别递归检查' : ''}`,
                   `尾单元预览：${preview ? `${preview.preview_state === 'RETEST_TOUCH' ? '触边，候选即时失效' : preview.preview_state === 'RETEST_PENDING' ? '首次回试待确认' : '离开待确认'} · 比较值 ${preview.comparison_i64} · K${preview.known_at_bar_index} · ${preview.unit_ids.join(' → ')}（不可交易）` : '无'}`,
                   `构成三单元：${center.seed_ids.join(' → ')}`,
@@ -272,56 +317,55 @@ async function loadSignalObjects(): Promise<void> {
                 local_center_structural_level: center.structural_level,
               }
             }),
-            ...(result.objects.level_centers ?? []).map((center): ChanTreeObject => ({
-              object_id: center.object_id, object_type: 'level_center',
-              bar_index: center.end_bar_index, time: center.end_time,
-              price_i64: Math.trunc((center.zd_i64 + center.zg_i64) / 2),
-              confirmed_at_bar_index: center.confirmed_at_bar_index,
-              known_at_bar_index: center.known_at_bar_index, object_revision: center.object_revision,
-              label: `${center.level_id} 中枢${center.status === 'candidate' ? '候选' : '提升'}`,
-              detail: center.promotion_reason === 'nine_component_extension' ? '九组件延伸升级' : '同级振幅重叠',
-            })),
-            ...(result.objects.level_movements ?? []).map((movement): ChanTreeObject => ({
-              object_id: movement.object_id, object_type: 'level_movement',
-              bar_index: movement.end_bar_index, time: movement.end_time,
-              price_i64: Math.trunc((movement.low_i64 + movement.high_i64) / 2),
-              confirmed_at_bar_index: movement.confirmed_at_bar_index,
-              known_at_bar_index: movement.known_at_bar_index, object_revision: movement.object_revision,
-              label: `${movement.level_id} ${movement.classification === 'uptrend' ? '上涨趋势' : movement.classification === 'downtrend' ? '下跌趋势' : movement.classification === 'consolidation' ? '盘整' : '升层候选'}`,
-              detail: movement.status,
-            })),
-            ...result.objects.movement_states.map((state): ChanTreeObject => ({
-              object_id: state.object_id, object_type: 'movement_state',
+            ...result.objects.center_audit_events.filter((event) => {
+              if (event.event_type !== 'BREAK_CONFIRMED') return false
+              const center = centerById.get(event.center_id)
+              return center?.unit_kind === 'BI' ? visibility.bi_boundary_confirmations
+                : center?.unit_kind === 'SEGMENT' ? visibility.segment_boundary_confirmations
+                  : false
+            }).map((event): ChanTreeObject => {
+              const center = centerById.get(event.center_id)!
+              const unitLabel = center.unit_kind === 'BI' ? '笔' : '线段'
+              return {
+                object_id: event.object_id, object_type: 'center_boundary_confirmation',
+                layer_category: center.unit_kind === 'BI' ? 'bi_states' : 'segment_boundary_confirmations',
+                bar_index: event.event_bar_index, time: event.event_time,
+                price_i64: event.comparison_i64 ?? Math.trunc((event.zd_i64 + event.zg_i64) / 2),
+                confirmed_at_bar_index: event.event_bar_index, known_at_bar_index: event.known_at_bar_index,
+                object_revision: event.object_revision, label: `${unitLabel}分界确认 K${event.event_bar_index}`,
+                detail: `中枢 ${event.center_id} · ZD ${event.zd_i64} / ZG ${event.zg_i64} · 比较值 ${event.comparison_i64 ?? '—'}`,
+              }
+            }),
+            ...(visibility.movement_states ? result.objects.movement_states.map((state): ChanTreeObject => ({
+              object_id: state.object_id, object_type: 'movement_state', layer_category: 'movement_states',
               bar_index: state.end_bar_index, time: state.end_time, price_i64: state.price_i64,
               confirmed_at_bar_index: state.confirmed_at_bar_index,
               known_at_bar_index: state.known_at_bar_index, object_revision: state.object_revision,
               label: state.state_type === 'consolidation' ? '盘整状态' : state.state_type === 'centre_oscillation' ? '中枢震荡' : state.state_type === 'centre_migration_up' ? '中枢上移' : '中枢下移',
               detail: state.analysis_level,
-            })),
-            ...result.objects.center_monitors.map((monitor): ChanTreeObject => ({
-              object_id: monitor.object_id, object_type: 'center_monitor',
+            })) : []),
+            ...(visibility.center_monitors ? result.objects.center_monitors.map((monitor): ChanTreeObject => ({
+              object_id: monitor.object_id, object_type: 'center_monitor', layer_category: 'center_monitors',
               bar_index: monitor.bar_index, time: monitor.time, price_i64: monitor.zn_i64,
               confirmed_at_bar_index: monitor.confirmed_at_bar_index,
               known_at_bar_index: monitor.known_at_bar_index, object_revision: monitor.object_revision,
               label: `Zn${monitor.component_ordinal} ${monitor.oscillation_bias === 'strong' ? '强' : monitor.oscillation_bias === 'weak' ? '弱' : '平'}`,
               detail: znMonitorDetail(monitor),
-            })),
+            })) : []),
           )
         }
       }
-      const localCenterObjects = signals.filter((item) => item.object_type === 'local_center')
-      if (localCenterObjects.length === 0) return { source, signals }
-      const unitKind = localCenterObjects.some((item) => item.local_center_unit_kind === 'BI') ? 'BI' : 'SEGMENT'
-      const structuralLevel = [...new Set(localCenterObjects.filter((item) => item.local_center_unit_kind === unitKind).map((item) => item.local_center_structural_level ?? ''))].sort()[0]
-      return {
-        source,
-        signals: signals.filter((item) => item.object_type !== 'local_center' || item.local_center_unit_kind === unitKind && item.local_center_structural_level === structuralLevel),
-      }
+      return { source, signals, segments }
     }))
     if (generation !== signalLoadGeneration) return
     const byId = new Map<string, ChanTreeObject>()
+    const segmentById = new Map<string, ChanLineObject>()
     const bySource: Record<string, ChanTreeObject[]> = {}
-    for (const { source, signals } of results) {
+    for (const { source, signals, segments } of results) {
+      for (const segment of segments) {
+        const previous = segmentById.get(segment.object_id)
+        if (!previous || segment.object_revision >= previous.object_revision) segmentById.set(segment.object_id, segment)
+      }
       const sourceSignals = new Map<string, ChanTreeObject>()
       for (const signal of signals) {
         const current = sourceSignals.get(signal.object_id)
@@ -331,6 +375,7 @@ async function loadSignalObjects(): Promise<void> {
       for (const signal of sourceSignals.values()) byId.set(signal.object_id, signal)
     }
     signalObjectsBySource.value = bySource
+    segmentEvidenceById.value = Object.fromEntries(segmentById)
     if (selectedSignal.value && selectedSignalOrigin.value !== 'trade') selectedSignal.value = byId.get(selectedSignal.value.object_id) ?? null
     if (selectedSignalOrigin.value !== 'trade' && lockedSignalId.value && !byId.has(lockedSignalId.value)) lockedSignalId.value = null
   } catch (cause) {
@@ -341,26 +386,71 @@ async function loadSignalObjects(): Promise<void> {
 }
 
 watch(
-  () => `${selectedDataset.value?.dataset_id ?? ''}:${selectedDataset.value?.data_revision ?? ''}:${strategySources.value.map((source) => `${source.job_id}:${source.status}`).join('|')}`,
+  () => `${selectedDataset.value?.dataset_id ?? ''}:${selectedDataset.value?.data_revision ?? ''}:${strategySources.value.map((source) => `${source.job_id}:${source.status}:${source.visible}:${Object.values(completeCategoryVisibility(source.category_visibility)).join(',')}`).join('|')}`,
   () => { void loadSignalObjects() },
 )
+
+function proofStateLabel(value: boolean | null | undefined): string {
+  return value === true ? '已证实' : value === false ? '已核验不满足' : '未核验'
+}
 
 function treeSignal(signal: ChanSignalPoint, objectType: 'divergence' | 'trade_point'): ChanTreeObject {
   const rank = signal.signal_type.endsWith('_1') ? '一' : signal.signal_type.endsWith('_2') ? '二' : '三'
   const buy = signal.signal_type.includes('buy') || signal.signal_type === 'bottom_divergence'
+  const divergencePrefix = signal.divergence_kind === 'center_oscillation' ? '中枢震荡'
+    : signal.divergence_profile === 'segment_trend_candidate' ? '线段趋势'
+      : signal.divergence_kind === 'trend' ? '趋势' : '盘整'
   const label = signal.signal_type.includes('divergence')
-    ? `${signal.divergence_kind === 'trend' ? '趋势' : '盘整'}${buy ? '底' : '顶'}背驰`
+    ? `${divergencePrefix}${buy ? '底' : '顶'}背驰${signal.status === 'forming' ? '形成中' : signal.status === 'candidate' ? '候选' : signal.status === 'invalidated' ? '（已失效）' : ''}`
     : `${signal.signal_type.startsWith('class_') ? '类' : ''}${rank}${buy ? '买' : '卖'}`
+  const divergenceDetail = objectType === 'divergence'
+    ? [
+        signal.status === 'invalidated' ? `失效原因 ${signal.invalidation_reason ?? '结构或力度修订'}` : '',
+        signal.status === 'forming' ? `c 尚未确认为线段；力度按已观察到的 K 线暂算，后续延伸可撤销（截至 K${signal.known_at_bar_index}）` : '',
+        signal.divergence_kind === 'trend' ? `A ${signal.a_center_id ?? '未知'} · B ${signal.b_center_id ?? signal.reference_object_id ?? '未知'}`
+          : signal.divergence_kind === 'consolidation' ? `中枢 ${signal.b_center_id ?? signal.reference_object_id ?? '未知'}`
+            : `中枢内同向震荡 ${signal.b_center_id ?? signal.reference_object_id ?? '未知'}`,
+        signal.divergence_kind === 'trend' ? `a ${signal.a_object_id ?? '未知'} · b ${signal.b_object_id ?? '未知'} · c ${signal.comparison_current_object_id ?? '未知'}`
+          : signal.divergence_kind === 'consolidation' ? `a ${signal.a_object_id ?? '未知'} · c ${signal.comparison_current_object_id ?? '未知'}` : '',
+        `参照段 ${signal.comparison_reference_object_id ?? '未知'} · 当前段 ${signal.comparison_current_object_id ?? '未知'}`,
+        signal.macd_area_reference == null || signal.macd_area_current == null ? '' : `MACD 同向面积 ${signal.macd_area_reference.toFixed(2)} → ${signal.macd_area_current.toFixed(2)}`,
+        signal.macd_area_ratio == null ? 'MACD 力度不可比' : `MACD 同向面积比 ${signal.macd_area_ratio.toFixed(3)}`,
+        signal.macd_diff_reference_extreme == null || signal.macd_diff_current_extreme == null
+          ? '' : `DIFF 同向极值 ${signal.macd_diff_reference_extreme.toFixed(2)} → ${signal.macd_diff_current_extreme.toFixed(2)}`,
+        signal.macd_dea_reference_extreme == null || signal.macd_dea_current_extreme == null
+          ? '' : `DEA 同向极值 ${signal.macd_dea_reference_extreme.toFixed(2)} → ${signal.macd_dea_current_extreme.toFixed(2)}`,
+        signal.macd_extreme_relation == null ? '' : `DIFF/DEA 极值辅助判断：${signal.macd_extreme_relation === 'both_weaker' ? '均减弱' : signal.macd_extreme_relation === 'diff_only' ? '仅 DIFF 减弱' : signal.macd_extreme_relation === 'dea_only' ? '仅 DEA 减弱' : signal.macd_extreme_relation === 'neither_weaker' ? '均未减弱' : '数据不足'}（不单独触发背驰）`,
+        `当前段创新极值：${signal.new_extreme_satisfied === true ? '是' : signal.new_extreme_satisfied === false ? '否' : '未记录'}`,
+        signal.divergence_kind === 'trend' ? `c 内三类点：${proofStateLabel(signal.c_contains_type3)}；次级别结构：${proofStateLabel(signal.c_meets_sublevel)}` : '',
+        signal.c_sublevel_profile === 'bi_two_confirmed_centers_type3_v1' ? `工程映射：c 内已确认笔中枢 ${signal.c_sublevel_center_ids?.length ?? 0}/2（${signal.c_sublevel_center_ids?.join('、') || '无'}）；首次笔级离开 ${signal.c_type3_departure_id ?? '无'} → 回试 ${signal.c_type3_retest_id ?? '无'}；证明确认 K${signal.c_proof_known_at_bar_index ?? '未完成'}` : '',
+        `形成方向 ${signal.formation_dir ?? '未知'} · 相对移动 ${signal.relative_dir ?? '未知'}`,
+        signal.divergence_profile === 'segment_trend_candidate' ? 'c 内三类点或两个已确认笔中枢的证明尚不齐全；不能升级为标准趋势背驰' : '',
+      ].filter(Boolean).join('；')
+    : undefined
   return {
-    object_id: signal.object_id, object_type: objectType, bar_index: signal.bar_index,
+    object_id: signal.object_id, object_type: objectType,
+    layer_category: objectType === 'divergence' ? 'divergences' : tradePointCategory(signal.signal_type) ?? undefined,
+    bar_index: signal.bar_index,
     time: signal.time, price_i64: signal.price_i64,
     confirmed_at_bar_index: signal.confirmed_at_bar_index,
     known_at_bar_index: signal.known_at_bar_index, object_revision: signal.object_revision,
     label,
-    detail: signal.status === 'candidate' ? `${signal.level_id ?? ''} 等待下层转折确认`
+    detail: divergenceDetail ?? (signal.status === 'candidate' ? `${signal.level_id ?? ''} 等待下层转折确认`
       : signal.status === 'invalidated' ? `候选失效：${signal.invalidation_reason ?? '结构修订'}`
-        : signal.lower_level_turn_object_id ? `${signal.level_id ?? ''} 下层转折已确认` : undefined,
+        : signal.lower_level_turn_object_id ? `${signal.level_id ?? ''} 下层转折已确认` : undefined),
     signal,
+  }
+}
+
+function treeLine(line: ChanLineObject, objectType: 'bi' | 'segment', layerCategory: ChanLayerCategory): ChanTreeObject {
+  const kind = objectType === 'bi' ? '笔' : '线段'
+  return {
+    object_id: line.object_id, object_type: objectType, layer_category: layerCategory,
+    bar_index: line.end_bar_index, time: line.end_time, price_i64: line.end_price_i64,
+    confirmed_at_bar_index: line.confirmed_at_bar_index, known_at_bar_index: line.known_at_bar_index,
+    object_revision: line.object_revision,
+    label: `${line.direction === 'up' ? '向上' : '向下'}${kind} · ${line.status === 'confirmed' ? '已确认' : line.status === 'candidate' ? '候选' : '已失效'}`,
+    detail: `K${line.start_bar_index} → K${line.end_bar_index} · ${line.start_price_i64} → ${line.end_price_i64} · 区间 ${line.range_low_i64}–${line.range_high_i64}`,
   }
 }
 
@@ -368,6 +458,10 @@ function selectSignal(signal: ChanTreeObject): void {
   selectedDrawingId.value = null
   selectedSignal.value = signal
   selectedSignalOrigin.value = 'strategy'
+}
+
+function selectChartSignal(signal: ChanSignalPoint): void {
+  selectSignal(treeSignal(signal, signal.divergence_kind ? 'divergence' : 'trade_point'))
 }
 
 function selectDrawingObject(id: string): void {
@@ -383,7 +477,7 @@ function toggleSignalLock(signal: ChanTreeObject): void {
     return
   }
   lockedSignalId.value = signal.object_id
-  void chartRef.value?.focusSignal(signal)
+  void nextTick(() => chartRef.value?.focusSignal(signal))
 }
 
 function addStrategyRunSource(source: StrategyRunSource): void {
@@ -494,11 +588,23 @@ async function installDefaultIndicators(dataset: DatasetMeta, definitions?: Algo
 }
 
 function completeCategoryVisibility(value: StrategySource['category_visibility'] | WorkspaceLayout['strategy_sources'][number]['category_visibility']): Required<StrategySource['category_visibility']> {
+  const legacy = value as typeof value & { local_centers?: boolean; trade_points?: boolean }
+  const biStateVisible = value.bi_states ?? false
   return {
-    processed_bars: value.processed_bars ?? false, fractals: value.fractals, bi: value.bi, bi_states: value.bi_states ?? true, segments: value.segments ?? true,
-    local_centers: value.local_centers, level_centers: value.level_centers ?? false,
-    level_movements: value.level_movements ?? true, movement_states: value.movement_states ?? true,
-    center_monitors: value.center_monitors ?? true, divergences: value.divergences ?? true, trade_points: value.trade_points ?? true,
+    processed_bars: value.processed_bars ?? false, fractals: value.fractals, bi: value.bi, bi_states: biStateVisible, segments: value.segments ?? true,
+    bi_centers: value.bi_centers ?? legacy.local_centers ?? true,
+    segment_centers: value.segment_centers ?? false,
+    center_objects: value.center_objects ?? false,
+    bi_boundary_confirmations: biStateVisible,
+    segment_boundary_confirmations: value.segment_boundary_confirmations ?? false,
+    movement_states: value.movement_states ?? true,
+    center_monitors: value.center_monitors ?? true, divergences: value.divergences ?? true,
+    first_trade_points: value.first_trade_points ?? legacy.trade_points ?? true,
+    second_trade_points: value.second_trade_points ?? legacy.trade_points ?? true,
+    third_trade_points: value.third_trade_points ?? legacy.trade_points ?? true,
+    class_first_trade_points: value.class_first_trade_points ?? value.first_trade_points ?? legacy.trade_points ?? true,
+    class_second_trade_points: value.class_second_trade_points ?? value.second_trade_points ?? legacy.trade_points ?? true,
+    class_third_trade_points: value.class_third_trade_points ?? value.third_trade_points ?? legacy.trade_points ?? true,
   }
 }
 
@@ -541,7 +647,7 @@ async function installDefaultChan(dataset: DatasetMeta, definitions?: AlgorithmD
   const source: StrategySource = {
     source_type: 'StrategySource', source_id: spec.sourceId, definition: spec.definition,
     parameters: spec.parameters, job_id: accepted.job_id, status: accepted.status,
-    visible: true, category_visibility: { processed_bars: false, fractals: false, bi: true, bi_states: true, segments: true, local_centers: true, level_centers: false, level_movements: true, movement_states: true, center_monitors: true, divergences: true, trade_points: true },
+    visible: true, category_visibility: { processed_bars: false, fractals: false, bi: true, bi_states: false, segments: true, bi_centers: true, segment_centers: true, center_objects: false, bi_boundary_confirmations: false, segment_boundary_confirmations: false, movement_states: true, center_monitors: true, divergences: true, first_trade_points: true, second_trade_points: true, third_trade_points: true, class_first_trade_points: true, class_second_trade_points: true, class_third_trade_points: true },
   }
   rememberLayoutStrategyPresentation(source)
   strategySources.value = [applyDynamicStrategyConfig(source, dataset)]
@@ -622,6 +728,7 @@ async function selectDataset(dataset: DatasetMeta, origin: 'automatic' | 'user' 
   replaySignals.value = []
   selectedDrawingId.value = null
   signalObjectsBySource.value = {}
+  segmentEvidenceById.value = {}
   selectedSignal.value = null
   selectedSignalOrigin.value = null
   lockedSignalId.value = null
@@ -818,6 +925,20 @@ async function saveWorkspace(): Promise<void> {
 }
 
 function patchStrategy(id: string, patch: Partial<StrategySource>): void {
+  const current = strategySources.value.find((source) => source.source_id === id)
+  const selected = selectedSignal.value
+  if (current && selected && selectedSignalOrigin.value === 'strategy'
+    && (signalObjectsBySource.value[id] ?? []).some((item) => item.object_id === selected.object_id)) {
+    const visible = patch.visible ?? current.visible
+    const categories = patch.category_visibility ?? current.category_visibility
+    const centerSelection = selected.object_type === 'local_center'
+    if (!visible || centerSelection && !categories.center_objects
+      || selected.layer_category !== undefined && !categories[selected.layer_category]) {
+      selectedSignal.value = null
+      selectedSignalOrigin.value = null
+      lockedSignalId.value = null
+    }
+  }
   strategySources.value = strategySources.value.map((source) => source.source_id === id ? { ...source, ...patch } : source)
   scheduleStrategyConfigurationSave()
 }
@@ -878,9 +999,10 @@ function resizeBottom(event: PointerEvent): void {
           ref="chartRef" :dataset="selectedDataset" :indicator-sources="indicatorSources"
           :strategy-sources="strategySources" :replay-cursor="replayCursor" :replay-objects="replayObjects" :replay-signals="visibleStrategySignals"
           :drawings="drawings" :selected-drawing-id="selectedDrawingId" :drawing-tool="drawingTool"
-          :selected-signal="selectedSignal" :signal-locked="lockedSignalId === selectedSignal?.object_id"
+          :selected-signal="selectedSignal" :selected-divergence-segments="selectedDivergenceSegments" :signal-locked="lockedSignalId === selectedSignal?.object_id"
           :magnet="magnet" :keep-drawing-mode="keepDrawingMode"
           @update:drawings="commitDrawings" @update:selected-drawing-id="selectedDrawingId = $event" @update:drawing-tool="drawingTool = $event"
+          @select:signal="selectChartSignal"
         />
         <button v-if="!rightOpen" class="reopen-right" @click="rightOpen = true">打开数据集</button>
       </section>
@@ -928,6 +1050,6 @@ function resizeBottom(event: PointerEvent): void {
       </div>
       <span v-else>{{ workspaceStatus || '底部面板已收起' }}</span>
     </footer>
-    <KeyboardInstrumentPicker @selected="selectDataset" />
+    <KeyboardInstrumentPicker :dataset="selectedDataset" @selected="selectDataset" @focus-bar="focusKeyboardBar" />
   </main>
 </template>

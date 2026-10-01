@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ChanPrimitive, buildChanGeometry, chanSignalLabel, localCenterScope } from './chanPrimitive'
+import { ChanPrimitive, buildChanGeometry, chanSignalLabel } from './chanPrimitive'
 import type { ChanCalculationResults } from '../types/api'
 
 function objects(count: number): ChanCalculationResults['objects'] {
@@ -18,7 +18,7 @@ function objects(count: number): ChanCalculationResults['objects'] {
       standard_signal: false as const, execution_allowed: false as const,
       confirmed_at_bar_index: index + 2, known_at_bar_index: index + 2, object_revision: 1,
     })),
-    bi: [], bi_states: [], segments: [], local_centers: [], center_connections: [], center_audit_events: [], level_centers: [], level_movements: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [],
+    bi: [], bi_states: [], segments: [], local_centers: [], center_connections: [], center_audit_events: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [],
   }
 }
 
@@ -26,6 +26,64 @@ describe('ChanPrimitive', () => {
   it('uses one primitive with bottom and normal batch views', () => {
     const primitive = new ChanPrimitive()
     expect(primitive.paneViews().map((view) => view.zOrder?.())).toEqual(['bottom', 'normal'])
+  })
+
+  it('hit-tests overlapping standard and class trade markers as separate selectable objects', () => {
+    const primitive = new ChanPrimitive()
+    const source = objects(0)
+    source.trade_points = [
+      { object_id: 'standard', signal_type: 'buy_1', time: 60_000, price_i64: 1000, status: 'confirmed' },
+      { object_id: 'class', signal_type: 'class_buy_1', time: 60_000, price_i64: 1000, status: 'confirmed' },
+    ] as never
+    primitive.attached({
+      chart: { timeScale: () => ({ timeToCoordinate: (time: number) => time }) },
+      series: { priceToCoordinate: (price: number) => price }, requestUpdate: () => {},
+    } as never)
+    primitive.setData(source, 10)
+    expect(primitive.hitTest(60, 100)?.externalId).toBe('trade-point:standard')
+    expect(primitive.hitTest(84, 100)?.externalId).toBe('trade-point:class')
+    expect(primitive.signalForHit('trade-point:class')?.signal_type).toBe('class_buy_1')
+  })
+
+  it('selects a divergence triangle through its original signal ID', () => {
+    const primitive = new ChanPrimitive()
+    const source = objects(0)
+    source.divergences = [{ object_id: 'divergence-1', signal_type: 'bottom_divergence', time: 60_000,
+      price_i64: 1000, status: 'confirmed', comparison_reference_object_id: 'segment-a',
+      comparison_current_object_id: 'segment-b' }] as never
+    primitive.attached({
+      chart: { timeScale: () => ({ timeToCoordinate: (time: number) => time }) },
+      series: { priceToCoordinate: (price: number) => price }, requestUpdate: () => {},
+    } as never)
+    primitive.setData(source, 10)
+    expect(primitive.hitTest(36, 100)?.externalId).toBe('divergence:divergence-1')
+    expect(primitive.signalForHit('divergence:divergence-1')).toMatchObject({
+      comparison_reference_object_id: 'segment-a', comparison_current_object_id: 'segment-b',
+    })
+  })
+
+  it('keeps invalidated divergence history out of the live chart', () => {
+    const source = objects(0)
+    source.divergences = [{ object_id: 'revised-away', signal_type: 'top_divergence',
+      divergence_kind: 'trend', status: 'invalidated', time: 60_000, price_i64: 1000 }] as never
+    const geometry = buildChanGeometry(source, 10, (time) => Number(time), (price) => price)
+    expect(geometry.divergences).toHaveLength(0)
+  })
+
+  it('keeps a forming divergence visible and selectable without treating it as confirmed', () => {
+    const primitive = new ChanPrimitive()
+    const source = objects(0)
+    source.divergences = [{ object_id: 'forming-c', signal_type: 'top_divergence',
+      divergence_kind: 'trend', divergence_profile: 'segment_trend_candidate',
+      status: 'forming', time: 60_000, price_i64: 1000, confirmed: false }] as never
+    const geometry = buildChanGeometry(source, 10, (time) => Number(time), (price) => price)
+    expect(geometry.divergences.map((point) => point.status)).toEqual(['forming'])
+    primitive.attached({
+      chart: { timeScale: () => ({ timeToCoordinate: (time: number) => time }) },
+      series: { priceToCoordinate: (price: number) => price }, requestUpdate: () => {},
+    } as never)
+    primitive.setData(source, 10)
+    expect(primitive.hitTest(36, 100)?.externalId).toBe('divergence:forming-c')
   })
 
   it('projects 10,000 semantic objects as one batch without Vue nodes', () => {
@@ -96,24 +154,6 @@ describe('ChanPrimitive', () => {
       analysis_level: 'segment', reference_object_id: 'segment-center-1', confirmed: true,
       confirmed_at_bar_index: 3, known_at_bar_index: 3, object_revision: 1,
     })
-    source.level_centers.push({
-      object_id: 'level-center-1', level_id: 'L1', parent_level_id: 'L0',
-      start_bar_index: 1, start_time: 60_000, end_bar_index: 3, end_time: 180_000,
-      zd_i64: 102, zg_i64: 119, dd_i64: 90, gg_i64: 130, component_kind: 'segment',
-      component_object_ids: ['segment-1'], source_center_ids: ['segment-center-1'], status: 'promoted',
-      promotion_reason: 'nine_component_extension', promoted_from_center_id: 'segment-center-1',
-      catalog_event: 'center_promoted', catalog_algorithm_id: 'ALG-GEO-005', confirmed: true,
-      confirmed_at_bar_index: 3, known_at_bar_index: 3, object_revision: 1,
-    })
-    source.level_movements.push({
-      object_id: 'level-movement-1', level_id: 'L0', start_bar_index: 1, start_time: 60_000,
-      end_bar_index: 3, end_time: 180_000, low_i64: 90, high_i64: 130,
-      component_center_ids: ['segment-center-1'], classification: 'consolidation', direction: null,
-      status: 'candidate', previous_classification: null, reclassification_reason: null,
-      parent_center_candidate_id: null, catalog_event: 'movement_candidate',
-      catalog_algorithm_id: 'ALG-GEO-006', confirmed: false, confirmed_at_bar_index: null,
-      known_at_bar_index: 3, object_revision: 1,
-    })
     source.center_monitors.push({
       object_id: 'monitor-1', bar_index: 3, time: 180_000, z_i64: 110, zn_i64: 115,
       z_twice_i64: 221, zn_twice_i64: 231, core_low_i64: 100, core_high_i64: 121,
@@ -135,8 +175,6 @@ describe('ChanPrimitive', () => {
     expect(geometry.divergences[0]).toMatchObject({ x: 240, y: 9, signal_type: 'bottom_divergence' })
     expect(geometry.tradePoints.map((point) => point.status)).toEqual(['confirmed', 'candidate', 'invalidated'])
     expect(geometry.movementStates[0]?.state_type).toBe('centre_oscillation')
-    expect(geometry.levelCenters[0]).toMatchObject({ level_id: 'L1', left: 60, right: 180, top: 11.9, bottom: 10.2 })
-    expect(geometry.levelMovements[0]).toMatchObject({ level_id: 'L0', classification: 'consolidation', start: { x: 60, y: 11 }, end: { x: 180, y: 11 } })
     expect(geometry.centerMonitors[0]).toMatchObject({ x: 180, y: 11.55, zY: 11.05, oscillation_bias: 'strong' })
     expect(geometry.centerMonitorCurves).toEqual([{
       start: expect.objectContaining({ x: 180, y: 11.55 }),
@@ -148,7 +186,7 @@ describe('ChanPrimitive', () => {
     }])
   })
 
-  it('renders one local-center scope with seed body, extension, roles and confirmation marker', () => {
+  it('renders BI and segment center layers together with roles and confirmation marker', () => {
     const source = objects(0)
     source.bi.push(
       { object_id: 'bi-entry', start_bar_index: 0, start_time: 0, start_price_i64: 90, start_extreme_source_bar_index: 0, end_bar_index: 1, end_time: 60_000, end_price_i64: 105, end_extreme_source_bar_index: 1, range_low_i64: 90, range_high_i64: 105, range_low_source_bar_index: 0, range_high_source_bar_index: 1, range_profile: 'endpoint_extrema_v1', direction: 'up', status: 'confirmed', invalidation_reason: null, catalog_algorithm_id: 'ALG-GEO-003', confirmed: true, confirmed_at_bar_index: 1, known_at_bar_index: 1, object_revision: 1 },
@@ -169,11 +207,26 @@ describe('ChanPrimitive', () => {
 
     const geometry = buildChanGeometry(source, 10, (time) => Number(time), (price) => price)
 
-    expect(localCenterScope(source)).toEqual({ unitKind: 'BI', structuralLevel: 'stroke' })
-    expect(geometry.localCenters).toHaveLength(1)
+    expect(geometry.localCenters).toHaveLength(2)
     expect(geometry.localCenters[0]).toMatchObject({ object_id: 'center-bi', left: 60, right: 180, top: 11, bottom: 10 })
     expect(geometry.centerRoleLines.map((line) => [line.role, line.unitId])).toEqual([['entry', 'bi-entry'], ['exit', 'bi-exit'], ['retest', 'bi-retest']])
-    expect(geometry.confirmationMarkers).toEqual([{ x: 300, centerId: 'center-bi', barIndex: 5 }])
+    expect(geometry.confirmationMarkers).toEqual([{ x: 300, centerId: 'center-bi', barIndex: 5, unitKind: 'BI' }])
+
+    const confirmationOnly = buildChanGeometry(source, 10, (time) => Number(time), (price) => price, new Map([
+      ['center-bi', { center: false, boundaryConfirmation: true }],
+      ['center-segment', { center: false, boundaryConfirmation: false }],
+    ]))
+    expect(confirmationOnly.localCenters).toEqual([])
+    expect(confirmationOnly.centerRoleLines).toEqual([])
+    expect(confirmationOnly.confirmationMarkers).toEqual([{ x: 300, centerId: 'center-bi', barIndex: 5, unitKind: 'BI' }])
+
+    const centerOnly = buildChanGeometry(source, 10, (time) => Number(time), (price) => price, new Map([
+      ['center-bi', { center: true, boundaryConfirmation: false }],
+      ['center-segment', { center: true, boundaryConfirmation: false }],
+    ]))
+    expect(centerOnly.localCenters).toHaveLength(2)
+    expect(centerOnly.centerRoleLines).toHaveLength(3)
+    expect(centerOnly.confirmationMarkers).toEqual([])
     source.center_connections.push({ ...source.center_connections[0]!, object_id: 'connection-in', from_center_id: 'center-before', to_center_id: 'center-bi' })
     const primitive = new ChanPrimitive()
     primitive.setData(source, 10)
@@ -208,13 +261,12 @@ describe('ChanPrimitive', () => {
       bi: { color: '#ab47bc', line_width: 3, line_style: 'dashed', opacity: 0.7, visible: true },
       biState: { color: '#26c6da', line_width: 1, line_style: 'dashed', opacity: 0.9, visible: true },
       segment: { color: '#ffeb3b', line_width: 3, line_style: 'solid', opacity: 1, visible: true },
-      levelCenter: { color: '#ff8a65', line_width: 2, line_style: 'dashed', opacity: 0.9, visible: true },
-      levelMovement: { color: '#ce93d8', line_width: 2, line_style: 'dashed', opacity: 0.9, visible: true },
       movementState: { color: '#ab47bc', line_width: 1, line_style: 'dashed', opacity: 0.9, visible: true },
       centerMonitor: { color: '#26c6da', line_width: 1, line_style: 'dotted', opacity: 0.9, visible: true },
       divergence: { color: '#ff9800', line_width: 1, line_style: 'solid', opacity: 1, visible: true },
       tradePoint: { color: '#ffffff', line_width: 1, line_style: 'solid', opacity: 1, visible: true },
-      localCenter: { color: '#42a5f5', line_width: 2, line_style: 'solid', opacity: 1, visible: true },
+      biCenter: { color: '#42a5f5', line_width: 2, line_style: 'solid', opacity: 1, visible: true },
+      segmentCenter: { color: '#ffb300', line_width: 2, line_style: 'dashed', opacity: 1, visible: true },
     })
   })
 })
@@ -223,6 +275,8 @@ describe('chanSignalLabel', () => {
   it('labels divergence, class points, and second-point strength', () => {
     expect(chanSignalLabel({ signal_type: 'bottom_divergence', divergence_kind: 'trend', strength: null })).toBe('趋势底背驰')
     expect(chanSignalLabel({ signal_type: 'top_divergence', divergence_kind: 'consolidation', strength: null })).toBe('盘整顶背驰')
+    expect(chanSignalLabel({ signal_type: 'top_divergence', divergence_kind: 'trend', divergence_profile: 'segment_trend_candidate', strength: null })).toBe('线段趋势顶背驰')
+    expect(chanSignalLabel({ signal_type: 'bottom_divergence', divergence_kind: 'center_oscillation', strength: null })).toBe('中枢震荡底背驰')
     expect(chanSignalLabel({ signal_type: 'buy_2', divergence_kind: null, strength: 'strongest' })).toBe('最强二买')
     expect(chanSignalLabel({ signal_type: 'class_sell_2', divergence_kind: null, strength: 'weakest' })).toBe('最弱类二卖')
     expect(chanSignalLabel({ signal_type: 'class_buy_3', divergence_kind: null, strength: null })).toBe('类三买')

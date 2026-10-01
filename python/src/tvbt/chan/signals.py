@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, replace
 from typing import Literal
 
@@ -18,7 +18,7 @@ from tvbt.chan.reference import LineLike
 """
 
 # 背驰类别。trend 对应 a+Z1+b+Z2+c，consolidation 对应 a+Z+c。
-DivergenceKind = Literal["trend", "consolidation"]
+DivergenceKind = Literal["trend", "consolidation", "center_oscillation"]
 # 二类点强弱：三类点同点、未突破一类点、突破但自身盘整背驰确认。
 SignalStrength = Literal["strongest", "normal", "weakest"]
 # standard 是 108 课标准点；class_like 是项目定义的盘整背驰派生点。
@@ -41,6 +41,9 @@ SignalType = Literal[
     "class_sell_3",
 ]
 MacdAreaKey = tuple[str, int, int, str]
+MacdExtremeRelation = Literal[
+    "both_weaker", "diff_only", "dea_only", "neither_weaker", "unavailable"
+]
 
 
 @dataclass(frozen=True)
@@ -60,6 +63,22 @@ class StructuralCenter:
     known_at_bar_index: int
     status: Literal["confirmed", "extended", "left"]
     leave_direction: Literal["up", "down"] | None
+    formation_dir: Literal["UP", "DOWN"] | None = None
+    relative_dir: Literal["UP", "DOWN", "OVERLAP", "UNKNOWN"] = "UNKNOWN"
+    previous_center_id: str | None = None
+    comparison_dd_i64: int | None = None
+    comparison_gg_i64: int | None = None
+    comparison_excluded_entry_id: str | None = None
+
+
+@dataclass(frozen=True)
+class BiCenterEvidence:
+    """A closed BI center wholly available at its break confirmation."""
+
+    object_id: str
+    start_bar_index: int
+    end_bar_index: int
+    known_at_bar_index: int
 
 
 @dataclass(frozen=True)
@@ -90,7 +109,7 @@ class ChanSignal:
     macd_area_reference: float | None
     macd_area_current: float | None
     known_at_bar_index: int
-    status: Literal["candidate", "confirmed", "invalidated"] = "confirmed"
+    status: Literal["forming", "candidate", "confirmed", "invalidated"] = "confirmed"
     invalidation_reason: str | None = None
     level_id: str | None = "L0"
     lower_level_turn_object_id: str | None = None
@@ -123,6 +142,30 @@ class ChanSignal:
     reference_center_ordinal: int | None = None
     older_center_count: int | None = None
     center_chain_profile: str | None = None
+    divergence_profile: (
+        Literal["segment_trend_candidate", "standard_trend", "external_range", "center_oscillation"]
+        | None
+    ) = None
+    formation_dir: Literal["UP", "DOWN"] | None = None
+    relative_dir: Literal["UP", "DOWN", "OVERLAP", "UNKNOWN"] | None = None
+    a_object_id: str | None = None
+    b_object_id: str | None = None
+    a_center_id: str | None = None
+    b_center_id: str | None = None
+    macd_area_ratio: float | None = None
+    macd_diff_reference_extreme: float | None = None
+    macd_diff_current_extreme: float | None = None
+    macd_dea_reference_extreme: float | None = None
+    macd_dea_current_extreme: float | None = None
+    macd_extreme_relation: MacdExtremeRelation | None = None
+    macd_parameter_profile: str | None = None
+    c_contains_type3: bool | None = None
+    c_meets_sublevel: bool | None = None
+    c_sublevel_profile: str | None = None
+    c_sublevel_center_ids: tuple[str, ...] = ()
+    c_type3_departure_id: str | None = None
+    c_type3_retest_id: str | None = None
+    c_proof_known_at_bar_index: int | None = None
 
     @property
     def confirmation_latency_bars(self) -> int:
@@ -139,24 +182,28 @@ def _high(line: LineLike) -> int:
     return value if value is not None else max(line.start.price_i64, line.end.price_i64)
 
 
-def _outer_range(center: StructuralCenter, segments: Sequence[LineLike]) -> tuple[int, int]:
-    """返回中枢参与组件完整外包络 `[DD, GG]`。"""
+def _body_range(center: StructuralCenter, segments: Sequence[LineLike]) -> tuple[int, int]:
+    """Return the complete center body used for local boundary descriptions."""
     components = segments[center.base_index : center.end_index + 1]
     return min(_low(line) for line in components), max(_high(line) for line in components)
 
 
-def _previous_same_direction(
+def _outer_range(center: StructuralCenter, segments: Sequence[LineLike]) -> tuple[int, int]:
+    """Return the center-migration envelope, excluding a shared SEGMENT entry."""
+    if center.comparison_dd_i64 is not None and center.comparison_gg_i64 is not None:
+        return center.comparison_dd_i64, center.comparison_gg_i64
+    return _body_range(center, segments)
+
+
+def _contiguous_preceding_same_direction(
     segments: Sequence[LineLike], before_index: int, direction: str
 ) -> int | None:
-    """从 `before_index` 前向左找最近同向线段，作为盘整背驰的 a 段。"""
-    return next(
-        (
-            index
-            for index in range(before_index - 1, -1, -1)
-            if segments[index].direction == direction
-        ),
-        None,
-    )
+    """Return an outward a leg only if it directly precedes the center body.
+
+    Skipping an opposite leg would splice an unproved movement into a+B+c.
+    """
+    index = before_index - 1
+    return index if index >= 0 and segments[index].direction == direction else None
 
 
 def _center_component_known_at(
@@ -194,7 +241,7 @@ def _macd_area(
     line: LineLike,
     histogram: Mapping[int, float],
     cache: MutableMapping[MacdAreaKey, float] | None = None,
-) -> float:
+) -> float | None:
     """计算线段同方向 MACD 柱面积。
 
     向上线段只累计正柱；向下线段只累计负柱绝对值。MACD 只用于结构成立后的
@@ -203,9 +250,10 @@ def _macd_area(
     key = (line.object_id, line.start.bar_index, line.end.bar_index, line.direction)
     if cache is not None and key in cache:
         return cache[key]
-    values = (
-        histogram.get(index, 0.0) for index in range(line.start.bar_index, line.end.bar_index + 1)
-    )
+    indexes = range(line.start.bar_index, line.end.bar_index + 1)
+    if any(index not in histogram for index in indexes):
+        return None
+    values = (histogram[index] for index in indexes)
     if line.direction == "up":
         result = sum(max(value, 0.0) for value in values)
     else:
@@ -213,6 +261,41 @@ def _macd_area(
     if cache is not None:
         cache[key] = result
     return result
+
+
+def _directional_extreme(line: LineLike, values: Mapping[int, float] | None) -> float | None:
+    if values is None:
+        return None
+    indexes = range(line.start.bar_index, line.end.bar_index + 1)
+    if any(index not in values for index in indexes):
+        return None
+    samples = (values[index] for index in indexes)
+    return max(samples) if line.direction == "up" else min(samples)
+
+
+def _macd_extreme_relation(
+    direction: str,
+    diff_reference: float | None,
+    diff_current: float | None,
+    dea_reference: float | None,
+    dea_current: float | None,
+) -> MacdExtremeRelation:
+    """Classify same-direction extrema as audit evidence, not a trading gate."""
+    if any(value is None for value in (diff_reference, diff_current, dea_reference, dea_current)):
+        return "unavailable"
+    assert diff_reference is not None and diff_current is not None
+    assert dea_reference is not None and dea_current is not None
+    diff_weaker = (
+        diff_current < diff_reference if direction == "up" else diff_current > diff_reference
+    )
+    dea_weaker = dea_current < dea_reference if direction == "up" else dea_current > dea_reference
+    if diff_weaker and dea_weaker:
+        return "both_weaker"
+    if diff_weaker:
+        return "diff_only"
+    if dea_weaker:
+        return "dea_only"
+    return "neither_weaker"
 
 
 def _divergence(
@@ -227,24 +310,38 @@ def _divergence(
     *,
     require_new_extreme: bool = True,
     follow_through_object_id: str | None = None,
+    diff: Mapping[int, float] | None = None,
+    dea: Mapping[int, float] | None = None,
 ) -> ChanSignal | None:
     """比较参考段和当前段，若当前段力度收缩则生成背驰。"""
     if reference.direction != current.direction:
         return None
     reference_area = _macd_area(reference, histogram, area_cache)
     current_area = _macd_area(current, histogram, area_cache)
-    if reference_area <= 0.0 or current_area >= reference_area:
+    if (
+        reference_area is None
+        or current_area is None
+        or reference_area <= 0.0
+        or current_area <= 0.0
+        or current_area >= reference_area
+    ):
         return None
     if current.direction == "up":
-        if require_new_extreme and _high(current) <= _high(reference):
+        new_extreme = _high(current) > _high(reference)
+        if require_new_extreme and not new_extreme:
             return None
         signal_type: SignalType = "top_divergence"
         price = _high(current)
     else:
-        if require_new_extreme and _low(current) >= _low(reference):
+        new_extreme = _low(current) < _low(reference)
+        if require_new_extreme and not new_extreme:
             return None
         signal_type = "bottom_divergence"
         price = _low(current)
+    diff_reference = _directional_extreme(reference, diff)
+    diff_current = _directional_extreme(current, diff)
+    dea_reference = _directional_extreme(reference, dea)
+    dea_current = _directional_extreme(current, dea)
     return ChanSignal(
         signal_type=signal_type,
         divergence_kind=kind,
@@ -257,6 +354,17 @@ def _divergence(
         reference_object_id=reference_object_id,
         macd_area_reference=reference_area,
         macd_area_current=current_area,
+        macd_area_ratio=current_area / reference_area,
+        macd_diff_reference_extreme=diff_reference,
+        macd_diff_current_extreme=diff_current,
+        macd_dea_reference_extreme=dea_reference,
+        macd_dea_current_extreme=dea_current,
+        macd_extreme_relation=_macd_extreme_relation(
+            current.direction, diff_reference, diff_current, dea_reference, dea_current
+        ),
+        macd_parameter_profile=(
+            "macd_12_26_9_histogram_x2" if diff is not None and dea is not None else None
+        ),
         known_at_bar_index=known_at_bar_index,
         comparison_reference_object_id=reference.object_id,
         comparison_current_object_id=current.object_id,
@@ -265,11 +373,87 @@ def _divergence(
             if require_new_extreme
             else "macd_same_direction_area_contraction"
         ),
-        new_extreme_satisfied=True if require_new_extreme else None,
+        new_extreme_satisfied=new_extreme,
         follow_through_object_id=follow_through_object_id,
         follow_through_status=(
             "observed" if follow_through_object_id is not None else "not_applicable"
         ),
+    )
+
+
+def _trend_c_sublevel_proof(
+    bi_lines: Sequence[LineLike],
+    bi_centers: Sequence[BiCenterEvidence],
+    *,
+    start_bar_index: int,
+    end_bar_index: int,
+    known_at_bar_index: int,
+    direction: str,
+    boundary_i64: int,
+) -> tuple[tuple[str, ...], str | None, str | None, int | None]:
+    """Project lesson-37 sublevel evidence onto confirmed BI objects.
+
+    This is an explicitly named engineering mapping, not an assertion that a
+    BI center is identical to every original-text lower-level movement.
+    """
+    eligible = sorted(
+        (
+            center
+            for center in bi_centers
+            if start_bar_index <= center.start_bar_index
+            and center.end_bar_index <= end_bar_index
+            and center.known_at_bar_index <= known_at_bar_index
+        ),
+        key=lambda center: (center.start_bar_index, center.end_bar_index, center.object_id),
+    )
+    # Closed centers must be distinct and sequential; a shared boundary is legal.
+    chain: list[BiCenterEvidence] = []
+    for center in eligible:
+        if not chain or center.start_bar_index >= chain[-1].end_bar_index:
+            chain.append(center)
+    selected = tuple(center.object_id for center in chain[:2])
+
+    departure = None
+    retest = None
+    for line in bi_lines:
+        if (
+            line.start.bar_index < start_bar_index
+            or line.end.bar_index > end_bar_index
+            or line.known_at_bar_index > known_at_bar_index
+        ):
+            continue
+        if departure is None:
+            if line.direction != direction:
+                continue
+            outside = (
+                line.start.price_i64 <= boundary_i64 < line.end.price_i64
+                if direction == "up"
+                else line.start.price_i64 >= boundary_i64 > line.end.price_i64
+            )
+            if outside:
+                departure = line
+            continue
+        if line.start.bar_index != departure.end.bar_index:
+            continue
+        if line.direction == direction:
+            continue
+        holds = _low(line) >= boundary_i64 if direction == "up" else _high(line) <= boundary_i64
+        if holds:
+            retest = line
+        break  # The first return cannot be replaced by a later successful one.
+    proof_time = (
+        max(
+            [center.known_at_bar_index for center in chain[:2]]
+            + ([retest.known_at_bar_index] if retest is not None else [])
+        )
+        if len(chain) >= 2 and retest is not None
+        else None
+    )
+    return (
+        selected,
+        None if departure is None else departure.object_id,
+        None if retest is None else retest.object_id,
+        proof_time,
     )
 
 
@@ -279,19 +463,21 @@ def chan_divergences(
     center_ids: list[str],
     histogram: Mapping[int, float],
     area_cache: MutableMapping[MacdAreaKey, float] | None = None,
+    *,
+    diff: Mapping[int, float] | None = None,
+    dea: Mapping[int, float] | None = None,
+    bi_lines: Sequence[LineLike] = (),
+    bi_centers: Sequence[BiCenterEvidence] | Callable[[], Sequence[BiCenterEvidence]] = (),
 ) -> list[ChanSignal]:
-    """识别已确认的线段级趋势背驰和盘整背驰。
+    """Classify segment-level trend, external range and center oscillation separately.
 
-    中枢真正的离开段是 `exit_index`。`end_index + 1` 只是奇偶交错序列中的
-    相邻段，不能拿来做 MACD 力度比较。
+    A completed single segment ``c`` is only a *candidate* for original-text
+    trend divergence: its internal third point and sublevel trend are not proven.
+    All comparisons use confirmed same-direction segments and complete MACD bars.
     """
     result: list[ChanSignal] = []
-    seen: set[tuple[DivergenceKind, int]] = set()
 
-    # Active-center oscillation: compare each completed component with the
-    # immediately preceding component in the same direction and center.  This
-    # is the confirmed lower-level exhaustion consumed by ALG-STR-004; Zn is
-    # deliberately absent from the structural decision.
+    # Ai / Ai+2 belongs to the center's own oscillation, not external a+B+c.
     for center_position, (center, center_id) in enumerate(zip(centers, center_ids, strict=True)):
         previous_by_direction: dict[str, int] = {}
         for current_index in range(center.base_index, center.end_index + 1):
@@ -301,7 +487,7 @@ def chan_divergences(
             if reference_index is None:
                 continue
             value = _divergence(
-                "consolidation",
+                "center_oscillation",
                 segments[reference_index],
                 current,
                 current_index,
@@ -310,76 +496,127 @@ def chan_divergences(
                 histogram,
                 area_cache,
                 require_new_extreme=False,
+                diff=diff,
+                dea=dea,
             )
             if value is not None:
                 value = replace(
                     value,
+                    divergence_profile="center_oscillation",
+                    formation_dir=center.formation_dir,
+                    relative_dir=center.relative_dir,
+                    a_object_id=segments[reference_index].object_id,
+                    b_center_id=center_id,
                     reference_center_ordinal=center_position + 1,
                     older_center_count=center_position,
                     center_chain_profile="confirmed_same_level_centers_known_at_signal_v1",
                 )
                 result.append(value)
-                seen.add(("consolidation", current_index))
 
-    # One center: a + Z + c.  A completed counter leg after c confirms c's endpoint.
-    for center_position, (center, center_id) in enumerate(zip(centers, center_ids, strict=True)):
-        if center.status != "left" or center.exit_index is None or center.base_index < 1:
-            continue
-        current_index = center.exit_index
-        confirmation_index = current_index + 1
-        if confirmation_index >= len(segments):
-            continue
-        reference_index = _previous_same_direction(
-            segments, center.base_index, segments[current_index].direction
-        )
-        if reference_index is None:
-            continue
-        value = _divergence(
-            "consolidation",
-            segments[reference_index],
-            segments[current_index],
-            current_index,
-            center_id,
-            segments[confirmation_index].known_at_bar_index,
-            histogram,
-            area_cache,
-            require_new_extreme=False,
-            follow_through_object_id=segments[confirmation_index].object_id,
-        )
-        if value is not None:
-            value = replace(
-                value,
-                reference_center_ordinal=center_position + 1,
-                older_center_count=center_position,
-                center_chain_profile="confirmed_same_level_centers_known_at_signal_v1",
+    # Each local a+B+c can be monitored. Only the first center has a proven
+    # one-center context here; with older centers, the movement boundary is
+    # not established and the range result must stay a structure candidate.
+    for center_position, center in enumerate(centers):
+        if (
+            center.status == "left"
+            and center.exit_index is not None
+            and center.base_index > 0
+            # A third seed may itself confirm the break. It remains a body
+            # component and cannot also be the external c of a+B+c.
+            and center.exit_index > center.end_index
+            and center.exit_index + 1 < len(segments)
+        ):
+            a_index = _contiguous_preceding_same_direction(
+                segments, center.base_index, segments[center.exit_index].direction
             )
-            result.append(value)
-            seen.add(("consolidation", current_index))
+            c_index = center.exit_index
+            if a_index is not None:
+                value = _divergence(
+                    "consolidation",
+                    segments[a_index],
+                    segments[c_index],
+                    c_index,
+                    center_ids[center_position],
+                    segments[c_index + 1].known_at_bar_index,
+                    histogram,
+                    area_cache,
+                    require_new_extreme=False,
+                    follow_through_object_id=segments[c_index + 1].object_id,
+                    diff=diff,
+                    dea=dea,
+                )
+                if value is not None:
+                    result.append(
+                        replace(
+                            value,
+                            status="confirmed" if center_position == 0 else "candidate",
+                            divergence_profile="external_range",
+                            formation_dir=center.formation_dir,
+                            relative_dir=center.relative_dir,
+                            a_object_id=segments[a_index].object_id,
+                            b_center_id=center_ids[center_position],
+                            reference_center_ordinal=center_position + 1,
+                            older_center_count=center_position,
+                            center_chain_profile="confirmed_same_level_centers_known_at_signal_v1",
+                        )
+                    )
 
-    # Trend: b + Z2 + c.  Centers must be separate in both time and their full
-    # DD/GG outer ranges; strength is b versus c, not a versus c.
+    # a+A+b+B+c: compare b with c, but verify a exists and all three travel
+    # in the center migration direction. A shared exit/B-first-seed is legal.
     for index in range(1, len(centers)):
         first = centers[index - 1]
         second = centers[index]
-        if first.exit_index is None or second.exit_index is None:
+        if (
+            first.status != "left"
+            or second.status != "left"
+            or first.exit_index is None
+            or second.exit_index is None
+            or first.base_index < 1
+        ):
             continue
-        if first.end_index >= second.base_index or second.exit_index + 1 >= len(segments):
+        if (
+            first.end_index >= second.base_index
+            or second.base_index not in {first.exit_index, first.exit_index + 1}
+            or second.exit_index <= second.seed_end_index
+            or second.exit_index + 1 >= len(segments)
+        ):
             continue
         first_dd, first_gg = _outer_range(first, segments)
         second_dd, second_gg = _outer_range(second, segments)
-        if second_dd > first_gg:
+        if second.zd_i64 > first.zg_i64 and second_dd > first_gg:
             direction = "up"
-        elif second_gg < first_dd:
+        elif second.zg_i64 < first.zd_i64 and second_gg < first_dd:
             direction = "down"
         else:
+            continue
+        if second.relative_dir != direction.upper():
+            continue
+        a_index = _contiguous_preceding_same_direction(segments, first.base_index, direction)
+        if a_index is None:
             continue
         reference_index = first.exit_index
         current_index = second.exit_index
         if (
-            segments[reference_index].direction != direction
+            segments[a_index].direction != direction
+            or segments[a_index].known_at_bar_index > segments[reference_index].known_at_bar_index
+            or segments[reference_index].direction != direction
             or segments[current_index].direction != direction
+            or segments[reference_index].known_at_bar_index
+            > segments[current_index].known_at_bar_index
             or second.leave_direction != direction
         ):
+            continue
+        prior_extreme = (
+            max(_high(line) for line in segments[a_index:current_index])
+            if direction == "up"
+            else min(_low(line) for line in segments[a_index:current_index])
+        )
+        new_extreme = (
+            _high(segments[current_index]) > prior_extreme
+            if direction == "up"
+            else _low(segments[current_index]) < prior_extreme
+        )
+        if not new_extreme:
             continue
         value = _divergence(
             "trend",
@@ -390,23 +627,202 @@ def chan_divergences(
             segments[current_index + 1].known_at_bar_index,
             histogram,
             area_cache,
+            require_new_extreme=False,
             follow_through_object_id=segments[current_index + 1].object_id,
+            diff=diff,
+            dea=dea,
         )
-        if value is not None and ("trend", current_index) not in seen:
+        if value is not None:
+            proof_centers, proof_departure, proof_retest, proof_time = _trend_c_sublevel_proof(
+                bi_lines,
+                bi_centers() if callable(bi_centers) else bi_centers,
+                start_bar_index=segments[current_index].start.bar_index,
+                end_bar_index=segments[current_index].end.bar_index,
+                known_at_bar_index=value.known_at_bar_index,
+                direction=direction,
+                boundary_i64=second.zg_i64 if direction == "up" else second.zd_i64,
+            )
+            proof_checked = bool(bi_lines)
+            standard = len(proof_centers) >= 2 and proof_retest is not None
             value = replace(
                 value,
+                status="confirmed" if standard else "candidate",
+                divergence_profile="standard_trend" if standard else "segment_trend_candidate",
+                formation_dir=second.formation_dir,
+                relative_dir="UP" if direction == "up" else "DOWN",
+                a_object_id=segments[a_index].object_id,
+                b_object_id=segments[reference_index].object_id,
+                a_center_id=center_ids[index - 1],
+                b_center_id=center_ids[index],
+                new_extreme_satisfied=True,
+                comparison_rule="macd_same_direction_area_contraction_with_trend_new_extreme",
+                c_contains_type3=proof_retest is not None if proof_checked else None,
+                c_meets_sublevel=len(proof_centers) >= 2 if proof_checked else None,
+                c_sublevel_profile="bi_two_confirmed_centers_type3_v1" if proof_checked else None,
+                c_sublevel_center_ids=proof_centers,
+                c_type3_departure_id=proof_departure,
+                c_type3_retest_id=proof_retest,
+                c_proof_known_at_bar_index=proof_time,
                 reference_center_ordinal=index + 1,
                 older_center_count=index,
                 center_chain_profile="confirmed_same_level_centers_known_at_signal_v1",
             )
             result.append(value)
-            seen.add(("trend", current_index))
     trend_segments = {value.segment_index for value in result if value.divergence_kind == "trend"}
     return [
         value
         for value in result
-        if value.divergence_kind == "trend" or value.segment_index not in trend_segments
+        if value.divergence_kind != "consolidation" or value.segment_index not in trend_segments
     ]
+
+
+def chan_forming_divergences(
+    segments: Sequence[LineLike],
+    centers: list[StructuralCenter],
+    center_ids: list[str],
+    forming_segment: LineLike,
+    histogram: Mapping[int, float],
+    area_cache: MutableMapping[MacdAreaKey, float] | None = None,
+    *,
+    diff: Mapping[int, float] | None = None,
+    dea: Mapping[int, float] | None = None,
+) -> list[ChanSignal]:
+    """Monitor an unconfirmed outward leg without treating it as a center unit.
+
+    The caller supplies the observed leg through the current bar. Its changing
+    area and extrema may remove the signal on the next bar. Only completed
+    segment centers and completed reference legs are used as structural facts.
+    """
+    if not segments or not centers or len(centers) != len(center_ids):
+        return []
+    center = centers[-1]
+    if (
+        center.status == "left"
+        or center.end_index != len(segments) - 1
+        or forming_segment.start.bar_index != segments[-1].end.bar_index
+        or forming_segment.end.bar_index <= forming_segment.start.bar_index
+    ):
+        return []
+    direction = forming_segment.direction
+    if direction == "up":
+        outward = _high(forming_segment) > center.zg_i64
+    else:
+        outward = _low(forming_segment) < center.zd_i64
+    if not outward:
+        return []
+
+    result: list[ChanSignal] = []
+    current_index = len(segments)
+    known_at = forming_segment.known_at_bar_index
+    if center.base_index > 0:
+        a_index = _contiguous_preceding_same_direction(segments, center.base_index, direction)
+        if a_index is not None:
+            value = _divergence(
+                "consolidation",
+                segments[a_index],
+                forming_segment,
+                current_index,
+                center_ids[-1],
+                known_at,
+                histogram,
+                area_cache,
+                require_new_extreme=False,
+                diff=diff,
+                dea=dea,
+            )
+            if value is not None:
+                result.append(
+                    replace(
+                        value,
+                        status="forming",
+                        divergence_profile="external_range",
+                        formation_dir=center.formation_dir,
+                        relative_dir=center.relative_dir,
+                        a_object_id=segments[a_index].object_id,
+                        b_center_id=center_ids[-1],
+                        follow_through_status="pending",
+                        reference_center_ordinal=len(centers),
+                        older_center_count=len(centers) - 1,
+                        center_chain_profile="confirmed_same_level_centers_known_at_signal_v1",
+                    )
+                )
+
+    if len(centers) < 2:
+        return result
+    first = centers[-2]
+    second = center
+    if (
+        first.status != "left"
+        or first.exit_index is None
+        or first.base_index < 1
+        or first.end_index >= second.base_index
+        or second.base_index not in {first.exit_index, first.exit_index + 1}
+    ):
+        return result
+    first_dd, first_gg = _outer_range(first, segments)
+    second_dd, second_gg = _outer_range(second, segments)
+    if direction == "up":
+        strict_migration = second.zd_i64 > first.zg_i64 and second_dd > first_gg
+    else:
+        strict_migration = second.zg_i64 < first.zd_i64 and second_gg < first_dd
+    if not strict_migration or second.relative_dir != direction.upper():
+        return result
+    a_index = _contiguous_preceding_same_direction(segments, first.base_index, direction)
+    if a_index is None:
+        return result
+    b_index = first.exit_index
+    if segments[a_index].direction != direction or segments[b_index].direction != direction:
+        return result
+    prior_extreme = (
+        max(_high(line) for line in segments[a_index:])
+        if direction == "up"
+        else min(_low(line) for line in segments[a_index:])
+    )
+    new_extreme = (
+        _high(forming_segment) > prior_extreme
+        if direction == "up"
+        else _low(forming_segment) < prior_extreme
+    )
+    if not new_extreme:
+        return result
+    value = _divergence(
+        "trend",
+        segments[b_index],
+        forming_segment,
+        current_index,
+        center_ids[-1],
+        known_at,
+        histogram,
+        area_cache,
+        require_new_extreme=False,
+        diff=diff,
+        dea=dea,
+    )
+    if value is not None:
+        relative_direction: Literal["UP", "DOWN"] = "UP" if direction == "up" else "DOWN"
+        result.append(
+            replace(
+                value,
+                status="forming",
+                divergence_profile="segment_trend_candidate",
+                formation_dir=second.formation_dir,
+                relative_dir=relative_direction,
+                a_object_id=segments[a_index].object_id,
+                b_object_id=segments[b_index].object_id,
+                a_center_id=center_ids[-2],
+                b_center_id=center_ids[-1],
+                new_extreme_satisfied=True,
+                comparison_rule="macd_same_direction_area_contraction_with_trend_new_extreme",
+                c_contains_type3=None,
+                c_meets_sublevel=None,
+                follow_through_status="pending",
+                reference_center_ordinal=len(centers),
+                older_center_count=len(centers) - 1,
+                center_chain_profile="confirmed_same_level_centers_known_at_signal_v1",
+            )
+        )
+        return [signal for signal in result if signal.divergence_kind == "trend"]
+    return result
 
 
 def chan_first_point_candidates(
@@ -418,94 +834,11 @@ def chan_first_point_candidates(
     *,
     level_id: str = "L0",
 ) -> list[ChanSignal]:
-    """Publish B1/S1 as soon as the fixed trend leg is complete.
-
-    Structure and force are fixed at the completed exit leg ``c``.  The point
-    remains a candidate until the following opposite segment confirms the
-    lower-level turn.  At that point this function returns the same semantic
-    point as confirmed; callers merge revisions by a stable level-and-leg ID.
-    """
-    result: list[ChanSignal] = []
-    for index in range(1, len(centers)):
-        first = centers[index - 1]
-        second = centers[index]
-        if first.exit_index is None or second.exit_index is None:
-            continue
-        if first.end_index >= second.base_index:
-            continue
-        first_dd, first_gg = _outer_range(first, segments)
-        second_dd, second_gg = _outer_range(second, segments)
-        if second_dd > first_gg:
-            direction = "up"
-        elif second_gg < first_dd:
-            direction = "down"
-        else:
-            continue
-        reference_index = first.exit_index
-        current_index = second.exit_index
-        reference = segments[reference_index]
-        current = segments[current_index]
-        if (
-            reference.direction != direction
-            or current.direction != direction
-            or second.leave_direction != direction
-        ):
-            continue
-        divergence = _divergence(
-            "trend",
-            reference,
-            current,
-            current_index,
-            center_ids[index],
-            current.known_at_bar_index,
-            histogram,
-            area_cache,
-        )
-        if divergence is None:
-            continue
-        buy_side = direction == "down"
-        turn_index = current_index + 1
-        turn = segments[turn_index] if turn_index < len(segments) else None
-        confirmed = turn is not None and turn.direction != current.direction
-        result.append(
-            ChanSignal(
-                signal_type="buy_1" if buy_side else "sell_1",
-                divergence_kind=None,
-                signal_class="standard",
-                strength=None,
-                segment_index=current_index,
-                bar_index=divergence.bar_index,
-                time=divergence.time,
-                price_i64=divergence.price_i64,
-                reference_object_id=center_ids[index],
-                macd_area_reference=None,
-                macd_area_current=None,
-                known_at_bar_index=(
-                    turn.known_at_bar_index
-                    if confirmed and turn is not None
-                    else current.known_at_bar_index
-                ),
-                status="confirmed" if confirmed else "candidate",
-                level_id=level_id,
-                lower_level_turn_object_id=(
-                    turn.object_id if confirmed and turn is not None else None
-                ),
-                catalog_event=("B1_confirmed" if buy_side else "S1_confirmed")
-                if confirmed
-                else ("B1_candidate" if buy_side else "S1_candidate"),
-                catalog_algorithm_id="ALG-SIG-001",
-                comparison_reference_object_id=divergence.comparison_reference_object_id,
-                comparison_current_object_id=divergence.comparison_current_object_id,
-                comparison_rule=divergence.comparison_rule,
-                new_extreme_satisfied=divergence.new_extreme_satisfied,
-                follow_through_object_id=turn.object_id if confirmed and turn is not None else None,
-                follow_through_status="observed" if confirmed else "pending",
-                reference_center_ordinal=index + 1,
-                older_center_count=index,
-                center_chain_profile="confirmed_same_level_centers_known_at_signal_v1",
-            )
-        )
-    return result
+    """Do not infer a standard B1/S1 from a single segment c without proof."""
+    # The segment-only center projection has no evidence that c contains B's
+    # third point or a complete sublevel trend. Retain this API for the later
+    # proof-bearing caller, but never upgrade a segment candidate by inference.
+    return []
 
 
 def _point_from_divergence(
@@ -560,7 +893,7 @@ def _third_points(
             continue
         leaving = segments[leave_index]
         returning = segments[return_index]
-        outer_low, outer_high = _outer_range(center, segments)
+        outer_low, outer_high = _body_range(center, segments)
         if center.leave_direction == "up":
             if (
                 leaving.direction != "up"
@@ -659,6 +992,17 @@ def chan_trade_points(
     )
 
     for divergence_id, divergence in ordered_divergences:
+        if divergence.status != "confirmed":
+            continue
+        if divergence.divergence_kind == "center_oscillation":
+            continue
+        if divergence.divergence_kind == "trend" and (
+            divergence.divergence_profile != "standard_trend"
+            or divergence.status != "confirmed"
+            or divergence.c_contains_type3 is not True
+            or divergence.c_meets_sublevel is not True
+        ):
+            continue
         buy_side = divergence.signal_type == "bottom_divergence"
         if divergence.divergence_kind == "trend":
             first_type: SignalType = "buy_1" if buy_side else "sell_1"

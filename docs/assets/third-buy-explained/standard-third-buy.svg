@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">标准三买结构示意图</title>
+  <desc id="desc">价格向上离开线段中枢后，第一次已完成向下回试的低点不低于中枢上沿ZG，形成标准三买。</desc>
+  <rect width="1200" height="620" fill="#111827"/>
+  <text x="48" y="48" fill="#f8fafc" font-family="Microsoft YaHei, sans-serif" font-size="27" font-weight="700">标准三买：结构条件</text>
+  <text x="48" y="82" fill="#94a3b8" font-family="Microsoft YaHei, sans-serif" font-size="17">当前程序：SEGMENT 线段 + SEGMENT 中枢；首次已完成回试低点 ≥ ZG</text>
+
+  <line x1="70" y1="520" x2="1140" y2="520" stroke="#334155" stroke-width="2"/>
+  <line x1="70" y1="120" x2="70" y2="520" stroke="#334155" stroke-width="2"/>
+
+  <rect x="150" y="310" width="470" height="140" fill="#f59e0b" fill-opacity="0.14" stroke="#fbbf24" stroke-width="3"/>
+  <line x1="120" y1="310" x2="1120" y2="310" stroke="#fbbf24" stroke-width="2" stroke-dasharray="10 8"/>
+  <line x1="120" y1="450" x2="690" y2="450" stroke="#f59e0b" stroke-width="2" stroke-dasharray="8 7"/>
+  <text x="165" y="340" fill="#fde68a" font-family="Microsoft YaHei, sans-serif" font-size="20" font-weight="700">来源中枢 Z</text>
+  <text x="165" y="370" fill="#fcd34d" font-family="Microsoft YaHei, sans-serif" font-size="17">上沿 ZG</text>
+  <text x="165" y="438" fill="#fcd34d" font-family="Microsoft YaHei, sans-serif" font-size="17">下沿 ZD</text>
+
+  <polyline points="105,420 210,350 300,420 395,335 485,410 575,340" fill="none" stroke="#60a5fa" stroke-width="5" stroke-linejoin="round"/>
+  <polyline points="575,340 760,155" fill="none" stroke="#22c55e" stroke-width="7" stroke-linejoin="round"/>
+  <polyline points="760,155 905,275" fill="none" stroke="#f97316" stroke-width="7" stroke-linejoin="round"/>
+  <polyline points="905,275 1060,170" fill="none" stroke="#60a5fa" stroke-width="5" stroke-linejoin="round"/>
+
+  <circle cx="905" cy="275" r="11" fill="#111827" stroke="#ef4444" stroke-width="5"/>
+  <path d="M905 286 l-13 24 h26 z" fill="#ef4444"/>
+  <text x="930" y="260" fill="#fca5a5" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="700">标准三买 B3</text>
+  <text x="930" y="290" fill="#e2e8f0" font-family="Microsoft YaHei, sans-serif" font-size="17">首次回试低点 L</text>
+  <text x="930" y="318" fill="#86efac" font-family="Microsoft YaHei, sans-serif" font-size="19" font-weight="700">L ≥ ZG</text>
+
+  <text x="640" y="140" fill="#86efac" font-family="Microsoft YaHei, sans-serif" font-size="19" font-weight="700">向上离开段</text>
+  <text x="745" y="355" fill="#fdba74" font-family="Microsoft YaHei, sans-serif" font-size="19" font-weight="700">第一条已完成向下回试段</text>
+
+  <line x1="905" y1="275" x2="905" y2="520" stroke="#ef4444" stroke-width="2" stroke-dasharray="7 6"/>
+  <line x1="1015" y1="205" x2="1015" y2="520" stroke="#a78bfa" stroke-width="2" stroke-dasharray="7 6"/>
+  <text x="830" y="555" fill="#fca5a5" font-family="Microsoft YaHei, sans-serif" font-size="16">理论端点/价格锚点</text>
+  <text x="982" y="585" fill="#c4b5fd" font-family="Microsoft YaHei, sans-serif" font-size="16">结构确认/可知时点可能更晚</text>
+
+  <rect x="90" y="548" width="520" height="48" rx="8" fill="#1e293b" stroke="#475569"/>
+  <text x="110" y="579" fill="#cbd5e1" font-family="Microsoft YaHei, sans-serif" font-size="17">不满足：L &lt; ZG，说明回试重新进入中枢，不是标准三买。</text>
+</svg>
