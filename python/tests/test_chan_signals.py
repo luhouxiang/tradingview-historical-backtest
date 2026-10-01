@@ -9,6 +9,7 @@ from tvbt.chan.signals import (
     BiCenterEvidence,
     ChanSignal,
     StructuralCenter,
+    _center_baseline_span_contracts,
     _macd_extreme_relation,
     _trend_c_sublevel_proof,
     chan_divergences,
@@ -271,7 +272,7 @@ def test_trend_divergence_compares_b_and_c_but_does_not_invent_standard_proof() 
     assert trend[0].macd_area_current < trend[0].macd_area_reference
     assert trend[0].comparison_reference_object_id == "segment-6"
     assert trend[0].comparison_current_object_id == "segment-10"
-    assert trend[0].comparison_rule == "macd_same_direction_area_contraction_with_trend_new_extreme"
+    assert trend[0].comparison_rule == "macd_area_center_baseline_price_span_and_trend_new_extreme"
     assert trend[0].new_extreme_satisfied is True
     assert trend[0].follow_through_object_id == "segment-11"
     assert trend[0].follow_through_status == "observed"
@@ -293,10 +294,101 @@ def test_trend_divergence_compares_b_and_c_but_does_not_invent_standard_proof() 
     assert trend[0].older_center_count == 1
     assert trend[0].center_chain_profile == "confirmed_same_level_centers_known_at_signal_v1"
 
+    # MACD still contracts and c still makes a new high, but 16-9 == 12-5.
+    equal_span_center = replace(centers[1], zd_i64=9)
+    assert not [
+        value
+        for value in chan_divergences(
+            segments, [centers[0], equal_span_center], ["center-1", "center-2"], histogram
+        )
+        if value.divergence_kind == "trend"
+    ]
+    assert not [
+        value
+        for value in chan_forming_divergences(
+            segments[:10],
+            [centers[0], replace(equal_span_center, status="extended", exit_index=None)],
+            ["center-1", "center-2"],
+            segments[10],
+            histogram,
+        )
+        if value.divergence_kind == "trend"
+    ]
+
     points = chan_trade_points(
         segments, centers, ["center-1", "center-2"], [("trend-div", trend[0])]
     )
     assert not [value for value in points if value.signal_type in {"sell_1", "sell_2"}]
+
+
+@pytest.mark.parametrize("direction", ["up", "down"])
+@pytest.mark.parametrize("a_start", [6, 7])
+def test_trend_requires_strictly_advancing_abc_start_prices(direction: str, a_start: int) -> None:
+    """Center migration and c's new extreme cannot rescue a retracing b start."""
+    price = (lambda value: value) if direction == "up" else (lambda value: 100 - value)
+    values = [
+        (a_start, 10),
+        (10, 4),
+        (4, 8),
+        (8, 5),
+        (5, 9),
+        (9, 6),
+        (6, 12),
+        (12, 11),
+        (11, 15),
+        (15, 11),
+        (11, 16),
+        (16, 14),
+    ]
+    segments = [line(index, price(start), price(end)) for index, (start, end) in enumerate(values)]
+    first = center(
+        1,
+        5,
+        6,
+        price(5) if direction == "up" else price(8),
+        price(8) if direction == "up" else price(5),
+        direction,
+    )
+    second = replace(
+        center(
+            7,
+            9,
+            10,
+            price(11) if direction == "up" else price(12),
+            price(12) if direction == "up" else price(11),
+            direction,
+        ),
+        relative_dir=direction.upper(),
+    )
+    histogram = {index: 0.0 for index in range(13)}
+    sign = 1.0 if direction == "up" else -1.0
+    histogram.update({6: 6.0 * sign, 7: 6.0 * sign, 10: 2.0 * sign, 11: 2.0 * sign})
+
+    # Both completed and still-forming c must reject this otherwise plausible
+    # b/c MACD contraction and new-extreme pattern.
+    assert not [
+        signal
+        for signal in chan_divergences(segments, [first, second], ["A", "B"], histogram)
+        if signal.divergence_kind == "trend"
+    ]
+    forming = chan_forming_divergences(
+        segments[:10],
+        [first, replace(second, status="extended", exit_index=None)],
+        ["A", "B"],
+        segments[10],
+        histogram,
+    )
+    assert not [signal for signal in forming if signal.divergence_kind == "trend"]
+
+
+@pytest.mark.parametrize("direction", ["up", "down"])
+def test_center_baseline_price_span_must_strictly_contract(direction: str) -> None:
+    price = (lambda value: value) if direction == "up" else (lambda value: 200 - value)
+    reference = line(0, price(100), price(120))
+    equal = line(2, price(115), price(135))
+    weaker = line(2, price(115), price(134))
+    assert not _center_baseline_span_contracts(reference, equal, direction, price(100), price(115))
+    assert _center_baseline_span_contracts(reference, weaker, direction, price(100), price(115))
 
 
 @pytest.mark.parametrize(
@@ -339,6 +431,11 @@ def test_forming_external_range_divergence_is_provisional_and_can_disappear() ->
     assert result[0].relative_dir == "UNKNOWN"
     assert result[0].follow_through_status == "pending"
     assert result[0].known_at_bar_index == forming.known_at_bar_index
+    assert not [
+        value
+        for value in chan_forming_divergences(confirmed, centers, ["B"], line(4, 5, 14), histogram)
+        if value.divergence_kind == "consolidation"
+    ]
     histogram.update({4: 12.0, 5: 12.0})
     assert chan_forming_divergences(confirmed, centers, ["B"], forming, histogram) == []
 
@@ -637,7 +734,7 @@ def test_consolidation_divergence_creates_class_one_and_normal_class_two() -> No
     盘整底背驰,并派生类一买与普通强度类二买。
     """
     segments = [
-        line(0, 10, 0),
+        line(0, 12, 0),
         line(1, 10, 4),
         line(2, 4, 9),
         line(3, 9, 5),
@@ -658,6 +755,9 @@ def test_consolidation_divergence_creates_class_one_and_normal_class_two() -> No
     assert consolidation[0].divergence_profile == "external_range"
     assert consolidation[0].relative_dir == "UNKNOWN"
     assert consolidation[0].macd_area_ratio is not None
+    assert (
+        consolidation[0].comparison_rule == "macd_area_and_center_baseline_price_span_contraction"
+    )
     points = chan_trade_points(
         segments, centers, ["center-1"], [("consolidation-div", consolidation[0])]
     )
@@ -665,6 +765,12 @@ def test_consolidation_divergence_creates_class_one_and_normal_class_two() -> No
         ("class_buy_1", "class_like", None),
         ("class_buy_2", "class_like", "normal"),
     ]
+
+    # a=12->0 and c=8->-3 measured from B.ZG=9 both travel 12 points.
+    equal_span_segments = list(segments)
+    equal_span_segments[5] = line(5, 8, -3)
+    rejected = chan_divergences(equal_span_segments, centers, ["center-1"], histogram)
+    assert not [value for value in rejected if value.divergence_kind == "consolidation"]
 
 
 def test_active_center_oscillation_emits_confirmed_lower_level_divergence() -> None:

@@ -1,4 +1,5 @@
 import { indicatorLineColor } from '../chart/marketStyle'
+import { anyDivergenceVisible } from '../chart/divergenceVisibility'
 import type {
   AlgorithmOutput,
   IndicatorLineStyleName,
@@ -51,7 +52,7 @@ function chanVisibility(source: StrategySource, output: AlgorithmOutput): boolea
   if (output.object_type === 'local_center') return source.category_visibility.bi_centers || source.category_visibility.segment_centers
   if (output.object_type === 'movement_state') return source.category_visibility.movement_states ?? true
   if (output.object_type === 'center_monitor') return source.category_visibility.center_monitors ?? true
-  if (output.object_type === 'divergence') return source.category_visibility.divergences
+  if (output.object_type === 'divergence') return anyDivergenceVisible(source.category_visibility)
   if (output.object_type === 'trade_point') return source.category_visibility.first_trade_points || source.category_visibility.second_trade_points || source.category_visibility.third_trade_points
   return true
 }

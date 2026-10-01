@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { chanSignalLabel } from '../chart/chanPrimitive'
+import { anyDivergenceVisible, divergenceLayer } from '../chart/divergenceVisibility'
 import type { DrawingObject } from '../drawing/model'
 import type { ChanSignalPoint, ChanTreeObject, DatasetMeta, SeriesSource, StrategyRunSource, StrategySource } from '../types/api'
 
@@ -49,7 +50,7 @@ function allSignalsFor(source: StrategySource): ChanTreeObject[] {
         const standard = category.slice('class_'.length) as keyof StrategySource['category_visibility']
         return source.category_visibility[category] ?? source.category_visibility[standard] ?? false
       }
-      return Boolean(source.category_visibility[category])
+      return Boolean(source.category_visibility[category] ?? (isDivergenceCategory(category) ? source.category_visibility.divergences : false))
     })
     .sort((left, right) =>
     right.bar_index - left.bar_index || right.known_at_bar_index - left.known_at_bar_index || right.object_id.localeCompare(left.object_id),
@@ -59,7 +60,12 @@ function allSignalsFor(source: StrategySource): ChanTreeObject[] {
 function objectCategory(value: ChanTreeObject): keyof StrategySource['category_visibility'] | undefined {
   if (value.object_type === 'bi') return 'bi_states'
   if (value.object_type === 'segment') return 'segment_boundary_confirmations'
+  if (value.object_type === 'divergence' && value.signal) return divergenceLayer(value.signal) ?? undefined
   return value.layer_category
+}
+
+function isDivergenceCategory(category: string): boolean {
+  return category === 'trend_divergences' || category === 'consolidation_divergences' || category === 'oscillation_divergences'
 }
 
 function signalsFor(source: StrategySource): ChanTreeObject[] {
@@ -106,7 +112,7 @@ const categoryLabels: Record<keyof StrategySource['category_visibility'], string
   processed_bars: '处理后K线', fractals: '分型', bi: '笔', bi_states: '笔状态', segments: '线段',
   bi_centers: '笔中枢', segment_centers: '线段中枢', center_objects: '中枢对象', movement_states: '走势状态',
   bi_boundary_confirmations: '笔状态', segment_boundary_confirmations: '线段状态',
-  center_monitors: '中枢监控', divergences: '背驰',
+  center_monitors: '中枢监控', divergences: '背驰', trend_divergences: '趋势背驰', consolidation_divergences: '盘整背驰', oscillation_divergences: '震荡背驰',
   first_trade_points: '一买卖点', second_trade_points: '二买卖点', third_trade_points: '三买卖点',
   class_first_trade_points: '类一买卖点', class_second_trade_points: '类二买卖点', class_third_trade_points: '类三买卖点',
 }
@@ -114,14 +120,22 @@ const categoryGroups: ReadonlyArray<ReadonlyArray<keyof StrategySource['category
   ['processed_bars', 'fractals'],
   ['bi', 'bi_states', 'segments', 'segment_boundary_confirmations'],
   ['bi_centers', 'segment_centers', 'center_objects'],
-  ['movement_states', 'center_monitors', 'divergences'],
+  ['movement_states', 'center_monitors'],
+  ['trend_divergences', 'consolidation_divergences', 'oscillation_divergences'],
   ['first_trade_points', 'second_trade_points', 'third_trade_points'],
   ['class_first_trade_points', 'class_second_trade_points', 'class_third_trade_points'],
 ]
 
 function toggleCategory(source: StrategySource, category: keyof StrategySource['category_visibility']): void {
-  const enabled = !source.category_visibility[category]
+  const enabled = !(source.category_visibility[category] ?? (isDivergenceCategory(category) ? source.category_visibility.divergences : false))
   const next = { ...source.category_visibility, [category]: enabled }
+  if (isDivergenceCategory(category)) {
+    next.trend_divergences = source.category_visibility.trend_divergences ?? source.category_visibility.divergences
+    next.consolidation_divergences = source.category_visibility.consolidation_divergences ?? source.category_visibility.divergences
+    next.oscillation_divergences = source.category_visibility.oscillation_divergences ?? source.category_visibility.divergences
+    next[category] = enabled
+    next.divergences = anyDivergenceVisible(next)
+  }
   if (category === 'bi_states') {
     next.bi_boundary_confirmations = enabled
   }
@@ -150,10 +164,11 @@ function toggleCategory(source: StrategySource, category: keyof StrategySource['
       <div v-if="!collapsedStrategies.has(source.source_id)" class="strategy-children">
         <details class="strategy-categories">
           <summary>图层分类</summary>
-          <div v-for="(group, groupIndex) in categoryGroups" :key="groupIndex" class="strategy-category-group">
+          <div v-for="(group, groupIndex) in categoryGroups" :key="groupIndex" class="strategy-category-group"
+            :class="{ 'divergence-category-group': group.includes('trend_divergences') }">
             <label v-for="category in group" :key="category">
               <input
-                type="checkbox" :checked="source.category_visibility[category]"
+                type="checkbox" :checked="source.category_visibility[category] ?? (isDivergenceCategory(category) ? source.category_visibility.divergences : false)"
                 @change="toggleCategory(source, category)"
               />{{ categoryLabels[category] }}
             </label>

@@ -155,6 +155,7 @@ button:disabled { color: #787b86; }
 .strategy-categories { padding: 5px 8px 7px 12px; color: #a2a6b3; }
 .strategy-categories summary { cursor: pointer; font-size: 11px; }
 .strategy-category-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 6px; }
+.strategy-category-group.divergence-category-group { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; }
 .strategy-categories label { display: grid; grid-template-columns: 17px minmax(0, 1fr); align-items: center; min-width: 0; padding: 2px 0; font-size: 11px; white-space: nowrap; }
 .strategy-category-group + .strategy-category-group { border-top: 1px solid #2b3344; margin-top: 3px; padding-top: 3px; }
 .signal-branch-title { display: flex; justify-content: space-between; padding: 7px 9px 5px 18px; border-top: 1px solid #252936; color: #a2a6b3; font-size: 11px; }

@@ -461,6 +461,32 @@ describe('ChartGroup', () => {
     setData.mockRestore()
   })
 
+  it.each([false, true])('filters the three divergence layers independently in historical/replay mode (replay=%s)', async (replay) => {
+    const divergences = [
+      { object_id: 'trend', divergence_kind: 'trend', status: 'confirmed' },
+      { object_id: 'consolidation', divergence_kind: 'consolidation', status: 'confirmed' },
+      { object_id: 'oscillation', divergence_kind: 'center_oscillation', status: 'confirmed' },
+    ] as ChanCalculationResults['objects']['divergences']
+    const objects = { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [],
+      local_centers: [], center_connections: [], center_audit_events: [], movement_states: [], center_monitors: [],
+      divergences, trade_points: [] } satisfies ChanCalculationResults['objects']
+    apiMocks.getCalculationResults.mockResolvedValue({ result_kind: 'chan', objects })
+    const source = rangeSources().strategySources[0]!
+    source.category_visibility.divergences = true
+    source.category_visibility.trend_divergences = false
+    source.category_visibility.consolidation_divergences = true
+    source.category_visibility.oscillation_divergences = false
+    const setData = vi.spyOn(ChanPrimitive.prototype, 'setData')
+    const wrapper = mount(ChartGroup, { props: {
+      dataset: dataset(), strategySources: [source], replayObjects: replay ? objects : null,
+      replayCursor: replay ? 1 : null,
+    } })
+    await flushPromises()
+    expect(setData.mock.calls.at(-1)?.[0].divergences.map((item) => item.object_id)).toEqual(['consolidation'])
+    wrapper.unmount()
+    setData.mockRestore()
+  })
+
   it('keeps a boundary-confirmation layer drawable when its center layer is hidden', async () => {
     const objects = {
       processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [],

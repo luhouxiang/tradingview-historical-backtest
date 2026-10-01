@@ -206,6 +206,46 @@ def _contiguous_preceding_same_direction(
     return index if index >= 0 and segments[index].direction == direction else None
 
 
+def _trend_legs_advance(a: LineLike, b: LineLike, c: LineLike, direction: str) -> bool:
+    """Require the three outward legs to advance from their own start prices.
+
+    Strictly separated centers and a new extreme at c's end do not prove this:
+    the intervening retracement can take b's start below a's start (or above
+    it in a downtrend). Such a chain is not the directed a+A+b+B+c pattern.
+    """
+    if any(line.direction != direction for line in (a, b, c)):
+        return False
+    starts = (a.start.price_i64, b.start.price_i64, c.start.price_i64)
+    return (
+        starts[0] < starts[1] < starts[2]
+        if direction == "up"
+        else starts[0] > starts[1] > starts[2]
+    )
+
+
+def _center_baseline_span_contracts(
+    reference: LineLike,
+    current: LineLike,
+    direction: str,
+    reference_baseline_i64: int,
+    current_baseline_i64: int,
+) -> bool:
+    """Conservatively compare outward price travel from equivalent baselines.
+
+    This is an additional project gate alongside MACD area contraction, not
+    a claim that lesson 24 defines a mandatory price-distance formula.
+    """
+    if reference.direction != direction or current.direction != direction:
+        return False
+    if direction == "up":
+        reference_span = _high(reference) - reference_baseline_i64
+        current_span = _high(current) - current_baseline_i64
+    else:
+        reference_span = reference_baseline_i64 - _low(reference)
+        current_span = current_baseline_i64 - _low(current)
+    return reference_span > 0 and 0 < current_span < reference_span
+
+
 def _center_component_known_at(
     center: StructuralCenter,
     segments: Sequence[LineLike],
@@ -530,7 +570,13 @@ def chan_divergences(
                 segments, center.base_index, segments[center.exit_index].direction
             )
             c_index = center.exit_index
-            if a_index is not None:
+            if a_index is not None and _center_baseline_span_contracts(
+                segments[a_index],
+                segments[c_index],
+                segments[c_index].direction,
+                segments[a_index].start.price_i64,
+                center.zd_i64 if segments[c_index].direction == "up" else center.zg_i64,
+            ):
                 value = _divergence(
                     "consolidation",
                     segments[a_index],
@@ -551,6 +597,7 @@ def chan_divergences(
                             value,
                             status="confirmed" if center_position == 0 else "candidate",
                             divergence_profile="external_range",
+                            comparison_rule="macd_area_and_center_baseline_price_span_contraction",
                             formation_dir=center.formation_dir,
                             relative_dir=center.relative_dir,
                             a_object_id=segments[a_index].object_id,
@@ -604,6 +651,16 @@ def chan_divergences(
             or segments[reference_index].known_at_bar_index
             > segments[current_index].known_at_bar_index
             or second.leave_direction != direction
+            or not _trend_legs_advance(
+                segments[a_index], segments[reference_index], segments[current_index], direction
+            )
+            or not _center_baseline_span_contracts(
+                segments[reference_index],
+                segments[current_index],
+                direction,
+                first.zd_i64 if direction == "up" else first.zg_i64,
+                second.zd_i64 if direction == "up" else second.zg_i64,
+            )
         ):
             continue
         prior_extreme = (
@@ -655,7 +712,7 @@ def chan_divergences(
                 a_center_id=center_ids[index - 1],
                 b_center_id=center_ids[index],
                 new_extreme_satisfied=True,
-                comparison_rule="macd_same_direction_area_contraction_with_trend_new_extreme",
+                comparison_rule="macd_area_center_baseline_price_span_and_trend_new_extreme",
                 c_contains_type3=proof_retest is not None if proof_checked else None,
                 c_meets_sublevel=len(proof_centers) >= 2 if proof_checked else None,
                 c_sublevel_profile="bi_two_confirmed_centers_type3_v1" if proof_checked else None,
@@ -716,7 +773,13 @@ def chan_forming_divergences(
     known_at = forming_segment.known_at_bar_index
     if center.base_index > 0:
         a_index = _contiguous_preceding_same_direction(segments, center.base_index, direction)
-        if a_index is not None:
+        if a_index is not None and _center_baseline_span_contracts(
+            segments[a_index],
+            forming_segment,
+            direction,
+            segments[a_index].start.price_i64,
+            center.zd_i64 if direction == "up" else center.zg_i64,
+        ):
             value = _divergence(
                 "consolidation",
                 segments[a_index],
@@ -736,6 +799,7 @@ def chan_forming_divergences(
                         value,
                         status="forming",
                         divergence_profile="external_range",
+                        comparison_rule="macd_area_and_center_baseline_price_span_contraction",
                         formation_dir=center.formation_dir,
                         relative_dir=center.relative_dir,
                         a_object_id=segments[a_index].object_id,
@@ -771,7 +835,15 @@ def chan_forming_divergences(
     if a_index is None:
         return result
     b_index = first.exit_index
-    if segments[a_index].direction != direction or segments[b_index].direction != direction:
+    if not _trend_legs_advance(segments[a_index], segments[b_index], forming_segment, direction):
+        return result
+    if not _center_baseline_span_contracts(
+        segments[b_index],
+        forming_segment,
+        direction,
+        first.zd_i64 if direction == "up" else first.zg_i64,
+        second.zd_i64 if direction == "up" else second.zg_i64,
+    ):
         return result
     prior_extreme = (
         max(_high(line) for line in segments[a_index:])
@@ -812,7 +884,7 @@ def chan_forming_divergences(
                 a_center_id=center_ids[-2],
                 b_center_id=center_ids[-1],
                 new_extreme_satisfied=True,
-                comparison_rule="macd_same_direction_area_contraction_with_trend_new_extreme",
+                comparison_rule="macd_area_center_baseline_price_span_and_trend_new_extreme",
                 c_contains_type3=None,
                 c_meets_sublevel=None,
                 follow_through_status="pending",

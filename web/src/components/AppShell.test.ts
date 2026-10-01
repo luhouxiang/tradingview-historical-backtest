@@ -325,7 +325,7 @@ describe('AppShell', () => {
     expect(chart.props('strategySources')).toEqual([
       expect.objectContaining({
         source_type: 'StrategySource', visible: true,
-        category_visibility: { processed_bars: false, fractals: false, bi: true, bi_states: false, segments: true, bi_centers: true, segment_centers: true, center_objects: false, bi_boundary_confirmations: false, segment_boundary_confirmations: false, movement_states: true, center_monitors: true, divergences: true, first_trade_points: true, second_trade_points: true, third_trade_points: true, class_first_trade_points: true, class_second_trade_points: true, class_third_trade_points: true },
+        category_visibility: { processed_bars: false, fractals: false, bi: true, bi_states: false, segments: true, bi_centers: true, segment_centers: true, center_objects: false, bi_boundary_confirmations: false, segment_boundary_confirmations: false, movement_states: true, center_monitors: true, divergences: true, trend_divergences: true, consolidation_divergences: true, oscillation_divergences: true, first_trade_points: true, second_trade_points: true, third_trade_points: true, class_first_trade_points: true, class_second_trade_points: true, class_third_trade_points: true },
       }),
     ])
   })
@@ -396,7 +396,7 @@ describe('AppShell', () => {
     expect(wrapper.findComponent(ChartStub).props('selectedSignal')).toEqual(expect.objectContaining({ object_id: 'buy-1' }))
     await row.get('.signal-object-lock').trigger('click')
     expect(focusSignalMock).toHaveBeenCalledWith(expect.objectContaining({ object_id: 'buy-1' }))
-    await wrapper.findAll('.strategy-categories input[type="checkbox"]')[12]?.trigger('change')
+    await wrapper.findAll('.strategy-categories input[type="checkbox"]')[14]?.trigger('change')
     expect(wrapper.findComponent(ChartStub).props('selectedSignal')).toBeNull()
     expect(wrapper.find('[data-signal-id="buy-1"]').exists()).toBe(false)
   })
@@ -428,7 +428,9 @@ describe('AppShell', () => {
         a_object_id: a.object_id, c_contains_type3: true, c_meets_sublevel: false,
         c_sublevel_profile: 'bi_two_confirmed_centers_type3_v1',
         c_sublevel_center_ids: ['bi-center-1'], c_type3_departure_id: 'bi-departure',
-        c_type3_retest_id: 'bi-retest', c_proof_known_at_bar_index: null }], trade_points: [],
+        c_type3_retest_id: 'bi-retest', c_proof_known_at_bar_index: null },
+      { ...divergence, object_id: 'oscillation-1', divergence_kind: 'center_oscillation',
+        divergence_profile: 'center_oscillation' }], trade_points: [],
     } })
     const wrapper = mount(AppShell, { props: { health: 'ok' }, global: { stubs: { ChartGroup: ChartStub, DatasetPanel: true } } })
     wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset)
@@ -453,6 +455,13 @@ describe('AppShell', () => {
     expect(chart.props('selectedDivergenceSegments')).toEqual({ reference, current })
     await wrapper.get('[data-signal-id="trend-candidate-1"]').trigger('click')
     expect(chart.props('selectedDivergenceSegments')).toEqual({ a, reference, current })
+    const trendToggle = wrapper.findAll('.strategy-categories label').find((label) => label.text() === '趋势背驰')
+    await trendToggle?.get('input').trigger('change')
+    await flushPromises()
+    expect(wrapper.find('[data-signal-id="trend-candidate-1"]').exists()).toBe(false)
+    expect(wrapper.find('[data-signal-id="divergence-1"]').exists()).toBe(true)
+    expect(wrapper.find('[data-signal-id="oscillation-1"]').exists()).toBe(true)
+    expect(chart.props('selectedSignal')).toBeNull()
     wrapper.unmount()
   })
 
@@ -578,8 +587,10 @@ describe('AppShell', () => {
 
       wrapper.findComponent({ name: 'DatasetPanel' }).vm.$emit('selected', dataset, 'automatic')
       await flushPromises()
+      api.putStrategySourceConfig.mockClear()
       const categoryToggles = wrapper.findAll('.strategy-categories input[type="checkbox"]')
-      expect(categoryToggles).toHaveLength(18)
+      expect(categoryToggles).toHaveLength(20)
+      expect(categoryToggles.slice(11, 14).every((item) => (item.element as HTMLInputElement).checked)).toBe(true)
       expect((categoryToggles[2]?.element as HTMLInputElement).checked).toBe(false)
       await categoryToggles[7]?.trigger('change')
       await categoryToggles[1]?.trigger('change')
@@ -591,7 +602,7 @@ describe('AppShell', () => {
       expect(api.putStrategySourceConfig).toHaveBeenCalledWith('default', 7, expect.objectContaining({
         strategy_sources: [expect.objectContaining({
           source_id: 'strategy-default-chan',
-          category_visibility: expect.objectContaining({ bi: false, fractals: true, segment_centers: false, first_trade_points: true, second_trade_points: true, third_trade_points: true }),
+          category_visibility: expect.objectContaining({ bi: false, fractals: true, segment_centers: false, trend_divergences: true, consolidation_divergences: true, oscillation_divergences: true, first_trade_points: true, second_trade_points: true, third_trade_points: true }),
         })],
       }))
       expect(api.putLayout).not.toHaveBeenCalled()

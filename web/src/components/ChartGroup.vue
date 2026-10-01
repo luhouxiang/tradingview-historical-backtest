@@ -19,6 +19,7 @@ import {
 import { loadCalculationWindow } from '../chart/calculationWindow'
 import { selectLocalCenterObjects } from '../chart/localCenterDisplay'
 import { selectVisibleTradePoints } from '../chart/tradePointVisibility'
+import { divergenceVisible } from '../chart/divergenceVisibility'
 import { barAtLogicalIndex, formatBarTimeRange } from '../chart/crosshair'
 import { ChartSession, type CachedBar } from '../chart/session'
 import { ChanPrimitive, type LocalCenterPresentation } from '../chart/chanPrimitive'
@@ -688,7 +689,7 @@ async function renderChan(fromBarIndex: number, toBarIndex: number): Promise<voi
       center_audit_events: source?.visible ? localObjects.center_audit_events : [],
       movement_states: source?.visible && (source.category_visibility.movement_states ?? true) ? props.replayObjects.movement_states : [],
       center_monitors: source?.visible && (source.category_visibility.center_monitors ?? true) ? props.replayObjects.center_monitors : [],
-      divergences: source?.visible && source.category_visibility.divergences ? props.replayObjects.divergences : [],
+      divergences: source?.visible ? props.replayObjects.divergences.filter((signal) => divergenceVisible(signal, source.category_visibility)) : [],
       trade_points: source?.visible ? selectVisibleTradePoints(props.replayObjects.trade_points, source.category_visibility) : [],
     }
     chanPrimitive.setData(filtered, props.dataset.price.price_scale, centerPresentation)
@@ -728,7 +729,7 @@ async function renderChan(fromBarIndex: number, toBarIndex: number): Promise<voi
     }
     if (source.category_visibility.movement_states ?? true) merged.movement_states.push(...result.objects.movement_states)
     if (source.category_visibility.center_monitors ?? true) merged.center_monitors.push(...result.objects.center_monitors)
-    if (source.category_visibility.divergences) merged.divergences.push(...result.objects.divergences)
+    merged.divergences.push(...result.objects.divergences.filter((signal) => divergenceVisible(signal, source.category_visibility)))
     merged.trade_points.push(...selectVisibleTradePoints(result.objects.trade_points, source.category_visibility))
   }))
   if (!isCurrent()) return

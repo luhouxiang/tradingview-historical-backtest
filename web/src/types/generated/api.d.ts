@@ -2833,6 +2833,9 @@ export interface components {
                     movement_states?: boolean;
                     center_monitors?: boolean;
                     divergences?: boolean;
+                    trend_divergences?: boolean;
+                    consolidation_divergences?: boolean;
+                    oscillation_divergences?: boolean;
                     first_trade_points?: boolean;
                     second_trade_points?: boolean;
                     third_trade_points?: boolean;
@@ -2890,6 +2893,9 @@ export interface components {
                     movement_states: boolean;
                     center_monitors: boolean;
                     divergences: boolean;
+                    trend_divergences?: boolean;
+                    consolidation_divergences?: boolean;
+                    oscillation_divergences?: boolean;
                     first_trade_points: boolean;
                     second_trade_points: boolean;
                     third_trade_points: boolean;

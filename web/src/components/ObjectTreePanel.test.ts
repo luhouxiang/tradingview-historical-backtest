@@ -56,12 +56,13 @@ describe('ObjectTreePanel', () => {
     expect(signals.map((node) => node.attributes('data-signal-id'))).toEqual(['class-buy-new', 'buy-old'])
     expect(signals[0]?.classes()).toContain('selected')
     expect(signals[0]?.text()).toContain('类一买')
-    expect(wrapper.findAll('.strategy-node label')).toHaveLength(18)
+    expect(wrapper.findAll('.strategy-node label')).toHaveLength(20)
     expect(wrapper.findAll('.strategy-node label').map((label) => label.text())).toEqual([
       '处理后K线', '分型', '笔', '笔状态', '线段', '线段状态', '笔中枢', '线段中枢', '中枢对象',
-      '走势状态', '中枢监控', '背驰', '一买卖点', '二买卖点', '三买卖点',
+      '走势状态', '中枢监控', '趋势背驰', '盘整背驰', '震荡背驰', '一买卖点', '二买卖点', '三买卖点',
       '类一买卖点', '类二买卖点', '类三买卖点',
     ])
+    expect(wrapper.get('.divergence-category-group').findAll('label').map((label) => label.text())).toEqual(['趋势背驰', '盘整背驰', '震荡背驰'])
     await wrapper.findAll('.strategy-node label input')[7]?.trigger('change')
     expect(wrapper.emitted('patchStrategy')?.at(-1)).toEqual(['chan-1', {
       category_visibility: { ...strategy.category_visibility, segment_centers: false },
@@ -80,6 +81,46 @@ describe('ObjectTreePanel', () => {
       ...strategy, category_visibility: { ...strategy.category_visibility, first_trade_points: false, class_first_trade_points: true },
     }] as never })
     expect(wrapper.findAll('[data-object-type="ChanSignalObject"]').map((node) => node.attributes('data-signal-id'))).toEqual(['class-buy-new'])
+  })
+
+  it('shows only the enabled divergence kind in the object list and toggles each independently', async () => {
+    const visibility = { fractals: false, bi: false, segments: false, bi_centers: false, segment_centers: false,
+      bi_boundary_confirmations: false, segment_boundary_confirmations: false, divergences: true,
+      trend_divergences: false, consolidation_divergences: true, oscillation_divergences: false,
+      first_trade_points: false, second_trade_points: false, third_trade_points: false }
+    const source = { source_type: 'StrategySource', source_id: 'chan-divergence', definition: { name: '缠论' },
+      parameters: {}, job_id: 'job-divergence', status: 'completed', visible: true, category_visibility: visibility }
+    const base = { object_type: 'divergence', time: 1_700_000_000_000, price_i64: 2650,
+      confirmed_at_bar_index: 10, known_at_bar_index: 10, object_revision: 1 }
+    const signals = [
+      { ...base, object_id: 'trend', bar_index: 12, signal: { signal_type: 'top_divergence', divergence_kind: 'trend' }, label: '趋势顶背驰' },
+      { ...base, object_id: 'range', bar_index: 11, signal: { signal_type: 'top_divergence', divergence_kind: 'consolidation' }, label: '盘整顶背驰' },
+      { ...base, object_id: 'oscillation', bar_index: 10, signal: { signal_type: 'top_divergence', divergence_kind: 'center_oscillation' }, label: '震荡顶背驰' },
+    ]
+    const wrapper = mount(ObjectTreePanel, { props: { drawings: [], sources: [], strategySources: [source] as never,
+      selectedId: null, signalsBySource: { 'chan-divergence': signals as never[] } } })
+    const shown = () => wrapper.findAll('[data-object-type="ChanSignalObject"]').map((node) => node.attributes('data-signal-id'))
+    expect(shown()).toEqual(['range'])
+    expect(wrapper.get('.signal-layer-category').text()).toBe('盘整背驰')
+    const trendToggle = wrapper.findAll('.strategy-categories label').find((label) => label.text() === '趋势背驰')
+    await trendToggle?.get('input').trigger('change')
+    expect(wrapper.emitted('patchStrategy')?.at(-1)?.[1]).toMatchObject({ category_visibility: { trend_divergences: true, consolidation_divergences: true } })
+    await wrapper.setProps({ strategySources: [{ ...source, category_visibility: { ...visibility, trend_divergences: true } }] as never })
+    expect(shown()).toEqual(['trend', 'range'])
+    wrapper.unmount()
+  })
+
+  it('freezes the legacy total divergence switch into three independent values on first toggle', async () => {
+    const source = { source_type: 'StrategySource', source_id: 'legacy', definition: { name: '缠论' },
+      parameters: {}, job_id: 'legacy', status: 'completed', visible: true,
+      category_visibility: { divergences: false } }
+    const wrapper = mount(ObjectTreePanel, { props: { drawings: [], sources: [], strategySources: [source] as never, selectedId: null } })
+    const trendToggle = wrapper.findAll('.strategy-categories label').find((label) => label.text() === '趋势背驰')
+    await trendToggle?.get('input').trigger('change')
+    expect(wrapper.emitted('patchStrategy')?.at(-1)?.[1]).toMatchObject({ category_visibility: {
+      divergences: true, trend_divergences: true, consolidation_divergences: false, oscillation_divergences: false,
+    } })
+    wrapper.unmount()
   })
 
   it('shows backtest strategy states as selectable and locatable semantic objects', async () => {

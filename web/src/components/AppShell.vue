@@ -16,6 +16,7 @@ import { DrawingHistory, LayerManager, type DrawingObject, type DrawingType } fr
 import { defaultIndicatorSpecs } from '../indicators/defaults'
 import { defaultChanSpec } from '../chan/defaults'
 import { selectLocalCenters } from '../chart/localCenterDisplay'
+import { anyDivergenceVisible, divergenceLayer, divergenceVisible } from '../chart/divergenceVisibility'
 import { selectVisibleTradePoints, tradePointCategory } from '../chart/tradePointVisibility'
 import { createBacktestWorkspaceChannel, createBacktestWorkspaceUrl, type BacktestWorkspaceMessage } from '../backtest/workspaceChannel'
 import type { ReplayObjects, ReplaySignal } from '../replay/eventIndex'
@@ -274,7 +275,7 @@ async function loadSignalObjects(): Promise<void> {
               detail: state.trigger,
             })) : []),
             ...(visibility.segment_boundary_confirmations ? result.objects.segments.map((line): ChanTreeObject => treeLine(line, 'segment', 'segment_boundary_confirmations')) : []),
-            ...(visibility.divergences ? result.objects.divergences.map((signal) => treeSignal(signal, 'divergence')) : []),
+            ...result.objects.divergences.filter((signal) => divergenceVisible(signal, visibility)).map((signal) => treeSignal(signal, 'divergence')),
             ...selectVisibleTradePoints(result.objects.trade_points, visibility).map((signal) => treeSignal(signal, 'trade_point')),
             ...localCenters.map((center): ChanTreeObject => {
               const connection = connectionByCenter.get(center.object_id)
@@ -429,7 +430,7 @@ function treeSignal(signal: ChanSignalPoint, objectType: 'divergence' | 'trade_p
     : undefined
   return {
     object_id: signal.object_id, object_type: objectType,
-    layer_category: objectType === 'divergence' ? 'divergences' : tradePointCategory(signal.signal_type) ?? undefined,
+    layer_category: objectType === 'divergence' ? divergenceLayer(signal) ?? 'divergences' : tradePointCategory(signal.signal_type) ?? undefined,
     bar_index: signal.bar_index,
     time: signal.time, price_i64: signal.price_i64,
     confirmed_at_bar_index: signal.confirmed_at_bar_index,
@@ -598,7 +599,10 @@ function completeCategoryVisibility(value: StrategySource['category_visibility']
     bi_boundary_confirmations: biStateVisible,
     segment_boundary_confirmations: value.segment_boundary_confirmations ?? false,
     movement_states: value.movement_states ?? true,
-    center_monitors: value.center_monitors ?? true, divergences: value.divergences ?? true,
+    center_monitors: value.center_monitors ?? true, divergences: anyDivergenceVisible({ ...value, divergences: value.divergences ?? true }),
+    trend_divergences: value.trend_divergences ?? value.divergences ?? true,
+    consolidation_divergences: value.consolidation_divergences ?? value.divergences ?? true,
+    oscillation_divergences: value.oscillation_divergences ?? value.divergences ?? true,
     first_trade_points: value.first_trade_points ?? legacy.trade_points ?? true,
     second_trade_points: value.second_trade_points ?? legacy.trade_points ?? true,
     third_trade_points: value.third_trade_points ?? legacy.trade_points ?? true,
@@ -647,7 +651,7 @@ async function installDefaultChan(dataset: DatasetMeta, definitions?: AlgorithmD
   const source: StrategySource = {
     source_type: 'StrategySource', source_id: spec.sourceId, definition: spec.definition,
     parameters: spec.parameters, job_id: accepted.job_id, status: accepted.status,
-    visible: true, category_visibility: { processed_bars: false, fractals: false, bi: true, bi_states: false, segments: true, bi_centers: true, segment_centers: true, center_objects: false, bi_boundary_confirmations: false, segment_boundary_confirmations: false, movement_states: true, center_monitors: true, divergences: true, first_trade_points: true, second_trade_points: true, third_trade_points: true, class_first_trade_points: true, class_second_trade_points: true, class_third_trade_points: true },
+    visible: true, category_visibility: { processed_bars: false, fractals: false, bi: true, bi_states: false, segments: true, bi_centers: true, segment_centers: true, center_objects: false, bi_boundary_confirmations: false, segment_boundary_confirmations: false, movement_states: true, center_monitors: true, divergences: true, trend_divergences: true, consolidation_divergences: true, oscillation_divergences: true, first_trade_points: true, second_trade_points: true, third_trade_points: true, class_first_trade_points: true, class_second_trade_points: true, class_third_trade_points: true },
   }
   rememberLayoutStrategyPresentation(source)
   strategySources.value = [applyDynamicStrategyConfig(source, dataset)]
@@ -933,7 +937,8 @@ function patchStrategy(id: string, patch: Partial<StrategySource>): void {
     const categories = patch.category_visibility ?? current.category_visibility
     const centerSelection = selected.object_type === 'local_center'
     if (!visible || centerSelection && !categories.center_objects
-      || selected.layer_category !== undefined && !categories[selected.layer_category]) {
+      || selected.object_type === 'divergence' && selected.signal && !divergenceVisible(selected.signal, categories)
+      || selected.layer_category !== undefined && selected.object_type !== 'divergence' && !categories[selected.layer_category]) {
       selectedSignal.value = null
       selectedSignalOrigin.value = null
       lockedSignalId.value = null

@@ -10050,16 +10050,19 @@ type PutLayoutJSONBody struct {
 			ClassFirstTradePoints        *bool `json:"class_first_trade_points,omitempty"`
 			ClassSecondTradePoints       *bool `json:"class_second_trade_points,omitempty"`
 			ClassThirdTradePoints        *bool `json:"class_third_trade_points,omitempty"`
+			ConsolidationDivergences     *bool `json:"consolidation_divergences,omitempty"`
 			Divergences                  *bool `json:"divergences,omitempty"`
 			FirstTradePoints             *bool `json:"first_trade_points,omitempty"`
 			Fractals                     bool  `json:"fractals"`
 			MovementStates               *bool `json:"movement_states,omitempty"`
+			OscillationDivergences       *bool `json:"oscillation_divergences,omitempty"`
 			ProcessedBars                *bool `json:"processed_bars,omitempty"`
 			SecondTradePoints            *bool `json:"second_trade_points,omitempty"`
 			SegmentBoundaryConfirmations *bool `json:"segment_boundary_confirmations,omitempty"`
 			SegmentCenters               bool  `json:"segment_centers"`
 			Segments                     *bool `json:"segments,omitempty"`
 			ThirdTradePoints             *bool `json:"third_trade_points,omitempty"`
+			TrendDivergences             *bool `json:"trend_divergences,omitempty"`
 		} `json:"category_visibility"`
 		DataRevision string                 `json:"data_revision"`
 		DatasetId    string                 `json:"dataset_id"`
@@ -10106,16 +10109,19 @@ type PutStrategySourceConfigJSONBody struct {
 			ClassFirstTradePoints        *bool `json:"class_first_trade_points,omitempty"`
 			ClassSecondTradePoints       *bool `json:"class_second_trade_points,omitempty"`
 			ClassThirdTradePoints        *bool `json:"class_third_trade_points,omitempty"`
+			ConsolidationDivergences     *bool `json:"consolidation_divergences,omitempty"`
 			Divergences                  bool  `json:"divergences"`
 			FirstTradePoints             bool  `json:"first_trade_points"`
 			Fractals                     bool  `json:"fractals"`
 			MovementStates               bool  `json:"movement_states"`
+			OscillationDivergences       *bool `json:"oscillation_divergences,omitempty"`
 			ProcessedBars                *bool `json:"processed_bars,omitempty"`
 			SecondTradePoints            bool  `json:"second_trade_points"`
 			SegmentBoundaryConfirmations bool  `json:"segment_boundary_confirmations"`
 			SegmentCenters               bool  `json:"segment_centers"`
 			Segments                     bool  `json:"segments"`
 			ThirdTradePoints             bool  `json:"third_trade_points"`
+			TrendDivergences             *bool `json:"trend_divergences,omitempty"`
 		} `json:"category_visibility"`
 		DataRevision string `json:"data_revision"`
 		DatasetId    string `json:"dataset_id"`

@@ -127,7 +127,7 @@ async function submit(definition: AlgorithmDefinition, parameters: Record<string
       const source: StrategySource = {
         source_type: 'StrategySource', source_id: id, definition, parameters,
         job_id: accepted.job_id, status: accepted.status, visible: existing?.visible ?? true,
-        category_visibility: existing?.category_visibility ?? { processed_bars: false, fractals: false, bi: true, bi_states: true, segments: true, bi_centers: true, segment_centers: true, bi_boundary_confirmations: true, segment_boundary_confirmations: true, movement_states: true, center_monitors: true, divergences: true, first_trade_points: true, second_trade_points: true, third_trade_points: true },
+        category_visibility: existing?.category_visibility ?? { processed_bars: false, fractals: false, bi: true, bi_states: true, segments: true, bi_centers: true, segment_centers: true, bi_boundary_confirmations: true, segment_boundary_confirmations: true, movement_states: true, center_monitors: true, divergences: true, trend_divergences: true, consolidation_divergences: true, oscillation_divergences: true, first_trade_points: true, second_trade_points: true, third_trade_points: true },
         style: existing?.style,
       }
       emit('update:strategy-sources', existing
@@ -192,7 +192,12 @@ function applyStyle(style: IndicatorStyle): void {
       }
       else if (output.object_type === 'movement_state') categoryVisibility.movement_states = visible
       else if (output.object_type === 'center_monitor') categoryVisibility.center_monitors = visible
-      else if (output.object_type === 'divergence') categoryVisibility.divergences = visible
+      else if (output.object_type === 'divergence') {
+        categoryVisibility.divergences = visible
+        categoryVisibility.trend_divergences = visible
+        categoryVisibility.consolidation_divergences = visible
+        categoryVisibility.oscillation_divergences = visible
+      }
       else if (output.object_type === 'trade_point') {
         categoryVisibility.first_trade_points = visible
         categoryVisibility.second_trade_points = visible

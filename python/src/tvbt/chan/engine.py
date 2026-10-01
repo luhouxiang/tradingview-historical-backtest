@@ -319,7 +319,7 @@ class ChanEngine:
     """逐 K 线因果缠论引擎，负责分型、笔、线段、中枢和信号事件生成。"""
 
     # 算法版本参与缓存键；任何语义变化都必须升级版本，禁止复用旧缓存。
-    algorithm_version = "19.3.0"
+    algorithm_version = "19.3.2"
 
     def __init__(
         self,

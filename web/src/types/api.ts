@@ -437,7 +437,7 @@ export interface ChanBiState {
 
 export type ChanLayerCategory = 'processed_bars' | 'fractals' | 'bi' | 'bi_states' | 'segments'
   | 'bi_centers' | 'segment_centers' | 'center_objects' | 'bi_boundary_confirmations' | 'segment_boundary_confirmations'
-  | 'movement_states' | 'center_monitors' | 'divergences'
+  | 'movement_states' | 'center_monitors' | 'divergences' | 'trend_divergences' | 'consolidation_divergences' | 'oscillation_divergences'
   | 'first_trade_points' | 'second_trade_points' | 'third_trade_points'
   | 'class_first_trade_points' | 'class_second_trade_points' | 'class_third_trade_points'
 
@@ -1181,7 +1181,7 @@ export interface StrategySource {
   job_id: string
   status: JobStatus['status']
   visible: boolean
-  category_visibility: { processed_bars?: boolean; fractals: boolean; bi: boolean; bi_states?: boolean; segments: boolean; bi_centers: boolean; segment_centers: boolean; center_objects?: boolean; bi_boundary_confirmations: boolean; segment_boundary_confirmations: boolean; movement_states?: boolean; center_monitors?: boolean; divergences: boolean; first_trade_points: boolean; second_trade_points: boolean; third_trade_points: boolean; class_first_trade_points?: boolean; class_second_trade_points?: boolean; class_third_trade_points?: boolean }
+  category_visibility: { processed_bars?: boolean; fractals: boolean; bi: boolean; bi_states?: boolean; segments: boolean; bi_centers: boolean; segment_centers: boolean; center_objects?: boolean; bi_boundary_confirmations: boolean; segment_boundary_confirmations: boolean; movement_states?: boolean; center_monitors?: boolean; divergences: boolean; trend_divergences?: boolean; consolidation_divergences?: boolean; oscillation_divergences?: boolean; first_trade_points: boolean; second_trade_points: boolean; third_trade_points: boolean; class_first_trade_points?: boolean; class_second_trade_points?: boolean; class_third_trade_points?: boolean }
   style?: IndicatorStyle
   error?: string
 }
@@ -1238,7 +1238,7 @@ export interface PersistedStrategySource {
   data_revision: string
   algorithm: AlgorithmRef & { kind: 'chan' }
   parameters: Record<string, string | number | boolean>
-  category_visibility: { processed_bars?: boolean; fractals: boolean; bi: boolean; bi_states?: boolean; segments?: boolean; bi_centers: boolean; segment_centers: boolean; center_objects?: boolean; bi_boundary_confirmations?: boolean; segment_boundary_confirmations?: boolean; movement_states?: boolean; center_monitors?: boolean; divergences?: boolean; first_trade_points?: boolean; second_trade_points?: boolean; third_trade_points?: boolean; class_first_trade_points?: boolean; class_second_trade_points?: boolean; class_third_trade_points?: boolean }
+  category_visibility: { processed_bars?: boolean; fractals: boolean; bi: boolean; bi_states?: boolean; segments?: boolean; bi_centers: boolean; segment_centers: boolean; center_objects?: boolean; bi_boundary_confirmations?: boolean; segment_boundary_confirmations?: boolean; movement_states?: boolean; center_monitors?: boolean; divergences?: boolean; trend_divergences?: boolean; consolidation_divergences?: boolean; oscillation_divergences?: boolean; first_trade_points?: boolean; second_trade_points?: boolean; third_trade_points?: boolean; class_first_trade_points?: boolean; class_second_trade_points?: boolean; class_third_trade_points?: boolean }
   style?: IndicatorStyle
 }
 

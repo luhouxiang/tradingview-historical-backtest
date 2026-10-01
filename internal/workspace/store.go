@@ -91,6 +91,9 @@ type CategoryVisibility struct {
 	MovementStates               *bool `json:"movement_states,omitempty"`
 	CenterMonitors               *bool `json:"center_monitors,omitempty"`
 	Divergences                  *bool `json:"divergences,omitempty"`
+	TrendDivergences             *bool `json:"trend_divergences,omitempty"`
+	ConsolidationDivergences     *bool `json:"consolidation_divergences,omitempty"`
+	OscillationDivergences       *bool `json:"oscillation_divergences,omitempty"`
 	FirstTradePoints             *bool `json:"first_trade_points,omitempty"`
 	SecondTradePoints            *bool `json:"second_trade_points,omitempty"`
 	ThirdTradePoints             *bool `json:"third_trade_points,omitempty"`
@@ -131,6 +134,9 @@ type DynamicCategoryVisibility struct {
 	MovementStates               bool  `json:"movement_states"`
 	CenterMonitors               bool  `json:"center_monitors"`
 	Divergences                  bool  `json:"divergences"`
+	TrendDivergences             *bool `json:"trend_divergences,omitempty"`
+	ConsolidationDivergences     *bool `json:"consolidation_divergences,omitempty"`
+	OscillationDivergences       *bool `json:"oscillation_divergences,omitempty"`
 	FirstTradePoints             bool  `json:"first_trade_points"`
 	SecondTradePoints            bool  `json:"second_trade_points"`
 	ThirdTradePoints             bool  `json:"third_trade_points"`
