@@ -124,7 +124,10 @@ const pendingProjected = computed(() => {
   const y = candles.priceToCoordinate(pendingAnchor.value.price_i64 / pendingAnchor.value.price_scale)
   return x === null || y === null ? null : { x, y }
 })
-const projectedReplaySignals = computed(() => props.replaySignals.flatMap((signal) => {
+const projectedReplaySignals = computed(() => {
+  projectionRevision.value
+  const fillRows = new Map<number, number>()
+  return props.replaySignals.flatMap((signal) => {
   if (!['strategy_state', 'chart_event', 'risk_decision'].includes(signal.object_type) || !chart || !candles) return []
   if (signal.event_type === 'aux_sector_strength_mean') return []
   if (typeof signal.chart_dataset_id === 'string' && signal.chart_dataset_id !== props.dataset?.dataset_id) return []
@@ -133,10 +136,14 @@ const projectedReplaySignals = computed(() => props.replaySignals.flatMap((signa
   if (!Number.isFinite(timestamp) || !Number.isFinite(price) || !props.dataset) return []
   const x = chart.timeScale().timeToCoordinate(Math.floor(timestamp / 1000) as UTCTimestamp)
   const y = candles.priceToCoordinate(price / props.dataset.price.price_scale)
-  const type = String(signal.event_type ?? signal.action ?? signal.state_to ?? signal.stage ?? signal.object_type)
+  const simulationFill = signal.event_type === 'simulation_fill'
+  const type = String(simulationFill ? signal.action : signal.event_type ?? signal.action ?? signal.state_to ?? signal.stage ?? signal.object_type)
   const label = String(signal.display_label ?? type)
-  return x === null || y === null ? [] : [{ x, y, type, label, id: signal.object_id }]
-}))
+  const row = simulationFill ? (fillRows.get(timestamp) ?? 0) : 0
+  if (simulationFill) fillRows.set(timestamp, row + 1)
+  return x === null || y === null ? [] : [{ x, y, type, label, labelY: y + 9 + row * 15, id: signal.object_id }]
+  })
+})
 const projectedDailyOverlapRegions = computed(() => props.replaySignals.flatMap((signal) => {
   projectionRevision.value
   if (signal.object_type !== 'chart_event' || signal.event_type !== 'aux_daily_30m_classification' || !chart || !candles || !props.dataset) return []
@@ -932,6 +939,27 @@ function clearKeyboardFocus(): void {
   keyboardFocusBarIndex.value = null
 }
 
+async function followReplay(barIndex: number): Promise<void> {
+  if (!props.dataset || props.replayCursor === null) return
+  const requestGeneration = ++focusGeneration
+  clearKeyboardFocus()
+  if (!session.bars.some(bar => bar.barIndex === barIndex)) {
+    await session.loadAround(barIndex, 1500, true)
+    if (requestGeneration !== focusGeneration || props.replayCursor !== barIndex) return
+  }
+  renderBars()
+  const bar = session.bars.find(value => value.barIndex === barIndex)
+  const scale = chart?.timeScale()
+  const logical = bar && scale?.timeToIndex(Math.floor(bar.timestampUtc / 1000) as UTCTimestamp)
+  if (logical !== null && logical !== undefined) {
+    const previous = scale?.getVisibleLogicalRange()
+    const available = session.bars.filter(value => value.barIndex <= barIndex).length
+    const span = Math.min(Math.max(80, Math.min(1000, available)), Math.max(80, previous ? previous.to - previous.from : 160))
+    scale?.setVisibleLogicalRange({ from: logical - span * .9, to: logical + span * .1 })
+  }
+  projectionRevision.value += 1
+}
+
 function enableChartPrefetch(): void {
   prefetchSuppressedUntil = 0
 }
@@ -1162,6 +1190,7 @@ watch(() => props.selectedSignal?.object_id, () => { focusNotice.value = '' })
 watch(() => props.drawings, () => projectDrawings(), { deep: true })
 
 defineExpose({
+  followReplay,
   focusSignal,
   focusBar,
   snapshotLayout: () => ({
@@ -1219,7 +1248,7 @@ onBeforeUnmount(() => {
       />
       <g v-for="signal in projectedReplaySignals" :key="signal.id" class="replay-signal" :class="signal.type">
         <path :d="`M ${signal.x} ${signal.y} l -5 9 h 10 z`" />
-        <text :x="signal.x + 7" :y="signal.y + 9">{{ signal.label }}</text>
+        <text :x="signal.x + 7" :y="signal.labelY">{{ signal.label }}</text>
       </g>
       <g v-if="projectedThirdBuyEvidence" class="third-buy-evidence" data-third-buy-evidence="true">
         <rect

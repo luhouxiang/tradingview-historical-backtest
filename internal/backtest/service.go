@@ -135,44 +135,10 @@ func NewService(guard *storage.PathGuard, catalog Catalog, python Python, manage
 }
 
 func (s *Service) Submit(ctx context.Context, requestID, traceID, idempotencyKey string, request Request) (Submission, error) {
-	meta, err := s.catalog.Get(request.DatasetID, "")
+	request, meta, err := s.Prepare(ctx, requestID, traceID, request)
 	if err != nil {
 		return Submission{}, err
 	}
-	if meta.DataRevision != request.DataRevision {
-		return Submission{}, ErrRevisionMismatch
-	}
-	if request.Range.WarmupFromBarIndex < 0 || request.Range.FromBarIndex < request.Range.WarmupFromBarIndex || request.Range.ToBarIndex < request.Range.FromBarIndex || request.Range.ToBarIndex > meta.Coverage.LastBarIndex {
-		return Submission{}, ErrInvalidRange
-	}
-	definitions, err := s.python.Algorithms(ctx, requestID, traceID)
-	if err != nil {
-		return Submission{}, err
-	}
-	definition, ok := findDefinition(definitions, request.Strategy)
-	if !ok || request.Strategy.Kind != "strategy" {
-		return Submission{}, ErrInvalidRequest
-	}
-	parameters, err := calculation.NormalizeParameters(definition.ParameterSchema, request.Parameters)
-	if err != nil {
-		return Submission{}, ErrInvalidRequest
-	}
-	capital, err := NormalizeCapital(request.Capital)
-	if err != nil {
-		return Submission{}, ErrInvalidRequest
-	}
-	execution, err := NormalizeExecution(request.Execution, capital, meta.Instrument.ContractMultiplier)
-	if err != nil {
-		return Submission{}, ErrInvalidRequest
-	}
-	request.Parameters = parameters
-	request.Capital = capital
-	request.Execution = execution
-	riskOverlay, err := NormalizeRiskOverlay(definitions, request.RiskOverlay, request.DataRevision, meta.Coverage.FirstBarIndex, meta.Coverage.LastBarIndex)
-	if err != nil {
-		return Submission{}, ErrInvalidRequest
-	}
-	request.RiskOverlay = riskOverlay
 	rankingDatasets, err := s.resolveRankingDatasets(request, meta)
 	if err != nil {
 		return Submission{}, err
@@ -181,6 +147,54 @@ func (s *Service) Submit(ctx context.Context, requestID, traceID, idempotencyKey
 	if err != nil {
 		return Submission{}, err
 	}
+	return s.submitPrepared(requestID, traceID, idempotencyKey, request, meta, rankingDatasets, signature)
+}
+
+// Prepare shares validation and normalization with incremental training. It
+// neither submits a task nor executes strategy or financial calculations.
+func (s *Service) Prepare(ctx context.Context, requestID, traceID string, request Request) (Request, catalog.DatasetMeta, error) {
+	meta, err := s.catalog.Get(request.DatasetID, "")
+	if err != nil {
+		return Request{}, meta, err
+	}
+	if meta.DataRevision != request.DataRevision {
+		return Request{}, meta, ErrRevisionMismatch
+	}
+	if request.Range.WarmupFromBarIndex < 0 || request.Range.FromBarIndex < request.Range.WarmupFromBarIndex || request.Range.ToBarIndex < request.Range.FromBarIndex || request.Range.ToBarIndex > meta.Coverage.LastBarIndex {
+		return Request{}, meta, ErrInvalidRange
+	}
+	definitions, err := s.python.Algorithms(ctx, requestID, traceID)
+	if err != nil {
+		return Request{}, meta, err
+	}
+	definition, ok := findDefinition(definitions, request.Strategy)
+	if !ok || request.Strategy.Kind != "strategy" {
+		return Request{}, meta, ErrInvalidRequest
+	}
+	parameters, err := calculation.NormalizeParameters(definition.ParameterSchema, request.Parameters)
+	if err != nil {
+		return Request{}, meta, ErrInvalidRequest
+	}
+	capital, err := NormalizeCapital(request.Capital)
+	if err != nil {
+		return Request{}, meta, ErrInvalidRequest
+	}
+	execution, err := NormalizeExecution(request.Execution, capital, meta.Instrument.ContractMultiplier)
+	if err != nil {
+		return Request{}, meta, ErrInvalidRequest
+	}
+	request.Parameters = parameters
+	request.Capital = capital
+	request.Execution = execution
+	riskOverlay, err := NormalizeRiskOverlay(definitions, request.RiskOverlay, request.DataRevision, meta.Coverage.FirstBarIndex, meta.Coverage.LastBarIndex)
+	if err != nil {
+		return Request{}, meta, ErrInvalidRequest
+	}
+	request.RiskOverlay = riskOverlay
+	return request, meta, nil
+}
+
+func (s *Service) submitPrepared(requestID, traceID, idempotencyKey string, request Request, meta catalog.DatasetMeta, rankingDatasets []rankingDatasetRef, signature string) (Submission, error) {
 	s.mu.Lock()
 	if idempotencyKey != "" {
 		if runID := s.idempotency[idempotencyKey]; runID != "" {

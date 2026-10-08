@@ -974,6 +974,51 @@ paths:
                 type: object
                 additionalProperties: true
 
+  /api/v1/training-sessions:
+    post:
+      operationId: createTrainingSession
+      summary: 准备策略复盘训练，只执行到起始K线
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/TrainingCreateRequest"}
+      responses:
+        "202":
+          description: Training preparation accepted
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/TrainingAccepted"}
+  /api/v1/training-sessions/{session_id}:
+    get:
+      operationId: getTrainingSession
+      summary: 获取最近已提交的训练命令快照及任务状态
+      parameters:
+        - {name: session_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200":
+          description: Known training prefix, never final future results
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/TrainingStatus"}
+  /api/v1/training-sessions/{session_id}/commands:
+    post:
+      operationId: commandTrainingSession
+      summary: 异步推进、回看或取消训练；暂停不发推进命令
+      parameters:
+        - {name: session_id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/TrainingCommand"}
+      responses:
+        "202":
+          description: Command accepted; poll the returned job before the next command
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/TrainingAccepted"}
+
   /internal/v1/job-submissions/{job_kind}:
     post:
       tags: [Python Internal]
@@ -986,7 +1031,7 @@ paths:
           in: path
           required: true
           schema:
-            enum: [calculation, replay, backtest, optimization, comparison, research]
+            enum: [calculation, replay, backtest, optimization, comparison, research, training]
       requestBody:
         required: true
         content:
@@ -3009,6 +3054,98 @@ components:
           additionalProperties: true
         output_path:
           type: string
+        training:
+          $ref: "#/components/schemas/TrainingCommand"
+
+    TrainingCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [operation_id, backtest]
+      properties:
+        operation_id: {type: string, pattern: "^[A-Za-z0-9_-]{1,128}$"}
+        backtest: {$ref: "#/components/schemas/BacktestRequest"}
+
+    TrainingAccepted:
+      type: object
+      additionalProperties: false
+      required: [request_id, session_id, job_id, status]
+      properties:
+        request_id: {type: string}
+        session_id: {type: string}
+        job_id: {type: string}
+        status: {enum: [queued, running, cancelling, completed, failed, cancelled, interrupted]}
+
+    TrainingStatus:
+      type: object
+      additionalProperties: false
+      required: [request_id, session_id, job_id, status, snapshot]
+      properties:
+        request_id: {type: string}
+        session_id: {type: string}
+        job_id: {type: string}
+        status: {enum: [queued, running, cancelling, completed, failed, cancelled, interrupted]}
+        snapshot:
+          anyOf:
+            - {$ref: "#/components/schemas/TrainingSnapshot"}
+            - {type: "null"}
+        error: {$ref: "#/components/schemas/Error"}
+
+    TrainingCommand:
+      type: object
+      additionalProperties: false
+      description: >-
+        Internal per-command asynchronous training operation. The enclosing job
+        retains the pinned normalized dataset, algorithm, parameters, range and
+        execution facts. output_path is an immutable command snapshot directory
+        under runs/training/session_id/commands/job_id, not the formal run path.
+        create processes only through from_bar_index. advance processes at most
+        count bars; seek only views already processed bars and never re-executes
+        orders. Cancel preserves the known prefix without a completed run marker.
+        A paused session occupies no engine admission slot. Session state is
+        process-local: restarting Python interrupts rather than silently resumes it.
+      required: [session_id, operation_id, action]
+      allOf:
+        - if: {properties: {action: {const: advance}}}
+          then: {required: [expected_cursor, count]}
+        - if: {properties: {action: {const: seek}}}
+          then: {required: [expected_cursor, target_bar_index]}
+        - if: {properties: {action: {const: cancel}}}
+          then: {required: [expected_cursor]}
+      properties:
+        session_id: {type: string, pattern: "^[A-Za-z0-9_-]{1,128}$"}
+        operation_id: {type: string, pattern: "^[A-Za-z0-9_-]{1,128}$"}
+        action: {enum: [create, advance, seek, cancel]}
+        expected_cursor: {type: integer, minimum: 0}
+        count: {type: integer, minimum: 1, maximum: 100}
+        target_bar_index: {type: integer, minimum: 0}
+
+    TrainingSnapshot:
+      type: object
+      additionalProperties: false
+      description: >-
+        Python-authored known prefix. reset=true replaces the client's event
+        history; otherwise events are new causal deltas. The account is the
+        latest simulation_account payload at cursor, not the final report.
+        completed requires committing the formal run and verifying _SUCCESS;
+        reaching its terminal bar alone is insufficient. Identical operation IDs
+        return their original immutable snapshot without repeating execution.
+      required: [session_id, operation_id, dataset_id, data_revision, run_id, run_signature, from_bar_index, to_bar_index, cursor, processed_until_bar_index, state, reset, events, account]
+      properties:
+        session_id: {type: string}
+        operation_id: {type: string}
+        dataset_id: {type: string}
+        data_revision: {type: string}
+        run_id: {type: string}
+        run_signature: {type: string}
+        from_bar_index: {type: integer, minimum: 0}
+        to_bar_index: {type: integer, minimum: 0}
+        cursor: {type: integer, minimum: 0}
+        processed_until_bar_index: {type: integer, minimum: 0}
+        state: {enum: [live, lookback, completed, cancelled, interrupted]}
+        reset: {type: boolean}
+        events: {type: array, items: {$ref: "#/components/schemas/CausalEvent"}}
+        account: {type: object, additionalProperties: true}
+        completed_run_ref: {type: string}
 
     CausalEvent:
       type: object
@@ -3035,6 +3172,26 @@ components:
           type: integer
         payload:
           type: object
+          description: >-
+            Python-authored causal fact. Divergence simulation fills use chart_event
+            with event_type simulation_fill, actual fill_id, order_id, action,
+            quantity, price_i64, commission_i64 and slippage_i64; known_at is the
+            execution bar. A segment_end_simulation_v1 stage preserves the segment
+            endpoint and its causal completion bar separately.
+            New simulation fills additionally preserve contract_symbol,
+            position_after_side (long, short or flat), position_after_quantity,
+            closed_gross_pnl_i64 and closed_net_pnl_i64. Both closed PnL fields
+            are null on an opening fill; closing values include the consumed
+            entry lots and fees from the Python execution ledger, never a UI
+            price-difference calculation. Missing legacy fields mean unavailable.
+            A simulation_account chart_event stores the authoritative per-bar
+            position_side, position_quantity, unrealized_pnl_i64, cash_i64,
+            equity_i64, available_i64 and margin_i64; its stable account object
+            is revised monotonically and only becomes visible at that bar.
+            Its current-time training report contains net_pnl_i64,
+            realized_net_pnl_i64, closed_trade_count, win_count, win_rate,
+            total_commission_i64, total_slippage_i64 and max_drawdown.
+            These are prefix statistics, not the completed run summary.
           additionalProperties: true
 
     PagedRows:

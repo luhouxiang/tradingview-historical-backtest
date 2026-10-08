@@ -13,6 +13,17 @@ export class ReplayEventIndex {
     this.events = [...events].sort((left, right) => left.event_seq - right.event_seq)
   }
 
+  append(events: CausalEvent[]): void {
+    let previous = this.events.at(-1)
+    for (const event of events) {
+      if (previous && (event.event_seq <= previous.event_seq || event.known_at_bar_index < previous.known_at_bar_index)) {
+        throw new Error('训练事件增量顺序不一致')
+      }
+      previous = event
+    }
+    this.events.push(...events)
+  }
+
   seek(cursor: number): ReplayObjects {
     if (cursor < this.cursor) {
       this.objects.clear()

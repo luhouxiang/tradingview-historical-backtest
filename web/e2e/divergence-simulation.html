@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<title>三类背驰自动模拟验收</title>
+<style>html,body,#app{margin:0;width:100%;height:100%;background:#131722;color:white}</style>
+<div id="app"></div>
+<script type="module">
+  import { createApp, h, reactive, ref } from 'vue'
+  import '/src/styles.css'
+  import ChartGroup from '/src/components/ChartGroup.vue'
+  import DivergenceSimulationPanel from '/src/components/DivergenceSimulationPanel.vue'
+  import SimulationSpeedBar from '/src/components/SimulationSpeedBar.vue'
+  const chart = ref(null), panel = ref(null)
+  const props = reactive(window.simulationFixtureProps)
+  const controls = reactive({ active: false, ready: false, playing: false, speed: 50, cursor: 0, to: 1000 })
+  createApp({ render: () => h('div', { style: 'height:100%;display:flex;flex-direction:column' }, [
+    controls.active && h(SimulationSpeedBar, { ...controls, onSpeed: n => panel.value.setSpeed(n), onPlay: () => panel.value.togglePlay(), onStep: () => panel.value.step(), onExit: () => panel.value.exit() }),
+    h(ChartGroup, { ...props, ref: chart, style: 'flex:1;min-height:0' }),
+    h(DivergenceSimulationPanel, { ref: panel, dataset: props.dataset, style: 'height:280px;overflow:auto',
+      followCursor: n => chart.value.followReplay(n), onControls: value => Object.assign(controls, value),
+      onUpdate: value => Object.assign(props, { replayCursor: value.cursor, replayObjects: value.objects, replaySignals: value.signals }),
+    }),
+  ]) }).mount('#app')
+</script>
+</html>

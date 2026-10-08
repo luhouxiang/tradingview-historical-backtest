@@ -193,6 +193,20 @@ button:disabled { color: #787b86; }
 .replay-panel input, .replay-panel select { width: 100px; padding: 4px 6px; border: 1px solid #363a45; border-radius: 3px; background: #131722; color: #d1d4dc; }
 .replay-panel button { border: 1px solid #363a45; background: #2a2e39; cursor: pointer; }
 .replay-panel .issue { color: #f23645; }
+.simulation-chart { display: flex; flex-direction: column; overflow: hidden; }
+.simulation-chart > .chart-group { flex: 1; min-height: 0; }
+.simulation-speed-bar { flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 6px 10px; background: #1e2532; color: #d1d4dc; }
+.simulation-speed-bar input[type=range] { flex: 1; min-width: 160px; max-width: 420px; accent-color: #2962ff; }
+.simulation-speed-bar button { color: #d1d4dc; background: #2a2e39; border: 1px solid #434956; padding: 4px 8px; cursor: pointer; }
+.simulation-panel p { margin: 0; color: #9faec5; }
+.simulation-panel .simulation-logic { color: #e6cb6e; }
+.simulation-panel input[type=checkbox] { width: auto; }
+.simulation-fills { width: 100%; border-collapse: collapse; font-size: 12px; }
+.simulation-fills td, .simulation-fills th { padding: 5px 8px; text-align: left; border-bottom: 1px solid #363a45; }
+.simulation-fills tbody tr { cursor: pointer; }
+.simulation-fills tbody tr:hover { background: #252e40; }
+.simulation-fills tbody tr.selected { background: #193c69; color: #fff; }
+.simulation-fills tbody tr:focus-visible { outline: 1px solid #659dff; outline-offset: -1px; }
 .backtest-panel { display: grid; gap: 10px; }
 .backtest-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .backtest-controls label { display: flex; align-items: center; gap: 4px; }
@@ -408,3 +422,9 @@ button:disabled { color: #787b86; }
   .workspace-body { grid-template-columns: 48px minmax(240px, 1fr); }
   .right-dock, .workspace-splitter { display: none; }
 }
+
+.training-date-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 0; }
+.training-date-controls input[type=date] { width: 156px; }
+.simulation-details summary { cursor: pointer; color: #9faec5; }
+.simulation-details[open] { padding-bottom: 6px; }
+.simulation-window-host { min-height: 100vh; padding: 12px; box-sizing: border-box; background: #131722; color: #d1d4dc; }

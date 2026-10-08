@@ -23,9 +23,18 @@ from tvbt.optimization import run_study
 from tvbt.replay import generate_replay
 from tvbt.research import run_research_study
 from tvbt.storage.path_guard import PathGuard
+from tvbt.training import TrainingStore
 
 ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
-VALID_KINDS = {"calculation", "replay", "backtest", "optimization", "comparison", "research"}
+VALID_KINDS = {
+    "calculation",
+    "replay",
+    "backtest",
+    "optimization",
+    "comparison",
+    "research",
+    "training",
+}
 
 
 class InternalServer(ThreadingHTTPServer):
@@ -39,6 +48,10 @@ class InternalServer(ThreadingHTTPServer):
         self.structured_logger = logger
         set_runtime_logger(logger)
         self.guard = guard or PathGuard(Path.cwd() / ".tvbt-test-data")
+        self.training = TrainingStore(self.guard)
+
+    def run_training(self, job_id: str) -> None:
+        self.jobs.run(job_id, self.training.command)
 
     def run_calculation(self, job_id: str) -> None:
         self.jobs.run(job_id, lambda value, event: calculate(value, self.guard, event))
@@ -234,6 +247,12 @@ class InternalHandler(BaseHTTPRequestHandler):
             elif kind == "research":
                 threading.Thread(
                     target=self.server.run_research,
+                    args=(job_id,),
+                    daemon=True,
+                ).start()
+            elif kind == "training":
+                threading.Thread(
+                    target=self.server.run_training,
                     args=(job_id,),
                     daemon=True,
                 ).start()

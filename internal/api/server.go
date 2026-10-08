@@ -26,6 +26,7 @@ import (
 	"github.com/tvbt/tradingview-historical-backtest/internal/pythonclient"
 	"github.com/tvbt/tradingview-historical-backtest/internal/replay"
 	"github.com/tvbt/tradingview-historical-backtest/internal/research"
+	"github.com/tvbt/tradingview-historical-backtest/internal/training"
 	"github.com/tvbt/tradingview-historical-backtest/internal/workspace"
 )
 
@@ -49,6 +50,7 @@ type Server struct {
 	calculations    *calculation.Service
 	replays         *replay.Service
 	backtests       *backtest.Service
+	training        *training.Service
 	optimization    *optimization.Service
 	comparisons     *comparison.Service
 	research        *research.Service
@@ -88,6 +90,10 @@ func WithReplays(service *replay.Service) Option {
 
 func WithBacktests(service *backtest.Service) Option {
 	return func(server *Server) { server.backtests = service }
+}
+
+func WithTraining(service *training.Service) Option {
+	return func(server *Server) { server.training = service }
 }
 
 func WithOptimization(service *optimization.Service) Option {
@@ -139,6 +145,9 @@ func NewServer(cfg config.Config, python *pythonclient.Client, logger, vueLogger
 	mux.HandleFunc("GET /api/v1/replays/{replay_id}", s.getReplay)
 	mux.HandleFunc("GET /api/v1/replays/{replay_id}/events", s.getReplayEvents)
 	mux.HandleFunc("POST /api/v1/backtests", s.createBacktest)
+	mux.HandleFunc("POST /api/v1/training-sessions", s.createTraining)
+	mux.HandleFunc("GET /api/v1/training-sessions/{session_id}", s.getTraining)
+	mux.HandleFunc("POST /api/v1/training-sessions/{session_id}/commands", s.commandTraining)
 	mux.HandleFunc("GET /api/v1/backtests/{run_id}", s.getBacktest)
 	mux.HandleFunc("POST /api/v1/backtests/{run_id}/cancel", s.cancelBacktest)
 	mux.HandleFunc("GET /api/v1/backtests/{run_id}/summary", s.getBacktestSummary)

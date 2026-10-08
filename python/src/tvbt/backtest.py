@@ -8,6 +8,8 @@ import platform
 import shutil
 import threading
 import uuid
+from collections.abc import Generator, Iterator
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -17,6 +19,12 @@ import pyarrow.parquet as pq
 
 from tvbt import CONTRACT_VERSION, ENGINE_VERSION
 from tvbt.chan.storage import EVENT_SCHEMA
+from tvbt.divergence_simulation import (
+    SimulationBarOpen,
+    SimulationPosition,
+    SimulationStep,
+    simulation_phases,
+)
 from tvbt.indicators import resolve
 from tvbt.logging_config.logger import LOG_METADATA_FIELDS, format_fixed_text_entry
 from tvbt.risk import (
@@ -31,7 +39,7 @@ from tvbt.risk import (
     unified_risk_overlay_definition,
 )
 from tvbt.storage.path_guard import PathGuard
-from tvbt.strategy import run_strategy
+from tvbt.strategy import StrategyBar, StrategyRun, run_strategy, validate_strategy_payload
 
 SCHEMAS = {
     "indicator_values": pa.schema([("bar_index", pa.int64()), ("ma", pa.float64())]),
@@ -620,7 +628,40 @@ def _validated_execution(value: dict[str, Any], money_scale: int) -> dict[str, A
     return {**value, "money_scale": money_scale}
 
 
-def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading.Event) -> str:
+def _simulation_event(
+    strategy: StrategyRun, object_id: str, known_at: int, fact: dict[str, Any], *, revision: int = 1
+) -> None:
+    strategy.events.append(
+        {
+            "event_seq": len(strategy.events),
+            "known_at_bar_index": known_at,
+            "object_type": "chart_event",
+            "object_id": object_id,
+            "operation": "upsert",
+            "object_revision": revision,
+            "payload_json": json.dumps(
+                {**fact, "known_at_bar_index": known_at, "object_revision": revision},
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ),
+        }
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class ExecutionStep:
+    bar_index: int
+    events: tuple[dict[str, Any], ...]
+    fills: tuple[dict[str, Any], ...]
+    orders: tuple[dict[str, Any], ...]
+    trades: tuple[dict[str, Any], ...]
+    account: dict[str, Any]
+    terminal_bar: bool = False
+
+
+def backtest_steps(
+    payload: dict[str, Any], guard: PathGuard, cancelled: threading.Event
+) -> Generator[ExecutionStep, None, str]:
     dataset = payload.get("dataset")
     algorithm = payload.get("algorithm")
     parameters = payload.get("parameters")
@@ -647,9 +688,43 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
     tick_size = int(meta["price"].get("tick_size_i64") or 1)
     money_scale = int(capital["money_scale"])
     execution = _validated_execution(execution_input, money_scale)
-    strategy = run_strategy(payload, guard, cancelled, last_bar_index=end)
-    if not strategy.bars or end > strategy.bars[-1].bar_index:
-        raise ValueError("backtest range exceeds dataset")
+    phases: Generator[SimulationBarOpen | SimulationStep, SimulationPosition | None] | None = None
+    if (
+        algorithm["algorithm_id"] == "divergence_segment_end_simulation"
+        and execution["fill_timing"] == "next_bar_open"
+    ):
+        validate_strategy_payload(payload)
+        phases = simulation_phases(payload, guard, cancelled, last_bar_index=end)
+        strategy = StrategyRun([], [], [], [], [], [], [])
+    else:
+        strategy = run_strategy(payload, guard, cancelled, last_bar_index=end)
+        if not strategy.bars or end > strategy.bars[-1].bar_index:
+            raise ValueError("backtest range exceeds dataset")
+
+    def merge_step(step: SimulationStep) -> None:
+        strategy.stage_signals.extend(step.stage_signals)
+        strategy.trade_signals.extend(step.trade_signals)
+        strategy.chart_events.extend(step.chart_events)
+        for event in step.events:
+            strategy.events.append({**event, "event_seq": len(strategy.events)})
+
+    def streaming_bars() -> Iterator[StrategyBar]:
+        assert phases is not None
+        while True:
+            try:
+                opening = next(phases)
+            except StopIteration:
+                return
+            if not isinstance(opening, SimulationBarOpen):
+                raise RuntimeError("simulation close phase must precede next open")
+            strategy.bars.append(opening.bar)
+            if opening.bar.bar_index < start:
+                closing = phases.send(None)
+                assert isinstance(closing, SimulationStep)
+                merge_step(closing)
+                continue
+            yield opening.bar
+
     risk_overlay = _risk_overlay(payload, str(dataset["data_revision"]))
     risk_config: RiskConfig | None = None
     risk_context: RiskContext | None = None
@@ -663,15 +738,23 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
         signal for signal in strategy.trade_signals if start <= signal["known_at_bar_index"] <= end
     ]
     due: dict[int, list[dict[str, Any]]] = {}
-    for signal in signals:
-        fill_index = (
-            signal["known_at_bar_index"]
-            + (1 if execution["fill_timing"] == "next_bar_open" else 0)
-            + int(execution.get("additional_delay_bars", 0))
-        )
-        due.setdefault(fill_index, []).append(signal)
+
+    def schedule(new_signals: list[dict[str, Any]] | tuple[dict[str, Any], ...]) -> None:
+        for signal in new_signals:
+            fill_index = (
+                signal["known_at_bar_index"]
+                + (1 if execution["fill_timing"] == "next_bar_open" else 0)
+                + int(execution.get("additional_delay_bars", 0))
+            )
+            due.setdefault(fill_index, []).append(signal)
+
+    schedule(signals)
     cash = int(capital["initial_cash_i64"])
     peak = cash
+    simulation_closed_count = 0
+    simulation_win_count = 0
+    simulation_realized_net = 0
+    simulation_max_drawdown = 0.0
     position: dict[str, Any] | None = None
     orders: list[dict[str, Any]] = []
     order_ids: set[str] = set()
@@ -685,10 +768,18 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
     risk_state = RiskState()
     current_trading_day: str | None = None
     day_start_equity = cash
-    bars = [bar for bar in strategy.bars if start <= bar.bar_index <= end]
+    bars: Iterator[StrategyBar] = (
+        streaming_bars()
+        if phases is not None
+        else iter([bar for bar in strategy.bars if start <= bar.bar_index <= end])
+    )
     trading_days = _trading_day_facts(guard.resolve(str(dataset["bars_path"])), start, end)
-    if len(trading_days) != len(bars):
+    if (
+        phases is None
+        and len(trading_days) != sum(start <= bar.bar_index <= end for bar in strategy.bars)
+    ) or (phases is not None and (start not in trading_days or end not in trading_days)):
         raise ValueError("backtest range has incomplete trading_day facts")
+    event_cursor = fill_cursor = order_cursor = trade_cursor = 0
     for bar in bars:
         if cancelled.is_set():
             raise InterruptedError("backtest cancelled")
@@ -989,6 +1080,11 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
                             }
                         )
                     cash += gross_total - commission
+                    if algorithm["algorithm_id"] == "divergence_segment_end_simulation":
+                        closed = [trade for trade in trades if trade["exit_order_id"] == order_id]
+                        simulation_closed_count += len(closed)
+                        simulation_win_count += sum(trade["net_pnl_i64"] > 0 for trade in closed)
+                        simulation_realized_net += sum(trade["net_pnl_i64"] for trade in closed)
                     if _position_quantity(position) == 0:
                         position = None
             else:
@@ -1007,6 +1103,21 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
                     "reason_code": reason,
                 }
             )
+            if algorithm["algorithm_id"] == "divergence_segment_end_simulation" and status not in {
+                "filled",
+                "partially_filled",
+            }:
+                _simulation_event(
+                    strategy,
+                    order_id,
+                    bar.bar_index,
+                    {
+                        **orders[-1],
+                        "event_type": "simulation_order_rejected",
+                        "bar_index": bar.bar_index,
+                        "timestamp_utc": bar.timestamp_utc,
+                    },
+                )
             if status in {"filled", "partially_filled"}:
                 total_commission += commission
                 total_slippage += slippage_cost
@@ -1023,6 +1134,65 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
                         "slippage_i64": slippage_cost,
                     }
                 )
+                if algorithm["algorithm_id"] == "divergence_segment_end_simulation":
+                    fill = fills[-1]
+                    labels = {
+                        "open_long": "买入开多",
+                        "open_short": "卖出开空",
+                        "close_long": "卖出平多",
+                        "close_short": "买入平空",
+                    }
+                    fill_payload = {
+                        **fill,
+                        "known_at_bar_index": bar.bar_index,
+                        "event_type": "simulation_fill",
+                        "display_label": labels.get(action, action),
+                        "reason_code": signal["reason_code"],
+                        "signal_id": signal["signal_id"],
+                        "contract_symbol": str(
+                            meta.get("instrument", {}).get("symbol", dataset["dataset_id"])
+                        ),
+                        "position_after_side": "flat" if position is None else position["side"],
+                        "position_after_quantity": _position_quantity(position),
+                        "closed_gross_pnl_i64": (
+                            sum(
+                                trade["gross_pnl_i64"]
+                                for trade in trades
+                                if trade["exit_order_id"] == order_id
+                            )
+                            if closes_position or reduces_position
+                            else None
+                        ),
+                        "closed_net_pnl_i64": (
+                            sum(
+                                trade["net_pnl_i64"]
+                                for trade in trades
+                                if trade["exit_order_id"] == order_id
+                            )
+                            if closes_position or reduces_position
+                            else None
+                        ),
+                    }
+                    _simulation_event(strategy, fill["fill_id"], bar.bar_index, fill_payload)
+        if phases is not None:
+            source_segment = None
+            if position is not None:
+                entry_id = position["lots"][0]["entry_signal_id"]
+                source_segment = next(
+                    (
+                        item.get("segment_object_id")
+                        for item in strategy.trade_signals
+                        if item["signal_id"] == entry_id
+                    ),
+                    None,
+                )
+            closing = phases.send(
+                SimulationPosition("flat" if position is None else position["side"], source_segment)
+            )
+            assert isinstance(closing, SimulationStep)
+            merge_step(closing)
+            signals.extend(closing.trade_signals)
+            schedule(closing.trade_signals)
         position_quantity = _position_quantity(position)
         unrealized = _position_unrealized(
             position,
@@ -1072,6 +1242,31 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
                 "drawdown": drawdown,
             }
         )
+        if algorithm["algorithm_id"] == "divergence_segment_end_simulation":
+            simulation_max_drawdown = max(simulation_max_drawdown, drawdown)
+            _simulation_event(
+                strategy,
+                "SIM-ACCOUNT",
+                bar.bar_index,
+                {
+                    **equity[-1],
+                    "event_type": "simulation_account",
+                    "position_side": "flat" if position is None else position["side"],
+                    "position_quantity": position_quantity,
+                    "unrealized_pnl_i64": unrealized,
+                    "net_pnl_i64": equity_value - int(capital["initial_cash_i64"]),
+                    "realized_net_pnl_i64": simulation_realized_net,
+                    "closed_trade_count": simulation_closed_count,
+                    "win_count": simulation_win_count,
+                    "win_rate": None
+                    if simulation_closed_count == 0
+                    else simulation_win_count / simulation_closed_count,
+                    "total_commission_i64": total_commission,
+                    "total_slippage_i64": total_slippage,
+                    "max_drawdown": simulation_max_drawdown,
+                },
+                revision=bar.bar_index + 1,
+            )
         if risk_config is not None and risk_context is not None and market_observation is not None:
             close_snapshot = _risk_snapshot(
                 bar_index=bar.bar_index,
@@ -1100,12 +1295,27 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
                     signal=None,
                     requested_execution_bar_index=bar.bar_index,
                 )
+        if bar.bar_index < end:
+            yield ExecutionStep(
+                bar.bar_index,
+                tuple(dict(e) for e in strategy.events[event_cursor:]),
+                tuple(dict(f) for f in fills[fill_cursor:]),
+                tuple(dict(o) for o in orders[order_cursor:]),
+                tuple(dict(t) for t in trades[trade_cursor:]),
+                dict(equity[-1]),
+            )
+            event_cursor, fill_cursor, order_cursor, trade_cursor = (
+                len(strategy.events),
+                len(fills),
+                len(orders),
+                len(trades),
+            )
     for fill_index, pending in due.items():
         if fill_index <= end:
             continue
         for signal in pending:
             if risk_context is not None:
-                final_bar = bars[-1]
+                final_bar = strategy.bars[-1]
                 final_observation = risk_context.observation_at(final_bar.bar_index)
                 _append_risk_decision(
                     risk_decisions,
@@ -1144,11 +1354,33 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
                     "reason_code": "NO_NEXT_BAR",
                 }
             )
+            if algorithm["algorithm_id"] == "divergence_segment_end_simulation":
+                _simulation_event(
+                    strategy,
+                    orders[-1]["order_id"],
+                    end,
+                    {
+                        **orders[-1],
+                        "event_type": "simulation_order_rejected",
+                        "bar_index": end,
+                    },
+                )
     strategy.events.sort(
         key=lambda event: (int(event["known_at_bar_index"]), int(event["event_seq"]))
     )
     for event_seq, event in enumerate(strategy.events):
         event["event_seq"] = event_seq
+    yield ExecutionStep(
+        end,
+        tuple(dict(e) for e in strategy.events[event_cursor:]),
+        tuple(dict(f) for f in fills[fill_cursor:]),
+        tuple(dict(o) for o in orders[order_cursor:]),
+        tuple(dict(t) for t in trades[trade_cursor:]),
+        dict(equity[-1]),
+        terminal_bar=True,
+    )
+    if cancelled.is_set():
+        raise InterruptedError("backtest cancelled before final commit")
     _attribute_trades(trades, strategy.trade_signals, strategy.events)
     daily_returns = _daily_returns(int(capital["initial_cash_i64"]), equity)
     summary = _summary(
@@ -1207,6 +1439,7 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
             "aux_macd_zero_axis_defense",
             "third_point_migration_macd_regime",
             "first_centre_B3_macd_regime",
+            "divergence_segment_end_simulation",
         }:
             dependency_ids = ["macd"]
         elif algorithm["algorithm_id"] == "aux_boll_bardo_warning":
@@ -1283,6 +1516,15 @@ def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading
         if temporary.exists():
             shutil.rmtree(temporary)
     return guard.relative(output)
+
+
+def run_backtest(payload: dict[str, Any], guard: PathGuard, cancelled: threading.Event) -> str:
+    driver = backtest_steps(payload, guard, cancelled)
+    while True:
+        try:
+            next(driver)
+        except StopIteration as finished:
+            return str(finished.value)
 
 
 def _formal_log_events(

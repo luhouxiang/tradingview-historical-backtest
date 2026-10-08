@@ -3,6 +3,19 @@ import type { CausalEvent } from '../types/api'
 import { ReplayEventIndex } from './eventIndex'
 
 describe('ReplayEventIndex', () => {
+  it('appends training deltas without exposing future or partially accepting invalid order', () => {
+    const event = (seq:number,known:number,id:string):CausalEvent => ({event_seq:seq,known_at_bar_index:known,object_type:'chart_event',object_id:id,operation:'upsert',object_revision:1,payload:{event_type:'simulation_fill',bar_index:known}})
+    const index = new ReplayEventIndex([event(1,3,'first')])
+    index.seek(3)
+    index.append([event(2,6,'second')])
+    index.seek(5)
+    expect(index.signals()).toHaveLength(1)
+    expect(()=>index.append([event(3,7,'uncommitted'),event(2,8,'invalid')])).toThrow('训练事件增量顺序不一致')
+    index.seek(8)
+    expect(index.signals()).toHaveLength(2)
+    index.seek(3)
+    expect(index.signals()).toHaveLength(1)
+  })
   it('replays preview revisions and withdrawal without exposing a trading signal', () => {
     const index = new ReplayEventIndex([
       { event_seq: 1, known_at_bar_index: 17, object_type: 'center_audit_event', object_id: 'preview', operation: 'upsert', object_revision: 1, payload: { event_type: 'PREVIEW_UPDATED', preview_state: 'RETEST_PENDING', preview_confirmed: false } },

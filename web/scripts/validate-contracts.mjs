@@ -81,6 +81,11 @@ for (const [examplePath, schemaName] of [
   ['examples/study-job.json', 'StudyRequest'],
   ['examples/research-study-job.json', 'ResearchStudyRequest'],
   ['examples/chan-calculation-results.json', 'CalculationResults'],
+  ['examples/training-command.json', 'TrainingCommand'],
+  ['examples/training-snapshot.json', 'TrainingSnapshot'],
+  ['examples/training-create.json', 'TrainingCreateRequest'],
+  ['examples/training-accepted.json', 'TrainingAccepted'],
+  ['examples/training-status.json', 'TrainingStatus'],
 ]) {
   const example = await json(examplePath)
   const schema = dereferenced.components.schemas[schemaName]
@@ -90,4 +95,16 @@ for (const [examplePath, schemaName] of [
   }
 }
 
-console.log('OpenAPI and 24 contract examples validated successfully.')
+const trainingCommandValidator = ajv.compile(dereferenced.components.schemas.TrainingCommand)
+for (const invalid of [
+  {session_id:'session',operation_id:'operation',action:'advance',count:1},
+  {session_id:'session',operation_id:'operation',action:'advance',expected_cursor:0,count:101},
+  {session_id:'session',operation_id:'operation',action:'seek',expected_cursor:0},
+]) {
+  if (trainingCommandValidator(invalid)) throw new Error('Invalid training control passed its schema')
+}
+const trainingStatusValidator = ajv.compile(dereferenced.components.schemas.TrainingStatus)
+if (!trainingStatusValidator({request_id:'request',session_id:'training-example',job_id:'job',status:'completed',snapshot:await json('examples/training-snapshot.json')})) {
+  throw new Error(`Completed training status failed schema: ${ajv.errorsText(trainingStatusValidator.errors)}`)
+}
+console.log('OpenAPI and 29 contract examples plus training control/status edge cases validated successfully.')

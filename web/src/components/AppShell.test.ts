@@ -11,7 +11,8 @@ const api = vi.hoisted(() => ({
   getStrategySourceConfig: vi.fn(), putStrategySourceConfig: vi.fn(),
   cancelCalculation: vi.fn(), listAlgorithms: vi.fn(), createCalculation: vi.fn(), getCalculation: vi.fn(), getCalculationResults: vi.fn(),
   createReplay: vi.fn(), getReplay: vi.fn(), getReplayEvents: vi.fn(),
-  createBacktest: vi.fn(), getBacktest: vi.fn(), getBacktestSummary: vi.fn(), getBacktestTrades: vi.fn(), getBacktestEquity: vi.fn(), getBacktestChartEvents: vi.fn(),
+  cancelBacktest: vi.fn(), createBacktest: vi.fn(), getBacktest: vi.fn(), getBacktestSummary: vi.fn(), getBacktestTrades: vi.fn(), getBacktestEquity: vi.fn(), getBacktestChartEvents: vi.fn(),
+  createTrainingSession:vi.fn(), getTrainingSession:vi.fn(), commandTrainingSession:vi.fn(), cancelJob:vi.fn(),
   createStudy: vi.fn(), getStudy: vi.fn(), getStudyEvaluations: vi.fn(),
   getDataset: vi.fn(), getJob: vi.fn(), getSourceFiles: vi.fn(), importSource: vi.fn(),
   listDatasets: vi.fn(), startDatasetScan: vi.fn(),
@@ -27,6 +28,7 @@ const dataset = {
 } as DatasetMeta
 const focusSignalMock = vi.fn()
 const focusBarMock = vi.fn()
+const followReplayMock = vi.fn().mockResolvedValue(undefined)
 
 class FakeBroadcastChannel {
   static instances: FakeBroadcastChannel[] = []
@@ -45,6 +47,7 @@ const ChartStub = defineComponent({
       restoreLayout: vi.fn(),
       focusSignal: focusSignalMock,
       focusBar: focusBarMock,
+      followReplay: followReplayMock,
     })
     return () => h('div', 'chart')
   },
@@ -77,6 +80,50 @@ function chanDefinition(): AlgorithmDefinition {
 
 describe('AppShell', () => {
   afterEach(() => vi.unstubAllGlobals())
+  it('opens simulation in a separate document without expanding the bottom dock and keeps chart controls linked', async () => {
+    const focusWindow=vi.spyOn(window,'focus').mockImplementation(()=>undefined)
+    const popupDocument=document.implementation.createHTMLDocument('simulation')
+    const popup={document:popupDocument,closed:false,focus:vi.fn(),close:vi.fn()}
+    const opened=vi.spyOn(window,'open').mockReturnValue(popup as unknown as Window)
+    api.getLayout.mockRejectedValue(new ApiError('WORKSPACE_NOT_FOUND', 'missing', 'req-layout'))
+    api.getDrawings.mockRejectedValue(new ApiError('DRAWINGS_NOT_FOUND', 'missing', 'req-drawings'))
+    api.listAlgorithms.mockResolvedValue([{ ...indicatorDefinition('ma'), kind:'strategy', algorithm_id:'divergence_segment_end_simulation' }])
+    let current=0,job='create'
+    api.createTrainingSession.mockResolvedValue({session_id:'sim-app',job_id:job,status:'queued'})
+    api.commandTrainingSession.mockImplementation(async request=>{ current+=request.count??0;job=request.operation_id;return {session_id:'sim-app',job_id:job,status:'queued'} })
+    api.getTrainingSession.mockImplementation(async ()=>({session_id:'sim-app',job_id:job,status:'completed',snapshot:{session_id:'sim-app',dataset_id:dataset.dataset_id,data_revision:dataset.data_revision,cursor:current,processed_until_bar_index:current,reset:current===0,state:'live',events:[],account:{equity_i64:10000,available_i64:10000}}}))
+    const wrapper = mount(AppShell, { props: { health:'ok' }, global: { stubs: { ChartGroup:ChartStub, DatasetPanel:true } } })
+    wrapper.findComponent({ name:'DatasetPanel' }).vm.$emit('selected', dataset)
+    await flushPromises()
+    expect(wrapper.findComponent({ name:'ReplayPanel' }).exists()).toBe(false)
+    await wrapper.get('[aria-label="打开独立自动交易模拟窗口"]').trigger('click')
+    await flushPromises()
+    const panel=wrapper.findComponent({name:'DivergenceSimulationPanel'})
+    expect(wrapper.find('.bottom-dock.expanded').exists()).toBe(false)
+    expect(wrapper.find('.simulation-panel').exists()).toBe(false)
+    expect(popupDocument.querySelector('.simulation-panel')).not.toBeNull()
+    await panel.get('.replay-range button').trigger('click'); await flushPromises()
+    expect(wrapper.get('[aria-label="模拟回放速度"]').attributes('value')).toBe('50')
+    await wrapper.get('[aria-label="打开独立自动交易模拟窗口"]').trigger('click')
+    expect(opened).toHaveBeenCalledTimes(1)
+    expect(popup.focus).toHaveBeenCalledTimes(2)
+    await wrapper.get('.simulation-speed-bar button:nth-child(2)').trigger('click'); await flushPromises()
+    expect(followReplayMock).toHaveBeenLastCalledWith(1)
+    expect(wrapper.get('.simulation-speed-bar').text()).toContain('K1 / 100')
+    const fill={object_id:'sim-fill',object_type:'chart_event',event_type:'simulation_fill',bar_index:1,timestamp_utc:1700000300000,price_i64:3001,action:'open_short',quantity:1}
+    panel.vm.$emit('update',{cursor:1,objects:null,signals:[fill]})
+    panel.vm.$emit('focusFill',fill);await flushPromises()
+    expect(focusSignalMock).toHaveBeenLastCalledWith(expect.objectContaining({object_id:'sim-fill',bar_index:1,time:1700000300000,price_i64:3001,label:'卖出'}))
+    expect(wrapper.findComponent(ChartStub).props('selectedSignal')).toMatchObject({object_id:'sim-fill'})
+    panel.vm.$emit('focusFill',{...fill,object_id:'future-fill',bar_index:2});await flushPromises()
+    expect(wrapper.findComponent(ChartStub).props('selectedSignal')).toBeNull()
+    await wrapper.get('.simulation-speed-bar button:last-child').trigger('click')
+    expect(wrapper.find('.simulation-speed-bar').exists()).toBe(false)
+    wrapper.unmount()
+    expect(popup.close).toHaveBeenCalled()
+    opened.mockRestore()
+    focusWindow.mockRestore()
+  })
   it('routes the keyboard K-line command to the active chart without changing object selection', async () => {
     api.getLayout.mockRejectedValue(new ApiError('WORKSPACE_NOT_FOUND', 'missing', 'req-layout'))
     api.getDrawings.mockRejectedValue(new ApiError('DRAWINGS_NOT_FOUND', 'missing', 'req-drawings'))

@@ -32,6 +32,12 @@ export interface JobStatus {
   error?: { code: string; message: string }
 }
 
+export type TrainingSnapshot = Omit<import('./generated/api').components['schemas']['TrainingSnapshot'], 'events'> & { events: CausalEvent[] }
+export type TrainingCommand = import('./generated/api').components['schemas']['TrainingCommand']
+export type TrainingAccepted = import('./generated/api').components['schemas']['TrainingAccepted']
+export type TrainingStatus = Omit<import('./generated/api').components['schemas']['TrainingStatus'], 'snapshot'> & { snapshot: TrainingSnapshot | null }
+export type TrainingCreateRequest = { operation_id: string; backtest: BacktestRequest }
+
 export interface SourceFile {
   source_file_id: string
   path: string

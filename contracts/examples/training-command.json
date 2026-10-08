@@ -1,0 +1,7 @@
+{
+  "session_id": "training-example",
+  "operation_id": "advance-01",
+  "action": "advance",
+  "expected_cursor": 357,
+  "count": 1
+}

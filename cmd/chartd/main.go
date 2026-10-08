@@ -29,6 +29,7 @@ import (
 	"github.com/tvbt/tradingview-historical-backtest/internal/replay"
 	"github.com/tvbt/tradingview-historical-backtest/internal/research"
 	"github.com/tvbt/tradingview-historical-backtest/internal/storage"
+	"github.com/tvbt/tradingview-historical-backtest/internal/training"
 	"github.com/tvbt/tradingview-historical-backtest/internal/workspace"
 )
 
@@ -96,11 +97,12 @@ func main() {
 	calculationService := calculation.NewService(guard, catalogStore, python, jobManager, cfg.App.ContractVersion, cfg.PythonJobPollInterval())
 	replayService := replay.NewService(guard, catalogStore, python, jobManager, cfg.App.ContractVersion, cfg.PythonJobPollInterval())
 	backtestService := backtest.NewService(guard, datasetService, python, jobManager, cfg.App.ContractVersion, cfg.PythonJobPollInterval())
+	trainingService := training.NewService(guard, backtestService, python, jobManager, cfg.App.ContractVersion, cfg.PythonJobPollInterval())
 	optimizationService := optimization.NewService(guard, datasetService, python, jobManager, cfg.App.ContractVersion, cfg.PythonJobPollInterval())
 	comparisonService := comparison.NewService(guard, datasetService, python, jobManager, cfg.App.ContractVersion, cfg.PythonJobPollInterval())
 	researchService := research.NewService(guard, datasetService, python, jobManager, cfg.App.ContractVersion, cfg.PythonJobPollInterval())
 	workspaceStore := workspace.NewStore(guard)
-	handler := api.NewServer(cfg, python, logger, vueLogger, api.WithDatasets(datasetService, jobManager), api.WithBarReader(barReader), api.WithCalculations(calculationService), api.WithReplays(replayService), api.WithBacktests(backtestService), api.WithOptimization(optimizationService), api.WithComparisons(comparisonService), api.WithResearch(researchService), api.WithWorkspace(workspaceStore)).Handler()
+	handler := api.NewServer(cfg, python, logger, vueLogger, api.WithDatasets(datasetService, jobManager), api.WithBarReader(barReader), api.WithCalculations(calculationService), api.WithReplays(replayService), api.WithBacktests(backtestService), api.WithTraining(trainingService), api.WithOptimization(optimizationService), api.WithComparisons(comparisonService), api.WithResearch(researchService), api.WithWorkspace(workspaceStore)).Handler()
 	if *webRoot != "" {
 		handler, err = withWebUI(handler, *webRoot)
 		if err != nil {

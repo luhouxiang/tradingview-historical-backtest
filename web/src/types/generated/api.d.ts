@@ -774,6 +774,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/training-sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 准备策略复盘训练，只执行到起始K线 */
+        post: operations["createTrainingSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/training-sessions/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 获取最近已提交的训练命令快照及任务状态 */
+        get: operations["getTrainingSession"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/training-sessions/{session_id}/commands": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 异步推进、回看或取消训练；暂停不发推进命令 */
+        post: operations["commandTrainingSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/internal/v1/job-submissions/{job_kind}": {
         parameters: {
             query?: never;
@@ -2078,6 +2129,58 @@ export interface components {
                 [key: string]: unknown;
             };
             output_path: string;
+            training?: components["schemas"]["TrainingCommand"];
+        };
+        TrainingCreateRequest: {
+            operation_id: string;
+            backtest: components["schemas"]["BacktestRequest"];
+        };
+        TrainingAccepted: {
+            request_id: string;
+            session_id: string;
+            job_id: string;
+            /** @enum {unknown} */
+            status: "queued" | "running" | "cancelling" | "completed" | "failed" | "cancelled" | "interrupted";
+        };
+        TrainingStatus: {
+            request_id: string;
+            session_id: string;
+            job_id: string;
+            /** @enum {unknown} */
+            status: "queued" | "running" | "cancelling" | "completed" | "failed" | "cancelled" | "interrupted";
+            snapshot: components["schemas"]["TrainingSnapshot"] | null;
+            error?: components["schemas"]["Error"];
+        };
+        /** @description Internal per-command asynchronous training operation. The enclosing job retains the pinned normalized dataset, algorithm, parameters, range and execution facts. output_path is an immutable command snapshot directory under runs/training/session_id/commands/job_id, not the formal run path. create processes only through from_bar_index. advance processes at most count bars; seek only views already processed bars and never re-executes orders. Cancel preserves the known prefix without a completed run marker. A paused session occupies no engine admission slot. Session state is process-local: restarting Python interrupts rather than silently resumes it. */
+        TrainingCommand: {
+            session_id: string;
+            operation_id: string;
+            /** @enum {unknown} */
+            action: "create" | "advance" | "seek" | "cancel";
+            expected_cursor?: number;
+            count?: number;
+            target_bar_index?: number;
+        } & (unknown & unknown & unknown);
+        /** @description Python-authored known prefix. reset=true replaces the client's event history; otherwise events are new causal deltas. The account is the latest simulation_account payload at cursor, not the final report. completed requires committing the formal run and verifying _SUCCESS; reaching its terminal bar alone is insufficient. Identical operation IDs return their original immutable snapshot without repeating execution. */
+        TrainingSnapshot: {
+            session_id: string;
+            operation_id: string;
+            dataset_id: string;
+            data_revision: string;
+            run_id: string;
+            run_signature: string;
+            from_bar_index: number;
+            to_bar_index: number;
+            cursor: number;
+            processed_until_bar_index: number;
+            /** @enum {unknown} */
+            state: "live" | "lookback" | "completed" | "cancelled" | "interrupted";
+            reset: boolean;
+            events: components["schemas"]["CausalEvent"][];
+            account: {
+                [key: string]: unknown;
+            };
+            completed_run_ref?: string;
         };
         CausalEvent: {
             event_seq: number;
@@ -2087,6 +2190,7 @@ export interface components {
             /** @enum {unknown} */
             operation: "upsert" | "delete";
             object_revision: number;
+            /** @description Python-authored causal fact. Divergence simulation fills use chart_event with event_type simulation_fill, actual fill_id, order_id, action, quantity, price_i64, commission_i64 and slippage_i64; known_at is the execution bar. A segment_end_simulation_v1 stage preserves the segment endpoint and its causal completion bar separately. New simulation fills additionally preserve contract_symbol, position_after_side (long, short or flat), position_after_quantity, closed_gross_pnl_i64 and closed_net_pnl_i64. Both closed PnL fields are null on an opening fill; closing values include the consumed entry lots and fees from the Python execution ledger, never a UI price-difference calculation. Missing legacy fields mean unavailable. A simulation_account chart_event stores the authoritative per-bar position_side, position_quantity, unrealized_pnl_i64, cash_i64, equity_i64, available_i64 and margin_i64; its stable account object is revised monotonically and only becomes visible at that bar. Its current-time training report contains net_pnl_i64, realized_net_pnl_i64, closed_trade_count, win_count, win_rate, total_commission_i64, total_slippage_i64 and max_drawdown. These are prefix statistics, not the completed run summary. */
             payload: {
                 [key: string]: unknown;
             };
@@ -4292,12 +4396,84 @@ export interface operations {
             };
         };
     };
+    createTrainingSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrainingCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Training preparation accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrainingAccepted"];
+                };
+            };
+        };
+    };
+    getTrainingSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Known training prefix, never final future results */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrainingStatus"];
+                };
+            };
+        };
+    };
+    commandTrainingSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrainingCommand"];
+            };
+        };
+        responses: {
+            /** @description Command accepted; poll the returned job before the next command */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrainingAccepted"];
+                };
+            };
+        };
+    };
     submitPythonJob: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                job_kind: "calculation" | "replay" | "backtest" | "optimization" | "comparison" | "research";
+                job_kind: "calculation" | "replay" | "backtest" | "optimization" | "comparison" | "research" | "training";
             };
             cookie?: never;
         };

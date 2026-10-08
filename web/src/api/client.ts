@@ -5,6 +5,10 @@ import type {
   BarRangeResponse,
   ErrorResponse,
   HealthResponse,
+  TrainingCreateRequest,
+  TrainingAccepted,
+  TrainingStatus,
+  TrainingCommand,
   JobAccepted,
   JobStatus,
   SourceFile,
@@ -54,6 +58,16 @@ function identifier(): string {
   return crypto.randomUUID().replaceAll('-', '')
 }
 
+export function createTrainingSession(request: TrainingCreateRequest): Promise<TrainingAccepted> {
+  return apiRequest('/api/v1/training-sessions', { method: 'POST', body: JSON.stringify(request) })
+}
+export function getTrainingSession(sessionId: string): Promise<TrainingStatus> {
+  return apiRequest(`/api/v1/training-sessions/${encodeURIComponent(sessionId)}`)
+}
+export function commandTrainingSession(command: TrainingCommand): Promise<TrainingAccepted> {
+  return apiRequest(`/api/v1/training-sessions/${encodeURIComponent(command.session_id)}/commands`, { method: 'POST', body: JSON.stringify(command) })
+}
+
 export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers)
   headers.set('Accept', 'application/json')
@@ -86,6 +100,9 @@ export function startDatasetScan(): Promise<JobAccepted> {
 
 export function getJob(jobId: string): Promise<JobStatus> {
   return apiRequest<JobStatus>(`/api/v1/jobs/${encodeURIComponent(jobId)}`)
+}
+export function cancelJob(jobId: string): Promise<JobStatus> {
+  return apiRequest(`/api/v1/jobs/${encodeURIComponent(jobId)}/cancel`, { method:'POST' })
 }
 
 export async function getSourceFiles(): Promise<SourceFile[]> {
@@ -214,6 +231,10 @@ export async function getBacktestEquity(runId: string): Promise<EquityRow[]> {
 export async function getBacktestChartEvents(runId: string): Promise<CausalEvent[]> {
   const response = await apiRequest<{ request_id: string; run_id: string; events: CausalEvent[] }>(`/api/v1/backtests/${encodeURIComponent(runId)}/chart-events`)
   return response.events
+}
+
+export function cancelBacktest(runId: string): Promise<unknown> {
+  return apiRequest(`/api/v1/backtests/${encodeURIComponent(runId)}/cancel`, { method: 'POST' })
 }
 
 export function createStrategyComparison(request: StrategyComparisonRequest): Promise<StrategyComparisonAccepted> {

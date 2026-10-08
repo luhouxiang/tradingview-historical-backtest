@@ -264,6 +264,32 @@ def trend_divergence_reversal_definition() -> dict[str, Any]:
     )
 
 
+def divergence_simulation_definition() -> dict[str, Any]:
+    from tvbt.divergence_simulation import source_hash
+
+    value = _chan_strategy_definition(
+        "divergence_segment_end_simulation",
+        "三类背驰段结束自动模拟",
+        "背驰模拟",
+        algorithm_version="1.2.0",
+        dependency_source_hashes=(
+            source_hash(),
+            "sha256:"
+            + hashlib.sha256(Path(__file__).with_name("backtest.py").read_bytes()).hexdigest(),
+        ),
+    )
+    value["parameter_schema"]["properties"].update(
+        {
+            "enable_trend": {"type": "boolean", "default": True},
+            "enable_consolidation": {"type": "boolean", "default": True},
+            "enable_oscillation": {"type": "boolean", "default": True},
+            "operation_quantity": {"type": "integer", "minimum": 1, "maximum": 100, "default": 1},
+            "allow_short": {"type": "boolean", "default": True},
+        }
+    )
+    return value
+
+
 def consolidation_reversion_definition() -> dict[str, Any]:
     return _chan_strategy_definition(
         "consolidation_divergence_centre_reversion",
@@ -700,6 +726,7 @@ def definitions() -> list[dict[str, Any]]:
         fixed_level_centre_definition(),
         downtrend_reversal_definition(),
         trend_divergence_reversal_definition(),
+        divergence_simulation_definition(),
         consolidation_reversion_definition(),
         third_point_migration_definition(),
         first_centre_rotation_definition(),
@@ -965,13 +992,9 @@ class StrategyRun:
     events: list[dict[str, Any]]
 
 
-def run_strategy(
+def validate_strategy_payload(
     payload: dict[str, Any],
-    guard: PathGuard,
-    cancelled: threading.Event,
-    *,
-    last_bar_index: int | None = None,
-) -> StrategyRun:
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     dataset = payload.get("dataset")
     algorithm = payload.get("algorithm")
     parameters = payload.get("parameters")
@@ -994,6 +1017,21 @@ def run_strategy(
     for key in ("kind", "algorithm_id", "algorithm_version", "source_hash"):
         if algorithm.get(key) != expected[key]:
             raise ValueError(f"strategy {key} does not match engine definition")
+    return dataset, algorithm, parameters
+
+
+def run_strategy(
+    payload: dict[str, Any],
+    guard: PathGuard,
+    cancelled: threading.Event,
+    *,
+    last_bar_index: int | None = None,
+) -> StrategyRun:
+    dataset, algorithm, parameters = validate_strategy_payload(payload)
+    if algorithm["algorithm_id"] == "divergence_segment_end_simulation":
+        from tvbt.divergence_simulation import run_simulation
+
+        return run_simulation(payload, guard, cancelled, last_bar_index=last_bar_index)
     if algorithm["algorithm_id"] == "fixed_level_centre_decision_tree":
         return _run_fixed_level_centre(payload, guard, cancelled, last_bar_index=last_bar_index)
     if algorithm["algorithm_id"] in {

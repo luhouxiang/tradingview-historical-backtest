@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import TopToolbar from './TopToolbar.vue'
 import DatasetPanel from './DatasetPanel.vue'
 import IndicatorManagerPanel from './IndicatorManagerPanel.vue'
@@ -7,6 +7,8 @@ import DrawingToolbar from './DrawingToolbar.vue'
 import ObjectTreePanel from './ObjectTreePanel.vue'
 import ChartGroup from './ChartGroup.vue'
 import ReplayPanel from './ReplayPanel.vue'
+import DivergenceSimulationPanel from './DivergenceSimulationPanel.vue'
+import SimulationSpeedBar from './SimulationSpeedBar.vue'
 import BacktestPanel from './BacktestPanel.vue'
 import OptimizationPanel from './OptimizationPanel.vue'
 import StrategyResearchPanel from './StrategyResearchPanel.vue'
@@ -29,7 +31,12 @@ const rightOpen = ref(true)
 const rightWidth = ref(320)
 const bottomOpen = ref(false)
 const bottomHeight = ref(260)
-const bottomTab = ref<'replay' | 'backtest' | 'trades' | 'equity' | 'optimization' | 'research' | 'tasks' | 'logs'>('replay')
+const bottomTab = ref<'replay' | 'simulation' | 'backtest' | 'trades' | 'equity' | 'optimization' | 'research' | 'tasks' | 'logs'>('replay')
+const simulationRef = ref<InstanceType<typeof DivergenceSimulationPanel> | null>(null)
+const simulationPopupTarget = shallowRef<HTMLElement | null>(null)
+let simulationPopup: Window | null = null
+let simulationPopupMonitor = 0
+const simulationState = ref({ active: false, ready: false, preparing:false, pendingPlay:false, status:'等待开始', playing: false, speed: 50, cursor: 0, to: 0 })
 const rightTab = ref<'datasets' | 'indicators' | 'strategies' | 'objects'>('datasets')
 const indicatorSources = ref<SeriesSource[]>([])
 const strategySources = ref<StrategySource[]>([])
@@ -39,6 +46,7 @@ const selectedDrawingId = ref<string | null>(null)
 const signalObjectsBySource = ref<Record<string, ChanTreeObject[]>>({})
 const segmentEvidenceById = ref<Record<string, ChanLineObject>>({})
 const selectedSignal = ref<ChanTreeObject | null>(null)
+const selectedSimulationFill = ref<ChanTreeObject | null>(null)
 const selectedDivergenceSegments = computed(() => {
   const signal = selectedSignal.value?.signal
   if (!signal?.divergence_kind) return null
@@ -66,7 +74,7 @@ const replayObjects = ref<ReplayObjects | null>(null)
 const replaySignals = ref<ReplaySignal[]>([])
 const visibleStrategySignals = computed<ReplaySignal[]>(() => [
   ...replaySignals.value,
-  ...strategyRunSources.value.filter((source) => source.visible).flatMap((source) => source.signals),
+  ...(simulationState.value.active ? [] : strategyRunSources.value.filter((source) => source.visible).flatMap((source) => source.signals)),
 ])
 const replaySource = computed(() => strategySources.value.find((source) => source.status === 'completed') ?? null)
 const chartRef = ref<{
@@ -74,10 +82,32 @@ const chartRef = ref<{
   restoreLayout: (value: { panes: Array<{ id: string; kind: 'price' | 'indicator'; weight: number; minHeight: number; collapsed?: boolean }> }) => void
   focusSignal: (signal: ChanTreeObject) => Promise<void>
   focusBar: (barIndex: number) => Promise<void>
+  followReplay: (barIndex: number) => Promise<void>
 } | null>(null)
 
 function focusKeyboardBar(barIndex: number): void {
   void chartRef.value?.focusBar(barIndex)
+}
+
+async function followSimulationCursor(barIndex: number): Promise<void> {
+  await chartRef.value?.followReplay(barIndex)
+}
+async function focusSimulationFill(fill: ReplaySignal | null): Promise<void> {
+  selectedSimulationFill.value = null
+  if (!fill || !simulationState.value.active || !selectedDataset.value) return
+  const barIndex = Number(fill.bar_index), time = Number(fill.timestamp_utc), price = Number(fill.price_i64)
+  if (!Number.isSafeInteger(barIndex) || !Number.isSafeInteger(time) || !Number.isSafeInteger(price)
+    || replayCursor.value === null || barIndex > replayCursor.value
+    || !replaySignals.value.some(item => item.object_id === fill.object_id)) return
+  const buy = ['open_long', 'close_short', 'add_long', 'reduce_short'].includes(String(fill.action))
+  const signal: ChanTreeObject = { object_id: fill.object_id, bar_index: barIndex, time, price_i64: price,
+    confirmed_at_bar_index: barIndex, known_at_bar_index: barIndex, object_revision: 1,
+    label: buy ? '买入' : '卖出', detail: `${fill.quantity} 手 · ${fill.object_id}` }
+  selectedSimulationFill.value = signal
+  await nextTick()
+  if (selectedSimulationFill.value?.object_id !== signal.object_id) return
+  await chartRef.value?.focusSignal(signal)
+  window.focus()
 }
 const drawingHistory = new DrawingHistory()
 const layerManager = new LayerManager()
@@ -166,6 +196,9 @@ async function createWorkspaceCalculation(request: CalculationRequest, generatio
 }
 
 onBeforeUnmount(() => {
+  window.clearInterval(simulationPopupMonitor)
+  simulationRef.value?.exit()
+  simulationPopup?.close()
   workspaceGeneration += 1
   cancelWorkspaceJobs()
   backtestWorkspaceChannel?.close()
@@ -542,6 +575,39 @@ function openBacktestWorkspace(): void {
   workspaceStatus.value = `已打开并绑定 ${dataset.dataset_id} 的回测窗口`
 }
 
+function openSimulationWorkspace(): void {
+  if (!selectedDataset.value) { workspaceStatus.value = '请先选择 K 线数据集'; return }
+  if (simulationPopup && !simulationPopup.closed && simulationPopupTarget.value) {
+    simulationPopup.focus(); bottomOpen.value = false; return
+  }
+  const popup = window.open('', 'tvbt-simulation-workspace', 'popup,width=1480,height=850,resizable=yes,scrollbars=yes')
+  if (!popup) { workspaceStatus.value = '浏览器阻止了模拟窗口，请允许本站弹出窗口'; return }
+  const document = popup.document
+  document.head.replaceChildren()
+  document.body.replaceChildren()
+  document.title = '自动交易模拟 · 策略复盘训练'
+  const base = document.createElement('base'); base.href = window.location.href
+  document.head.appendChild(base)
+  for (const style of window.document.head.querySelectorAll('style, link[rel="stylesheet"]')) document.head.appendChild(style.cloneNode(true))
+  document.body.style.margin = '0'
+  const host = document.createElement('div'); host.className = 'simulation-window-host'
+  document.body.appendChild(host)
+  simulationPopup = popup; simulationPopupTarget.value = host
+  bottomOpen.value = false
+  window.clearInterval(simulationPopupMonitor)
+  simulationPopupMonitor = window.setInterval(() => {
+    let present = false
+    try { present = !popup.closed && popup.document.body.contains(host) } catch { /* Window navigated away from this origin. */ }
+    if (present) return
+    simulationRef.value?.exit()
+    simulationPopupTarget.value = null; simulationPopup = null
+    window.clearInterval(simulationPopupMonitor)
+    workspaceStatus.value = '模拟窗口已关闭，训练已退出，记录保留'
+  }, 500)
+  popup.focus()
+  workspaceStatus.value = '自动交易模拟已在独立窗口打开'
+}
+
 onMounted(() => {
   if (!backtestWorkspaceChannel) return
   backtestWorkspaceChannel.onmessage = (event: MessageEvent<BacktestWorkspaceMessage>) => {
@@ -794,6 +860,7 @@ async function selectDataset(dataset: DatasetMeta, origin: 'automatic' | 'user' 
 }
 
 function updateReplay(value: { cursor: number | null; objects: ReplayObjects | null; signals: ReplaySignal[] }): void {
+  if (!value.signals.some(item => item.object_id === selectedSimulationFill.value?.object_id)) selectedSimulationFill.value = null
   replayCursor.value = value.cursor
   replayObjects.value = value.objects
   replaySignals.value = value.signals
@@ -815,7 +882,7 @@ function snapshotWorkspaceLayout(): WorkspaceLayout | null {
       width: rightWidth.value, collapsed: !rightOpen.value,
       active_tab: rightTab.value === 'objects' ? 'object_tree' : rightTab.value === 'indicators' || rightTab.value === 'strategies' ? 'strategy_params' : 'watchlist',
     },
-    bottom_panel: { height: bottomHeight.value, collapsed: !bottomOpen.value, active_tab: bottomTab.value },
+    bottom_panel: { height: bottomHeight.value, collapsed: !bottomOpen.value, active_tab: bottomTab.value === 'simulation' ? 'replay' : bottomTab.value },
     object_order: [
       { id: 'series-candles', pane_id: 'price', z_band: 300, order_in_band: 0, visible: true, locked: true },
       ...drawings.value.map((drawing) => ({ id: drawing.id, pane_id: drawing.pane_id, z_band: drawing.z_band, order_in_band: drawing.order_in_band, visible: drawing.visible, locked: drawing.locked })),
@@ -1003,12 +1070,15 @@ function resizeBottom(event: PointerEvent): void {
         @update:tool="drawingTool = $event" @update:magnet="magnet = $event" @update:keep-mode="keepDrawingMode = $event"
         @lock-all="lockAll" @hide-all="hideAll" @delete-selected="deleteSelected" @delete-all="deleteAll"
       />
-      <section class="chart-workspace" aria-label="图表工作区">
+      <section class="chart-workspace" :class="{ 'simulation-chart': simulationState.active }" aria-label="图表工作区">
+        <SimulationSpeedBar v-if="simulationState.active" v-bind="simulationState"
+          @speed="simulationRef?.setSpeed($event)" @play="simulationRef?.togglePlay()"
+          @step="simulationRef?.step()" @exit="simulationRef?.exit()" />
         <ChartGroup
           ref="chartRef" :dataset="selectedDataset" :indicator-sources="indicatorSources"
           :strategy-sources="strategySources" :replay-cursor="replayCursor" :replay-objects="replayObjects" :replay-signals="visibleStrategySignals"
           :drawings="drawings" :selected-drawing-id="selectedDrawingId" :drawing-tool="drawingTool"
-          :selected-signal="selectedSignal" :selected-divergence-segments="selectedDivergenceSegments" :signal-locked="lockedSignalId === selectedSignal?.object_id"
+          :selected-signal="simulationState.active ? selectedSimulationFill : selectedSignal" :selected-divergence-segments="simulationState.active ? null : selectedDivergenceSegments" :signal-locked="simulationState.active ? !!selectedSimulationFill : lockedSignalId === selectedSignal?.object_id"
           :magnet="magnet" :keep-drawing-mode="keepDrawingMode"
           @update:drawings="commitDrawings" @update:selected-drawing-id="selectedDrawingId = $event" @update:drawing-tool="drawingTool = $event"
           @select:signal="selectChartSignal"
@@ -1032,8 +1102,8 @@ function resizeBottom(event: PointerEvent): void {
         />
         <div v-else-if="rightTab === 'strategies'" class="empty-panel">交易策略参数在回放、回测和优化面板中管理。</div>
         <ObjectTreePanel
-          v-else :dataset="selectedDataset" :drawings="drawings" :sources="indicatorSources" :strategy-sources="strategySources" :strategy-run-sources="strategyRunSources"
-          :signals-by-source="signalObjectsBySource" :signals-loading="signalLoading"
+          v-else :dataset="selectedDataset" :drawings="drawings" :sources="indicatorSources" :strategy-sources="strategySources" :strategy-run-sources="simulationState.active ? [] : strategyRunSources"
+          :signals-by-source="simulationState.active ? {} : signalObjectsBySource" :signals-loading="signalLoading"
           :selected-id="selectedDrawingId" :selected-signal-id="selectedSignal?.object_id ?? null" :locked-signal-id="lockedSignalId"
           @patch-drawing="patchDrawing" @remove-drawing="removeDrawing" @reorder-drawing="reorderDrawing" @select-drawing="selectDrawingObject"
           @patch-strategy="patchStrategy" @remove-strategy="removeStrategy" @select-signal="selectSignal" @lock-signal="toggleSignalLock"
@@ -1044,6 +1114,7 @@ function resizeBottom(event: PointerEvent): void {
       <button v-if="bottomOpen" class="bottom-splitter" aria-label="调整底部面板高度" @pointerdown="resizeBottom" />
       <nav>
         <button :class="{ active: bottomTab === 'replay' }" @click="bottomTab = 'replay'; bottomOpen = true">回放</button>
+        <button :class="{ active: !!simulationPopupTarget }" aria-label="打开独立自动交易模拟窗口" @click="openSimulationWorkspace">自动交易模拟 ↗</button>
         <button aria-label="打开独立回测工作区" @click="openBacktestWorkspace">回测 ↗</button>
         <button :class="{ active: bottomTab === 'trades' }" @click="bottomTab = 'trades'; bottomOpen = true">交易</button>
         <button :class="{ active: bottomTab === 'equity' }" @click="bottomTab = 'equity'; bottomOpen = true">权益</button>
@@ -1051,14 +1122,18 @@ function resizeBottom(event: PointerEvent): void {
         <button :class="{ active: bottomTab === 'research' }" @click="bottomTab = 'research'; bottomOpen = true; bottomHeight = Math.max(bottomHeight, 420)">策略研究</button>
         <button @click="bottomOpen = !bottomOpen">{{ bottomOpen ? '收起' : '展开' }}</button>
       </nav>
-      <div v-if="bottomOpen" class="bottom-content">
-        <ReplayPanel v-if="bottomTab === 'replay'" :dataset="selectedDataset" :source="replaySource" @update="updateReplay" />
-        <BacktestPanel v-else-if="['backtest', 'trades', 'equity'].includes(bottomTab)" :dataset="selectedDataset" :view="bottomTab === 'trades' ? 'trades' : bottomTab === 'equity' ? 'equity' : 'backtest'" @completed="addStrategyRunSource" />
-        <OptimizationPanel v-else-if="bottomTab === 'optimization'" :dataset="selectedDataset" />
-        <StrategyResearchPanel v-else-if="bottomTab === 'research'" :dataset="selectedDataset" @completed="addStrategyRunSource" @focus-trade="focusResearchTrade" />
+      <div v-show="bottomOpen" class="bottom-content">
+        <ReplayPanel v-if="bottomOpen && bottomTab === 'replay'" :dataset="selectedDataset" :source="replaySource" @update="updateReplay" />
+        <BacktestPanel v-else-if="bottomOpen && ['backtest', 'trades', 'equity'].includes(bottomTab)" :dataset="selectedDataset" :view="bottomTab === 'trades' ? 'trades' : bottomTab === 'equity' ? 'equity' : 'backtest'" @completed="addStrategyRunSource" />
+        <OptimizationPanel v-else-if="bottomOpen && bottomTab === 'optimization'" :dataset="selectedDataset" />
+        <StrategyResearchPanel v-else-if="bottomOpen && bottomTab === 'research'" :dataset="selectedDataset" @completed="addStrategyRunSource" @focus-trade="focusResearchTrade" />
       </div>
-      <span v-else>{{ workspaceStatus || '底部面板已收起' }}</span>
+      <span v-if="!bottomOpen">{{ workspaceStatus || '底部面板已收起' }}</span>
     </footer>
+    <Teleport v-if="simulationPopupTarget" :to="simulationPopupTarget">
+      <DivergenceSimulationPanel ref="simulationRef" :dataset="selectedDataset"
+        :follow-cursor="followSimulationCursor" @update="updateReplay" @focus-fill="focusSimulationFill" @controls="simulationState = $event" />
+    </Teleport>
     <KeyboardInstrumentPicker :dataset="selectedDataset" @selected="selectDataset" @focus-bar="focusKeyboardBar" />
   </main>
 </template>

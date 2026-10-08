@@ -6349,13 +6349,15 @@ type CapitalConfig struct {
 
 // CausalEvent defines model for CausalEvent.
 type CausalEvent struct {
-	EventSeq        int                    `json:"event_seq"`
-	KnownAtBarIndex int                    `json:"known_at_bar_index"`
-	ObjectId        string                 `json:"object_id"`
-	ObjectRevision  int                    `json:"object_revision"`
-	ObjectType      string                 `json:"object_type"`
-	Operation       interface{}            `json:"operation"`
-	Payload         map[string]interface{} `json:"payload"`
+	EventSeq        int         `json:"event_seq"`
+	KnownAtBarIndex int         `json:"known_at_bar_index"`
+	ObjectId        string      `json:"object_id"`
+	ObjectRevision  int         `json:"object_revision"`
+	ObjectType      string      `json:"object_type"`
+	Operation       interface{} `json:"operation"`
+
+	// Payload Python-authored causal fact. Divergence simulation fills use chart_event with event_type simulation_fill, actual fill_id, order_id, action, quantity, price_i64, commission_i64 and slippage_i64; known_at is the execution bar. A segment_end_simulation_v1 stage preserves the segment endpoint and its causal completion bar separately. New simulation fills additionally preserve contract_symbol, position_after_side (long, short or flat), position_after_quantity, closed_gross_pnl_i64 and closed_net_pnl_i64. Both closed PnL fields are null on an opening fill; closing values include the consumed entry lots and fees from the Python execution ledger, never a UI price-difference calculation. Missing legacy fields mean unavailable. A simulation_account chart_event stores the authoritative per-bar position_side, position_quantity, unrealized_pnl_i64, cash_i64, equity_i64, available_i64 and margin_i64; its stable account object is revised monotonically and only becomes visible at that bar. Its current-time training report contains net_pnl_i64, realized_net_pnl_i64, closed_trade_count, win_count, win_rate, total_commission_i64, total_slippage_i64 and max_drawdown. These are prefix statistics, not the completed run summary.
+	Payload map[string]interface{} `json:"payload"`
 }
 
 // ChanBiState defines model for ChanBiState.
@@ -7625,6 +7627,16 @@ type PythonJobRequest struct {
 	RequestId  string                  `json:"request_id"`
 	RunId      *string                 `json:"run_id,omitempty"`
 	TraceId    string                  `json:"trace_id"`
+
+	// Training Internal per-command asynchronous training operation. The enclosing job retains the pinned normalized dataset, algorithm, parameters, range and execution facts. output_path is an immutable command snapshot directory under runs/training/session_id/commands/job_id, not the formal run path. create processes only through from_bar_index. advance processes at most count bars; seek only views already processed bars and never re-executes orders. Cancel preserves the known prefix without a completed run marker. A paused session occupies no engine admission slot. Session state is process-local: restarting Python interrupts rather than silently resumes it.
+	Training *struct {
+		Action         interface{} `json:"action"`
+		Count          *int        `json:"count,omitempty"`
+		ExpectedCursor *int        `json:"expected_cursor,omitempty"`
+		OperationId    string      `json:"operation_id"`
+		SessionId      string      `json:"session_id"`
+		TargetBarIndex *int        `json:"target_bar_index,omitempty"`
+	} `json:"training,omitempty"`
 }
 
 // RankingContext defines model for RankingContext.
@@ -9299,6 +9311,200 @@ type StudyStatus struct {
 	StudyId   string      `json:"study_id"`
 }
 
+// TrainingAccepted defines model for TrainingAccepted.
+type TrainingAccepted struct {
+	JobId     string      `json:"job_id"`
+	RequestId string      `json:"request_id"`
+	SessionId string      `json:"session_id"`
+	Status    interface{} `json:"status"`
+}
+
+// TrainingCommand Internal per-command asynchronous training operation. The enclosing job retains the pinned normalized dataset, algorithm, parameters, range and execution facts. output_path is an immutable command snapshot directory under runs/training/session_id/commands/job_id, not the formal run path. create processes only through from_bar_index. advance processes at most count bars; seek only views already processed bars and never re-executes orders. Cancel preserves the known prefix without a completed run marker. A paused session occupies no engine admission slot. Session state is process-local: restarting Python interrupts rather than silently resumes it.
+type TrainingCommand struct {
+	Action         interface{} `json:"action"`
+	Count          *int        `json:"count,omitempty"`
+	ExpectedCursor *int        `json:"expected_cursor,omitempty"`
+	OperationId    string      `json:"operation_id"`
+	SessionId      string      `json:"session_id"`
+	TargetBarIndex *int        `json:"target_bar_index,omitempty"`
+}
+
+// TrainingCreateRequest defines model for TrainingCreateRequest.
+type TrainingCreateRequest struct {
+	Backtest struct {
+		Capital struct {
+			Currency       string `json:"currency"`
+			InitialCashI64 int    `json:"initial_cash_i64"`
+			MoneyScale     int    `json:"money_scale"`
+		} `json:"capital"`
+		DataRevision string `json:"data_revision"`
+		DatasetId    string `json:"dataset_id"`
+		Execution    struct {
+			// AdditionalDelayBars Go defaults this to 0.
+			AdditionalDelayBars *int `json:"additional_delay_bars,omitempty"`
+
+			// AdditionalSlippageTicks Go defaults this to 0.
+			AdditionalSlippageTicks *float32 `json:"additional_slippage_ticks,omitempty"`
+			Commission              struct {
+				AmountI64  *int        `json:"amount_i64,omitempty"`
+				Mode       interface{} `json:"mode"`
+				MoneyScale *int        `json:"money_scale,omitempty"`
+				Rate       *float32    `json:"rate,omitempty"`
+			} `json:"commission"`
+
+			// ContractMultiplier Optional assertion; Go resolves the authoritative value from instrument_config.
+			ContractMultiplier       *int        `json:"contract_multiplier,omitempty"`
+			ContractMultiplierSource interface{} `json:"contract_multiplier_source,omitempty"`
+
+			// CostMultiplier Go defaults this to 1.
+			CostMultiplier *float32 `json:"cost_multiplier,omitempty"`
+
+			// FillMode Go defaults this to unlimited.
+			FillMode                   interface{} `json:"fill_mode,omitempty"`
+			FillTiming                 interface{} `json:"fill_timing"`
+			IntrabarConflictRule       interface{} `json:"intrabar_conflict_rule"`
+			MarginRatio                float32     `json:"margin_ratio"`
+			MaxVolumeParticipationRate *float32    `json:"max_volume_participation_rate,omitempty"`
+			SemanticVersion            interface{} `json:"semantic_version"`
+			SignalTiming               interface{} `json:"signal_timing"`
+			Slippage                   struct {
+				Mode  interface{} `json:"mode"`
+				Value float32     `json:"value"`
+			} `json:"slippage"`
+
+			// StressScenarioId Go defaults this to baseline.
+			StressScenarioId *string `json:"stress_scenario_id,omitempty"`
+		} `json:"execution"`
+		Parameters map[string]interface{} `json:"parameters"`
+		RandomSeed int                    `json:"random_seed"`
+		Range      struct {
+			FromBarIndex       int `json:"from_bar_index"`
+			ToBarIndex         int `json:"to_bar_index"`
+			WarmupFromBarIndex int `json:"warmup_from_bar_index"`
+		} `json:"range"`
+		RankingContext *struct {
+			EpisodeAvailableAtUtc    int64       `json:"episode_available_at_utc"`
+			EpisodeId                string      `json:"episode_id"`
+			EpisodeStartTimestampUtc int64       `json:"episode_start_timestamp_utc"`
+			MembershipMode           interface{} `json:"membership_mode"`
+			MembershipRevision       string      `json:"membership_revision"`
+			Memberships              []struct {
+				AvailableAtUtc   int64  `json:"available_at_utc"`
+				DataRevision     string `json:"data_revision"`
+				DatasetId        string `json:"dataset_id"`
+				EffectiveFromUtc int64  `json:"effective_from_utc"`
+				EffectiveToUtc   *int64 `json:"effective_to_utc"`
+				SectorId         string `json:"sector_id"`
+			} `json:"memberships"`
+			PriceAdjustmentMode     interface{} `json:"price_adjustment_mode"`
+			PriceAdjustmentRevision string      `json:"price_adjustment_revision"`
+			UniverseId              string      `json:"universe_id"`
+		} `json:"ranking_context,omitempty"`
+		RiskOverlay *struct {
+			Algorithm struct {
+				AlgorithmId      string      `json:"algorithm_id"`
+				AlgorithmVersion string      `json:"algorithm_version"`
+				Kind             interface{} `json:"kind"`
+				SourceHash       string      `json:"source_hash"`
+			} `json:"algorithm"`
+			Context struct {
+				HandledFutureBranches []string `json:"handled_future_branches"`
+				LegalFutureBranches   []string `json:"legal_future_branches"`
+				MarketStateRevision   string   `json:"market_state_revision"`
+				Observations          []struct {
+					AvailableAtBarIndex   int         `json:"available_at_bar_index"`
+					DataGapBars           int         `json:"data_gap_bars"`
+					DataRevision          string      `json:"data_revision"`
+					EffectiveFromBarIndex int         `json:"effective_from_bar_index"`
+					EventRiskActive       bool        `json:"event_risk_active"`
+					StaleBars             int         `json:"stale_bars"`
+					TradingStatus         interface{} `json:"trading_status"`
+				} `json:"observations"`
+				SectorId string `json:"sector_id"`
+			} `json:"context"`
+			Parameters map[string]interface{} `json:"parameters"`
+		} `json:"risk_overlay,omitempty"`
+		Strategy struct {
+			AlgorithmId      string      `json:"algorithm_id"`
+			AlgorithmVersion string      `json:"algorithm_version"`
+			Kind             interface{} `json:"kind"`
+			SourceHash       string      `json:"source_hash"`
+		} `json:"strategy"`
+		TraceId *string `json:"trace_id,omitempty"`
+	} `json:"backtest"`
+	OperationId string `json:"operation_id"`
+}
+
+// TrainingSnapshot Python-authored known prefix. reset=true replaces the client's event history; otherwise events are new causal deltas. The account is the latest simulation_account payload at cursor, not the final report. completed requires committing the formal run and verifying _SUCCESS; reaching its terminal bar alone is insufficient. Identical operation IDs return their original immutable snapshot without repeating execution.
+type TrainingSnapshot struct {
+	Account         map[string]interface{} `json:"account"`
+	CompletedRunRef *string                `json:"completed_run_ref,omitempty"`
+	Cursor          int                    `json:"cursor"`
+	DataRevision    string                 `json:"data_revision"`
+	DatasetId       string                 `json:"dataset_id"`
+	Events          []struct {
+		EventSeq        int         `json:"event_seq"`
+		KnownAtBarIndex int         `json:"known_at_bar_index"`
+		ObjectId        string      `json:"object_id"`
+		ObjectRevision  int         `json:"object_revision"`
+		ObjectType      string      `json:"object_type"`
+		Operation       interface{} `json:"operation"`
+
+		// Payload Python-authored causal fact. Divergence simulation fills use chart_event with event_type simulation_fill, actual fill_id, order_id, action, quantity, price_i64, commission_i64 and slippage_i64; known_at is the execution bar. A segment_end_simulation_v1 stage preserves the segment endpoint and its causal completion bar separately. New simulation fills additionally preserve contract_symbol, position_after_side (long, short or flat), position_after_quantity, closed_gross_pnl_i64 and closed_net_pnl_i64. Both closed PnL fields are null on an opening fill; closing values include the consumed entry lots and fees from the Python execution ledger, never a UI price-difference calculation. Missing legacy fields mean unavailable. A simulation_account chart_event stores the authoritative per-bar position_side, position_quantity, unrealized_pnl_i64, cash_i64, equity_i64, available_i64 and margin_i64; its stable account object is revised monotonically and only becomes visible at that bar. Its current-time training report contains net_pnl_i64, realized_net_pnl_i64, closed_trade_count, win_count, win_rate, total_commission_i64, total_slippage_i64 and max_drawdown. These are prefix statistics, not the completed run summary.
+		Payload map[string]interface{} `json:"payload"`
+	} `json:"events"`
+	FromBarIndex           int         `json:"from_bar_index"`
+	OperationId            string      `json:"operation_id"`
+	ProcessedUntilBarIndex int         `json:"processed_until_bar_index"`
+	Reset                  bool        `json:"reset"`
+	RunId                  string      `json:"run_id"`
+	RunSignature           string      `json:"run_signature"`
+	SessionId              string      `json:"session_id"`
+	State                  interface{} `json:"state"`
+	ToBarIndex             int         `json:"to_bar_index"`
+}
+
+// TrainingStatus defines model for TrainingStatus.
+type TrainingStatus struct {
+	// Error RESOURCE_MEMORY_LIMIT indicates cooperative engine memory protection; no partial calculation cache is committed and the task can be retried after freeing memory.
+	Error *struct {
+		Code    string                  `json:"code"`
+		Details *map[string]interface{} `json:"details,omitempty"`
+		Message string                  `json:"message"`
+	} `json:"error,omitempty"`
+	JobId     string `json:"job_id"`
+	RequestId string `json:"request_id"`
+	SessionId string `json:"session_id"`
+	Snapshot  *struct {
+		Account         map[string]interface{} `json:"account"`
+		CompletedRunRef *string                `json:"completed_run_ref,omitempty"`
+		Cursor          int                    `json:"cursor"`
+		DataRevision    string                 `json:"data_revision"`
+		DatasetId       string                 `json:"dataset_id"`
+		Events          []struct {
+			EventSeq        int         `json:"event_seq"`
+			KnownAtBarIndex int         `json:"known_at_bar_index"`
+			ObjectId        string      `json:"object_id"`
+			ObjectRevision  int         `json:"object_revision"`
+			ObjectType      string      `json:"object_type"`
+			Operation       interface{} `json:"operation"`
+
+			// Payload Python-authored causal fact. Divergence simulation fills use chart_event with event_type simulation_fill, actual fill_id, order_id, action, quantity, price_i64, commission_i64 and slippage_i64; known_at is the execution bar. A segment_end_simulation_v1 stage preserves the segment endpoint and its causal completion bar separately. New simulation fills additionally preserve contract_symbol, position_after_side (long, short or flat), position_after_quantity, closed_gross_pnl_i64 and closed_net_pnl_i64. Both closed PnL fields are null on an opening fill; closing values include the consumed entry lots and fees from the Python execution ledger, never a UI price-difference calculation. Missing legacy fields mean unavailable. A simulation_account chart_event stores the authoritative per-bar position_side, position_quantity, unrealized_pnl_i64, cash_i64, equity_i64, available_i64 and margin_i64; its stable account object is revised monotonically and only becomes visible at that bar. Its current-time training report contains net_pnl_i64, realized_net_pnl_i64, closed_trade_count, win_count, win_rate, total_commission_i64, total_slippage_i64 and max_drawdown. These are prefix statistics, not the completed run summary.
+			Payload map[string]interface{} `json:"payload"`
+		} `json:"events"`
+		FromBarIndex           int         `json:"from_bar_index"`
+		OperationId            string      `json:"operation_id"`
+		ProcessedUntilBarIndex int         `json:"processed_until_bar_index"`
+		Reset                  bool        `json:"reset"`
+		RunId                  string      `json:"run_id"`
+		RunSignature           string      `json:"run_signature"`
+		SessionId              string      `json:"session_id"`
+		State                  interface{} `json:"state"`
+		ToBarIndex             int         `json:"to_bar_index"`
+	} `json:"snapshot"`
+	Status interface{} `json:"status"`
+}
+
 // WalkForwardConfig defines model for WalkForwardConfig.
 type WalkForwardConfig struct {
 	Constraints []struct {
@@ -10547,6 +10753,122 @@ type CreateStudyJSONBody struct {
 	TraceId *string `json:"trace_id,omitempty"`
 }
 
+// CreateTrainingSessionJSONBody defines parameters for CreateTrainingSession.
+type CreateTrainingSessionJSONBody struct {
+	Backtest struct {
+		Capital struct {
+			Currency       string `json:"currency"`
+			InitialCashI64 int    `json:"initial_cash_i64"`
+			MoneyScale     int    `json:"money_scale"`
+		} `json:"capital"`
+		DataRevision string `json:"data_revision"`
+		DatasetId    string `json:"dataset_id"`
+		Execution    struct {
+			// AdditionalDelayBars Go defaults this to 0.
+			AdditionalDelayBars *int `json:"additional_delay_bars,omitempty"`
+
+			// AdditionalSlippageTicks Go defaults this to 0.
+			AdditionalSlippageTicks *float32 `json:"additional_slippage_ticks,omitempty"`
+			Commission              struct {
+				AmountI64  *int        `json:"amount_i64,omitempty"`
+				Mode       interface{} `json:"mode"`
+				MoneyScale *int        `json:"money_scale,omitempty"`
+				Rate       *float32    `json:"rate,omitempty"`
+			} `json:"commission"`
+
+			// ContractMultiplier Optional assertion; Go resolves the authoritative value from instrument_config.
+			ContractMultiplier       *int        `json:"contract_multiplier,omitempty"`
+			ContractMultiplierSource interface{} `json:"contract_multiplier_source,omitempty"`
+
+			// CostMultiplier Go defaults this to 1.
+			CostMultiplier *float32 `json:"cost_multiplier,omitempty"`
+
+			// FillMode Go defaults this to unlimited.
+			FillMode                   interface{} `json:"fill_mode,omitempty"`
+			FillTiming                 interface{} `json:"fill_timing"`
+			IntrabarConflictRule       interface{} `json:"intrabar_conflict_rule"`
+			MarginRatio                float32     `json:"margin_ratio"`
+			MaxVolumeParticipationRate *float32    `json:"max_volume_participation_rate,omitempty"`
+			SemanticVersion            interface{} `json:"semantic_version"`
+			SignalTiming               interface{} `json:"signal_timing"`
+			Slippage                   struct {
+				Mode  interface{} `json:"mode"`
+				Value float32     `json:"value"`
+			} `json:"slippage"`
+
+			// StressScenarioId Go defaults this to baseline.
+			StressScenarioId *string `json:"stress_scenario_id,omitempty"`
+		} `json:"execution"`
+		Parameters map[string]interface{} `json:"parameters"`
+		RandomSeed int                    `json:"random_seed"`
+		Range      struct {
+			FromBarIndex       int `json:"from_bar_index"`
+			ToBarIndex         int `json:"to_bar_index"`
+			WarmupFromBarIndex int `json:"warmup_from_bar_index"`
+		} `json:"range"`
+		RankingContext *struct {
+			EpisodeAvailableAtUtc    int64       `json:"episode_available_at_utc"`
+			EpisodeId                string      `json:"episode_id"`
+			EpisodeStartTimestampUtc int64       `json:"episode_start_timestamp_utc"`
+			MembershipMode           interface{} `json:"membership_mode"`
+			MembershipRevision       string      `json:"membership_revision"`
+			Memberships              []struct {
+				AvailableAtUtc   int64  `json:"available_at_utc"`
+				DataRevision     string `json:"data_revision"`
+				DatasetId        string `json:"dataset_id"`
+				EffectiveFromUtc int64  `json:"effective_from_utc"`
+				EffectiveToUtc   *int64 `json:"effective_to_utc"`
+				SectorId         string `json:"sector_id"`
+			} `json:"memberships"`
+			PriceAdjustmentMode     interface{} `json:"price_adjustment_mode"`
+			PriceAdjustmentRevision string      `json:"price_adjustment_revision"`
+			UniverseId              string      `json:"universe_id"`
+		} `json:"ranking_context,omitempty"`
+		RiskOverlay *struct {
+			Algorithm struct {
+				AlgorithmId      string      `json:"algorithm_id"`
+				AlgorithmVersion string      `json:"algorithm_version"`
+				Kind             interface{} `json:"kind"`
+				SourceHash       string      `json:"source_hash"`
+			} `json:"algorithm"`
+			Context struct {
+				HandledFutureBranches []string `json:"handled_future_branches"`
+				LegalFutureBranches   []string `json:"legal_future_branches"`
+				MarketStateRevision   string   `json:"market_state_revision"`
+				Observations          []struct {
+					AvailableAtBarIndex   int         `json:"available_at_bar_index"`
+					DataGapBars           int         `json:"data_gap_bars"`
+					DataRevision          string      `json:"data_revision"`
+					EffectiveFromBarIndex int         `json:"effective_from_bar_index"`
+					EventRiskActive       bool        `json:"event_risk_active"`
+					StaleBars             int         `json:"stale_bars"`
+					TradingStatus         interface{} `json:"trading_status"`
+				} `json:"observations"`
+				SectorId string `json:"sector_id"`
+			} `json:"context"`
+			Parameters map[string]interface{} `json:"parameters"`
+		} `json:"risk_overlay,omitempty"`
+		Strategy struct {
+			AlgorithmId      string      `json:"algorithm_id"`
+			AlgorithmVersion string      `json:"algorithm_version"`
+			Kind             interface{} `json:"kind"`
+			SourceHash       string      `json:"source_hash"`
+		} `json:"strategy"`
+		TraceId *string `json:"trace_id,omitempty"`
+	} `json:"backtest"`
+	OperationId string `json:"operation_id"`
+}
+
+// CommandTrainingSessionJSONBody defines parameters for CommandTrainingSession.
+type CommandTrainingSessionJSONBody struct {
+	Action         interface{} `json:"action"`
+	Count          *int        `json:"count,omitempty"`
+	ExpectedCursor *int        `json:"expected_cursor,omitempty"`
+	OperationId    string      `json:"operation_id"`
+	SessionId      string      `json:"session_id"`
+	TargetBarIndex *int        `json:"target_bar_index,omitempty"`
+}
+
 // PutDrawingsJSONBody defines parameters for PutDrawings.
 type PutDrawingsJSONBody struct {
 	DataRevision string `json:"data_revision"`
@@ -10778,6 +11100,16 @@ type SubmitPythonJobJSONBody struct {
 	RequestId  string                  `json:"request_id"`
 	RunId      *string                 `json:"run_id,omitempty"`
 	TraceId    string                  `json:"trace_id"`
+
+	// Training Internal per-command asynchronous training operation. The enclosing job retains the pinned normalized dataset, algorithm, parameters, range and execution facts. output_path is an immutable command snapshot directory under runs/training/session_id/commands/job_id, not the formal run path. create processes only through from_bar_index. advance processes at most count bars; seek only views already processed bars and never re-executes orders. Cancel preserves the known prefix without a completed run marker. A paused session occupies no engine admission slot. Session state is process-local: restarting Python interrupts rather than silently resumes it.
+	Training *struct {
+		Action         interface{} `json:"action"`
+		Count          *int        `json:"count,omitempty"`
+		ExpectedCursor *int        `json:"expected_cursor,omitempty"`
+		OperationId    string      `json:"operation_id"`
+		SessionId      string      `json:"session_id"`
+		TargetBarIndex *int        `json:"target_bar_index,omitempty"`
+	} `json:"training,omitempty"`
 }
 
 // CreateBacktestJSONRequestBody defines body for CreateBacktest for application/json ContentType.
@@ -10806,6 +11138,12 @@ type CreateStrategyComparisonJSONRequestBody CreateStrategyComparisonJSONBody
 
 // CreateStudyJSONRequestBody defines body for CreateStudy for application/json ContentType.
 type CreateStudyJSONRequestBody CreateStudyJSONBody
+
+// CreateTrainingSessionJSONRequestBody defines body for CreateTrainingSession for application/json ContentType.
+type CreateTrainingSessionJSONRequestBody CreateTrainingSessionJSONBody
+
+// CommandTrainingSessionJSONRequestBody defines body for CommandTrainingSession for application/json ContentType.
+type CommandTrainingSessionJSONRequestBody CommandTrainingSessionJSONBody
 
 // PutDrawingsJSONRequestBody defines body for PutDrawings for application/json ContentType.
 type PutDrawingsJSONRequestBody PutDrawingsJSONBody
