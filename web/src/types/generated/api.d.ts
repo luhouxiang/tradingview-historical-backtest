@@ -1005,7 +1005,7 @@ export interface components {
                 /** @enum {unknown} */
                 series_type: "line" | "histogram" | "semantic_objects";
                 /** @enum {unknown} */
-                object_type?: "processed_bar" | "fractal" | "bi" | "bi_state" | "segment" | "local_center" | "center_connection" | "center_audit_event" | "movement_state" | "center_monitor" | "divergence" | "trade_point" | "strategy_state" | "stage_signal" | "trade_signal" | "chart_event" | "risk_decision";
+                object_type?: "processed_bar" | "fractal" | "bi" | "bi_state" | "segment" | "local_center" | "center_connection" | "center_audit_event" | "movement_state" | "center_monitor" | "recursive_movement" | "recursive_center" | "recursive_membership" | "divergence" | "trade_point" | "strategy_state" | "stage_signal" | "trade_signal" | "chart_event" | "risk_decision";
             }[];
             warmup: {
                 /** @constant */
@@ -1071,7 +1071,13 @@ export interface components {
             center_monitors: components["schemas"]["ChanCenterMonitor"][];
             divergences: components["schemas"]["ChanSignalPoint"][];
             trade_points: components["schemas"]["ChanSignalPoint"][];
+            recursive_movements?: components["schemas"]["movement"][];
+            recursive_centers?: components["schemas"]["center"][];
+            recursive_memberships?: components["schemas"]["membership"][];
         };
+        ChanRecursiveMovement: components["schemas"]["movement"];
+        ChanRecursiveCenter: components["schemas"]["center"];
+        ChanRecursiveMembership: components["schemas"]["membership"];
         ChanProcessedBar: {
             object_id: string;
             normalized_index: number;
@@ -1383,7 +1389,7 @@ export interface components {
             c_contains_type3?: boolean | null;
             c_meets_sublevel?: boolean | null;
             /** @enum {string|null} */
-            c_sublevel_profile?: "bi_two_confirmed_centers_type3_v1" | null;
+            c_sublevel_profile?: "bi_two_confirmed_centers_type3_v1" | "recursive_completed_movement_type3_v2" | null;
             c_sublevel_center_ids?: string[];
             c_type3_departure_id?: string | null;
             c_type3_retest_id?: string | null;
@@ -1404,8 +1410,8 @@ export interface components {
             catalog_event: "B1_candidate" | "B1_confirmed" | "B1_invalidated" | "S1_candidate" | "S1_confirmed" | "S1_invalidated" | null;
             /** @enum {string|null} */
             catalog_algorithm_id: "ALG-SIG-001" | null;
-            /** @constant */
-            evidence_profile: "chan108_single_scope_v1";
+            /** @enum {string} */
+            evidence_profile: "chan108_single_scope_v1" | "fixed_same_level_recursive_v2";
             comparison_reference_object_id: string | null;
             comparison_current_object_id: string | null;
             comparison_rule: string | null;
@@ -1439,7 +1445,7 @@ export interface components {
             reference_center_ordinal: number | null;
             older_center_count: number | null;
             /** @enum {string|null} */
-            center_chain_profile: "confirmed_same_level_centers_known_at_signal_v1" | null;
+            center_chain_profile: "confirmed_same_level_centers_known_at_signal_v1" | "fixed_same_level_recursive_v2" | null;
             confirmed: boolean;
             confirmed_at_bar_index: number | null;
             known_at_bar_index: number;
@@ -2291,6 +2297,106 @@ export interface components {
                 sha256: string;
                 relative_path: string;
             };
+        };
+        ref: {
+            object_id: string;
+            object_revision: number;
+        };
+        movement: {
+            object_id: string;
+            object_revision: number;
+            dataset_id: string;
+            data_revision: string;
+            decomposition_id: string;
+            /** @constant */
+            rule_version: "fixed_same_level_recursive_v2";
+            level: number;
+            /** @enum {unknown} */
+            movement_type: "consolidation" | "uptrend" | "downtrend" | "unknown";
+            /** @enum {unknown} */
+            construction_kind?: "canonical" | "association";
+            promotable?: boolean;
+            /** @enum {unknown} */
+            direction: "up" | "down";
+            /** @enum {unknown} */
+            status: "building" | "completed" | "invalidated";
+            start_bar_index: number;
+            start_time: number;
+            start_price_i64: number;
+            end_bar_index: number;
+            end_time: number;
+            end_price_i64: number;
+            range_low_i64: number;
+            range_high_i64: number;
+            range_low_source_bar_index: number;
+            range_high_source_bar_index: number;
+            component_refs: components["schemas"]["ref"][];
+            center_ids: string[];
+            center_refs?: components["schemas"]["ref"][];
+            /** @enum {unknown} */
+            completion_rule: null | "fixed_same_level_center_block_v2" | "same_level_trend_association_v1";
+            /** @enum {unknown} */
+            completion_context: "none" | "fixed_same_level" | "same_level_association";
+            completion_refs: components["schemas"]["ref"][];
+            comparison_reference_ids: string[];
+            comparison_current_id: string | null;
+            reversal_id: string | null;
+            strength_evidence: {
+                [key: string]: unknown;
+            } | null;
+            known_at_bar_index: number;
+        } & (unknown & unknown & unknown & unknown);
+        center: {
+            object_id: string;
+            object_revision: number;
+            dataset_id: string;
+            data_revision: string;
+            decomposition_id: string;
+            /** @constant */
+            rule_version: "fixed_same_level_recursive_v2";
+            level: number;
+            seed_refs: components["schemas"]["ref"][];
+            component_refs: components["schemas"]["ref"][];
+            start_bar_index: number;
+            start_time: number;
+            end_bar_index: number;
+            end_time: number;
+            zd_i64: number;
+            zg_i64: number;
+            dd_i64: number;
+            gg_i64: number;
+            observed_low_i64: number;
+            observed_high_i64: number;
+            /** @enum {unknown} */
+            formation_dir: "up" | "down";
+            /** @enum {unknown} */
+            status: "active" | "closed" | "invalidated";
+            previous_center_id?: string | null;
+            /** @enum {unknown} */
+            relative_dir?: "up" | "down" | "overlap" | "unknown";
+            higher_level_review_required?: boolean;
+            /** @constant */
+            relation_profile?: "fixed_seed_zn_same_level_v2";
+            exit_id: string | null;
+            retest_id: string | null;
+            exit_ref?: components["schemas"]["ref"] | null;
+            retest_ref?: components["schemas"]["ref"] | null;
+            formed_at_bar_index: number;
+            known_at_bar_index: number;
+        };
+        membership: {
+            object_id: string;
+            object_revision: number;
+            parent_id: string;
+            /** @enum {unknown} */
+            parent_kind: "movement" | "center";
+            child_ref: components["schemas"]["ref"];
+            /** @enum {unknown} */
+            child_kind: "segment" | "movement" | "center";
+            /** @enum {unknown} */
+            role: "component" | "seed" | "center" | "entry" | "exit" | "retest" | "completion" | "association" | "higher_level_review";
+            level: number;
+            known_at_bar_index: number;
         };
         risk_market_observation: {
             effective_from_bar_index: number;

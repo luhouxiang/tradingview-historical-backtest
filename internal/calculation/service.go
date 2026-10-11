@@ -231,8 +231,9 @@ func (s *Service) validCache(resultRef, cacheKey string) bool {
 		return false
 	}
 	var manifest struct {
-		CacheKey  string                    `json:"cache_key"`
-		Algorithm pythonclient.AlgorithmRef `json:"algorithm"`
+		SchemaVersion int                       `json:"schema_version"`
+		CacheKey      string                    `json:"cache_key"`
+		Algorithm     pythonclient.AlgorithmRef `json:"algorithm"`
 	}
 	if json.Unmarshal(data, &manifest) != nil || manifest.CacheKey != cacheKey {
 		return false
@@ -240,6 +241,9 @@ func (s *Service) validCache(resultRef, cacheKey string) bool {
 	files := []string{"values.parquet"}
 	if manifest.Algorithm.Kind == "chan" {
 		files = []string{"processed_bars.parquet", "fractals.parquet", "bi.parquet", "bi_states.parquet", "segments.parquet", "local_centers.parquet", "center_connections.parquet", "center_audit_events.parquet", "movement_states.parquet", "center_monitors.parquet", "divergences.parquet", "trade_points.parquet", "events.parquet"}
+		if manifest.SchemaVersion >= 13 {
+			files = append(files, "recursive_movements.parquet", "recursive_centers.parquet", "recursive_memberships.parquet")
+		}
 	} else if manifest.Algorithm.Kind != "indicator" {
 		return false
 	}

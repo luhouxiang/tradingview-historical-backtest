@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/recursive-center-proof.schema.json",
+  "title": "RecursiveCenterProof",
+  "description": "Confirmed parent core derived from three verified consecutive movements. Completion-rule validation is additionally required in Python; this schema alone is not structural proof.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["object_id", "dataset_id", "data_revision", "decomposition_id", "rule_version", "range_profile", "level", "seed_refs", "start_bar_index", "start_time", "end_bar_index", "end_time", "zd_i64", "zg_i64", "dd_i64", "gg_i64", "known_at_bar_index"],
+  "properties": {
+    "object_id": {"type": "string", "minLength": 1},
+    "dataset_id": {"type": "string", "minLength": 1},
+    "data_revision": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "decomposition_id": {"type": "string", "minLength": 1},
+    "rule_version": {"const": "fixed_same_level_recursive_v2"},
+    "range_profile": {"const": "complete_seed_movement_union_v1", "description": "DD/GG here record the union of the three complete seed movement ranges. They are not an independently verified extended-center Zn envelope."},
+    "level": {"type": "integer", "minimum": 1},
+    "seed_refs": {
+      "type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["object_id", "object_revision"],
+        "properties": {
+          "object_id": {"type": "string", "minLength": 1},
+          "object_revision": {"type": "integer", "minimum": 1}
+        }
+      }
+    },
+    "start_bar_index": {"type": "integer", "minimum": 0},
+    "start_time": {"type": "integer", "minimum": 0},
+    "end_bar_index": {"type": "integer", "minimum": 0},
+    "end_time": {"type": "integer", "minimum": 0},
+    "zd_i64": {"type": "integer"},
+    "zg_i64": {"type": "integer"},
+    "dd_i64": {"type": "integer"},
+    "gg_i64": {"type": "integer"},
+    "known_at_bar_index": {"type": "integer", "minimum": 0}
+  }
+}

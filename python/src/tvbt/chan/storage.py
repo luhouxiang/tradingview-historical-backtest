@@ -389,6 +389,9 @@ class ChanResult:
     center_monitors: list[dict[str, Any]] = field(default_factory=list)
     divergences: list[dict[str, Any]] = field(default_factory=list)
     trade_points: list[dict[str, Any]] = field(default_factory=list)
+    recursive_movements: list[dict[str, Any]] = field(default_factory=list)
+    recursive_centers: list[dict[str, Any]] = field(default_factory=list)
+    recursive_memberships: list[dict[str, Any]] = field(default_factory=list)
     # 按发生顺序记录 upsert/delete，供回放和审计使用。
     events: list[dict[str, Any]] = field(default_factory=list)
     # 可选检查点，长任务恢复和一致性测试使用。
@@ -442,6 +445,45 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
             "trade_points": (result.trade_points, SIGNAL_SCHEMA),
             "events": (result.events, EVENT_SCHEMA),
         }
+        recursive_schema = pa.schema(
+            [
+                ("object_id", pa.string()),
+                ("level", pa.int64()),
+                ("start_bar_index", pa.int64()),
+                ("end_bar_index", pa.int64()),
+                ("known_at_bar_index", pa.int64()),
+                ("object_revision", pa.int64()),
+                ("payload_json", pa.string()),
+            ]
+        )
+        recursive_parents = {
+            row["object_id"]: row
+            for row in (*result.recursive_movements, *result.recursive_centers)
+        }
+        for name, values in (
+            ("recursive_movements", result.recursive_movements),
+            ("recursive_centers", result.recursive_centers),
+            ("recursive_memberships", result.recursive_memberships),
+        ):
+            packed = []
+            for row in values:
+                anchor = (
+                    recursive_parents[row["parent_id"]] if name == "recursive_memberships" else row
+                )
+                packed.append(
+                    {
+                        "object_id": row["object_id"],
+                        "level": row["level"],
+                        "start_bar_index": anchor["start_bar_index"],
+                        "end_bar_index": anchor["end_bar_index"],
+                        "known_at_bar_index": row["known_at_bar_index"],
+                        "object_revision": row["object_revision"],
+                        "payload_json": json.dumps(
+                            row, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+                        ),
+                    }
+                )
+            tables[name] = (packed, recursive_schema)
         files: dict[str, dict[str, int | str]] = {}
         for name, (rows, schema) in tables.items():
             path = temporary / f"{name}.parquet"
@@ -467,7 +509,7 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
             )
         checkpoint_indices = sorted(result.checkpoints.keys() | result.checkpoint_files.keys())
         manifest = {
-            "schema_version": 12,
+            "schema_version": 13,
             "cache_key": payload["cache_key"],
             "dataset_id": dataset["dataset_id"],
             "data_revision": dataset["data_revision"],
@@ -494,6 +536,9 @@ def write_chan_cache(payload: dict[str, Any], guard: PathGuard, result: ChanResu
                 "center_monitors": len(result.center_monitors),
                 "divergences": len(result.divergences),
                 "trade_points": len(result.trade_points),
+                "recursive_movements": len(result.recursive_movements),
+                "recursive_centers": len(result.recursive_centers),
+                "recursive_memberships": len(result.recursive_memberships),
                 "events": files["events"]["row_count"],
             },
             "files": files,

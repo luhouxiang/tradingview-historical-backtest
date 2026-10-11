@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/recursive-proof-state.schema.json",
+  "title": "RecursiveProofState",
+  "description": "Checkpoint for versioned recursive evidence. Restoring must revalidate all movement completion rules and rederive parent cores; JSON validity alone does not certify a movement.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "scope", "cursor", "facts", "claims", "centers", "revision_floors", "invalidations"],
+  "properties": {
+    "format": {"const": "tvbt-recursive-proof-state-v1"},
+    "scope": {"$ref": "#/$defs/scope"},
+    "cursor": {"type": "integer", "minimum": 0},
+    "facts": {"type": "array", "items": {"$ref": "#/$defs/fact"}},
+    "claims": {"type": "array", "items": {"$ref": "#/$defs/claim"}},
+    "centers": {"type": "array", "items": {"$ref": "https://example.local/schemas/recursive-center-proof.schema.json"}},
+    "revision_floors": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 1}},
+    "invalidations": {
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["object_id", "object_kind", "known_at_bar_index", "reason"],
+        "properties": {
+          "object_id": {"type": "string", "minLength": 1},
+          "object_kind": {"enum": ["movement", "center"]},
+          "known_at_bar_index": {"type": "integer", "minimum": 0},
+          "reason": {"enum": ["source_revised", "source_removed"]}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "scope": {
+      "type": "object", "additionalProperties": false,
+      "required": ["dataset_id", "data_revision", "decomposition_id", "rule_version"],
+      "properties": {
+        "dataset_id": {"type": "string", "minLength": 1},
+        "data_revision": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "decomposition_id": {"type": "string", "minLength": 1},
+        "rule_version": {"const": "fixed_same_level_recursive_v2"}
+      }
+    },
+    "ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["object_id", "object_revision"],
+      "properties": {
+        "object_id": {"type": "string", "minLength": 1},
+        "object_revision": {"type": "integer", "minimum": 1}
+      }
+    },
+    "anchor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["bar_index", "time", "price_i64"],
+      "properties": {
+        "bar_index": {"type": "integer", "minimum": 0},
+        "time": {"type": "integer", "minimum": 0},
+        "price_i64": {"type": "integer"}
+      }
+    },
+    "fact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ref", "scope", "level", "kind", "start", "end", "low_i64", "high_i64", "low_source_bar_index", "high_source_bar_index", "known_at_bar_index"],
+      "properties": {
+        "ref": {"$ref": "#/$defs/ref"}, "scope": {"$ref": "#/$defs/scope"},
+        "level": {"type": "integer", "minimum": -1},
+        "kind": {"enum": ["segment", "movement", "completion"]},
+        "start": {"$ref": "#/$defs/anchor"}, "end": {"$ref": "#/$defs/anchor"},
+        "low_i64": {"type": "integer"}, "high_i64": {"type": "integer"},
+        "low_source_bar_index": {"type": "integer", "minimum": 0},
+        "high_source_bar_index": {"type": "integer", "minimum": 0},
+        "known_at_bar_index": {"type": "integer", "minimum": 0}
+      }
+    },
+    "claim": {
+      "type": "object", "additionalProperties": false,
+      "required": ["fact_ref", "component_refs", "completion_rule", "completion_refs"],
+      "properties": {
+        "fact_ref": {"$ref": "#/$defs/ref"},
+        "component_refs": {"type": "array", "minItems": 3, "uniqueItems": true, "items": {"$ref": "#/$defs/ref"}},
+        "completion_rule": {"type": "string", "minLength": 1},
+        "completion_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/ref"}}
+      }
+    }
+  }
+}

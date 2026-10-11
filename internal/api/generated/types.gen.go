@@ -242,8 +242,9 @@ func (e CalculationResultsObjectsDivergencesBoundaryRelation) Valid() bool {
 
 // Defines values for CalculationResultsObjectsDivergencesCSublevelProfile.
 const (
-	CalculationResultsObjectsDivergencesCSublevelProfileBiTwoConfirmedCentersType3V1 CalculationResultsObjectsDivergencesCSublevelProfile = "bi_two_confirmed_centers_type3_v1"
-	CalculationResultsObjectsDivergencesCSublevelProfileLessThannil                  CalculationResultsObjectsDivergencesCSublevelProfile = "<nil>"
+	CalculationResultsObjectsDivergencesCSublevelProfileBiTwoConfirmedCentersType3V1      CalculationResultsObjectsDivergencesCSublevelProfile = "bi_two_confirmed_centers_type3_v1"
+	CalculationResultsObjectsDivergencesCSublevelProfileLessThannil                       CalculationResultsObjectsDivergencesCSublevelProfile = "<nil>"
+	CalculationResultsObjectsDivergencesCSublevelProfileRecursiveCompletedMovementType3V2 CalculationResultsObjectsDivergencesCSublevelProfile = "recursive_completed_movement_type3_v2"
 )
 
 // Valid indicates whether the value is a known member of the CalculationResultsObjectsDivergencesCSublevelProfile enum.
@@ -252,6 +253,8 @@ func (e CalculationResultsObjectsDivergencesCSublevelProfile) Valid() bool {
 	case CalculationResultsObjectsDivergencesCSublevelProfileBiTwoConfirmedCentersType3V1:
 		return true
 	case CalculationResultsObjectsDivergencesCSublevelProfileLessThannil:
+		return true
+	case CalculationResultsObjectsDivergencesCSublevelProfileRecursiveCompletedMovementType3V2:
 		return true
 	default:
 		return false
@@ -312,6 +315,7 @@ func (e CalculationResultsObjectsDivergencesCatalogEvent) Valid() bool {
 // Defines values for CalculationResultsObjectsDivergencesCenterChainProfile.
 const (
 	CalculationResultsObjectsDivergencesCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1 CalculationResultsObjectsDivergencesCenterChainProfile = "confirmed_same_level_centers_known_at_signal_v1"
+	CalculationResultsObjectsDivergencesCenterChainProfileFixedSameLevelRecursiveV2                CalculationResultsObjectsDivergencesCenterChainProfile = "fixed_same_level_recursive_v2"
 	CalculationResultsObjectsDivergencesCenterChainProfileLessThannil                              CalculationResultsObjectsDivergencesCenterChainProfile = "<nil>"
 )
 
@@ -319,6 +323,8 @@ const (
 func (e CalculationResultsObjectsDivergencesCenterChainProfile) Valid() bool {
 	switch e {
 	case CalculationResultsObjectsDivergencesCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1:
+		return true
+	case CalculationResultsObjectsDivergencesCenterChainProfileFixedSameLevelRecursiveV2:
 		return true
 	case CalculationResultsObjectsDivergencesCenterChainProfileLessThannil:
 		return true
@@ -380,13 +386,16 @@ func (e CalculationResultsObjectsDivergencesDivergenceProfile) Valid() bool {
 
 // Defines values for CalculationResultsObjectsDivergencesEvidenceProfile.
 const (
-	CalculationResultsObjectsDivergencesEvidenceProfileChan108SingleScopeV1 CalculationResultsObjectsDivergencesEvidenceProfile = "chan108_single_scope_v1"
+	CalculationResultsObjectsDivergencesEvidenceProfileChan108SingleScopeV1      CalculationResultsObjectsDivergencesEvidenceProfile = "chan108_single_scope_v1"
+	CalculationResultsObjectsDivergencesEvidenceProfileFixedSameLevelRecursiveV2 CalculationResultsObjectsDivergencesEvidenceProfile = "fixed_same_level_recursive_v2"
 )
 
 // Valid indicates whether the value is a known member of the CalculationResultsObjectsDivergencesEvidenceProfile enum.
 func (e CalculationResultsObjectsDivergencesEvidenceProfile) Valid() bool {
 	switch e {
 	case CalculationResultsObjectsDivergencesEvidenceProfileChan108SingleScopeV1:
+		return true
+	case CalculationResultsObjectsDivergencesEvidenceProfileFixedSameLevelRecursiveV2:
 		return true
 	default:
 		return false
@@ -914,8 +923,9 @@ func (e CalculationResultsObjectsTradePointsBoundaryRelation) Valid() bool {
 
 // Defines values for CalculationResultsObjectsTradePointsCSublevelProfile.
 const (
-	CalculationResultsObjectsTradePointsCSublevelProfileBiTwoConfirmedCentersType3V1 CalculationResultsObjectsTradePointsCSublevelProfile = "bi_two_confirmed_centers_type3_v1"
-	CalculationResultsObjectsTradePointsCSublevelProfileLessThannil                  CalculationResultsObjectsTradePointsCSublevelProfile = "<nil>"
+	CalculationResultsObjectsTradePointsCSublevelProfileBiTwoConfirmedCentersType3V1      CalculationResultsObjectsTradePointsCSublevelProfile = "bi_two_confirmed_centers_type3_v1"
+	CalculationResultsObjectsTradePointsCSublevelProfileLessThannil                       CalculationResultsObjectsTradePointsCSublevelProfile = "<nil>"
+	CalculationResultsObjectsTradePointsCSublevelProfileRecursiveCompletedMovementType3V2 CalculationResultsObjectsTradePointsCSublevelProfile = "recursive_completed_movement_type3_v2"
 )
 
 // Valid indicates whether the value is a known member of the CalculationResultsObjectsTradePointsCSublevelProfile enum.
@@ -924,6 +934,8 @@ func (e CalculationResultsObjectsTradePointsCSublevelProfile) Valid() bool {
 	case CalculationResultsObjectsTradePointsCSublevelProfileBiTwoConfirmedCentersType3V1:
 		return true
 	case CalculationResultsObjectsTradePointsCSublevelProfileLessThannil:
+		return true
+	case CalculationResultsObjectsTradePointsCSublevelProfileRecursiveCompletedMovementType3V2:
 		return true
 	default:
 		return false
@@ -984,6 +996,7 @@ func (e CalculationResultsObjectsTradePointsCatalogEvent) Valid() bool {
 // Defines values for CalculationResultsObjectsTradePointsCenterChainProfile.
 const (
 	CalculationResultsObjectsTradePointsCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1 CalculationResultsObjectsTradePointsCenterChainProfile = "confirmed_same_level_centers_known_at_signal_v1"
+	CalculationResultsObjectsTradePointsCenterChainProfileFixedSameLevelRecursiveV2                CalculationResultsObjectsTradePointsCenterChainProfile = "fixed_same_level_recursive_v2"
 	CalculationResultsObjectsTradePointsCenterChainProfileLessThannil                              CalculationResultsObjectsTradePointsCenterChainProfile = "<nil>"
 )
 
@@ -991,6 +1004,8 @@ const (
 func (e CalculationResultsObjectsTradePointsCenterChainProfile) Valid() bool {
 	switch e {
 	case CalculationResultsObjectsTradePointsCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1:
+		return true
+	case CalculationResultsObjectsTradePointsCenterChainProfileFixedSameLevelRecursiveV2:
 		return true
 	case CalculationResultsObjectsTradePointsCenterChainProfileLessThannil:
 		return true
@@ -1052,13 +1067,16 @@ func (e CalculationResultsObjectsTradePointsDivergenceProfile) Valid() bool {
 
 // Defines values for CalculationResultsObjectsTradePointsEvidenceProfile.
 const (
-	CalculationResultsObjectsTradePointsEvidenceProfileChan108SingleScopeV1 CalculationResultsObjectsTradePointsEvidenceProfile = "chan108_single_scope_v1"
+	CalculationResultsObjectsTradePointsEvidenceProfileChan108SingleScopeV1      CalculationResultsObjectsTradePointsEvidenceProfile = "chan108_single_scope_v1"
+	CalculationResultsObjectsTradePointsEvidenceProfileFixedSameLevelRecursiveV2 CalculationResultsObjectsTradePointsEvidenceProfile = "fixed_same_level_recursive_v2"
 )
 
 // Valid indicates whether the value is a known member of the CalculationResultsObjectsTradePointsEvidenceProfile enum.
 func (e CalculationResultsObjectsTradePointsEvidenceProfile) Valid() bool {
 	switch e {
 	case CalculationResultsObjectsTradePointsEvidenceProfileChan108SingleScopeV1:
+		return true
+	case CalculationResultsObjectsTradePointsEvidenceProfileFixedSameLevelRecursiveV2:
 		return true
 	default:
 		return false
@@ -1910,8 +1928,9 @@ func (e ChanObjectsDivergencesBoundaryRelation) Valid() bool {
 
 // Defines values for ChanObjectsDivergencesCSublevelProfile.
 const (
-	ChanObjectsDivergencesCSublevelProfileBiTwoConfirmedCentersType3V1 ChanObjectsDivergencesCSublevelProfile = "bi_two_confirmed_centers_type3_v1"
-	ChanObjectsDivergencesCSublevelProfileLessThannil                  ChanObjectsDivergencesCSublevelProfile = "<nil>"
+	ChanObjectsDivergencesCSublevelProfileBiTwoConfirmedCentersType3V1      ChanObjectsDivergencesCSublevelProfile = "bi_two_confirmed_centers_type3_v1"
+	ChanObjectsDivergencesCSublevelProfileLessThannil                       ChanObjectsDivergencesCSublevelProfile = "<nil>"
+	ChanObjectsDivergencesCSublevelProfileRecursiveCompletedMovementType3V2 ChanObjectsDivergencesCSublevelProfile = "recursive_completed_movement_type3_v2"
 )
 
 // Valid indicates whether the value is a known member of the ChanObjectsDivergencesCSublevelProfile enum.
@@ -1920,6 +1939,8 @@ func (e ChanObjectsDivergencesCSublevelProfile) Valid() bool {
 	case ChanObjectsDivergencesCSublevelProfileBiTwoConfirmedCentersType3V1:
 		return true
 	case ChanObjectsDivergencesCSublevelProfileLessThannil:
+		return true
+	case ChanObjectsDivergencesCSublevelProfileRecursiveCompletedMovementType3V2:
 		return true
 	default:
 		return false
@@ -1980,6 +2001,7 @@ func (e ChanObjectsDivergencesCatalogEvent) Valid() bool {
 // Defines values for ChanObjectsDivergencesCenterChainProfile.
 const (
 	ChanObjectsDivergencesCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1 ChanObjectsDivergencesCenterChainProfile = "confirmed_same_level_centers_known_at_signal_v1"
+	ChanObjectsDivergencesCenterChainProfileFixedSameLevelRecursiveV2                ChanObjectsDivergencesCenterChainProfile = "fixed_same_level_recursive_v2"
 	ChanObjectsDivergencesCenterChainProfileLessThannil                              ChanObjectsDivergencesCenterChainProfile = "<nil>"
 )
 
@@ -1987,6 +2009,8 @@ const (
 func (e ChanObjectsDivergencesCenterChainProfile) Valid() bool {
 	switch e {
 	case ChanObjectsDivergencesCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1:
+		return true
+	case ChanObjectsDivergencesCenterChainProfileFixedSameLevelRecursiveV2:
 		return true
 	case ChanObjectsDivergencesCenterChainProfileLessThannil:
 		return true
@@ -2048,13 +2072,16 @@ func (e ChanObjectsDivergencesDivergenceProfile) Valid() bool {
 
 // Defines values for ChanObjectsDivergencesEvidenceProfile.
 const (
-	ChanObjectsDivergencesEvidenceProfileChan108SingleScopeV1 ChanObjectsDivergencesEvidenceProfile = "chan108_single_scope_v1"
+	ChanObjectsDivergencesEvidenceProfileChan108SingleScopeV1      ChanObjectsDivergencesEvidenceProfile = "chan108_single_scope_v1"
+	ChanObjectsDivergencesEvidenceProfileFixedSameLevelRecursiveV2 ChanObjectsDivergencesEvidenceProfile = "fixed_same_level_recursive_v2"
 )
 
 // Valid indicates whether the value is a known member of the ChanObjectsDivergencesEvidenceProfile enum.
 func (e ChanObjectsDivergencesEvidenceProfile) Valid() bool {
 	switch e {
 	case ChanObjectsDivergencesEvidenceProfileChan108SingleScopeV1:
+		return true
+	case ChanObjectsDivergencesEvidenceProfileFixedSameLevelRecursiveV2:
 		return true
 	default:
 		return false
@@ -2582,8 +2609,9 @@ func (e ChanObjectsTradePointsBoundaryRelation) Valid() bool {
 
 // Defines values for ChanObjectsTradePointsCSublevelProfile.
 const (
-	ChanObjectsTradePointsCSublevelProfileBiTwoConfirmedCentersType3V1 ChanObjectsTradePointsCSublevelProfile = "bi_two_confirmed_centers_type3_v1"
-	ChanObjectsTradePointsCSublevelProfileLessThannil                  ChanObjectsTradePointsCSublevelProfile = "<nil>"
+	ChanObjectsTradePointsCSublevelProfileBiTwoConfirmedCentersType3V1      ChanObjectsTradePointsCSublevelProfile = "bi_two_confirmed_centers_type3_v1"
+	ChanObjectsTradePointsCSublevelProfileLessThannil                       ChanObjectsTradePointsCSublevelProfile = "<nil>"
+	ChanObjectsTradePointsCSublevelProfileRecursiveCompletedMovementType3V2 ChanObjectsTradePointsCSublevelProfile = "recursive_completed_movement_type3_v2"
 )
 
 // Valid indicates whether the value is a known member of the ChanObjectsTradePointsCSublevelProfile enum.
@@ -2592,6 +2620,8 @@ func (e ChanObjectsTradePointsCSublevelProfile) Valid() bool {
 	case ChanObjectsTradePointsCSublevelProfileBiTwoConfirmedCentersType3V1:
 		return true
 	case ChanObjectsTradePointsCSublevelProfileLessThannil:
+		return true
+	case ChanObjectsTradePointsCSublevelProfileRecursiveCompletedMovementType3V2:
 		return true
 	default:
 		return false
@@ -2652,6 +2682,7 @@ func (e ChanObjectsTradePointsCatalogEvent) Valid() bool {
 // Defines values for ChanObjectsTradePointsCenterChainProfile.
 const (
 	ChanObjectsTradePointsCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1 ChanObjectsTradePointsCenterChainProfile = "confirmed_same_level_centers_known_at_signal_v1"
+	ChanObjectsTradePointsCenterChainProfileFixedSameLevelRecursiveV2                ChanObjectsTradePointsCenterChainProfile = "fixed_same_level_recursive_v2"
 	ChanObjectsTradePointsCenterChainProfileLessThannil                              ChanObjectsTradePointsCenterChainProfile = "<nil>"
 )
 
@@ -2659,6 +2690,8 @@ const (
 func (e ChanObjectsTradePointsCenterChainProfile) Valid() bool {
 	switch e {
 	case ChanObjectsTradePointsCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1:
+		return true
+	case ChanObjectsTradePointsCenterChainProfileFixedSameLevelRecursiveV2:
 		return true
 	case ChanObjectsTradePointsCenterChainProfileLessThannil:
 		return true
@@ -2720,13 +2753,16 @@ func (e ChanObjectsTradePointsDivergenceProfile) Valid() bool {
 
 // Defines values for ChanObjectsTradePointsEvidenceProfile.
 const (
-	ChanObjectsTradePointsEvidenceProfileChan108SingleScopeV1 ChanObjectsTradePointsEvidenceProfile = "chan108_single_scope_v1"
+	ChanObjectsTradePointsEvidenceProfileChan108SingleScopeV1      ChanObjectsTradePointsEvidenceProfile = "chan108_single_scope_v1"
+	ChanObjectsTradePointsEvidenceProfileFixedSameLevelRecursiveV2 ChanObjectsTradePointsEvidenceProfile = "fixed_same_level_recursive_v2"
 )
 
 // Valid indicates whether the value is a known member of the ChanObjectsTradePointsEvidenceProfile enum.
 func (e ChanObjectsTradePointsEvidenceProfile) Valid() bool {
 	switch e {
 	case ChanObjectsTradePointsEvidenceProfileChan108SingleScopeV1:
+		return true
+	case ChanObjectsTradePointsEvidenceProfileFixedSameLevelRecursiveV2:
 		return true
 	default:
 		return false
@@ -3068,8 +3104,9 @@ func (e ChanSignalPointBoundaryRelation) Valid() bool {
 
 // Defines values for ChanSignalPointCSublevelProfile.
 const (
-	ChanSignalPointCSublevelProfileBiTwoConfirmedCentersType3V1 ChanSignalPointCSublevelProfile = "bi_two_confirmed_centers_type3_v1"
-	ChanSignalPointCSublevelProfileLessThannil                  ChanSignalPointCSublevelProfile = "<nil>"
+	ChanSignalPointCSublevelProfileBiTwoConfirmedCentersType3V1      ChanSignalPointCSublevelProfile = "bi_two_confirmed_centers_type3_v1"
+	ChanSignalPointCSublevelProfileLessThannil                       ChanSignalPointCSublevelProfile = "<nil>"
+	ChanSignalPointCSublevelProfileRecursiveCompletedMovementType3V2 ChanSignalPointCSublevelProfile = "recursive_completed_movement_type3_v2"
 )
 
 // Valid indicates whether the value is a known member of the ChanSignalPointCSublevelProfile enum.
@@ -3078,6 +3115,8 @@ func (e ChanSignalPointCSublevelProfile) Valid() bool {
 	case ChanSignalPointCSublevelProfileBiTwoConfirmedCentersType3V1:
 		return true
 	case ChanSignalPointCSublevelProfileLessThannil:
+		return true
+	case ChanSignalPointCSublevelProfileRecursiveCompletedMovementType3V2:
 		return true
 	default:
 		return false
@@ -3138,6 +3177,7 @@ func (e ChanSignalPointCatalogEvent) Valid() bool {
 // Defines values for ChanSignalPointCenterChainProfile.
 const (
 	ChanSignalPointCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1 ChanSignalPointCenterChainProfile = "confirmed_same_level_centers_known_at_signal_v1"
+	ChanSignalPointCenterChainProfileFixedSameLevelRecursiveV2                ChanSignalPointCenterChainProfile = "fixed_same_level_recursive_v2"
 	ChanSignalPointCenterChainProfileLessThannil                              ChanSignalPointCenterChainProfile = "<nil>"
 )
 
@@ -3145,6 +3185,8 @@ const (
 func (e ChanSignalPointCenterChainProfile) Valid() bool {
 	switch e {
 	case ChanSignalPointCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1:
+		return true
+	case ChanSignalPointCenterChainProfileFixedSameLevelRecursiveV2:
 		return true
 	case ChanSignalPointCenterChainProfileLessThannil:
 		return true
@@ -3206,13 +3248,16 @@ func (e ChanSignalPointDivergenceProfile) Valid() bool {
 
 // Defines values for ChanSignalPointEvidenceProfile.
 const (
-	ChanSignalPointEvidenceProfileChan108SingleScopeV1 ChanSignalPointEvidenceProfile = "chan108_single_scope_v1"
+	ChanSignalPointEvidenceProfileChan108SingleScopeV1      ChanSignalPointEvidenceProfile = "chan108_single_scope_v1"
+	ChanSignalPointEvidenceProfileFixedSameLevelRecursiveV2 ChanSignalPointEvidenceProfile = "fixed_same_level_recursive_v2"
 )
 
 // Valid indicates whether the value is a known member of the ChanSignalPointEvidenceProfile enum.
 func (e ChanSignalPointEvidenceProfile) Valid() bool {
 	switch e {
 	case ChanSignalPointEvidenceProfileChan108SingleScopeV1:
+		return true
+	case ChanSignalPointEvidenceProfileFixedSameLevelRecursiveV2:
 		return true
 	default:
 		return false
@@ -4115,8 +4160,9 @@ func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesBoundaryRelati
 
 // Defines values for GetCalculationResults200JSONResponseBodyObjectsDivergencesCSublevelProfile.
 const (
-	GetCalculationResults200JSONResponseBodyObjectsDivergencesCSublevelProfileBiTwoConfirmedCentersType3V1 GetCalculationResults200JSONResponseBodyObjectsDivergencesCSublevelProfile = "bi_two_confirmed_centers_type3_v1"
-	GetCalculationResults200JSONResponseBodyObjectsDivergencesCSublevelProfileLessThannil                  GetCalculationResults200JSONResponseBodyObjectsDivergencesCSublevelProfile = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesCSublevelProfileBiTwoConfirmedCentersType3V1      GetCalculationResults200JSONResponseBodyObjectsDivergencesCSublevelProfile = "bi_two_confirmed_centers_type3_v1"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesCSublevelProfileLessThannil                       GetCalculationResults200JSONResponseBodyObjectsDivergencesCSublevelProfile = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesCSublevelProfileRecursiveCompletedMovementType3V2 GetCalculationResults200JSONResponseBodyObjectsDivergencesCSublevelProfile = "recursive_completed_movement_type3_v2"
 )
 
 // Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsDivergencesCSublevelProfile enum.
@@ -4125,6 +4171,8 @@ func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesCSublevelProfi
 	case GetCalculationResults200JSONResponseBodyObjectsDivergencesCSublevelProfileBiTwoConfirmedCentersType3V1:
 		return true
 	case GetCalculationResults200JSONResponseBodyObjectsDivergencesCSublevelProfileLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesCSublevelProfileRecursiveCompletedMovementType3V2:
 		return true
 	default:
 		return false
@@ -4185,6 +4233,7 @@ func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesCatalogEvent) 
 // Defines values for GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfile.
 const (
 	GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1 GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfile = "confirmed_same_level_centers_known_at_signal_v1"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfileFixedSameLevelRecursiveV2                GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfile = "fixed_same_level_recursive_v2"
 	GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfileLessThannil                              GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfile = "<nil>"
 )
 
@@ -4192,6 +4241,8 @@ const (
 func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfile) Valid() bool {
 	switch e {
 	case GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfileFixedSameLevelRecursiveV2:
 		return true
 	case GetCalculationResults200JSONResponseBodyObjectsDivergencesCenterChainProfileLessThannil:
 		return true
@@ -4253,13 +4304,16 @@ func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesDivergenceProf
 
 // Defines values for GetCalculationResults200JSONResponseBodyObjectsDivergencesEvidenceProfile.
 const (
-	GetCalculationResults200JSONResponseBodyObjectsDivergencesEvidenceProfileChan108SingleScopeV1 GetCalculationResults200JSONResponseBodyObjectsDivergencesEvidenceProfile = "chan108_single_scope_v1"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesEvidenceProfileChan108SingleScopeV1      GetCalculationResults200JSONResponseBodyObjectsDivergencesEvidenceProfile = "chan108_single_scope_v1"
+	GetCalculationResults200JSONResponseBodyObjectsDivergencesEvidenceProfileFixedSameLevelRecursiveV2 GetCalculationResults200JSONResponseBodyObjectsDivergencesEvidenceProfile = "fixed_same_level_recursive_v2"
 )
 
 // Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsDivergencesEvidenceProfile enum.
 func (e GetCalculationResults200JSONResponseBodyObjectsDivergencesEvidenceProfile) Valid() bool {
 	switch e {
 	case GetCalculationResults200JSONResponseBodyObjectsDivergencesEvidenceProfileChan108SingleScopeV1:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsDivergencesEvidenceProfileFixedSameLevelRecursiveV2:
 		return true
 	default:
 		return false
@@ -4787,8 +4841,9 @@ func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsBoundaryRelati
 
 // Defines values for GetCalculationResults200JSONResponseBodyObjectsTradePointsCSublevelProfile.
 const (
-	GetCalculationResults200JSONResponseBodyObjectsTradePointsCSublevelProfileBiTwoConfirmedCentersType3V1 GetCalculationResults200JSONResponseBodyObjectsTradePointsCSublevelProfile = "bi_two_confirmed_centers_type3_v1"
-	GetCalculationResults200JSONResponseBodyObjectsTradePointsCSublevelProfileLessThannil                  GetCalculationResults200JSONResponseBodyObjectsTradePointsCSublevelProfile = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsCSublevelProfileBiTwoConfirmedCentersType3V1      GetCalculationResults200JSONResponseBodyObjectsTradePointsCSublevelProfile = "bi_two_confirmed_centers_type3_v1"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsCSublevelProfileLessThannil                       GetCalculationResults200JSONResponseBodyObjectsTradePointsCSublevelProfile = "<nil>"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsCSublevelProfileRecursiveCompletedMovementType3V2 GetCalculationResults200JSONResponseBodyObjectsTradePointsCSublevelProfile = "recursive_completed_movement_type3_v2"
 )
 
 // Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsTradePointsCSublevelProfile enum.
@@ -4797,6 +4852,8 @@ func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsCSublevelProfi
 	case GetCalculationResults200JSONResponseBodyObjectsTradePointsCSublevelProfileBiTwoConfirmedCentersType3V1:
 		return true
 	case GetCalculationResults200JSONResponseBodyObjectsTradePointsCSublevelProfileLessThannil:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsCSublevelProfileRecursiveCompletedMovementType3V2:
 		return true
 	default:
 		return false
@@ -4857,6 +4914,7 @@ func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsCatalogEvent) 
 // Defines values for GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfile.
 const (
 	GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1 GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfile = "confirmed_same_level_centers_known_at_signal_v1"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfileFixedSameLevelRecursiveV2                GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfile = "fixed_same_level_recursive_v2"
 	GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfileLessThannil                              GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfile = "<nil>"
 )
 
@@ -4864,6 +4922,8 @@ const (
 func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfile) Valid() bool {
 	switch e {
 	case GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfileConfirmedSameLevelCentersKnownAtSignalV1:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfileFixedSameLevelRecursiveV2:
 		return true
 	case GetCalculationResults200JSONResponseBodyObjectsTradePointsCenterChainProfileLessThannil:
 		return true
@@ -4925,13 +4985,16 @@ func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsDivergenceProf
 
 // Defines values for GetCalculationResults200JSONResponseBodyObjectsTradePointsEvidenceProfile.
 const (
-	GetCalculationResults200JSONResponseBodyObjectsTradePointsEvidenceProfileChan108SingleScopeV1 GetCalculationResults200JSONResponseBodyObjectsTradePointsEvidenceProfile = "chan108_single_scope_v1"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsEvidenceProfileChan108SingleScopeV1      GetCalculationResults200JSONResponseBodyObjectsTradePointsEvidenceProfile = "chan108_single_scope_v1"
+	GetCalculationResults200JSONResponseBodyObjectsTradePointsEvidenceProfileFixedSameLevelRecursiveV2 GetCalculationResults200JSONResponseBodyObjectsTradePointsEvidenceProfile = "fixed_same_level_recursive_v2"
 )
 
 // Valid indicates whether the value is a known member of the GetCalculationResults200JSONResponseBodyObjectsTradePointsEvidenceProfile enum.
 func (e GetCalculationResults200JSONResponseBodyObjectsTradePointsEvidenceProfile) Valid() bool {
 	switch e {
 	case GetCalculationResults200JSONResponseBodyObjectsTradePointsEvidenceProfileChan108SingleScopeV1:
+		return true
+	case GetCalculationResults200JSONResponseBodyObjectsTradePointsEvidenceProfileFixedSameLevelRecursiveV2:
 		return true
 	default:
 		return false
@@ -6067,6 +6130,109 @@ type CalculationResults struct {
 			StartTime          int         `json:"start_time"`
 			Status             interface{} `json:"status"`
 		} `json:"processed_bars"`
+		RecursiveCenters *[]struct {
+			ComponentRefs []struct {
+				ObjectId       string `json:"object_id"`
+				ObjectRevision int    `json:"object_revision"`
+			} `json:"component_refs"`
+			DataRevision    string  `json:"data_revision"`
+			DatasetId       string  `json:"dataset_id"`
+			DdI64           int     `json:"dd_i64"`
+			DecompositionId string  `json:"decomposition_id"`
+			EndBarIndex     int     `json:"end_bar_index"`
+			EndTime         int     `json:"end_time"`
+			ExitId          *string `json:"exit_id"`
+			ExitRef         *struct {
+				ObjectId       string `json:"object_id"`
+				ObjectRevision int    `json:"object_revision"`
+			} `json:"exit_ref,omitempty"`
+			FormationDir              interface{} `json:"formation_dir"`
+			FormedAtBarIndex          int         `json:"formed_at_bar_index"`
+			GgI64                     int         `json:"gg_i64"`
+			HigherLevelReviewRequired *bool       `json:"higher_level_review_required,omitempty"`
+			KnownAtBarIndex           int         `json:"known_at_bar_index"`
+			Level                     int         `json:"level"`
+			ObjectId                  string      `json:"object_id"`
+			ObjectRevision            int         `json:"object_revision"`
+			ObservedHighI64           int         `json:"observed_high_i64"`
+			ObservedLowI64            int         `json:"observed_low_i64"`
+			PreviousCenterId          *string     `json:"previous_center_id,omitempty"`
+			RelationProfile           interface{} `json:"relation_profile,omitempty"`
+			RelativeDir               interface{} `json:"relative_dir,omitempty"`
+			RetestId                  *string     `json:"retest_id"`
+			RetestRef                 *struct {
+				ObjectId       string `json:"object_id"`
+				ObjectRevision int    `json:"object_revision"`
+			} `json:"retest_ref,omitempty"`
+			RuleVersion interface{} `json:"rule_version"`
+			SeedRefs    []struct {
+				ObjectId       string `json:"object_id"`
+				ObjectRevision int    `json:"object_revision"`
+			} `json:"seed_refs"`
+			StartBarIndex int         `json:"start_bar_index"`
+			StartTime     int         `json:"start_time"`
+			Status        interface{} `json:"status"`
+			ZdI64         int         `json:"zd_i64"`
+			ZgI64         int         `json:"zg_i64"`
+		} `json:"recursive_centers,omitempty"`
+		RecursiveMemberships *[]struct {
+			ChildKind interface{} `json:"child_kind"`
+			ChildRef  struct {
+				ObjectId       string `json:"object_id"`
+				ObjectRevision int    `json:"object_revision"`
+			} `json:"child_ref"`
+			KnownAtBarIndex int         `json:"known_at_bar_index"`
+			Level           int         `json:"level"`
+			ObjectId        string      `json:"object_id"`
+			ObjectRevision  int         `json:"object_revision"`
+			ParentId        string      `json:"parent_id"`
+			ParentKind      interface{} `json:"parent_kind"`
+			Role            interface{} `json:"role"`
+		} `json:"recursive_memberships,omitempty"`
+		RecursiveMovements *[]struct {
+			CenterIds  []string `json:"center_ids"`
+			CenterRefs *[]struct {
+				ObjectId       string `json:"object_id"`
+				ObjectRevision int    `json:"object_revision"`
+			} `json:"center_refs,omitempty"`
+			ComparisonCurrentId    *string     `json:"comparison_current_id"`
+			ComparisonReferenceIds []string    `json:"comparison_reference_ids"`
+			CompletionContext      interface{} `json:"completion_context"`
+			CompletionRefs         []struct {
+				ObjectId       string `json:"object_id"`
+				ObjectRevision int    `json:"object_revision"`
+			} `json:"completion_refs"`
+			CompletionRule interface{} `json:"completion_rule"`
+			ComponentRefs  []struct {
+				ObjectId       string `json:"object_id"`
+				ObjectRevision int    `json:"object_revision"`
+			} `json:"component_refs"`
+			ConstructionKind        interface{}             `json:"construction_kind"`
+			DataRevision            string                  `json:"data_revision"`
+			DatasetId               string                  `json:"dataset_id"`
+			DecompositionId         string                  `json:"decomposition_id"`
+			Direction               interface{}             `json:"direction"`
+			EndBarIndex             int                     `json:"end_bar_index"`
+			EndPriceI64             int                     `json:"end_price_i64"`
+			EndTime                 int                     `json:"end_time"`
+			KnownAtBarIndex         int                     `json:"known_at_bar_index"`
+			Level                   int                     `json:"level"`
+			MovementType            interface{}             `json:"movement_type"`
+			ObjectId                string                  `json:"object_id"`
+			ObjectRevision          int                     `json:"object_revision"`
+			Promotable              bool                    `json:"promotable"`
+			RangeHighI64            int                     `json:"range_high_i64"`
+			RangeHighSourceBarIndex int                     `json:"range_high_source_bar_index"`
+			RangeLowI64             int                     `json:"range_low_i64"`
+			RangeLowSourceBarIndex  int                     `json:"range_low_source_bar_index"`
+			ReversalId              *string                 `json:"reversal_id"`
+			RuleVersion             interface{}             `json:"rule_version"`
+			StartBarIndex           int                     `json:"start_bar_index"`
+			StartPriceI64           int                     `json:"start_price_i64"`
+			StartTime               int                     `json:"start_time"`
+			Status                  interface{}             `json:"status"`
+			StrengthEvidence        *map[string]interface{} `json:"strength_evidence"`
+		} `json:"recursive_movements,omitempty"`
 		Segments []struct {
 			CatalogAlgorithmId         interface{}                                   `json:"catalog_algorithm_id"`
 			Confirmed                  bool                                          `json:"confirmed"`
@@ -6951,6 +7117,109 @@ type ChanObjects struct {
 		StartTime          int         `json:"start_time"`
 		Status             interface{} `json:"status"`
 	} `json:"processed_bars"`
+	RecursiveCenters *[]struct {
+		ComponentRefs []struct {
+			ObjectId       string `json:"object_id"`
+			ObjectRevision int    `json:"object_revision"`
+		} `json:"component_refs"`
+		DataRevision    string  `json:"data_revision"`
+		DatasetId       string  `json:"dataset_id"`
+		DdI64           int     `json:"dd_i64"`
+		DecompositionId string  `json:"decomposition_id"`
+		EndBarIndex     int     `json:"end_bar_index"`
+		EndTime         int     `json:"end_time"`
+		ExitId          *string `json:"exit_id"`
+		ExitRef         *struct {
+			ObjectId       string `json:"object_id"`
+			ObjectRevision int    `json:"object_revision"`
+		} `json:"exit_ref,omitempty"`
+		FormationDir              interface{} `json:"formation_dir"`
+		FormedAtBarIndex          int         `json:"formed_at_bar_index"`
+		GgI64                     int         `json:"gg_i64"`
+		HigherLevelReviewRequired *bool       `json:"higher_level_review_required,omitempty"`
+		KnownAtBarIndex           int         `json:"known_at_bar_index"`
+		Level                     int         `json:"level"`
+		ObjectId                  string      `json:"object_id"`
+		ObjectRevision            int         `json:"object_revision"`
+		ObservedHighI64           int         `json:"observed_high_i64"`
+		ObservedLowI64            int         `json:"observed_low_i64"`
+		PreviousCenterId          *string     `json:"previous_center_id,omitempty"`
+		RelationProfile           interface{} `json:"relation_profile,omitempty"`
+		RelativeDir               interface{} `json:"relative_dir,omitempty"`
+		RetestId                  *string     `json:"retest_id"`
+		RetestRef                 *struct {
+			ObjectId       string `json:"object_id"`
+			ObjectRevision int    `json:"object_revision"`
+		} `json:"retest_ref,omitempty"`
+		RuleVersion interface{} `json:"rule_version"`
+		SeedRefs    []struct {
+			ObjectId       string `json:"object_id"`
+			ObjectRevision int    `json:"object_revision"`
+		} `json:"seed_refs"`
+		StartBarIndex int         `json:"start_bar_index"`
+		StartTime     int         `json:"start_time"`
+		Status        interface{} `json:"status"`
+		ZdI64         int         `json:"zd_i64"`
+		ZgI64         int         `json:"zg_i64"`
+	} `json:"recursive_centers,omitempty"`
+	RecursiveMemberships *[]struct {
+		ChildKind interface{} `json:"child_kind"`
+		ChildRef  struct {
+			ObjectId       string `json:"object_id"`
+			ObjectRevision int    `json:"object_revision"`
+		} `json:"child_ref"`
+		KnownAtBarIndex int         `json:"known_at_bar_index"`
+		Level           int         `json:"level"`
+		ObjectId        string      `json:"object_id"`
+		ObjectRevision  int         `json:"object_revision"`
+		ParentId        string      `json:"parent_id"`
+		ParentKind      interface{} `json:"parent_kind"`
+		Role            interface{} `json:"role"`
+	} `json:"recursive_memberships,omitempty"`
+	RecursiveMovements *[]struct {
+		CenterIds  []string `json:"center_ids"`
+		CenterRefs *[]struct {
+			ObjectId       string `json:"object_id"`
+			ObjectRevision int    `json:"object_revision"`
+		} `json:"center_refs,omitempty"`
+		ComparisonCurrentId    *string     `json:"comparison_current_id"`
+		ComparisonReferenceIds []string    `json:"comparison_reference_ids"`
+		CompletionContext      interface{} `json:"completion_context"`
+		CompletionRefs         []struct {
+			ObjectId       string `json:"object_id"`
+			ObjectRevision int    `json:"object_revision"`
+		} `json:"completion_refs"`
+		CompletionRule interface{} `json:"completion_rule"`
+		ComponentRefs  []struct {
+			ObjectId       string `json:"object_id"`
+			ObjectRevision int    `json:"object_revision"`
+		} `json:"component_refs"`
+		ConstructionKind        interface{}             `json:"construction_kind"`
+		DataRevision            string                  `json:"data_revision"`
+		DatasetId               string                  `json:"dataset_id"`
+		DecompositionId         string                  `json:"decomposition_id"`
+		Direction               interface{}             `json:"direction"`
+		EndBarIndex             int                     `json:"end_bar_index"`
+		EndPriceI64             int                     `json:"end_price_i64"`
+		EndTime                 int                     `json:"end_time"`
+		KnownAtBarIndex         int                     `json:"known_at_bar_index"`
+		Level                   int                     `json:"level"`
+		MovementType            interface{}             `json:"movement_type"`
+		ObjectId                string                  `json:"object_id"`
+		ObjectRevision          int                     `json:"object_revision"`
+		Promotable              bool                    `json:"promotable"`
+		RangeHighI64            int                     `json:"range_high_i64"`
+		RangeHighSourceBarIndex int                     `json:"range_high_source_bar_index"`
+		RangeLowI64             int                     `json:"range_low_i64"`
+		RangeLowSourceBarIndex  int                     `json:"range_low_source_bar_index"`
+		ReversalId              *string                 `json:"reversal_id"`
+		RuleVersion             interface{}             `json:"rule_version"`
+		StartBarIndex           int                     `json:"start_bar_index"`
+		StartPriceI64           int                     `json:"start_price_i64"`
+		StartTime               int                     `json:"start_time"`
+		Status                  interface{}             `json:"status"`
+		StrengthEvidence        *map[string]interface{} `json:"strength_evidence"`
+	} `json:"recursive_movements,omitempty"`
 	Segments []struct {
 		CatalogAlgorithmId         interface{}                     `json:"catalog_algorithm_id"`
 		Confirmed                  bool                            `json:"confirmed"`
@@ -7241,6 +7510,115 @@ type ChanProcessedBar struct {
 	StartBarIndex      int         `json:"start_bar_index"`
 	StartTime          int         `json:"start_time"`
 	Status             interface{} `json:"status"`
+}
+
+// ChanRecursiveCenter defines model for ChanRecursiveCenter.
+type ChanRecursiveCenter struct {
+	ComponentRefs []struct {
+		ObjectId       string `json:"object_id"`
+		ObjectRevision int    `json:"object_revision"`
+	} `json:"component_refs"`
+	DataRevision    string  `json:"data_revision"`
+	DatasetId       string  `json:"dataset_id"`
+	DdI64           int     `json:"dd_i64"`
+	DecompositionId string  `json:"decomposition_id"`
+	EndBarIndex     int     `json:"end_bar_index"`
+	EndTime         int     `json:"end_time"`
+	ExitId          *string `json:"exit_id"`
+	ExitRef         *struct {
+		ObjectId       string `json:"object_id"`
+		ObjectRevision int    `json:"object_revision"`
+	} `json:"exit_ref,omitempty"`
+	FormationDir              interface{} `json:"formation_dir"`
+	FormedAtBarIndex          int         `json:"formed_at_bar_index"`
+	GgI64                     int         `json:"gg_i64"`
+	HigherLevelReviewRequired *bool       `json:"higher_level_review_required,omitempty"`
+	KnownAtBarIndex           int         `json:"known_at_bar_index"`
+	Level                     int         `json:"level"`
+	ObjectId                  string      `json:"object_id"`
+	ObjectRevision            int         `json:"object_revision"`
+	ObservedHighI64           int         `json:"observed_high_i64"`
+	ObservedLowI64            int         `json:"observed_low_i64"`
+	PreviousCenterId          *string     `json:"previous_center_id,omitempty"`
+	RelationProfile           interface{} `json:"relation_profile,omitempty"`
+	RelativeDir               interface{} `json:"relative_dir,omitempty"`
+	RetestId                  *string     `json:"retest_id"`
+	RetestRef                 *struct {
+		ObjectId       string `json:"object_id"`
+		ObjectRevision int    `json:"object_revision"`
+	} `json:"retest_ref,omitempty"`
+	RuleVersion interface{} `json:"rule_version"`
+	SeedRefs    []struct {
+		ObjectId       string `json:"object_id"`
+		ObjectRevision int    `json:"object_revision"`
+	} `json:"seed_refs"`
+	StartBarIndex int         `json:"start_bar_index"`
+	StartTime     int         `json:"start_time"`
+	Status        interface{} `json:"status"`
+	ZdI64         int         `json:"zd_i64"`
+	ZgI64         int         `json:"zg_i64"`
+}
+
+// ChanRecursiveMembership defines model for ChanRecursiveMembership.
+type ChanRecursiveMembership struct {
+	ChildKind interface{} `json:"child_kind"`
+	ChildRef  struct {
+		ObjectId       string `json:"object_id"`
+		ObjectRevision int    `json:"object_revision"`
+	} `json:"child_ref"`
+	KnownAtBarIndex int         `json:"known_at_bar_index"`
+	Level           int         `json:"level"`
+	ObjectId        string      `json:"object_id"`
+	ObjectRevision  int         `json:"object_revision"`
+	ParentId        string      `json:"parent_id"`
+	ParentKind      interface{} `json:"parent_kind"`
+	Role            interface{} `json:"role"`
+}
+
+// ChanRecursiveMovement defines model for ChanRecursiveMovement.
+type ChanRecursiveMovement struct {
+	CenterIds  []string `json:"center_ids"`
+	CenterRefs *[]struct {
+		ObjectId       string `json:"object_id"`
+		ObjectRevision int    `json:"object_revision"`
+	} `json:"center_refs,omitempty"`
+	ComparisonCurrentId    *string     `json:"comparison_current_id"`
+	ComparisonReferenceIds []string    `json:"comparison_reference_ids"`
+	CompletionContext      interface{} `json:"completion_context"`
+	CompletionRefs         []struct {
+		ObjectId       string `json:"object_id"`
+		ObjectRevision int    `json:"object_revision"`
+	} `json:"completion_refs"`
+	CompletionRule interface{} `json:"completion_rule"`
+	ComponentRefs  []struct {
+		ObjectId       string `json:"object_id"`
+		ObjectRevision int    `json:"object_revision"`
+	} `json:"component_refs"`
+	ConstructionKind        interface{}             `json:"construction_kind"`
+	DataRevision            string                  `json:"data_revision"`
+	DatasetId               string                  `json:"dataset_id"`
+	DecompositionId         string                  `json:"decomposition_id"`
+	Direction               interface{}             `json:"direction"`
+	EndBarIndex             int                     `json:"end_bar_index"`
+	EndPriceI64             int                     `json:"end_price_i64"`
+	EndTime                 int                     `json:"end_time"`
+	KnownAtBarIndex         int                     `json:"known_at_bar_index"`
+	Level                   int                     `json:"level"`
+	MovementType            interface{}             `json:"movement_type"`
+	ObjectId                string                  `json:"object_id"`
+	ObjectRevision          int                     `json:"object_revision"`
+	Promotable              bool                    `json:"promotable"`
+	RangeHighI64            int                     `json:"range_high_i64"`
+	RangeHighSourceBarIndex int                     `json:"range_high_source_bar_index"`
+	RangeLowI64             int                     `json:"range_low_i64"`
+	RangeLowSourceBarIndex  int                     `json:"range_low_source_bar_index"`
+	ReversalId              *string                 `json:"reversal_id"`
+	RuleVersion             interface{}             `json:"rule_version"`
+	StartBarIndex           int                     `json:"start_bar_index"`
+	StartPriceI64           int                     `json:"start_price_i64"`
+	StartTime               int                     `json:"start_time"`
+	Status                  interface{}             `json:"status"`
+	StrengthEvidence        *map[string]interface{} `json:"strength_evidence"`
 }
 
 // ChanSignalPoint defines model for ChanSignalPoint.

@@ -18,8 +18,11 @@ from tvbt.strategy import _run_strategy_chan, definitions
 def test_algorithm_catalog_marks_structural_and_macd_composite_strategies_eligible() -> None:
     values = definitions()
     eligible = [value for value in values if value.get("comparison_eligible")]
-    assert len(eligible) == 14
-    assert not any(value["algorithm_id"] == "same_level_decomposition_program" for value in values)
+    assert len(eligible) == 15
+    recursive = next(
+        value for value in values if value["algorithm_id"] == "same_level_decomposition_program"
+    )
+    assert recursive["algorithm_version"] == "1.4.0"
     assert all(value["research_role"] == "formal_strategy" for value in eligible)
     assert all(value["strategy_family"] for value in eligible)
     assert not next(value for value in values if value["algorithm_id"] == "ma20_retest_short")[
@@ -156,7 +159,7 @@ def test_all_formal_strategies_finish_one_batch_with_one_chan_calculation(
         threading.Event(),
     )
     results = json.loads((guard.resolve(result_ref) / "results.json").read_text(encoding="utf-8"))
-    assert len(results) == 14
+    assert len(results) == 15
     assert all(value["status"] == "completed" for value in results)
     assert chan_calls == 1
 

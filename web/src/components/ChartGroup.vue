@@ -30,7 +30,7 @@ import { histogramColor, indicatorLineColor, MARKET_COLORS } from '../chart/mark
 import { chanStyleForRendering, colorWithOpacity, resolvedOutputStyle } from '../indicators/style'
 import { logger } from '../logging/logger'
 import type { ReplayObjects, ReplaySignal } from '../replay/eventIndex'
-import type { ChanCalculationResults, ChanLineObject, ChanSignalPoint, ChanTreeObject, DatasetMeta, SeriesSource, StrategySource } from '../types/api'
+import type { ChanCalculationResults, ChanEvidenceLine, ChanLineObject, ChanSignalPoint, ChanTreeObject, DatasetMeta, SeriesSource, StrategySource } from '../types/api'
 import { cloneDrawings, LayerManager, type DrawingAnchor, type DrawingObject, type DrawingType, type ProjectedDrawing } from '../drawing/model'
 
 const props = withDefaults(defineProps<{
@@ -43,7 +43,7 @@ const props = withDefaults(defineProps<{
   drawings?: DrawingObject[]
   selectedDrawingId?: string | null
   selectedSignal?: ChanTreeObject | null
-  selectedDivergenceSegments?: { a?: ChanLineObject | null; reference: ChanLineObject | null; current: ChanLineObject | null } | null
+  selectedDivergenceSegments?: { a?: ChanEvidenceLine | null; reference: ChanEvidenceLine | null; current: ChanEvidenceLine | null } | null
   signalLocked?: boolean
   drawingTool?: DrawingType | 'cursor'
   magnet?: boolean
@@ -444,6 +444,7 @@ function renderBars(): void {
     : cachedBars.filter((bar) => bar.barIndex <= props.replayCursor!)
   cacheFirstIndex.value = cachedBars[0]?.barIndex ?? null
   cacheBarCount.value = cachedBars.length
+  chanPrimitive.setBarIndexOrigin(bars[0]?.barIndex ?? null)
   candles.setData(bars.map((bar) => ({
     time: Math.floor(bar.timestampUtc / 1000) as UTCTimestamp,
     open: bar.openI64 / scale,
@@ -698,6 +699,9 @@ async function renderChan(fromBarIndex: number, toBarIndex: number): Promise<voi
       center_monitors: source?.visible && (source.category_visibility.center_monitors ?? true) ? props.replayObjects.center_monitors : [],
       divergences: source?.visible ? props.replayObjects.divergences.filter((signal) => divergenceVisible(signal, source.category_visibility)) : [],
       trade_points: source?.visible ? selectVisibleTradePoints(props.replayObjects.trade_points, source.category_visibility) : [],
+      recursive_movements: source?.visible && (source.category_visibility.movement_states ?? true) ? props.replayObjects.recursive_movements ?? [] : [],
+      recursive_centers: source?.visible && (source.category_visibility.center_objects ?? true) && source.category_visibility.segment_centers ? props.replayObjects.recursive_centers ?? [] : [],
+      recursive_memberships: source?.visible ? props.replayObjects.recursive_memberships ?? [] : [],
     }
     chanPrimitive.setData(filtered, props.dataset.price.price_scale, centerPresentation)
     chanVisibleCounts.value = { bi: filtered.bi.length, segments: filtered.segments.length, localCenters: [...centerPresentation.values()].filter((value) => value.center).length, divergences: filtered.divergences.filter((value) => value.status !== 'invalidated').length, tradePoints: filtered.trade_points.length }
@@ -706,6 +710,9 @@ async function renderChan(fromBarIndex: number, toBarIndex: number): Promise<voi
   const sources = props.strategySources.filter((source) => source.status === 'completed' && source.visible)
   chanPrimitive.setStyle(chanStyleForRendering(sources[0]))
   const merged: ChanCalculationResults['objects'] = { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], local_centers: [], center_connections: [], center_audit_events: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] }
+  merged.recursive_movements = []
+  merged.recursive_centers = []
+  merged.recursive_memberships = []
   const centerPresentation = new Map<string, LocalCenterPresentation>()
   await Promise.all(sources.map(async (source) => {
     const result = await loadCalculationWindow(source.job_id, fromBarIndex, toBarIndex, isCurrent)
@@ -735,6 +742,9 @@ async function renderChan(fromBarIndex: number, toBarIndex: number): Promise<voi
       }
     }
     if (source.category_visibility.movement_states ?? true) merged.movement_states.push(...result.objects.movement_states)
+    if (source.category_visibility.movement_states ?? true) merged.recursive_movements!.push(...result.objects.recursive_movements ?? [])
+    if ((source.category_visibility.center_objects ?? true) && source.category_visibility.segment_centers) merged.recursive_centers!.push(...result.objects.recursive_centers ?? [])
+    merged.recursive_memberships!.push(...result.objects.recursive_memberships ?? [])
     if (source.category_visibility.center_monitors ?? true) merged.center_monitors.push(...result.objects.center_monitors)
     merged.divergences.push(...result.objects.divergences.filter((signal) => divergenceVisible(signal, source.category_visibility)))
     merged.trade_points.push(...selectVisibleTradePoints(result.objects.trade_points, source.category_visibility))

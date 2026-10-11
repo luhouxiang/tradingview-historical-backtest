@@ -9,8 +9,8 @@ from tvbt.chan.engine import ChanEngine
 
 
 def test_chan_oscillation_divergence_semantics_publish_new_algorithm_version() -> None:
-    """测试 9.0.0 身份使中枢内背驰语义与 8.x 缓存隔离。"""
-    assert ChanEngine.algorithm_version == "20.0.0"
+    """递归结构语义必须与20.x固定线段缓存隔离。"""
+    assert ChanEngine.algorithm_version == "22.3.0"
 
 
 def test_event_emitter_is_deterministic_and_suppresses_unchanged_upserts() -> None:

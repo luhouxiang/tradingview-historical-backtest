@@ -1,0 +1,522 @@
+{
+  "format": "tvbt-recursive-proof-state-v1",
+  "scope": {
+    "dataset_id": "synthetic",
+    "data_revision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "decomposition_id": "fixed-synthetic",
+    "rule_version": "fixed_same_level_recursive_v2"
+  },
+  "cursor": 15,
+  "facts": [
+    {
+      "ref": {
+        "object_id": "movement-0",
+        "object_revision": 1
+      },
+      "scope": {
+        "dataset_id": "synthetic",
+        "data_revision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "decomposition_id": "fixed-synthetic",
+        "rule_version": "fixed_same_level_recursive_v2"
+      },
+      "level": 0,
+      "kind": "movement",
+      "start": {
+        "bar_index": 0,
+        "time": 1000,
+        "price_i64": 90
+      },
+      "end": {
+        "bar_index": 3,
+        "time": 4000,
+        "price_i64": 120
+      },
+      "low_i64": 90,
+      "high_i64": 120,
+      "low_source_bar_index": 0,
+      "high_source_bar_index": 3,
+      "known_at_bar_index": 15
+    },
+    {
+      "ref": {
+        "object_id": "movement-1",
+        "object_revision": 1
+      },
+      "scope": {
+        "dataset_id": "synthetic",
+        "data_revision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "decomposition_id": "fixed-synthetic",
+        "rule_version": "fixed_same_level_recursive_v2"
+      },
+      "level": 0,
+      "kind": "movement",
+      "start": {
+        "bar_index": 3,
+        "time": 4000,
+        "price_i64": 120
+      },
+      "end": {
+        "bar_index": 6,
+        "time": 7000,
+        "price_i64": 100
+      },
+      "low_i64": 100,
+      "high_i64": 120,
+      "low_source_bar_index": 6,
+      "high_source_bar_index": 3,
+      "known_at_bar_index": 15
+    },
+    {
+      "ref": {
+        "object_id": "movement-2",
+        "object_revision": 1
+      },
+      "scope": {
+        "dataset_id": "synthetic",
+        "data_revision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "decomposition_id": "fixed-synthetic",
+        "rule_version": "fixed_same_level_recursive_v2"
+      },
+      "level": 0,
+      "kind": "movement",
+      "start": {
+        "bar_index": 6,
+        "time": 7000,
+        "price_i64": 100
+      },
+      "end": {
+        "bar_index": 9,
+        "time": 10000,
+        "price_i64": 115
+      },
+      "low_i64": 100,
+      "high_i64": 115,
+      "low_source_bar_index": 6,
+      "high_source_bar_index": 9,
+      "known_at_bar_index": 15
+    },
+    {
+      "ref": {
+        "object_id": "segment-0",
+        "object_revision": 1
+      },
+      "scope": {
+        "dataset_id": "synthetic",
+        "data_revision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "decomposition_id": "fixed-synthetic",
+        "rule_version": "fixed_same_level_recursive_v2"
+      },
+      "level": -1,
+      "kind": "segment",
+      "start": {
+        "bar_index": 0,
+        "time": 1000,
+        "price_i64": 90
+      },
+      "end": {
+        "bar_index": 1,
+        "time": 2000,
+        "price_i64": 110
+      },
+      "low_i64": 90,
+      "high_i64": 110,
+      "low_source_bar_index": 0,
+      "high_source_bar_index": 1,
+      "known_at_bar_index": 2
+    },
+    {
+      "ref": {
+        "object_id": "segment-1",
+        "object_revision": 1
+      },
+      "scope": {
+        "dataset_id": "synthetic",
+        "data_revision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "decomposition_id": "fixed-synthetic",
+        "rule_version": "fixed_same_level_recursive_v2"
+      },
+      "level": -1,
+      "kind": "segment",
+      "start": {
+        "bar_index": 1,
+        "time": 2000,
+        "price_i64": 110
+      },
+      "end": {
+        "bar_index": 2,
+        "time": 3000,
+        "price_i64": 95
+      },
+      "low_i64": 95,
+      "high_i64": 110,
+      "low_source_bar_index": 2,
+      "high_source_bar_index": 1,
+      "known_at_bar_index": 3
+    },
+    {
+      "ref": {
+        "object_id": "segment-2",
+        "object_revision": 1
+      },
+      "scope": {
+        "dataset_id": "synthetic",
+        "data_revision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "decomposition_id": "fixed-synthetic",
+        "rule_version": "fixed_same_level_recursive_v2"
+      },
+      "level": -1,
+      "kind": "segment",
+      "start": {
+        "bar_index": 2,
+        "time": 3000,
+        "price_i64": 95
+      },
+      "end": {
+        "bar_index": 3,
+        "time": 4000,
+        "price_i64": 120
+      },
+      "low_i64": 95,
+      "high_i64": 120,
+      "low_source_bar_index": 2,
+      "high_source_bar_index": 3,
+      "known_at_bar_index": 4
+    },
+    {
+      "ref": {
+        "object_id": "segment-3",
+        "object_revision": 1
+      },
+      "scope": {
+        "dataset_id": "synthetic",
+        "data_revision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "decomposition_id": "fixed-synthetic",
+        "rule_version": "fixed_same_level_recursive_v2"
+      },
+      "level": -1,
+      "kind": "segment",
+      "start": {
+        "bar_index": 3,
+        "time": 4000,
+        "price_i64": 120
+      },
+      "end": {
+        "bar_index": 4,
+        "time": 5000,
+        "price_i64": 110
+      },
+      "low_i64": 110,
+      "high_i64": 120,
+      "low_source_bar_index": 4,
+      "high_source_bar_index": 3,
+      "known_at_bar_index": 5
+    },
+    {
+      "ref": {
+        "object_id": "segment-4",
+        "object_revision": 1
+      },
+      "scope": {
+        "dataset_id": "synthetic",
+        "data_revision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "decomposition_id": "fixed-synthetic",
+        "rule_version": "fixed_same_level_recursive_v2"
+      },
+      "level": -1,
+      "kind": "segment",
+      "start": {
+        "bar_index": 4,
+        "time": 5000,
+        "price_i64": 110
+      },
+      "end": {
+        "bar_index": 5,
+        "time": 6000,
+        "price_i64": 120
+      },
+      "low_i64": 110,
+      "high_i64": 120,
+      "low_source_bar_index": 4,
+      "high_source_bar_index": 5,
+      "known_at_bar_index": 6
+    },
+    {
+      "ref": {
+        "object_id": "segment-5",
+        "object_revision": 1
+      },
+      "scope": {
+        "dataset_id": "synthetic",
+        "data_revision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "decomposition_id": "fixed-synthetic",
+        "rule_version": "fixed_same_level_recursive_v2"
+      },
+      "level": -1,
+      "kind": "segment",
+      "start": {
+        "bar_index": 5,
+        "time": 6000,
+        "price_i64": 120
+      },
+      "end": {
+        "bar_index": 6,
+        "time": 7000,
+        "price_i64": 100
+      },
+      "low_i64": 100,
+      "high_i64": 120,
+      "low_source_bar_index": 6,
+      "high_source_bar_index": 5,
+      "known_at_bar_index": 7
+    },
+    {
+      "ref": {
+        "object_id": "segment-6",
+        "object_revision": 1
+      },
+      "scope": {
+        "dataset_id": "synthetic",
+        "data_revision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "decomposition_id": "fixed-synthetic",
+        "rule_version": "fixed_same_level_recursive_v2"
+      },
+      "level": -1,
+      "kind": "segment",
+      "start": {
+        "bar_index": 6,
+        "time": 7000,
+        "price_i64": 100
+      },
+      "end": {
+        "bar_index": 7,
+        "time": 8000,
+        "price_i64": 110
+      },
+      "low_i64": 100,
+      "high_i64": 110,
+      "low_source_bar_index": 6,
+      "high_source_bar_index": 7,
+      "known_at_bar_index": 8
+    },
+    {
+      "ref": {
+        "object_id": "segment-7",
+        "object_revision": 1
+      },
+      "scope": {
+        "dataset_id": "synthetic",
+        "data_revision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "decomposition_id": "fixed-synthetic",
+        "rule_version": "fixed_same_level_recursive_v2"
+      },
+      "level": -1,
+      "kind": "segment",
+      "start": {
+        "bar_index": 7,
+        "time": 8000,
+        "price_i64": 110
+      },
+      "end": {
+        "bar_index": 8,
+        "time": 9000,
+        "price_i64": 100
+      },
+      "low_i64": 100,
+      "high_i64": 110,
+      "low_source_bar_index": 8,
+      "high_source_bar_index": 7,
+      "known_at_bar_index": 9
+    },
+    {
+      "ref": {
+        "object_id": "segment-8",
+        "object_revision": 1
+      },
+      "scope": {
+        "dataset_id": "synthetic",
+        "data_revision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "decomposition_id": "fixed-synthetic",
+        "rule_version": "fixed_same_level_recursive_v2"
+      },
+      "level": -1,
+      "kind": "segment",
+      "start": {
+        "bar_index": 8,
+        "time": 9000,
+        "price_i64": 100
+      },
+      "end": {
+        "bar_index": 9,
+        "time": 10000,
+        "price_i64": 115
+      },
+      "low_i64": 100,
+      "high_i64": 115,
+      "low_source_bar_index": 8,
+      "high_source_bar_index": 9,
+      "known_at_bar_index": 10
+    },
+    {
+      "ref": {
+        "object_id": "synthetic-boundary",
+        "object_revision": 1
+      },
+      "scope": {
+        "dataset_id": "synthetic",
+        "data_revision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "decomposition_id": "fixed-synthetic",
+        "rule_version": "fixed_same_level_recursive_v2"
+      },
+      "level": -1,
+      "kind": "completion",
+      "start": {
+        "bar_index": 9,
+        "time": 10000,
+        "price_i64": 115
+      },
+      "end": {
+        "bar_index": 10,
+        "time": 11000,
+        "price_i64": 110
+      },
+      "low_i64": 110,
+      "high_i64": 115,
+      "low_source_bar_index": 10,
+      "high_source_bar_index": 9,
+      "known_at_bar_index": 15
+    }
+  ],
+  "claims": [
+    {
+      "fact_ref": {
+        "object_id": "movement-0",
+        "object_revision": 1
+      },
+      "component_refs": [
+        {
+          "object_id": "segment-0",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-1",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-2",
+          "object_revision": 1
+        }
+      ],
+      "completion_rule": "synthetic_boundary_only",
+      "completion_refs": [
+        {
+          "object_id": "synthetic-boundary",
+          "object_revision": 1
+        }
+      ]
+    },
+    {
+      "fact_ref": {
+        "object_id": "movement-1",
+        "object_revision": 1
+      },
+      "component_refs": [
+        {
+          "object_id": "segment-3",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-4",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-5",
+          "object_revision": 1
+        }
+      ],
+      "completion_rule": "synthetic_boundary_only",
+      "completion_refs": [
+        {
+          "object_id": "synthetic-boundary",
+          "object_revision": 1
+        }
+      ]
+    },
+    {
+      "fact_ref": {
+        "object_id": "movement-2",
+        "object_revision": 1
+      },
+      "component_refs": [
+        {
+          "object_id": "segment-6",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-7",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-8",
+          "object_revision": 1
+        }
+      ],
+      "completion_rule": "synthetic_boundary_only",
+      "completion_refs": [
+        {
+          "object_id": "synthetic-boundary",
+          "object_revision": 1
+        }
+      ]
+    }
+  ],
+  "centers": [
+    {
+      "object_id": "recursive-center-e4da6eccf53d5c02fb20",
+      "dataset_id": "synthetic",
+      "data_revision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "decomposition_id": "fixed-synthetic",
+      "rule_version": "fixed_same_level_recursive_v2",
+      "level": 1,
+      "seed_refs": [
+        {
+          "object_id": "movement-0",
+          "object_revision": 1
+        },
+        {
+          "object_id": "movement-1",
+          "object_revision": 1
+        },
+        {
+          "object_id": "movement-2",
+          "object_revision": 1
+        }
+      ],
+      "start_bar_index": 0,
+      "start_time": 1000,
+      "end_bar_index": 9,
+      "end_time": 10000,
+      "zd_i64": 100,
+      "zg_i64": 115,
+      "dd_i64": 90,
+      "gg_i64": 120,
+      "known_at_bar_index": 15,
+      "range_profile": "complete_seed_movement_union_v1"
+    }
+  ],
+  "revision_floors": {
+    "movement-0": 1,
+    "movement-1": 1,
+    "movement-2": 1,
+    "segment-0": 1,
+    "segment-1": 1,
+    "segment-2": 1,
+    "segment-3": 1,
+    "segment-4": 1,
+    "segment-5": 1,
+    "segment-6": 1,
+    "segment-7": 1,
+    "segment-8": 1,
+    "synthetic-boundary": 1
+  },
+  "invalidations": []
+}

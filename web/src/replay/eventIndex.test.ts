@@ -3,6 +3,24 @@ import type { CausalEvent } from '../types/api'
 import { ReplayEventIndex } from './eventIndex'
 
 describe('ReplayEventIndex', () => {
+  it('reveals recursive parents only at proof discovery and restores deleted ownership on rewind', () => {
+    const events: CausalEvent[] = [
+      { event_seq: 1, known_at_bar_index: 30, object_type: 'recursive_movement', object_id: 'm', operation: 'upsert', object_revision: 1, payload: { object_id: 'm', level: 0, start_bar_index: 0, status: 'completed' } },
+      { event_seq: 2, known_at_bar_index: 40, object_type: 'recursive_center', object_id: 'p', operation: 'upsert', object_revision: 1, payload: { object_id: 'p', level: 1, start_bar_index: 0, zd_i64: 10, zg_i64: 20 } },
+      { event_seq: 3, known_at_bar_index: 40, object_type: 'recursive_membership', object_id: 'edge', operation: 'upsert', object_revision: 1, payload: { object_id: 'edge', level: 1, parent_id: 'p', role: 'seed', child_ref: { object_id: 'm', object_revision: 1 } } },
+      { event_seq: 4, known_at_bar_index: 50, object_type: 'recursive_center', object_id: 'p', operation: 'delete', object_revision: 2, payload: {} },
+      { event_seq: 5, known_at_bar_index: 50, object_type: 'recursive_membership', object_id: 'edge', operation: 'delete', object_revision: 2, payload: {} },
+    ]
+    const index = new ReplayEventIndex(events)
+    expect(index.seek(39).recursive_centers).toEqual([])
+    expect(index.seek(40).recursive_centers).toHaveLength(1)
+    expect(index.seek(40).recursive_memberships).toHaveLength(1)
+    expect(index.seek(50).recursive_centers).toEqual([])
+    expect(index.seek(50).recursive_memberships).toEqual([])
+    expect(index.seek(40).recursive_centers?.[0]?.zd_i64).toBe(10)
+    expect(index.seek(40).recursive_memberships?.[0]?.child_ref.object_revision).toBe(1)
+    expect(index.signals()).toEqual([])
+  })
   it('appends training deltas without exposing future or partially accepting invalid order', () => {
     const event = (seq:number,known:number,id:string):CausalEvent => ({event_seq:seq,known_at_bar_index:known,object_type:'chart_event',object_id:id,operation:'upsert',object_revision:1,payload:{event_type:'simulation_fill',bar_index:known}})
     const index = new ReplayEventIndex([event(1,3,'first')])

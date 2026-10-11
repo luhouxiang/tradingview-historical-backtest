@@ -1,0 +1,1106 @@
+{
+  "movements": [
+    {
+      "dataset_id": "synthetic-recursive",
+      "data_revision": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "decomposition_id": "fixed-same-level-full",
+      "rule_version": "fixed_same_level_recursive_v2",
+      "object_id": "recursive-movement-9a78408ccc7448a64c6e",
+      "level": 0,
+      "construction_kind": "canonical",
+      "promotable": true,
+      "movement_type": "consolidation",
+      "direction": "up",
+      "status": "completed",
+      "start_bar_index": 0,
+      "start_time": 1000,
+      "start_price_i64": 0,
+      "end_bar_index": 50,
+      "end_time": 6000,
+      "end_price_i64": 10,
+      "range_low_i64": -5,
+      "range_high_i64": 20,
+      "range_low_source_bar_index": 20,
+      "range_high_source_bar_index": 10,
+      "component_refs": [
+        {
+          "object_id": "segment-0",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-1",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-2",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-3",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-4",
+          "object_revision": 1
+        }
+      ],
+      "center_ids": [
+        "recursive-center-acf8fb4f7f735e7419af"
+      ],
+      "completion_rule": "fixed_same_level_center_block_v2",
+      "completion_context": "fixed_same_level",
+      "completion_refs": [
+        {
+          "object_id": "segment-0",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-1",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-2",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-3",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-4",
+          "object_revision": 1
+        }
+      ],
+      "comparison_reference_ids": [],
+      "comparison_current_id": null,
+      "reversal_id": null,
+      "strength_evidence": null,
+      "object_revision": 1,
+      "known_at_bar_index": 51
+    },
+    {
+      "dataset_id": "synthetic-recursive",
+      "data_revision": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "decomposition_id": "fixed-same-level-full",
+      "rule_version": "fixed_same_level_recursive_v2",
+      "object_id": "recursive-movement-e7a567d3eac2f77cb40c",
+      "level": 0,
+      "construction_kind": "canonical",
+      "promotable": true,
+      "movement_type": "consolidation",
+      "direction": "down",
+      "status": "completed",
+      "start_bar_index": 50,
+      "start_time": 6000,
+      "start_price_i64": 10,
+      "end_bar_index": 120,
+      "end_time": 13000,
+      "end_price_i64": 40,
+      "range_low_i64": 0,
+      "range_high_i64": 50,
+      "range_low_source_bar_index": 60,
+      "range_high_source_bar_index": 90,
+      "component_refs": [
+        {
+          "object_id": "segment-5",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-6",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-7",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-8",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-9",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-10",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-11",
+          "object_revision": 1
+        }
+      ],
+      "center_ids": [
+        "recursive-center-4f66a5f90aad852b0768"
+      ],
+      "completion_rule": "fixed_same_level_center_block_v2",
+      "completion_context": "fixed_same_level",
+      "completion_refs": [
+        {
+          "object_id": "segment-5",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-6",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-7",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-8",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-9",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-10",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-11",
+          "object_revision": 1
+        }
+      ],
+      "comparison_reference_ids": [],
+      "comparison_current_id": null,
+      "reversal_id": null,
+      "strength_evidence": null,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "dataset_id": "synthetic-recursive",
+      "data_revision": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "decomposition_id": "fixed-same-level-full",
+      "rule_version": "fixed_same_level_recursive_v2",
+      "object_id": "recursive-movement-5e9b1967b309f5cc3155",
+      "level": 1,
+      "construction_kind": "canonical",
+      "promotable": true,
+      "movement_type": "unknown",
+      "direction": "up",
+      "status": "building",
+      "start_bar_index": 0,
+      "start_time": 1000,
+      "start_price_i64": 0,
+      "end_bar_index": 120,
+      "end_time": 13000,
+      "end_price_i64": 40,
+      "range_low_i64": -5,
+      "range_high_i64": 50,
+      "range_low_source_bar_index": 20,
+      "range_high_source_bar_index": 90,
+      "component_refs": [
+        {
+          "object_id": "recursive-movement-9a78408ccc7448a64c6e",
+          "object_revision": 1
+        },
+        {
+          "object_id": "recursive-movement-e7a567d3eac2f77cb40c",
+          "object_revision": 1
+        }
+      ],
+      "center_ids": [],
+      "completion_rule": null,
+      "completion_context": "none",
+      "completion_refs": [],
+      "comparison_reference_ids": [],
+      "comparison_current_id": null,
+      "reversal_id": null,
+      "strength_evidence": null,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "dataset_id": "synthetic-recursive",
+      "data_revision": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "decomposition_id": "fixed-same-level-full",
+      "rule_version": "fixed_same_level_recursive_v2",
+      "object_id": "recursive-association-b8e4680397e1f8a049e7",
+      "level": 0,
+      "construction_kind": "association",
+      "promotable": false,
+      "movement_type": "uptrend",
+      "direction": "up",
+      "status": "completed",
+      "start_bar_index": 0,
+      "start_time": 1000,
+      "start_price_i64": 0,
+      "end_bar_index": 120,
+      "end_time": 13000,
+      "end_price_i64": 40,
+      "range_low_i64": -5,
+      "range_high_i64": 50,
+      "range_low_source_bar_index": 20,
+      "range_high_source_bar_index": 90,
+      "component_refs": [
+        {
+          "object_id": "recursive-movement-9a78408ccc7448a64c6e",
+          "object_revision": 1
+        },
+        {
+          "object_id": "recursive-movement-e7a567d3eac2f77cb40c",
+          "object_revision": 1
+        }
+      ],
+      "center_ids": [
+        "recursive-center-acf8fb4f7f735e7419af",
+        "recursive-center-4f66a5f90aad852b0768"
+      ],
+      "completion_rule": "same_level_trend_association_v1",
+      "completion_context": "same_level_association",
+      "completion_refs": [
+        {
+          "object_id": "recursive-movement-9a78408ccc7448a64c6e",
+          "object_revision": 1
+        },
+        {
+          "object_id": "recursive-movement-e7a567d3eac2f77cb40c",
+          "object_revision": 1
+        }
+      ],
+      "comparison_reference_ids": [],
+      "comparison_current_id": null,
+      "reversal_id": null,
+      "strength_evidence": null,
+      "center_refs": [
+        {
+          "object_id": "recursive-center-acf8fb4f7f735e7419af",
+          "object_revision": 1
+        },
+        {
+          "object_id": "recursive-center-4f66a5f90aad852b0768",
+          "object_revision": 1
+        }
+      ],
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    }
+  ],
+  "centers": [
+    {
+      "dataset_id": "synthetic-recursive",
+      "data_revision": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "decomposition_id": "fixed-same-level-full",
+      "rule_version": "fixed_same_level_recursive_v2",
+      "object_id": "recursive-center-acf8fb4f7f735e7419af",
+      "level": 0,
+      "seed_refs": [
+        {
+          "object_id": "segment-2",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-3",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-4",
+          "object_revision": 1
+        }
+      ],
+      "component_refs": [
+        {
+          "object_id": "segment-2",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-3",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-4",
+          "object_revision": 1
+        }
+      ],
+      "start_bar_index": 20,
+      "start_time": 3000,
+      "end_bar_index": 50,
+      "end_time": 6000,
+      "zd_i64": -2,
+      "zg_i64": -1,
+      "dd_i64": -5,
+      "gg_i64": 10,
+      "observed_low_i64": -5,
+      "observed_high_i64": 10,
+      "formation_dir": "up",
+      "status": "closed",
+      "previous_center_id": null,
+      "relative_dir": "unknown",
+      "higher_level_review_required": false,
+      "relation_profile": "fixed_seed_zn_same_level_v2",
+      "exit_id": null,
+      "retest_id": null,
+      "exit_ref": null,
+      "retest_ref": null,
+      "formed_at_bar_index": 51,
+      "object_revision": 1,
+      "known_at_bar_index": 51
+    },
+    {
+      "dataset_id": "synthetic-recursive",
+      "data_revision": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "decomposition_id": "fixed-same-level-full",
+      "rule_version": "fixed_same_level_recursive_v2",
+      "object_id": "recursive-center-4f66a5f90aad852b0768",
+      "level": 0,
+      "seed_refs": [
+        {
+          "object_id": "segment-9",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-10",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-11",
+          "object_revision": 1
+        }
+      ],
+      "component_refs": [
+        {
+          "object_id": "segment-9",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-10",
+          "object_revision": 1
+        },
+        {
+          "object_id": "segment-11",
+          "object_revision": 1
+        }
+      ],
+      "start_bar_index": 90,
+      "start_time": 10000,
+      "end_bar_index": 120,
+      "end_time": 13000,
+      "zd_i64": 40,
+      "zg_i64": 45,
+      "dd_i64": 35,
+      "gg_i64": 50,
+      "observed_low_i64": 35,
+      "observed_high_i64": 50,
+      "formation_dir": "down",
+      "status": "closed",
+      "previous_center_id": "recursive-center-acf8fb4f7f735e7419af",
+      "relative_dir": "up",
+      "higher_level_review_required": false,
+      "relation_profile": "fixed_seed_zn_same_level_v2",
+      "exit_id": null,
+      "retest_id": null,
+      "exit_ref": null,
+      "retest_ref": null,
+      "formed_at_bar_index": 121,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    }
+  ],
+  "memberships": [
+    {
+      "object_id": "recursive-membership-f3411b1411989bffb006",
+      "parent_id": "recursive-center-acf8fb4f7f735e7419af",
+      "parent_kind": "center",
+      "child_ref": {
+        "object_id": "segment-0",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "entry",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 51
+    },
+    {
+      "object_id": "recursive-membership-b9141f1422dc6bb1cff1",
+      "parent_id": "recursive-center-acf8fb4f7f735e7419af",
+      "parent_kind": "center",
+      "child_ref": {
+        "object_id": "segment-1",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "entry",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 51
+    },
+    {
+      "object_id": "recursive-membership-808d53d795c18228ee9a",
+      "parent_id": "recursive-movement-9a78408ccc7448a64c6e",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-0",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "component",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 51
+    },
+    {
+      "object_id": "recursive-membership-e0b9d1515d1a9375a0b5",
+      "parent_id": "recursive-movement-9a78408ccc7448a64c6e",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-1",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "component",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 51
+    },
+    {
+      "object_id": "recursive-membership-bcd320b25515daaf14c1",
+      "parent_id": "recursive-movement-9a78408ccc7448a64c6e",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-2",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "component",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 51
+    },
+    {
+      "object_id": "recursive-membership-552b594095cc25f874fa",
+      "parent_id": "recursive-movement-9a78408ccc7448a64c6e",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-3",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "component",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 51
+    },
+    {
+      "object_id": "recursive-membership-28c021a51eb119b04d88",
+      "parent_id": "recursive-movement-9a78408ccc7448a64c6e",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-4",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "component",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 51
+    },
+    {
+      "object_id": "recursive-membership-5d0571af54f50a24f2af",
+      "parent_id": "recursive-movement-9a78408ccc7448a64c6e",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-0",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "completion",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 51
+    },
+    {
+      "object_id": "recursive-membership-db281078107ba1924544",
+      "parent_id": "recursive-movement-9a78408ccc7448a64c6e",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-1",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "completion",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 51
+    },
+    {
+      "object_id": "recursive-membership-42200835e6d8a9b32145",
+      "parent_id": "recursive-movement-9a78408ccc7448a64c6e",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-2",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "completion",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 51
+    },
+    {
+      "object_id": "recursive-membership-ebe4e174a131aabf563e",
+      "parent_id": "recursive-movement-9a78408ccc7448a64c6e",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-3",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "completion",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 51
+    },
+    {
+      "object_id": "recursive-membership-0643d87d3a468000e7de",
+      "parent_id": "recursive-movement-9a78408ccc7448a64c6e",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-4",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "completion",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 51
+    },
+    {
+      "object_id": "recursive-membership-225a6e1a3ed2c3f722a0",
+      "parent_id": "recursive-movement-9a78408ccc7448a64c6e",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "recursive-center-acf8fb4f7f735e7419af",
+        "object_revision": 1
+      },
+      "child_kind": "center",
+      "role": "center",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 51
+    },
+    {
+      "object_id": "recursive-membership-59802c319e55a5358e59",
+      "parent_id": "recursive-center-4f66a5f90aad852b0768",
+      "parent_kind": "center",
+      "child_ref": {
+        "object_id": "segment-5",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "entry",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-d184fbd3c4acf1e99d6d",
+      "parent_id": "recursive-center-4f66a5f90aad852b0768",
+      "parent_kind": "center",
+      "child_ref": {
+        "object_id": "segment-6",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "entry",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-cc655e95a9f35c9ccaf6",
+      "parent_id": "recursive-center-4f66a5f90aad852b0768",
+      "parent_kind": "center",
+      "child_ref": {
+        "object_id": "segment-7",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "entry",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-d66d7e6386e15a4cd309",
+      "parent_id": "recursive-center-4f66a5f90aad852b0768",
+      "parent_kind": "center",
+      "child_ref": {
+        "object_id": "segment-8",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "entry",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-0fc3d677d0f680139cc4",
+      "parent_id": "recursive-movement-e7a567d3eac2f77cb40c",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-5",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "component",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-3d4c72c959a0a946358b",
+      "parent_id": "recursive-movement-e7a567d3eac2f77cb40c",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-6",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "component",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-f2380f2de2df5beb3eb4",
+      "parent_id": "recursive-movement-e7a567d3eac2f77cb40c",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-7",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "component",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-7a70890814c70b825b60",
+      "parent_id": "recursive-movement-e7a567d3eac2f77cb40c",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-8",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "component",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-afe8d3f83c66f6791e62",
+      "parent_id": "recursive-movement-e7a567d3eac2f77cb40c",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-9",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "component",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-94ab5e5b9d14685f80af",
+      "parent_id": "recursive-movement-e7a567d3eac2f77cb40c",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-10",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "component",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-302c92485dce59afb09a",
+      "parent_id": "recursive-movement-e7a567d3eac2f77cb40c",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-11",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "component",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-712fdee9e0316a534961",
+      "parent_id": "recursive-movement-e7a567d3eac2f77cb40c",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-5",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "completion",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-32e9943bf2f5524ffea1",
+      "parent_id": "recursive-movement-e7a567d3eac2f77cb40c",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-6",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "completion",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-57ff1e620a37d8f061a6",
+      "parent_id": "recursive-movement-e7a567d3eac2f77cb40c",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-7",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "completion",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-504fe83351952c78d272",
+      "parent_id": "recursive-movement-e7a567d3eac2f77cb40c",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-8",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "completion",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-e2079a08bad38bb7aa1b",
+      "parent_id": "recursive-movement-e7a567d3eac2f77cb40c",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-9",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "completion",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-8ea0efc1793f2cc3cad1",
+      "parent_id": "recursive-movement-e7a567d3eac2f77cb40c",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-10",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "completion",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-5b5ac8d814c56a66a15c",
+      "parent_id": "recursive-movement-e7a567d3eac2f77cb40c",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "segment-11",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "completion",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-d127a24a1522d8fc88b0",
+      "parent_id": "recursive-movement-e7a567d3eac2f77cb40c",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "recursive-center-4f66a5f90aad852b0768",
+        "object_revision": 1
+      },
+      "child_kind": "center",
+      "role": "center",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-def81aa1423b4b89d1ab",
+      "parent_id": "recursive-movement-5e9b1967b309f5cc3155",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "recursive-movement-9a78408ccc7448a64c6e",
+        "object_revision": 1
+      },
+      "child_kind": "movement",
+      "role": "component",
+      "level": 1,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-b3e3871725059f44afad",
+      "parent_id": "recursive-movement-5e9b1967b309f5cc3155",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "recursive-movement-e7a567d3eac2f77cb40c",
+        "object_revision": 1
+      },
+      "child_kind": "movement",
+      "role": "component",
+      "level": 1,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-f580a0bd88c0adea8229",
+      "parent_id": "recursive-center-acf8fb4f7f735e7419af",
+      "parent_kind": "center",
+      "child_ref": {
+        "object_id": "segment-2",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "component",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 51
+    },
+    {
+      "object_id": "recursive-membership-8ef22b7774f52d1809ea",
+      "parent_id": "recursive-center-acf8fb4f7f735e7419af",
+      "parent_kind": "center",
+      "child_ref": {
+        "object_id": "segment-3",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "component",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 51
+    },
+    {
+      "object_id": "recursive-membership-c6ddf1c207ae02c8acee",
+      "parent_id": "recursive-center-acf8fb4f7f735e7419af",
+      "parent_kind": "center",
+      "child_ref": {
+        "object_id": "segment-4",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "component",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 51
+    },
+    {
+      "object_id": "recursive-membership-82704a41ea7e79bed6d3",
+      "parent_id": "recursive-center-acf8fb4f7f735e7419af",
+      "parent_kind": "center",
+      "child_ref": {
+        "object_id": "segment-2",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "seed",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 51
+    },
+    {
+      "object_id": "recursive-membership-2b71ec516aef404f3c4c",
+      "parent_id": "recursive-center-acf8fb4f7f735e7419af",
+      "parent_kind": "center",
+      "child_ref": {
+        "object_id": "segment-3",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "seed",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 51
+    },
+    {
+      "object_id": "recursive-membership-fac05e7e442e53872020",
+      "parent_id": "recursive-center-acf8fb4f7f735e7419af",
+      "parent_kind": "center",
+      "child_ref": {
+        "object_id": "segment-4",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "seed",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 51
+    },
+    {
+      "object_id": "recursive-membership-7df721d0dc56f889eadb",
+      "parent_id": "recursive-center-4f66a5f90aad852b0768",
+      "parent_kind": "center",
+      "child_ref": {
+        "object_id": "segment-9",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "component",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-11f367e2509f2f080945",
+      "parent_id": "recursive-center-4f66a5f90aad852b0768",
+      "parent_kind": "center",
+      "child_ref": {
+        "object_id": "segment-10",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "component",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-36e2d869a51bee6c4d16",
+      "parent_id": "recursive-center-4f66a5f90aad852b0768",
+      "parent_kind": "center",
+      "child_ref": {
+        "object_id": "segment-11",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "component",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-fa9edf89ea400c5d8a89",
+      "parent_id": "recursive-center-4f66a5f90aad852b0768",
+      "parent_kind": "center",
+      "child_ref": {
+        "object_id": "segment-9",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "seed",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-8c594cbd6723e61a73a3",
+      "parent_id": "recursive-center-4f66a5f90aad852b0768",
+      "parent_kind": "center",
+      "child_ref": {
+        "object_id": "segment-10",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "seed",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-9d0d07ebd7fa7b23ca8f",
+      "parent_id": "recursive-center-4f66a5f90aad852b0768",
+      "parent_kind": "center",
+      "child_ref": {
+        "object_id": "segment-11",
+        "object_revision": 1
+      },
+      "child_kind": "segment",
+      "role": "seed",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-09d59e69581a9c61588f",
+      "parent_id": "recursive-association-b8e4680397e1f8a049e7",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "recursive-movement-9a78408ccc7448a64c6e",
+        "object_revision": 1
+      },
+      "child_kind": "movement",
+      "role": "association",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-72ab8a573743b7260872",
+      "parent_id": "recursive-association-b8e4680397e1f8a049e7",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "recursive-movement-e7a567d3eac2f77cb40c",
+        "object_revision": 1
+      },
+      "child_kind": "movement",
+      "role": "association",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-d0d088c8b504c0d64c8f",
+      "parent_id": "recursive-association-b8e4680397e1f8a049e7",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "recursive-center-acf8fb4f7f735e7419af",
+        "object_revision": 1
+      },
+      "child_kind": "center",
+      "role": "center",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    },
+    {
+      "object_id": "recursive-membership-0be60a4069b347756d59",
+      "parent_id": "recursive-association-b8e4680397e1f8a049e7",
+      "parent_kind": "movement",
+      "child_ref": {
+        "object_id": "recursive-center-4f66a5f90aad852b0768",
+        "object_revision": 1
+      },
+      "child_kind": "center",
+      "role": "center",
+      "level": 0,
+      "object_revision": 1,
+      "known_at_bar_index": 121
+    }
+  ]
+}

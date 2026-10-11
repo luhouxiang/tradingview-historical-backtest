@@ -147,6 +147,16 @@ func TestDetectZhengzhouThreeDigitContract(t *testing.T) {
 func TestFullSampleImportsToParquetWithinTarget(t *testing.T) {
 	// 测试一键启动历史数据源中的完整 AOL9 导入；期望行数、质量统计和性能满足验收值。
 	data := readCanonicalHistory(t, "30#AOL9.txt")
+	// Keep precise fixture expectations bound to content identity. A different
+	// revision of the same source filename must not inherit the old row count.
+	expectedRowsByHash := map[string]int{
+		"sha256:ab5233d6a68f71b3c3dc265af7208b6cd562b6c35a99bada1328c46842e4ea44": 71149,
+		"sha256:29e890b51175b089889a98c062ee31b57650ee3bdeb3ae17d3718ae47f790a8b": 38376,
+	}
+	expectedRows, knownFixture := expectedRowsByHash[hashBytes(data)]
+	if !knownFixture {
+		t.Fatalf("full sample content identity has no verified golden: %s", hashBytes(data))
+	}
 	instrument := InstrumentConfig{
 		Exchange: "SHFE", Product: "AO", Timezone: "Asia/Shanghai", PriceDecimals: 0, PriceScale: 1,
 		TickSizeI64: 1, SessionTemplateID: "sample",
@@ -170,7 +180,7 @@ func TestFullSampleImportsToParquetWithinTarget(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(result.Bars) < 69289 || result.Quality.Counts["error_count"] != 0 {
+	if len(result.Bars) != expectedRows || result.Quality.Counts["error_count"] != 0 {
 		t.Fatalf("full sample counts: bars=%d quality=%#v", len(result.Bars), result.Quality.Counts)
 	}
 	path := filepath.Join(t.TempDir(), "bars.parquet")

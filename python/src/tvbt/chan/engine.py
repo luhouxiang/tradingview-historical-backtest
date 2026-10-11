@@ -26,10 +26,8 @@ from tvbt.chan.signals import (
     BiCenterEvidence,
     ChanSignal,
     StructuralCenter,
-    chan_divergences,
     chan_first_point_candidates,
     chan_forming_divergences,
-    chan_trade_points,
 )
 from tvbt.chan.zn import classify_zn_components
 from tvbt.logging_proxy import logger
@@ -319,7 +317,7 @@ class ChanEngine:
     """逐 K 线因果缠论引擎，负责分型、笔、线段、中枢和信号事件生成。"""
 
     # 算法版本参与缓存键；任何语义变化都必须升级版本，禁止复用旧缓存。
-    algorithm_version = "20.0.0"
+    algorithm_version = "22.3.0"
 
     def __init__(
         self,
@@ -329,12 +327,25 @@ class ChanEngine:
         stream_timeframe: str = "unknown",
         stream_anchor_id: str = "full-history",
         price_tick_i64: int = 1,
+        dataset_id: str = "synthetic-engine",
+        data_revision: str = "sha256:" + "0" * 64,
+        decomposition_id: str | None = None,
     ) -> None:
         # 运行参数。
         self.parameters = parameters or ChanParameters()
         self.stream_symbol = stream_symbol
         self.stream_timeframe = stream_timeframe
         self.stream_anchor_id = stream_anchor_id
+        from tvbt.chan.recursive import RecursiveDecomposition
+        from tvbt.chan.recursive_proof import ProofScope
+
+        self._recursive_scope = ProofScope(
+            dataset_id,
+            data_revision,
+            decomposition_id
+            or f"fixed-same-level-dataset-start:{self.algorithm_version}:{stream_anchor_id}",
+        )
+        self._recursive = RecursiveDecomposition(self._recursive_scope)
         if (
             isinstance(price_tick_i64, bool)
             or not isinstance(price_tick_i64, int)
@@ -1126,6 +1137,11 @@ class ChanEngine:
         self._segment_lines = segment_lines
         self._update_local_center_objects(known_at_bar_index)
         self._sync_objects("segment", segments, known_at_bar_index)
+        recursive_divergences, recursive_points = (
+            self._update_recursive_objects(known_at_bar_index)
+            if confirmed_segments_changed
+            else ([], [])
+        )
         if not confirmed_segments_changed:
             logger.debug(
                 "chan.structures.tail_reused",
@@ -1241,34 +1257,10 @@ class ChanEngine:
                     )
                 )
 
-        divergence_specs = chan_divergences(
-            segment_lines,
-            segment_centers,
-            segment_center_ids,
-            self._macd_histogram,
-            self._macd_area_cache,
-            diff=self._macd_diff_by_bar,
-            dea=self._macd_dea_by_bar,
-            bi_lines=self.bi,
-            bi_centers=self._bi_sublevel_centers,
-            raw_positions=self._raw_position_by_bar_index,
-            certified_complete_positions=True,
-            strength_profile="price_displacement_speed_v1",
-        )
-        divergence_values: list[tuple[str, dict[str, Any], int]] = []
-        divergence_objects: list[tuple[str, ChanSignal]] = []
-        # 背驰：使用线段、SEGMENT 实体中枢投影和 MACD 柱面积计算。
-        for signal in divergence_specs:
-            object_id = _stable_id(
-                "divergence",
-                signal.divergence_kind,
-                segment_lines[signal.segment_index].object_id,
-                signal.reference_object_id,
-            )
-            divergence_objects.append((object_id, signal))
-            divergence_values.append(
-                (object_id, _signal_payload(signal), signal.known_at_bar_index)
-            )
+        divergence_values = [
+            (object_id, _signal_payload(signal), signal.known_at_bar_index)
+            for object_id, signal in recursive_divergences
+        ]
         # Defer provisional revisions to the common end-of-bar path. A forced
         # structural rescan must not emit them before fractal/BI state events.
         finalized_ids = {object_id for object_id, _, _ in divergence_values}
@@ -1303,16 +1295,8 @@ class ChanEngine:
                 _signal_payload(signal),
                 signal.known_at_bar_index,
             )
-        # 买卖点：消费 SEGMENT 实体中枢投影和背驰对象。
-        for signal in chan_trade_points(
-            segment_lines, segment_centers, segment_center_ids, divergence_objects
-        ):
-            object_id = _stable_id(
-                "trade-point",
-                signal.signal_type,
-                signal.level_id,
-                segment_lines[signal.segment_index].object_id,
-            )
+        # Authoritative recursive points supersede the legacy local-center path.
+        for object_id, signal in recursive_points:
             trade_point_by_id[object_id] = (
                 object_id,
                 _signal_payload(signal),
@@ -1802,6 +1786,71 @@ class ChanEngine:
                 },
             )
 
+    def _update_recursive_objects(
+        self, cursor: int
+    ) -> tuple[list[tuple[str, ChanSignal]], list[tuple[str, ChanSignal]]]:
+        from tvbt.chan.recursive import RecursiveLine
+        from tvbt.chan.recursive_proof import ObjectRef, ProofAnchor, RangeFact
+        from tvbt.chan.recursive_signals import recursive_signals
+
+        lines = []
+        for line in self._segment_lines:
+            source = self.emitter.get("segment", line.object_id)
+            if source is None:
+                raise AssertionError("recursive source segment has not been published")
+            low = line.range_low_i64
+            high = line.range_high_i64
+            if low is None or high is None:
+                raise AssertionError("recursive source requires actual segment range")
+            low_source = line.range_low_source_bar_index
+            high_source = line.range_high_source_bar_index
+            if low_source is None or high_source is None:
+                raise AssertionError("recursive source requires extreme provenance")
+            fact = RangeFact(
+                ObjectRef(line.object_id, int(source["object_revision"])),
+                self._recursive_scope,
+                -1,
+                "segment",
+                ProofAnchor(line.start.bar_index, line.start.time, line.start.price_i64),
+                ProofAnchor(line.end.bar_index, line.end.time, line.end.price_i64),
+                low,
+                high,
+                low_source,
+                high_source,
+                int(source["known_at_bar_index"]),
+            )
+            lines.append(RecursiveLine(fact, line.direction))
+        snapshot = self._recursive.update(
+            lines, self._raw_position_by_bar_index, cursor=cursor, discovery_at=cursor
+        )
+        for category, object_type in (
+            ("movements", "recursive_movement"),
+            ("centers", "recursive_center"),
+            ("memberships", "recursive_membership"),
+        ):
+            values = []
+            for row in snapshot[category]:
+                payload = {
+                    key: value
+                    for key, value in row.items()
+                    if key
+                    not in {
+                        "object_id",
+                        "object_revision",
+                        "known_at_bar_index",
+                    }
+                }
+                values.append((str(row["object_id"]), payload, int(row["known_at_bar_index"])))
+            self._sync_objects(object_type, values, cursor)
+        return recursive_signals(
+            self._recursive,
+            lines,
+            snapshot,
+            cursor,
+            self._raw_position_by_bar_index,
+            {bar.bar_index: bar.time for bar in self.raw_bars},
+        )
+
     def _segment_structural_centers(self) -> tuple[list[StructuralCenter], list[str]]:
         """Project authoritative SEGMENT local centers into the signal algorithms."""
         accumulator = self._local_center_accumulators.get("SEGMENT")
@@ -2198,12 +2247,22 @@ class ChanEngine:
                 self.emitter.current("trade_point"),
                 key=lambda item: (item["bar_index"], item["object_id"]),
             ),
+            "recursive_movements": self.emitter.current("recursive_movement"),
+            "recursive_centers": self.emitter.current("recursive_center"),
+            "recursive_memberships": self.emitter.current("recursive_membership"),
         }
 
     def export_state(self) -> dict[str, Any]:
         """导出可恢复状态，用于长任务检查点，不包含临时运行环境对象。"""
         return {
             "parameters": asdict(self.parameters),
+            "recursive": self._recursive.state(),
+            "segment_specs": [asdict(item) for item in self._segment_specs],
+            "segment_lines": [asdict(item) for item in self._segment_lines],
+            "segment_records": [
+                {"value": value, "line_id": None if line is None else line.object_id}
+                for value, line in self._segment_records
+            ],
             "raw_bars": [asdict(item) for item in self.raw_bars],
             "included": [asdict(item) for item in self.included],
             "fractals": [asdict(item) for item in self.fractals],
@@ -2222,6 +2281,9 @@ class ChanEngine:
                 "symbol": self.stream_symbol,
                 "timeframe": self.stream_timeframe,
                 "anchor_id": self.stream_anchor_id,
+                "dataset_id": self._recursive_scope.dataset_id,
+                "data_revision": self._recursive_scope.data_revision,
+                "decomposition_id": self._recursive_scope.decomposition_id,
             },
             "local_center_accumulators": {
                 key: accumulator.state()
@@ -2242,6 +2304,14 @@ class ChanEngine:
             stream_timeframe=str(identity.get("timeframe", "unknown")),
             stream_anchor_id=str(identity.get("anchor_id", "full-history")),
             price_tick_i64=int(identity.get("price_tick_i64", 1)),
+            dataset_id=str(identity.get("dataset_id", "synthetic-engine")),
+            data_revision=str(identity.get("data_revision", "sha256:" + "0" * 64)),
+            decomposition_id=identity.get("decomposition_id"),
+        )
+        from tvbt.chan.recursive import RecursiveDecomposition
+
+        engine._recursive = RecursiveDecomposition.from_state(
+            state["recursive"], engine._recursive_scope
         )
         engine.raw_bars = [RawBar(**item) for item in state["raw_bars"]]
         engine._raw_position_by_bar_index = {
@@ -2270,7 +2340,26 @@ class ChanEngine:
         engine._fractal_by_normalized_index = {
             fractal.normalized_index: position for position, fractal in enumerate(engine.fractals)
         }
-        engine._segment_accumulator.update(engine.bi, engine.raw_bars, 0)
+        restored_specs = engine._segment_accumulator.update(engine.bi, engine.raw_bars, 0)
+        engine._segment_specs = [ReferenceSegment(**item) for item in state["segment_specs"]]
+        if restored_specs != engine._segment_specs:
+            raise ValueError("checkpoint segment tail differs from its observed BI evidence")
+        engine._segment_lines = []
+        for item in state["segment_lines"]:
+            line_value = dict(item)
+            line_value["start"] = Fractal(**line_value["start"])
+            line_value["end"] = Fractal(**line_value["end"])
+            engine._segment_lines.append(LineObject(**line_value))
+        restored_lines = {line.object_id: line for line in engine._segment_lines}
+        engine._segment_records = [
+            (
+                (str(item["value"][0]), dict(item["value"][1]), int(item["value"][2])),
+                None if item["line_id"] is None else restored_lines[item["line_id"]],
+            )
+            for item in state["segment_records"]
+        ]
+        if len(engine._segment_records) != len(engine._segment_specs):
+            raise ValueError("checkpoint segment projection lacks scanner records")
         engine._local_center_accumulators = {
             str(key): LocalCenterAccumulator.from_state(value)
             for key, value in state.get("local_center_accumulators", {}).items()
@@ -2281,7 +2370,84 @@ class ChanEngine:
             for key, value in state.get("center_audit_payload_cache", {}).items()
         }
         engine.emitter = EventEmitter.from_state(state["emitter"])
+        engine._verify_restored_recursive_state()
         return engine
+
+    def _verify_restored_recursive_state(self) -> None:
+        """Reconstruct completion evidence; a saved completed flag is not proof."""
+        from tvbt.chan.recursive import RecursiveLine
+        from tvbt.chan.recursive_proof import ObjectRef, ProofAnchor, RangeFact, StructureProofError
+
+        cursor = self.raw_bars[-1].bar_index if self.raw_bars else 0
+        roots = []
+        for row in sorted(
+            self.emitter.current("segment"), key=lambda value: value["start_bar_index"]
+        ):
+            if row.get("confirmed") is not True:
+                continue
+            roots.append(
+                RecursiveLine(
+                    RangeFact(
+                        ObjectRef(row["object_id"], row["object_revision"]),
+                        self._recursive_scope,
+                        -1,
+                        "segment",
+                        ProofAnchor(
+                            row["start_bar_index"], row["start_time"], row["start_price_i64"]
+                        ),
+                        ProofAnchor(row["end_bar_index"], row["end_time"], row["end_price_i64"]),
+                        row["range_low_i64"],
+                        row["range_high_i64"],
+                        row["range_low_source_bar_index"],
+                        row["range_high_source_bar_index"],
+                        row["known_at_bar_index"],
+                    ),
+                    row["direction"],
+                )
+            )
+        prior_versions = self._recursive.state()
+        root_by_id = {line.object_id: line for line in roots}
+        for (object_id, payload, known_at), _ in self._segment_records:
+            saved = self.emitter.get("segment", object_id)
+            if (
+                saved is None
+                or known_at > cursor
+                or any(saved.get(key) != value for key, value in payload.items())
+            ):
+                raise StructureProofError(
+                    "checkpoint segment record differs from published evidence"
+                )
+        if set(root_by_id) != {line.object_id for line in self._segment_lines}:
+            raise StructureProofError("checkpoint confirmed segment projection differs")
+        for line in self._segment_lines:
+            fact = root_by_id[line.object_id].fact
+            if (
+                ProofAnchor(line.start.bar_index, line.start.time, line.start.price_i64)
+                != fact.start
+                or ProofAnchor(line.end.bar_index, line.end.time, line.end.price_i64) != fact.end
+                or line.range_low_i64 != fact.low_i64
+                or line.range_high_i64 != fact.high_i64
+                or line.range_low_source_bar_index != fact.low_source_bar_index
+                or line.range_high_source_bar_index != fact.high_source_bar_index
+                or line.direction != root_by_id[line.object_id].direction
+                or line.known_at_bar_index > fact.known_at_bar_index
+            ):
+                raise StructureProofError("checkpoint segment geometry differs from its source")
+        expected = self._recursive.update(
+            roots, self._raw_position_by_bar_index, cursor=cursor, discovery_at=cursor
+        )
+        if self._recursive.state() != prior_versions:
+            raise StructureProofError(
+                "checkpoint recursive claims differ from reconstructed evidence"
+            )
+        for category, kind in (
+            ("movements", "recursive_movement"),
+            ("centers", "recursive_center"),
+            ("memberships", "recursive_membership"),
+        ):
+            saved = {row["object_id"]: row for row in self.emitter.current(kind)}
+            if saved != {row["object_id"]: row for row in expected[category]}:
+                raise StructureProofError("checkpoint recursive snapshot differs from its proof")
 
     def _append_macd(self, bar: RawBar) -> None:
         """增量维护 MACD(12,26,9) 柱值，供线段背驰面积比较使用。"""

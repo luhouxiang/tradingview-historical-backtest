@@ -20,6 +20,9 @@ OBJECT_TYPES = frozenset(
         "center_monitor",
         "divergence",
         "trade_point",
+        "recursive_movement",
+        "recursive_center",
+        "recursive_membership",
     }
 )
 

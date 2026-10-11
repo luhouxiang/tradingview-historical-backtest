@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/recursive-structure.schema.json",
+  "title": "RecursiveStructureSnapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["movements", "centers", "memberships"],
+  "properties": {
+    "movements": {"type": "array", "items": {"$ref": "#/$defs/movement"}},
+    "centers": {"type": "array", "items": {"$ref": "#/$defs/center"}},
+    "memberships": {"type": "array", "items": {"$ref": "#/$defs/membership"}}
+  },
+  "$defs": {
+    "ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["object_id", "object_revision"],
+      "properties": {"object_id": {"type": "string", "minLength": 1}, "object_revision": {"type": "integer", "minimum": 1}}
+    },
+    "movement": {
+      "type": "object", "additionalProperties": false,
+      "required": ["object_id", "object_revision", "dataset_id", "data_revision", "decomposition_id", "rule_version", "level", "movement_type", "direction", "status", "start_bar_index", "start_time", "start_price_i64", "end_bar_index", "end_time", "end_price_i64", "range_low_i64", "range_high_i64", "range_low_source_bar_index", "range_high_source_bar_index", "component_refs", "center_ids", "completion_rule", "completion_context", "completion_refs", "comparison_reference_ids", "comparison_current_id", "reversal_id", "strength_evidence", "known_at_bar_index"],
+      "properties": {
+        "object_id": {"type": "string", "minLength": 1}, "object_revision": {"type": "integer", "minimum": 1},
+        "dataset_id": {"type": "string", "minLength": 1}, "data_revision": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "decomposition_id": {"type": "string", "minLength": 1}, "rule_version": {"const": "fixed_same_level_recursive_v2"},
+        "level": {"type": "integer", "minimum": 0}, "movement_type": {"enum": ["consolidation", "uptrend", "downtrend", "unknown"]},
+        "construction_kind": {"enum": ["canonical", "association"]},
+        "promotable": {"type": "boolean"},
+        "direction": {"enum": ["up", "down"]}, "status": {"enum": ["building", "completed", "invalidated"]},
+        "start_bar_index": {"type": "integer", "minimum": 0}, "start_time": {"type": "integer", "minimum": 0}, "start_price_i64": {"type": "integer"},
+        "end_bar_index": {"type": "integer", "minimum": 0}, "end_time": {"type": "integer", "minimum": 0}, "end_price_i64": {"type": "integer"},
+        "range_low_i64": {"type": "integer"}, "range_high_i64": {"type": "integer"},
+        "range_low_source_bar_index": {"type": "integer", "minimum": 0}, "range_high_source_bar_index": {"type": "integer", "minimum": 0},
+        "component_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/ref"}},
+        "center_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "center_refs": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/ref"}},
+        "completion_rule": {"enum": [null, "fixed_same_level_center_block_v2", "same_level_trend_association_v1"]},
+        "completion_context": {"enum": ["none", "fixed_same_level", "same_level_association"]},
+        "completion_refs": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/ref"}},
+        "comparison_reference_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "comparison_current_id": {"type": ["string", "null"]}, "reversal_id": {"type": ["string", "null"]},
+        "strength_evidence": {"type": ["object", "null"], "additionalProperties": true},
+        "known_at_bar_index": {"type": "integer", "minimum": 0}
+      },
+      "allOf": [
+        {"required": ["construction_kind", "promotable"]},
+        {"if": {"properties": {"construction_kind": {"const": "canonical"}}}, "then": {"properties": {"promotable": {"const": true}}}},
+        {"if": {"properties": {"status": {"const": "completed"}, "construction_kind": {"const": "canonical"}}}, "then": {"properties": {"movement_type": {"const": "consolidation"}, "completion_rule": {"const": "fixed_same_level_center_block_v2"}, "completion_context": {"const": "fixed_same_level"}, "completion_refs": {"minItems": 3}, "center_ids": {"minItems": 1, "maxItems": 1}, "strength_evidence": {"type": "null"}, "comparison_reference_ids": {"maxItems": 0}, "comparison_current_id": {"type": "null"}, "reversal_id": {"type": "null"}}}},
+        {"if": {"properties": {"construction_kind": {"const": "association"}}}, "then": {"required": ["center_refs"], "properties": {"promotable": {"const": false}, "status": {"const": "completed"}, "movement_type": {"enum": ["uptrend", "downtrend"]}, "completion_rule": {"const": "same_level_trend_association_v1"}, "completion_context": {"const": "same_level_association"}, "component_refs": {"minItems": 2}, "completion_refs": {"minItems": 2}, "center_ids": {"minItems": 2}, "center_refs": {"minItems": 2}, "strength_evidence": {"type": "null"}, "comparison_reference_ids": {"maxItems": 0}, "comparison_current_id": {"type": "null"}, "reversal_id": {"type": "null"}}}}
+      ]
+    },
+    "center": {
+      "type": "object", "additionalProperties": false,
+      "required": ["object_id", "object_revision", "dataset_id", "data_revision", "decomposition_id", "rule_version", "level", "seed_refs", "component_refs", "start_bar_index", "start_time", "end_bar_index", "end_time", "zd_i64", "zg_i64", "dd_i64", "gg_i64", "observed_low_i64", "observed_high_i64", "formation_dir", "status", "exit_id", "retest_id", "formed_at_bar_index", "known_at_bar_index"],
+      "properties": {
+        "object_id": {"type": "string", "minLength": 1}, "object_revision": {"type": "integer", "minimum": 1},
+        "dataset_id": {"type": "string", "minLength": 1}, "data_revision": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "decomposition_id": {"type": "string", "minLength": 1}, "rule_version": {"const": "fixed_same_level_recursive_v2"},
+        "level": {"type": "integer", "minimum": 0},
+        "seed_refs": {"type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true, "items": {"$ref": "#/$defs/ref"}},
+        "component_refs": {"type": "array", "minItems": 3, "uniqueItems": true, "items": {"$ref": "#/$defs/ref"}},
+        "start_bar_index": {"type": "integer", "minimum": 0}, "start_time": {"type": "integer", "minimum": 0},
+        "end_bar_index": {"type": "integer", "minimum": 0}, "end_time": {"type": "integer", "minimum": 0},
+        "zd_i64": {"type": "integer"}, "zg_i64": {"type": "integer"}, "dd_i64": {"type": "integer"}, "gg_i64": {"type": "integer"},
+        "observed_low_i64": {"type": "integer"}, "observed_high_i64": {"type": "integer"},
+        "formation_dir": {"enum": ["up", "down"]}, "status": {"enum": ["active", "closed", "invalidated"]},
+        "previous_center_id": {"type": ["string", "null"]},
+        "relative_dir": {"enum": ["up", "down", "overlap", "unknown"]},
+        "higher_level_review_required": {"type": "boolean"},
+        "relation_profile": {"const": "fixed_seed_zn_same_level_v2"},
+        "exit_id": {"type": ["string", "null"]}, "retest_id": {"type": ["string", "null"]},
+        "exit_ref": {"anyOf": [{"$ref": "#/$defs/ref"}, {"type": "null"}]},
+        "retest_ref": {"anyOf": [{"$ref": "#/$defs/ref"}, {"type": "null"}]},
+        "formed_at_bar_index": {"type": "integer", "minimum": 0}, "known_at_bar_index": {"type": "integer", "minimum": 0}
+      }
+    },
+    "membership": {
+      "type": "object", "additionalProperties": false,
+      "required": ["object_id", "object_revision", "parent_id", "parent_kind", "child_ref", "child_kind", "role", "level", "known_at_bar_index"],
+      "properties": {
+        "object_id": {"type": "string", "minLength": 1}, "object_revision": {"type": "integer", "minimum": 1},
+        "parent_id": {"type": "string", "minLength": 1}, "parent_kind": {"enum": ["movement", "center"]},
+        "child_ref": {"$ref": "#/$defs/ref"}, "child_kind": {"enum": ["segment", "movement", "center"]},
+        "role": {"enum": ["component", "seed", "center", "entry", "exit", "retest", "completion", "association", "higher_level_review"]},
+        "level": {"type": "integer", "minimum": 0}, "known_at_bar_index": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

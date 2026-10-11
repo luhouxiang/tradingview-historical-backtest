@@ -35,11 +35,12 @@ type Results struct {
 }
 
 type manifest struct {
-	CacheKey     string                    `json:"cache_key"`
-	DatasetID    string                    `json:"dataset_id"`
-	DataRevision string                    `json:"data_revision"`
-	Algorithm    pythonclient.AlgorithmRef `json:"algorithm"`
-	Outputs      []string                  `json:"outputs"`
+	SchemaVersion int                       `json:"schema_version"`
+	CacheKey      string                    `json:"cache_key"`
+	DatasetID     string                    `json:"dataset_id"`
+	DataRevision  string                    `json:"data_revision"`
+	Algorithm     pythonclient.AlgorithmRef `json:"algorithm"`
+	Outputs       []string                  `json:"outputs"`
 }
 
 func readResults(guard *storage.PathGuard, jobID, cacheKey, resultRef string, from, to int64) (Results, error) {
@@ -450,18 +451,21 @@ type ChanSignalPoint struct {
 }
 
 type ChanObjects struct {
-	ProcessedBars     []ChanProcessedBar     `json:"processed_bars"`
-	Fractals          []ChanFractal          `json:"fractals"`
-	Bi                []ChanLineObject       `json:"bi"`
-	BiStates          []ChanBiState          `json:"bi_states"`
-	Segments          []ChanLineObject       `json:"segments"`
-	LocalCenters      []ChanLocalCenter      `json:"local_centers"`
-	CenterConnections []ChanCenterConnection `json:"center_connections"`
-	CenterAuditEvents []ChanCenterAuditEvent `json:"center_audit_events"`
-	MovementStates    []ChanMovementState    `json:"movement_states"`
-	CenterMonitors    []ChanCenterMonitor    `json:"center_monitors"`
-	Divergences       []ChanSignalPoint      `json:"divergences"`
-	TradePoints       []ChanSignalPoint      `json:"trade_points"`
+	ProcessedBars        []ChanProcessedBar     `json:"processed_bars"`
+	Fractals             []ChanFractal          `json:"fractals"`
+	Bi                   []ChanLineObject       `json:"bi"`
+	BiStates             []ChanBiState          `json:"bi_states"`
+	Segments             []ChanLineObject       `json:"segments"`
+	LocalCenters         []ChanLocalCenter      `json:"local_centers"`
+	CenterConnections    []ChanCenterConnection `json:"center_connections"`
+	CenterAuditEvents    []ChanCenterAuditEvent `json:"center_audit_events"`
+	MovementStates       []ChanMovementState    `json:"movement_states"`
+	CenterMonitors       []ChanCenterMonitor    `json:"center_monitors"`
+	Divergences          []ChanSignalPoint      `json:"divergences"`
+	TradePoints          []ChanSignalPoint      `json:"trade_points"`
+	RecursiveMovements   []json.RawMessage      `json:"recursive_movements,omitempty"`
+	RecursiveCenters     []json.RawMessage      `json:"recursive_centers,omitempty"`
+	RecursiveMemberships []json.RawMessage      `json:"recursive_memberships,omitempty"`
 }
 
 func readChanResults(directory, jobID, cacheKey string, meta manifest, from, to int64) (Results, error) {
@@ -527,7 +531,23 @@ func readChanResults(directory, jobID, cacheKey string, meta manifest, from, to 
 		Divergences:       filterSignalPoints(divergences, from, to),
 		TradePoints:       filterSignalPoints(tradePoints, from, to),
 	}
+	if meta.SchemaVersion >= 13 {
+		var err error
+		objects.RecursiveMovements, err = readRecursiveRows(directory, "recursive_movements", from, to)
+		if err != nil {
+			return Results{}, err
+		}
+		objects.RecursiveCenters, err = readRecursiveRows(directory, "recursive_centers", from, to)
+		if err != nil {
+			return Results{}, err
+		}
+		objects.RecursiveMemberships, err = readRecursiveRows(directory, "recursive_memberships", from, to)
+		if err != nil {
+			return Results{}, err
+		}
+	}
 	returned := len(objects.ProcessedBars) + len(objects.Fractals) + len(objects.Bi) + len(objects.BiStates) + len(objects.Segments) + len(objects.LocalCenters) + len(objects.CenterConnections) + len(objects.CenterAuditEvents) + len(objects.MovementStates) + len(objects.CenterMonitors) + len(objects.Divergences) + len(objects.TradePoints)
+	returned += len(objects.RecursiveMovements) + len(objects.RecursiveCenters) + len(objects.RecursiveMemberships)
 	checksumPayload, _ := json.Marshal(objects)
 	digest := sha256.Sum256(checksumPayload)
 	return Results{
@@ -535,6 +555,40 @@ func readChanResults(directory, jobID, cacheKey string, meta manifest, from, to 
 		Algorithm: meta.Algorithm, ResultKind: "chan", Coverage: Coverage{FirstBarIndex: from, LastBarIndex: to, ReturnedCount: returned},
 		Checksum: "sha256:" + hex.EncodeToString(digest[:]), Objects: &objects,
 	}, nil
+}
+
+type recursiveRow struct {
+	ObjectID        string `parquet:"object_id"`
+	Level           int64  `parquet:"level"`
+	StartBarIndex   int64  `parquet:"start_bar_index"`
+	EndBarIndex     int64  `parquet:"end_bar_index"`
+	KnownAtBarIndex int64  `parquet:"known_at_bar_index"`
+	ObjectRevision  int64  `parquet:"object_revision"`
+	PayloadJSON     string `parquet:"payload_json"`
+}
+
+func readRecursiveRows(directory, name string, from, to int64) ([]json.RawMessage, error) {
+	rows, err := parquet.ReadFile[recursiveRow](filepath.Join(directory, name+".parquet"))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]json.RawMessage, 0)
+	for _, row := range rows {
+		if row.EndBarIndex < from || row.StartBarIndex > to {
+			continue
+		}
+		var identity struct {
+			ObjectID        string `json:"object_id"`
+			ObjectRevision  int64  `json:"object_revision"`
+			Level           int64  `json:"level"`
+			KnownAtBarIndex int64  `json:"known_at_bar_index"`
+		}
+		if err := json.Unmarshal([]byte(row.PayloadJSON), &identity); err != nil || identity.ObjectID != row.ObjectID || identity.ObjectRevision != row.ObjectRevision || identity.Level != row.Level || identity.KnownAtBarIndex != row.KnownAtBarIndex || row.Level < 0 || row.ObjectRevision < 1 || row.StartBarIndex > row.EndBarIndex {
+			return nil, fmt.Errorf("recursive structure payload metadata mismatch")
+		}
+		result = append(result, json.RawMessage(row.PayloadJSON))
+	}
+	return result, nil
 }
 
 func filterProcessedBars(values []ChanProcessedBar, from, to int64) []ChanProcessedBar {

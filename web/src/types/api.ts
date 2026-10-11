@@ -1,3 +1,9 @@
+import type { components } from './generated/api'
+
+export type ChanRecursiveMovement = components['schemas']['ChanRecursiveMovement']
+export type ChanRecursiveCenter = components['schemas']['ChanRecursiveCenter']
+export type ChanRecursiveMembership = components['schemas']['ChanRecursiveMembership']
+
 export type ServiceStatus = 'ok' | 'degraded' | 'unavailable'
 
 export interface HealthResponse {
@@ -139,7 +145,7 @@ export interface AlgorithmOutput {
   display_name: string
   pane: 'main' | 'indicator'
   series_type: 'line' | 'histogram' | 'semantic_objects'
-  object_type?: 'processed_bar' | 'fractal' | 'bi' | 'bi_state' | 'segment' | 'local_center' | 'center_connection' | 'center_audit_event' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event' | 'risk_decision'
+  object_type?: 'processed_bar' | 'fractal' | 'bi' | 'bi_state' | 'segment' | 'local_center' | 'center_connection' | 'center_audit_event' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event' | 'risk_decision' | 'recursive_movement' | 'recursive_center' | 'recursive_membership'
 }
 
 export interface AlgorithmDefinition extends AlgorithmRef {
@@ -245,6 +251,8 @@ export interface ChanLineObject {
   object_revision: number
 }
 
+export type ChanEvidenceLine = Pick<ChanLineObject, 'object_id' | 'object_revision' | 'start_bar_index' | 'start_time' | 'start_price_i64' | 'end_bar_index' | 'end_time' | 'end_price_i64'>
+
 export interface ChanSignalPoint {
   object_id: string
   bar_index: number
@@ -268,7 +276,7 @@ export interface ChanSignalPoint {
   macd_parameter_profile?: 'macd_12_26_9_histogram_x2' | null
   c_contains_type3?: boolean | null
   c_meets_sublevel?: boolean | null
-  c_sublevel_profile?: 'bi_two_confirmed_centers_type3_v1' | null
+  c_sublevel_profile?: 'bi_two_confirmed_centers_type3_v1' | 'recursive_completed_movement_type3_v2' | null
   c_sublevel_center_ids?: string[]
   c_type3_departure_id?: string | null
   c_type3_retest_id?: string | null
@@ -284,7 +292,7 @@ export interface ChanSignalPoint {
   lower_level_turn_object_id: string | null
   catalog_event: 'B1_candidate' | 'B1_confirmed' | 'B1_invalidated' | 'S1_candidate' | 'S1_confirmed' | 'S1_invalidated' | null
   catalog_algorithm_id: 'ALG-SIG-001' | null
-  evidence_profile: 'chan108_single_scope_v1'
+  evidence_profile: 'chan108_single_scope_v1' | 'fixed_same_level_recursive_v2'
   comparison_reference_object_id: string | null
   comparison_current_object_id: string | null
   comparison_rule: string | null
@@ -311,7 +319,7 @@ export interface ChanSignalPoint {
   confirmation_latency_bars: number
   reference_center_ordinal: number | null
   older_center_count: number | null
-  center_chain_profile: 'confirmed_same_level_centers_known_at_signal_v1' | null
+  center_chain_profile: 'confirmed_same_level_centers_known_at_signal_v1' | 'fixed_same_level_recursive_v2' | null
   confirmed: boolean
   confirmed_at_bar_index: number | null
   known_at_bar_index: number
@@ -459,7 +467,7 @@ export type ChanLayerCategory = 'processed_bars' | 'fractals' | 'bi' | 'bi_state
 
 export interface ChanTreeObject {
   object_id: string
-  object_type?: 'processed_bar' | 'fractal' | 'bi' | 'bi_state' | 'segment' | 'local_center' | 'center_boundary_confirmation' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point'
+  object_type?: 'processed_bar' | 'fractal' | 'bi' | 'bi_state' | 'segment' | 'local_center' | 'center_boundary_confirmation' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point' | 'recursive_movement' | 'recursive_center'
   layer_category?: ChanLayerCategory
   bar_index: number
   time: number
@@ -598,6 +606,9 @@ export interface ChanCalculationResults extends CalculationResultBase {
     center_monitors: ChanCenterMonitor[]
     divergences: ChanSignalPoint[]
     trade_points: ChanSignalPoint[]
+    recursive_movements?: ChanRecursiveMovement[]
+    recursive_centers?: ChanRecursiveCenter[]
+    recursive_memberships?: ChanRecursiveMembership[]
   }
 }
 
@@ -626,7 +637,7 @@ export interface ReplayStatus {
 export interface CausalEvent {
   event_seq: number
   known_at_bar_index: number
-  object_type: 'processed_bar' | 'fractal' | 'bi' | 'bi_state' | 'segment' | 'local_center' | 'center_connection' | 'center_audit_event' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event' | 'risk_decision'
+  object_type: 'processed_bar' | 'fractal' | 'bi' | 'bi_state' | 'segment' | 'local_center' | 'center_connection' | 'center_audit_event' | 'movement_state' | 'center_monitor' | 'divergence' | 'trade_point' | 'strategy_state' | 'stage_signal' | 'trade_signal' | 'chart_event' | 'risk_decision' | 'recursive_movement' | 'recursive_center' | 'recursive_membership'
   object_id: string
   operation: 'upsert' | 'delete'
   object_revision: number

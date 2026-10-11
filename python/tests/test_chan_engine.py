@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from itertools import pairwise
 from pathlib import Path
 
+import pyarrow.parquet as pq
 import pytest
 
 from tvbt.chan.engine import ChanEngine, ChanParameters, Fractal, LineObject, RawBar
@@ -469,21 +471,39 @@ def test_algo_ui_segment_golden_for_aol9_prefix_is_exact() -> None:
     预期:首个段的起止 K 线、起止价格和方向与 `algo-ui` 参考实现一致,
     并且所有输出段保持方向交替。
     """
-    sample = Path(__file__).parents[2] / "trading-data" / "history" / "30#AOL9.txt"
+    # The gold belongs to this immutable input, not a mutable source filename.
+    directory = (
+        Path(__file__).parents[2] / "trading-data" / "normalized" / "SHFE.AOL9.5m" / "2904362e6217"
+    )
+    sample = directory / "bars.parquet"
     if not sample.is_file():
-        pytest.skip(f"唯一历史数据源中不存在完整测试文件：{sample}")
+        pytest.skip("requires the pinned AOL9 golden data revision 2904362e6217")
+    meta = json.loads((directory / "meta.json").read_text(encoding="utf-8"))
+    assert (
+        meta["data_revision"]
+        == "sha256:2904362e62173a418d63feaf8855a3aef4b61ce5b0027e7801785baf9d8302fe"
+    )
+    assert (
+        hashlib.sha256(sample.read_bytes()).hexdigest()
+        == "36d025a48c2cb69ff610095d7ff3a10f438c095ed5a512e1738a54df67b86779"
+    )
     runtime = engine()
-    rows = sample.read_text(encoding="gb18030").splitlines()[2:302]
-    for index, raw in enumerate(rows):
-        fields = [value.strip() for value in raw.split(",")]
+    rows = pq.read_table(
+        sample,
+        filters=[("bar_index", "<", 300)],
+        columns=["bar_index", "open_i64", "high_i64", "low_i64", "close_i64"],
+    ).to_pylist()
+    assert len(rows) == 300
+    for row in rows:
+        index = int(row["bar_index"])
         runtime.update(
             RawBar(
                 index,
                 1_700_000_000_000 + index * 300_000,
-                int(fields[2]),
-                int(fields[3]),
-                int(fields[4]),
-                int(fields[5]),
+                int(row["open_i64"]),
+                int(row["high_i64"]),
+                int(row["low_i64"]),
+                int(row["close_i64"]),
             )
         )
     segments = runtime.result_rows()["segments"]
@@ -636,12 +656,28 @@ def test_segment_local_centers_and_third_points_are_causal_on_aol9() -> None:
         if value["signal_class"] == "standard"
     ]
     assert standard_points
-    assert all(signal_type == "buy_3" for signal_type, _ in standard_points)
-    assert any(
-        value["signal_class"] == "class_like"
-        and value["signal_type"] in {"class_buy_1", "class_sell_1"}
-        for value in result["trade_points"]
-    )
+    recursive_divergences = {
+        row["object_id"]: row
+        for row in result["divergences"]
+        if row["evidence_profile"] == "fixed_same_level_recursive_v2"
+    }
+    for point in result["trade_points"]:
+        if point["signal_class"] != "standard":
+            continue
+        assert point["evidence_profile"] == "fixed_same_level_recursive_v2"
+        if point["signal_type"] in {"buy_3", "sell_3"}:
+            assert point["departure_object_id"] and point["return_object_id"]
+            assert point["return_ordinal"] == 1
+        elif point["signal_type"] in {"buy_1", "sell_1"}:
+            origin = recursive_divergences[point["reference_object_id"]]
+            assert origin["divergence_profile"] == "standard_trend"
+            assert origin["c_contains_type3"] and origin["c_meets_sublevel"]
+            assert origin["level_id"] != "L0"
+    for point in result["trade_points"]:
+        if point["signal_type"] in {"class_buy_1", "class_sell_1"}:
+            origin = recursive_divergences[point["reference_object_id"]]
+            assert origin["divergence_kind"] == "consolidation"
+            assert origin["divergence_profile"] == "external_range"
     assert all(
         value["confirmed_at_bar_index"] is None
         or value["known_at_bar_index"] >= value["confirmed_at_bar_index"]

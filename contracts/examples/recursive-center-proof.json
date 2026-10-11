@@ -1,0 +1,23 @@
+{
+  "object_id": "recursive-center-example",
+  "dataset_id": "synthetic-recursive-proof",
+  "data_revision": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "decomposition_id": "fixed-level-synthetic",
+  "rule_version": "fixed_same_level_recursive_v2",
+  "range_profile": "complete_seed_movement_union_v1",
+  "level": 1,
+  "seed_refs": [
+    {"object_id": "movement-1", "object_revision": 1},
+    {"object_id": "movement-2", "object_revision": 1},
+    {"object_id": "movement-3", "object_revision": 1}
+  ],
+  "start_bar_index": 0,
+  "start_time": 1000,
+  "end_bar_index": 9,
+  "end_time": 10000,
+  "zd_i64": 100,
+  "zg_i64": 115,
+  "dd_i64": 90,
+  "gg_i64": 120,
+  "known_at_bar_index": 15
+}

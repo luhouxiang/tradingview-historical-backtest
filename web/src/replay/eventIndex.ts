@@ -39,6 +39,9 @@ export class ReplayEventIndex {
     }
     this.cursor = cursor
     const result: ReplayObjects = { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], local_centers: [], center_connections: [], center_audit_events: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] }
+    result.recursive_movements = []
+    result.recursive_centers = []
+    result.recursive_memberships = []
     for (const [key, payload] of this.objects) {
       if (key.startsWith('processed_bar:')) result.processed_bars.push(payload as unknown as ReplayObjects['processed_bars'][number])
       else if (key.startsWith('fractal:')) result.fractals.push(payload as unknown as ReplayObjects['fractals'][number])
@@ -52,6 +55,9 @@ export class ReplayEventIndex {
       else if (key.startsWith('center_monitor:')) result.center_monitors.push(payload as unknown as ReplayObjects['center_monitors'][number])
       else if (key.startsWith('divergence:')) result.divergences.push(payload as unknown as ReplayObjects['divergences'][number])
       else if (key.startsWith('trade_point:')) result.trade_points.push(payload as unknown as ReplayObjects['trade_points'][number])
+      else if (key.startsWith('recursive_movement:')) result.recursive_movements.push(payload as unknown as NonNullable<ReplayObjects['recursive_movements']>[number])
+      else if (key.startsWith('recursive_center:')) result.recursive_centers.push(payload as unknown as NonNullable<ReplayObjects['recursive_centers']>[number])
+      else if (key.startsWith('recursive_membership:')) result.recursive_memberships.push(payload as unknown as NonNullable<ReplayObjects['recursive_memberships']>[number])
     }
     result.processed_bars.sort((left, right) => left.normalized_index - right.normalized_index)
     result.fractals.sort((left, right) => left.bar_index - right.bar_index)
@@ -65,6 +71,9 @@ export class ReplayEventIndex {
     result.center_monitors.sort((left, right) => left.bar_index - right.bar_index)
     result.divergences.sort((left, right) => left.bar_index - right.bar_index)
     result.trade_points.sort((left, right) => left.bar_index - right.bar_index)
+    result.recursive_movements.sort((left, right) => left.level - right.level || left.start_bar_index - right.start_bar_index)
+    result.recursive_centers.sort((left, right) => left.level - right.level || left.start_bar_index - right.start_bar_index)
+    result.recursive_memberships.sort((left, right) => left.level - right.level || left.object_id.localeCompare(right.object_id))
     return result
   }
 

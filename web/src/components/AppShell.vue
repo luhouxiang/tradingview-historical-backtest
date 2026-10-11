@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { recursiveTreeObjects } from '../chan/recursiveDisplay'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import TopToolbar from './TopToolbar.vue'
 import DatasetPanel from './DatasetPanel.vue'
@@ -22,7 +23,7 @@ import { anyDivergenceVisible, divergenceLayer, divergenceVisible } from '../cha
 import { selectVisibleTradePoints, tradePointCategory } from '../chart/tradePointVisibility'
 import { createBacktestWorkspaceChannel, createBacktestWorkspaceUrl, type BacktestWorkspaceMessage } from '../backtest/workspaceChannel'
 import type { ReplayObjects, ReplaySignal } from '../replay/eventIndex'
-import type { AlgorithmDefinition, BacktestTrade, CalculationRequest, ChanCenterMonitor, ChanLayerCategory, ChanLineObject, ChanSignalPoint, ChanTreeObject, DatasetMeta, SeriesSource, StrategyRunSource, StrategySource, StrategySourceDynamicConfig, StrategySourcePreference, WorkspaceLayout } from '../types/api'
+import type { AlgorithmDefinition, BacktestTrade, CalculationRequest, ChanCenterMonitor, ChanEvidenceLine, ChanLayerCategory, ChanLineObject, ChanSignalPoint, ChanTreeObject, DatasetMeta, SeriesSource, StrategyRunSource, StrategySource, StrategySourceDynamicConfig, StrategySourcePreference, WorkspaceLayout } from '../types/api'
 
 defineProps<{ health: string }>()
 
@@ -44,7 +45,7 @@ const strategyRunSources = ref<StrategyRunSource[]>([])
 const drawings = ref<DrawingObject[]>([])
 const selectedDrawingId = ref<string | null>(null)
 const signalObjectsBySource = ref<Record<string, ChanTreeObject[]>>({})
-const segmentEvidenceById = ref<Record<string, ChanLineObject>>({})
+const segmentEvidenceById = ref<Record<string, ChanEvidenceLine>>({})
 const selectedSignal = ref<ChanTreeObject | null>(null)
 const selectedSimulationFill = ref<ChanTreeObject | null>(null)
 const selectedDivergenceSegments = computed(() => {
@@ -261,13 +262,14 @@ async function loadSignalObjects(): Promise<void> {
   try {
     const results = await Promise.all(sources.map(async (source) => {
       const signals: ChanTreeObject[] = []
-      const segments: ChanLineObject[] = []
+      const segments: ChanEvidenceLine[] = []
       for (let from = dataset.coverage.first_bar_index; from <= dataset.coverage.last_bar_index; from += 5000) {
         const to = Math.min(dataset.coverage.last_bar_index, from + 4999)
         if (generation !== signalLoadGeneration) return { source, signals: [], segments: [] }
         const result = await getCalculationResults(source.job_id, from, to)
         if (result.result_kind === 'chan') {
           segments.push(...result.objects.segments)
+          segments.push(...result.objects.recursive_movements ?? [])
           const visibility = completeCategoryVisibility(source.category_visibility)
           const localCenters = selectLocalCenters(result.objects.local_centers ?? [], {
             bi: visibility.center_objects && visibility.bi_centers,
@@ -378,6 +380,7 @@ async function loadSignalObjects(): Promise<void> {
               label: state.state_type === 'consolidation' ? '盘整状态' : state.state_type === 'centre_oscillation' ? '中枢震荡' : state.state_type === 'centre_migration_up' ? '中枢上移' : '中枢下移',
               detail: state.analysis_level,
             })) : []),
+            ...recursiveTreeObjects(result.objects),
             ...(visibility.center_monitors ? result.objects.center_monitors.map((monitor): ChanTreeObject => ({
               object_id: monitor.object_id, object_type: 'center_monitor', layer_category: 'center_monitors',
               bar_index: monitor.bar_index, time: monitor.time, price_i64: monitor.zn_i64,
@@ -393,7 +396,7 @@ async function loadSignalObjects(): Promise<void> {
     }))
     if (generation !== signalLoadGeneration) return
     const byId = new Map<string, ChanTreeObject>()
-    const segmentById = new Map<string, ChanLineObject>()
+    const segmentById = new Map<string, ChanEvidenceLine>()
     const bySource: Record<string, ChanTreeObject[]> = {}
     for (const { source, signals, segments } of results) {
       for (const segment of segments) {
@@ -460,9 +463,10 @@ function treeSignal(signal: ChanSignalPoint, objectType: 'divergence' | 'trade_p
         signal.macd_extreme_relation == null ? '' : `DIFF/DEA 极值辅助判断：${signal.macd_extreme_relation === 'both_weaker' ? '均减弱' : signal.macd_extreme_relation === 'diff_only' ? '仅 DIFF 减弱' : signal.macd_extreme_relation === 'dea_only' ? '仅 DEA 减弱' : signal.macd_extreme_relation === 'neither_weaker' ? '均未减弱' : '数据不足'}（不单独触发背驰）`,
         `当前段创新极值：${signal.new_extreme_satisfied === true ? '是' : signal.new_extreme_satisfied === false ? '否' : '未记录'}`,
         signal.divergence_kind === 'trend' ? `c 内三类点：${proofStateLabel(signal.c_contains_type3)}；次级别结构：${proofStateLabel(signal.c_meets_sublevel)}` : '',
+        signal.c_sublevel_profile === 'recursive_completed_movement_type3_v2' ? `递归证明：c 的完整走势与所属中枢条件 ${proofStateLabel(signal.c_meets_sublevel)}；所属递归中枢 ${signal.c_sublevel_center_ids?.length ?? 0}/2；首次次级别离开 ${signal.c_type3_departure_id ?? '无'} → 回试 ${signal.c_type3_retest_id ?? '无'}；证据可知 K${signal.c_proof_known_at_bar_index ?? '未完成'}` : '',
         signal.c_sublevel_profile === 'bi_two_confirmed_centers_type3_v1' ? `工程映射：c 内已确认笔中枢 ${signal.c_sublevel_center_ids?.length ?? 0}/2（${signal.c_sublevel_center_ids?.join('、') || '无'}）；首次笔级离开 ${signal.c_type3_departure_id ?? '无'} → 回试 ${signal.c_type3_retest_id ?? '无'}；证明确认 K${signal.c_proof_known_at_bar_index ?? '未完成'}` : '',
         `形成方向 ${signal.formation_dir ?? '未知'} · 相对移动 ${signal.relative_dir ?? '未知'}`,
-        signal.divergence_profile === 'segment_trend_candidate' ? 'c 内三类点或两个已确认笔中枢的证明尚不齐全；不能升级为标准趋势背驰' : '',
+        signal.invalidation_reason === 'reversal_crossed_current_extreme' ? '反向确认单元再次越过 c 的极值，旧端点不能确认背驰' : signal.divergence_profile === 'segment_trend_candidate' ? signal.c_sublevel_profile === 'recursive_completed_movement_type3_v2' ? 'c 的完整次级别走势、归属中枢或三类点证据尚未齐全；不能升级为标准趋势背驰' : 'c 内三类点或两个已确认笔中枢的证明尚不齐全；不能升级为标准趋势背驰' : '',
       ].filter(Boolean).join('；')
     : undefined
   return {

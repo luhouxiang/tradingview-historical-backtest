@@ -2,6 +2,7 @@ import type {
   IPrimitivePaneRenderer,
   IPrimitivePaneView,
   ISeriesPrimitive,
+  Logical,
   PrimitiveHoveredItem,
   PrimitivePaneViewZOrder,
   SeriesAttachedParameter,
@@ -35,6 +36,8 @@ export interface LocalCenterPresentation {
 }
 
 export interface ChanGeometry {
+  recursiveMovements: Array<Line & { level: number }>
+  recursiveCenters: Array<Region & { level: number; objectId: string }>
   processedBars: ProcessedBarRegion[]
   fractals: FractalPoint[]
   bi: Line[]
@@ -98,9 +101,10 @@ export function buildChanGeometry(
   timeToX: (time: UTCTimestamp) => number | null,
   priceToY: (price: number) => number | null,
   localCenterPresentation?: ReadonlyMap<string, LocalCenterPresentation>,
+  barIndexToX?: (barIndex: number) => number | null,
 ): ChanGeometry {
-  const point = (timeMs: number, priceI64: number): Point | null => {
-    const x = timeToX(Math.floor(timeMs / 1000) as UTCTimestamp)
+  const point = (timeMs: number, priceI64: number, barIndex?: number): Point | null => {
+    const x = timeToX(Math.floor(timeMs / 1000) as UTCTimestamp) ?? (barIndex === undefined ? null : barIndexToX?.(barIndex) ?? null)
     const y = priceToY(priceI64 / priceScale)
     return x === null || y === null ? null : { x, y }
   }
@@ -236,6 +240,16 @@ export function buildChanGeometry(
       const position = point(event.event_time, event.comparison_i64)
       return position ? [{ ...position, centerId: event.center_id, state: event.preview_state }] : []
     }),
+    recursiveMovements: (objects.recursive_movements ?? []).flatMap((value) => {
+      const start = point(value.start_time, value.start_price_i64, value.start_bar_index)
+      const end = point(value.end_time, value.end_price_i64, value.end_bar_index)
+      return start && end ? [{ start, end, confirmed: value.status === 'completed', status: value.status, objectId: value.object_id, level: value.level }] : []
+    }),
+    recursiveCenters: (objects.recursive_centers ?? []).flatMap((value) => {
+      const start = point(value.start_time, value.zg_i64, value.start_bar_index)
+      const end = point(value.end_time, value.zd_i64, value.end_bar_index)
+      return start && end ? [{ left: start.x, right: end.x, top: start.y, bottom: end.y, confirmed: true, level: value.level, objectId: value.object_id }] : []
+    }),
     movementStates: objects.movement_states.flatMap((value) => {
       const start = point(value.start_time, value.price_i64)
       const end = point(value.end_time, value.price_i64)
@@ -259,6 +273,7 @@ class ChanRenderer implements IPrimitivePaneRenderer {
       context.scale(horizontalPixelRatio, verticalPixelRatio)
       if (this.layer === 'fill') {
         drawRegions(context, geometry.processedBars, false, true, this.source.renderStyle().processedBar)
+        drawRecursiveCenters(context, geometry.recursiveCenters)
         drawLocalCenters(context, geometry.localCenters.filter((center) => center.unit_kind === 'BI'), geometry.localCenterExtensions.filter((center) => center.unit_kind === 'BI'), this.source.renderStyle().biCenter)
         drawLocalCenters(context, geometry.localCenters.filter((center) => center.unit_kind === 'SEGMENT'), geometry.localCenterExtensions.filter((center) => center.unit_kind === 'SEGMENT'), this.source.renderStyle().segmentCenter)
       }
@@ -280,6 +295,7 @@ class ChanView implements IPrimitivePaneView {
 }
 
 export class ChanPrimitive implements ISeriesPrimitive<Time> {
+  private barIndexOrigin: number | null = null
   private attachment: SeriesAttachedParameter<Time> | null = null
   private objects: ChanObjects = { processed_bars: [], fractals: [], bi: [], bi_states: [], segments: [], local_centers: [], center_connections: [], center_audit_events: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [] }
   private priceScale = 1
@@ -294,6 +310,11 @@ export class ChanPrimitive implements ISeriesPrimitive<Time> {
   detached(): void { this.attachment = null }
   paneViews(): readonly IPrimitivePaneView[] { return this.views }
   updateAllViews(): void {}
+
+  setBarIndexOrigin(origin: number | null): void {
+    this.barIndexOrigin = origin
+    this.attachment?.requestUpdate()
+  }
 
   setData(objects: ChanObjects, priceScale: number, localCenterPresentation?: ReadonlyMap<string, LocalCenterPresentation>): void {
     this.objects = objects
@@ -325,13 +346,14 @@ export class ChanPrimitive implements ISeriesPrimitive<Time> {
 
   geometry(): ChanGeometry {
     const attachment = this.attachment
-    if (!attachment) return { processedBars: [], fractals: [], bi: [], biStates: [], segments: [], localCenters: [], localCenterExtensions: [], centerRoleLines: [], confirmationMarkers: [], previewMarkers: [], movementStates: [], centerMonitors: [], centerMonitorCurves: [], centerMonitorAxes: [], divergences: [], tradePoints: [] }
+    if (!attachment) return { recursiveMovements: [], recursiveCenters: [], processedBars: [], fractals: [], bi: [], biStates: [], segments: [], localCenters: [], localCenterExtensions: [], centerRoleLines: [], confirmationMarkers: [], previewMarkers: [], movementStates: [], centerMonitors: [], centerMonitorCurves: [], centerMonitorAxes: [], divergences: [], tradePoints: [] }
     return buildChanGeometry(
       this.objects,
       this.priceScale,
       (time) => attachment.chart.timeScale().timeToCoordinate(time),
       (price) => attachment.series.priceToCoordinate(price),
       this.localCenterPresentation,
+      this.barIndexOrigin === null ? undefined : (index) => attachment.chart.timeScale().logicalToCoordinate((index - this.barIndexOrigin!) as Logical),
     )
   }
 
@@ -361,12 +383,22 @@ export class ChanPrimitive implements ISeriesPrimitive<Time> {
       const bottom = Math.max(center.top, center.bottom)
       if (x >= left && x < right && y >= top && y <= bottom) return { externalId: `local-center:${center.object_id}`, cursorStyle: 'help', hitTestPriority: 0, distance: 0, zOrder: 'normal' }
     }
+    for (const center of [...this.geometry().recursiveCenters].reverse()) {
+      if (x >= Math.min(center.left, center.right) && x < Math.max(center.left, center.right)
+        && y >= Math.min(center.top, center.bottom) && y <= Math.max(center.top, center.bottom)) {
+        return { externalId: `recursive-center:${center.objectId}`, cursorStyle: 'help', hitTestPriority: 0, distance: 0, zOrder: 'normal' }
+      }
+    }
     return null
   }
 
   hoverDetail(externalId: unknown): string | null {
     const tradePoint = this.signalForHit(externalId)
     if (tradePoint) return `${chanSignalLabel(tradePoint)} · K${tradePoint.bar_index} · ${tradePoint.status}`
+    if (typeof externalId === 'string' && externalId.startsWith('recursive-center:')) {
+      const center = (this.objects.recursive_centers ?? []).find((value) => value.object_id === externalId.slice('recursive-center:'.length))
+      return center ? `L${center.level} 递归中枢 · ZD ${center.zd_i64} / ZG ${center.zg_i64}\n种子：${center.seed_refs.map(ref => `${ref.object_id}@${ref.object_revision}`).join(' → ')}\n形成 K${center.formed_at_bar_index} · 可知 K${center.known_at_bar_index}` : null
+    }
     if (typeof externalId !== 'string' || !externalId.startsWith('local-center:')) return null
     const id = externalId.slice('local-center:'.length)
     const center = (this.objects.local_centers ?? []).find((value) => value.object_id === id)
@@ -460,6 +492,26 @@ function drawLocalCenters(context: CanvasRenderingContext2D, centers: LocalCente
   }
 }
 
+function recursiveColor(level: number): string {
+  return ['#78909c', '#ab47bc', '#26a69a', '#ef5350'][level % 4]!
+}
+
+function drawRecursiveCenters(context: CanvasRenderingContext2D, values: ChanGeometry['recursiveCenters']): void {
+  context.save()
+  for (const value of values) {
+    const color = recursiveColor(value.level)
+    context.strokeStyle = color
+    context.fillStyle = colorWithOpacity(color, 0.08)
+    context.lineWidth = 1
+    context.setLineDash([4, 3])
+    context.fillRect(value.left, value.top, value.right - value.left, value.bottom - value.top)
+    context.strokeRect(value.left, value.top, value.right - value.left, value.bottom - value.top)
+    context.fillStyle = color
+    context.fillText(`L${value.level}`, value.left + 3, value.top + 12)
+  }
+  context.restore()
+}
+
 function drawLines(context: CanvasRenderingContext2D, lines: Line[], style: IndicatorOutputStyle): void {
   if (!style.visible) return
   for (const line of lines) {
@@ -477,6 +529,9 @@ function drawLines(context: CanvasRenderingContext2D, lines: Line[], style: Indi
 }
 
 function drawOverlay(context: CanvasRenderingContext2D, geometry: ChanGeometry, style: ChanRenderStyle): void {
+  for (const value of geometry.recursiveMovements) {
+    drawLines(context, [value], { color: recursiveColor(value.level), line_width: 1, line_style: value.confirmed ? 'solid' : 'dashed', opacity: 0.75, visible: true })
+  }
   drawLines(context, geometry.bi, style.bi)
   drawLines(context, geometry.segments, style.segment)
   drawCenterRoleLines(context, geometry.centerRoleLines)

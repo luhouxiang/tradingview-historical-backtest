@@ -55,6 +55,7 @@ from tvbt.auxiliary.single_instrument_ma import (
 from tvbt.auxiliary.single_instrument_ma import definition as single_instrument_ma_definition
 from tvbt.chan.algorithm import definition as chan_definition
 from tvbt.chan.algorithm import run_chan
+from tvbt.chan.events import ChanEvent
 from tvbt.risk import unified_risk_overlay_definition
 from tvbt.storage.path_guard import PathGuard
 
@@ -528,7 +529,7 @@ def same_level_decomposition_program_definition() -> dict[str, Any]:
         "same_level_decomposition_program",
         "同级别分解机械程序",
         "同级分解",
-        algorithm_version="1.1.0",
+        algorithm_version="1.4.0",
     )
     result["parameter_schema"] = {
         "type": "object",
@@ -735,6 +736,7 @@ def definitions() -> list[dict[str, Any]]:
         second_buy_only_definition(),
         third_buy_only_definition(),
         centre_oscillation_spread_definition(),
+        same_level_decomposition_program_definition(),
         three_level_complete_classification_definition(),
         target_level_rebound_segmented_operation_definition(),
         bottom_top_construction_definition(),
@@ -765,6 +767,7 @@ def definitions() -> list[dict[str, Any]]:
         "second_buy_only": ("second_point", ["ALG-STR-002"]),
         "third_buy_only": ("third_point", ["ALG-STR-003"]),
         "centre_oscillation_spread": ("centre_oscillation", ["ALG-STR-004"]),
+        "same_level_decomposition_program": ("same_level_decomposition", ["ALG-STR-005"]),
         "three_level_complete_classification": ("structure_classification", ["ALG-STR-007"]),
         "target_level_rebound_segmented_operation": ("segmented_operation", ["ALG-STR-008"]),
         "bottom_top_construction": ("bottom_top_construction", ["ALG-STR-009"]),
@@ -1086,6 +1089,10 @@ def run_strategy(
         return _run_centre_oscillation_spread(
             payload, guard, cancelled, last_bar_index=last_bar_index
         )
+    if algorithm["algorithm_id"] == "same_level_decomposition_program":
+        return _run_same_level_decomposition_program(
+            payload, guard, cancelled, last_bar_index=last_bar_index
+        )
     if algorithm["algorithm_id"] == "three_level_complete_classification":
         return _run_three_level_complete_classification(
             payload, guard, cancelled, last_bar_index=last_bar_index
@@ -1232,7 +1239,7 @@ def _run_fixed_level_centre(
             )
         )
     events_by_bar: dict[int, list[Any]] = {}
-    for event in runtime.emitter.events:
+    for event in _strategy_center_events(runtime.emitter.events):
         events_by_bar.setdefault(event.known_at_bar_index, []).append(event)
 
     centers: dict[str, dict[str, Any]] = {}
@@ -1650,7 +1657,7 @@ def _run_consolidation_reversion(
         if last_bar_index is None or int(value) <= last_bar_index
     ]
     events_by_bar: dict[int, list[Any]] = {}
-    for event in runtime.emitter.events:
+    for event in _strategy_center_events(runtime.emitter.events):
         if event.object_type in {
             "local_center",
             "divergence",
@@ -1913,7 +1920,7 @@ def _run_third_point_migration_hold(
             )
         }
     events_by_bar: dict[int, list[Any]] = {}
-    for event in runtime.emitter.events:
+    for event in _strategy_center_events(runtime.emitter.events):
         if event.object_type in {"local_center", "trade_point"} and _strategy_accepts_center_event(
             event
         ):
@@ -2406,6 +2413,16 @@ def _run_second_buy_only(
     def confirmed_segment_for(
         point: dict[str, Any], direction: str
     ) -> tuple[str, dict[str, Any]] | None:
+        explicit_id = point.get("return_object_id") or point.get("comparison_current_object_id")
+        if explicit_id is not None:
+            source = active_segments.get(str(explicit_id))
+            return (
+                (str(explicit_id), source)
+                if source is not None
+                and source.get("confirmed") is True
+                and source.get("direction") == direction
+                else None
+            )
         endpoint = int(point.get("bar_index", -1))
         price = int(point.get("price_i64", 0))
         candidates = [
@@ -2868,7 +2885,12 @@ def _load_chan_strategy_feed(
         volume = table["volume"][row_position] if has_volume else None
         volume_by_bar[bar_index] = None if volume is None else int(volume)
     events_by_bar: dict[int, list[Any]] = {}
-    for event in runtime.emitter.events:
+    events = (
+        _strategy_center_events(runtime.emitter.events)
+        if "local_center" in object_types
+        else runtime.emitter.events
+    )
+    for event in events:
         if event.object_type in object_types and _strategy_accepts_center_event(event):
             events_by_bar.setdefault(event.known_at_bar_index, []).append(event)
     return _ChanStrategyFeed(bars, events_by_bar, volume_by_bar)
@@ -2879,6 +2901,124 @@ def _strategy_accepts_center_event(event: Any) -> bool:
     if event.object_type != "local_center" or event.operation == "delete":
         return True
     return str(json.loads(event.payload_json).get("unit_kind", "SEGMENT")) == "SEGMENT"
+
+
+def _strategy_center_events(events: list[Any]) -> list[Any]:
+    """Read-only root-center contexts for existing segment strategy consumers.
+
+    Projection records are internal to a strategy feed, never published back
+    to Chan. CONSTRUCTED is not a type-3 exit: CLOSED/leave_direction are only
+    supplied by the actual confirmed first-return signal referencing this
+    source. The source identity/revision and projection profile stay explicit.
+    """
+    result: list[Any] = []
+    centers: dict[str, dict[str, Any]] = {}
+    closures: dict[str, tuple[str, dict[str, Any]]] = {}
+    projections: dict[str, str] = {}
+    revisions: dict[str, int] = {}
+
+    def project(event: Any, center_id: str) -> None:
+        source = centers.get(center_id)
+        operation = "delete" if source is None else "upsert"
+        payload: dict[str, Any] = {}
+        if source is not None:
+            closure = next(
+                (point for owner, point in closures.values() if owner == center_id), None
+            )
+            payload = {
+                **source,
+                "strategy_context_profile": "recursive_center_context_v1",
+                "source_object_type": "recursive_center",
+                "source_object_revision": source["object_revision"],
+                "unit_kind": "SEGMENT",
+                "analysis_level": "segment",
+                "confirmed": True,
+                "status": "CONSTRUCTED" if closure is None else "CLOSED",
+                "leave_direction": None
+                if closure is None
+                else "up"
+                if closure["signal_type"] == "buy_3"
+                else "down",
+                "exit_id": None if closure is None else closure["departure_object_id"],
+                "retest_id": None if closure is None else closure["return_object_id"],
+                "context_confirmation_source_id": None if closure is None else closure["object_id"],
+            }
+        semantic = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        if projections.get(center_id) == semantic:
+            return
+        projections[center_id] = semantic
+        revision = revisions.get(center_id, 0) + 1
+        revisions[center_id] = revision
+        if payload:
+            payload["object_revision"] = revision
+            payload["known_at_bar_index"] = event.known_at_bar_index
+        result.append(
+            ChanEvent(
+                getattr(event, "event_seq", 0),
+                event.known_at_bar_index,
+                "local_center",
+                center_id,
+                operation,
+                revision,
+                json.dumps(payload, separators=(",", ":")),
+            )
+        )
+
+    for event in events:
+        if event.object_type == "recursive_center":
+            if event.operation == "delete":
+                if event.object_id in centers:
+                    centers.pop(event.object_id)
+                    closures = {
+                        key: value for key, value in closures.items() if value[0] != event.object_id
+                    }
+                    project(event, event.object_id)
+            else:
+                value = json.loads(event.payload_json)
+                if value.get("level") == 0:
+                    closures = {
+                        key: closure
+                        for key, closure in closures.items()
+                        if closure[0] != event.object_id
+                    }
+                    centers[event.object_id] = {
+                        **value,
+                        "object_id": event.object_id,
+                        "known_at_bar_index": event.known_at_bar_index,
+                        "object_revision": getattr(
+                            event, "object_revision", value.get("object_revision", 1)
+                        ),
+                    }
+                    project(event, event.object_id)
+        elif event.object_type == "trade_point":
+            if event.operation == "delete":
+                old = closures.pop(event.object_id, None)
+                if old is not None:
+                    project(event, old[0])
+            else:
+                point = json.loads(event.payload_json)
+                if (
+                    point.get("evidence_profile") == "fixed_same_level_recursive_v2"
+                    and point.get("level_id") == "L0"
+                    and point.get("confirmed") is True
+                    and point.get("signal_class") == "standard"
+                    and point.get("signal_type") in {"buy_3", "sell_3"}
+                ):
+                    owner = point.get("reference_object_id")
+                    if (
+                        owner in centers
+                        and event.known_at_bar_index >= centers[owner]["known_at_bar_index"]
+                        and point.get("departure_object_id")
+                        and point.get("return_object_id")
+                    ):
+                        closures[event.object_id] = (owner, {**point, "object_id": event.object_id})
+                        project(event, owner)
+                else:
+                    old = closures.pop(event.object_id, None)
+                    if old is not None:
+                        project(event, old[0])
+        result.append(event)
+    return result
 
 
 class _CausalStrategyOutput:
@@ -3129,6 +3269,16 @@ def _run_third_buy_only(
     def segment_for_point(
         point: dict[str, Any], direction: str
     ) -> tuple[str, dict[str, Any]] | None:
+        explicit_id = point.get("return_object_id") or point.get("comparison_current_object_id")
+        if explicit_id is not None:
+            source = active_segments.get(str(explicit_id))
+            return (
+                (str(explicit_id), source)
+                if source is not None
+                and source.get("confirmed") is True
+                and source.get("direction") == direction
+                else None
+            )
         endpoint = int(point.get("bar_index", -1))
         price = int(point.get("price_i64", 0))
         candidates = [
@@ -3164,10 +3314,12 @@ def _run_third_buy_only(
         )
 
     def center_ordinal(center_id: str) -> int | None:
+        profile = active_centers.get(center_id, {}).get("strategy_context_profile")
         centers = [
             (object_id, value)
             for object_id, value in active_centers.items()
             if value.get("confirmed") is True
+            and value.get("strategy_context_profile") == profile
             and value.get("analysis_level", "segment") == "segment"
             and all(
                 name in value for name in ("start_bar_index", "end_bar_index", "dd_i64", "gg_i64")
@@ -4907,7 +5059,7 @@ def _run_same_level_decomposition_program(
     *,
     last_bar_index: int | None,
 ) -> StrategyRun:
-    """Run ALG-STR-005 from the causal confirmed-segment decomposition feed."""
+    """Run ALG-STR-005 on complete L0 movements with independent parent observation."""
     parameters = payload["parameters"]
     quantity = parameters["operation_quantity"]
     if isinstance(quantity, bool) or not isinstance(quantity, int) or not 1 <= quantity <= 100:
@@ -4923,24 +5075,21 @@ def _run_same_level_decomposition_program(
         guard,
         cancelled,
         last_bar_index=last_bar_index,
-        object_types={"segment", "local_center", "level_center", "divergence"},
+        object_types={"recursive_movement", "recursive_center", "divergence"},
     )
     output = _CausalStrategyOutput("SLD", "waiting_same_level_sequence")
-    active_segments: dict[str, dict[str, Any]] = {}
-    active_centers: dict[str, dict[str, Any]] = {}
-    active_level_centers: dict[str, dict[str, Any]] = {}
+    active_movements: dict[str, dict[str, Any]] = {}
+    parent_centers: dict[str, dict[str, Any]] = {}
     active_divergences: dict[str, dict[str, Any]] = {}
     sequence: list[dict[str, Any]] = []
     reversed_comparisons: set[tuple[str, str]] = set()
-    promotion_candidate_ids: set[str] = set()
     pending_branch: dict[str, Any] | None = None
     position_side = "flat"
     position_quantity = 0
     position_source_id: str | None = None
     active_level_id = "L0"
-    active_promotion_id: str | None = None
 
-    def segment_signature(value: dict[str, Any]) -> tuple[Any, ...]:
+    def movement_signature(value: dict[str, Any]) -> tuple[Any, ...]:
         return tuple(
             value.get(name)
             for name in (
@@ -4951,6 +5100,7 @@ def _run_same_level_decomposition_program(
                 "direction",
                 "confirmed",
                 "confirmed_at_bar_index",
+                "object_revision",
             )
         )
 
@@ -4988,7 +5138,7 @@ def _run_same_level_decomposition_program(
                 anchor_bar_index=anchor_bar_index,
                 price_i64=price_i64,
                 stage_id=stage_id,
-                details={"decomposition_unit": "confirmed_segment"},
+                details={"decomposition_unit": "completed_recursive_movement"},
             )
         position_side = "flat"
         position_quantity = 0
@@ -5010,7 +5160,7 @@ def _run_same_level_decomposition_program(
             source_id,
             anchor_bar_index=anchor_bar_index,
             price_i64=price_i64,
-            details={"decomposition_unit": "confirmed_segment"},
+            details={"decomposition_unit": "completed_recursive_movement"},
         )
         close_position(
             bar,
@@ -5031,15 +5181,24 @@ def _run_same_level_decomposition_program(
         sequence.clear()
         pending_branch = None
 
-    def matching_divergence(unit: dict[str, Any]) -> tuple[str, dict[str, Any]] | None:
+    def matching_divergence(
+        reference: dict[str, Any], unit: dict[str, Any]
+    ) -> tuple[str, dict[str, Any]] | None:
+        if not reference["directional"] or not unit["directional"]:
+            return None
         expected_type = "top_divergence" if unit["direction"] == "up" else "bottom_divergence"
         values = [
             (object_id, value)
             for object_id, value in active_divergences.items()
             if value.get("confirmed") is True
-            and value.get("divergence_kind") == "consolidation"
+            # L1 contexts compare their complete L0 inputs (Ai), rather than
+            # matching a primitive segment signal by endpoint coincidence.
+            and value.get("level_id") == "L1"
+            and value.get("evidence_profile") == "fixed_same_level_recursive_v2"
+            and value.get("divergence_kind") in {"consolidation", "center_oscillation"}
+            and value.get("comparison_reference_object_id") == reference["object_id"]
+            and value.get("comparison_current_object_id") == unit["object_id"]
             and value.get("signal_type") == expected_type
-            and int(value.get("bar_index", -1)) == unit["end_bar_index"]
         ]
         if not values:
             return None
@@ -5088,7 +5247,7 @@ def _run_same_level_decomposition_program(
             "ai_plus_2_object_id": current["object_id"],
             "ai_plus_2_index": current["sequence_index"],
             "odd_direction": odd_direction,
-            "decomposition_unit": "confirmed_segment",
+            "decomposition_unit": "completed_recursive_movement",
             "comparison": "directional_structural_endpoint",
             "later_made_new_extreme": (
                 current["end_price_i64"] > reference["end_price_i64"]
@@ -5162,7 +5321,12 @@ def _run_same_level_decomposition_program(
             ),
             None,
         )
-        if reference is None or reference["direction"] != current["direction"]:
+        if (
+            reference is None
+            or reference["direction"] != current["direction"]
+            or not current["directional"]
+            or not reference["directional"]
+        ):
             return
         comparison_key = (reference["object_id"], current["object_id"])
         if comparison_key in reversed_comparisons:
@@ -5172,7 +5336,7 @@ def _run_same_level_decomposition_program(
             if current["direction"] == "up"
             else current["end_price_i64"] < reference["end_price_i64"]
         )
-        divergence = matching_divergence(current)
+        divergence = matching_divergence(reference, current)
         if not later_made_new_extreme or divergence is not None:
             reverse_operation(bar, reference, current, divergence)
             return
@@ -5182,7 +5346,7 @@ def _run_same_level_decomposition_program(
             "ai_plus_2_object_id": current["object_id"],
             "ai_plus_2_index": current["sequence_index"],
             "odd_direction": odd_direction,
-            "decomposition_unit": "confirmed_segment",
+            "decomposition_unit": "completed_recursive_movement",
         }
         output.transition(
             bar,
@@ -5214,7 +5378,7 @@ def _run_same_level_decomposition_program(
             return
         reference = pending_branch["reference"]
         compared = pending_branch["compared"]
-        if current["direction"] == compared["direction"]:
+        if not current["directional"] or current["direction"] == compared["direction"]:
             pending_branch = None
             return
         destroyed = (
@@ -5236,7 +5400,7 @@ def _run_same_level_decomposition_program(
             "ai_plus_3_object_id": current["object_id"],
             "ai_plus_3_index": current["sequence_index"],
             "odd_direction": odd_direction,
-            "decomposition_unit": "confirmed_segment",
+            "decomposition_unit": "completed_recursive_movement",
         }
         output.transition(
             bar,
@@ -5258,7 +5422,7 @@ def _run_same_level_decomposition_program(
         )
         pending_branch = None
 
-    def append_segment(bar: StrategyBar, object_id: str, value: dict[str, Any]) -> None:
+    def append_movement(bar: StrategyBar, object_id: str, value: dict[str, Any]) -> None:
         if active_level_id != "L0" or value.get("confirmed") is not True:
             return
         direction = value.get("direction")
@@ -5268,9 +5432,9 @@ def _run_same_level_decomposition_program(
         end = int(value.get("end_bar_index", -1))
         if start < 0 or end <= start:
             return
-        if sequence and (
-            start != sequence[-1]["end_bar_index"] or direction == sequence[-1]["direction"]
-        ):
+        delta = int(value["end_price_i64"]) - int(value["start_price_i64"])
+        direction = "up" if delta > 0 else "down" if delta < 0 else direction
+        if sequence and start != sequence[-1]["end_bar_index"]:
             reset_decomposition(
                 bar,
                 "CANONICAL_SAME_LEVEL_SEQUENCE_DISCONTINUITY",
@@ -5293,6 +5457,7 @@ def _run_same_level_decomposition_program(
             "start_price_i64": int(value["start_price_i64"]),
             "end_price_i64": int(value["end_price_i64"]),
             "direction": direction,
+            "directional": delta != 0,
         }
         sequence.append(unit)
         resolve_ai_plus_3_branch(bar, unit)
@@ -5301,28 +5466,30 @@ def _run_same_level_decomposition_program(
     for bar in feed.bars:
         if bar.bar_index % 256 == 0 and cancelled.is_set():
             raise InterruptedError("strategy execution cancelled")
-        new_segments: list[tuple[str, dict[str, Any]]] = []
+        new_movements: list[tuple[str, dict[str, Any]]] = []
         new_divergence_ids: set[str] = set()
-        new_centers: list[tuple[str, dict[str, Any]]] = []
-        new_level_centers: list[tuple[str, dict[str, Any]]] = []
         reset_source_ids: set[str] = set()
-        promotion_reset_ids: set[str] = set()
         for event in feed.events_by_bar.get(bar.bar_index, []):
-            if event.object_type == "segment":
-                previous = active_segments.get(event.object_id)
+            if event.object_type == "recursive_movement":
+                previous = active_movements.get(event.object_id)
                 if event.operation == "delete":
-                    active_segments.pop(event.object_id, None)
+                    active_movements.pop(event.object_id, None)
                     if any(unit["object_id"] == event.object_id for unit in sequence):
                         reset_source_ids.add(event.object_id)
                     continue
                 value = json.loads(event.payload_json)
-                active_segments[event.object_id] = value
-                if previous is None or segment_signature(previous) != segment_signature(value):
+                if value.get("level") != 0:
+                    continue
+                if value.get("construction_kind", "canonical") != "canonical":
+                    continue
+                value = {**value, "confirmed": value.get("status") == "completed"}
+                active_movements[event.object_id] = value
+                if previous is None or movement_signature(previous) != movement_signature(value):
                     if previous is not None and any(
                         unit["object_id"] == event.object_id for unit in sequence
                     ):
                         reset_source_ids.add(event.object_id)
-                    new_segments.append((event.object_id, value))
+                    new_movements.append((event.object_id, value))
             elif event.object_type == "divergence":
                 previous = active_divergences.get(event.object_id)
                 if event.operation == "delete":
@@ -5338,26 +5505,41 @@ def _run_same_level_decomposition_program(
                     if previous is not None and position_source_id == event.object_id:
                         reset_source_ids.add(event.object_id)
                     new_divergence_ids.add(event.object_id)
-            elif event.object_type == "local_center":
+            elif event.object_type == "recursive_center":
+                previous = parent_centers.get(event.object_id)
                 if event.operation == "delete":
-                    active_centers.pop(event.object_id, None)
+                    if previous is not None:
+                        parent_centers.pop(event.object_id)
+                        output.chart_event(
+                            bar,
+                            "recursive_parent_invalidated",
+                            "RECURSIVE_PARENT_EVIDENCE_REVISED",
+                            event.object_id,
+                            anchor_bar_index=int(previous["end_bar_index"]),
+                            price_i64=(int(previous["zd_i64"]) + int(previous["zg_i64"])) // 2,
+                            details={"level": previous["level"], "independent_parent": True},
+                        )
                     continue
                 value = json.loads(event.payload_json)
-                active_centers[event.object_id] = value
-                new_centers.append((event.object_id, value))
-            elif event.object_type == "level_center":
-                previous = active_level_centers.get(event.object_id)
-                if event.operation == "delete":
-                    active_level_centers.pop(event.object_id, None)
-                    if active_promotion_id == event.object_id:
-                        promotion_reset_ids.add(event.object_id)
+                if int(value.get("level", -1)) < 1:
                     continue
-                value = json.loads(event.payload_json)
-                active_level_centers[event.object_id] = value
-                if active_promotion_id == event.object_id and value.get("confirmed") is not True:
-                    promotion_reset_ids.add(event.object_id)
-                elif previous is None:
-                    new_level_centers.append((event.object_id, value))
+                parent_centers[event.object_id] = value
+                output.chart_event(
+                    bar,
+                    "recursive_parent_formed" if previous is None else "recursive_parent_updated",
+                    "INDEPENDENT_RECURSIVE_PARENT_OBSERVED",
+                    event.object_id,
+                    anchor_bar_index=int(value["end_bar_index"]),
+                    price_i64=(int(value["zd_i64"]) + int(value["zg_i64"])) // 2,
+                    details={
+                        "level": value["level"],
+                        "zd_i64": value["zd_i64"],
+                        "zg_i64": value["zg_i64"],
+                        "seed_refs": value["seed_refs"],
+                        "independent_parent": True,
+                        "decomposition_unit": "completed_recursive_movement",
+                    },
+                )
 
         if reset_source_ids:
             source_id = sorted(reset_source_ids)[0]
@@ -5369,161 +5551,15 @@ def _run_same_level_decomposition_program(
                 price_i64=bar.close_i64,
             )
 
-        if promotion_reset_ids:
-            source_id = sorted(promotion_reset_ids)[0]
-            reset_decomposition(
-                bar,
-                "CONFIRMED_HIGHER_LEVEL_CENTER_REVISED",
-                source_id,
-                anchor_bar_index=bar.bar_index,
-                price_i64=bar.close_i64,
-            )
-            active_level_id = "L0"
-            active_promotion_id = None
-
-        promotion = next(
-            (
-                (object_id, value)
-                for object_id, value in sorted(
-                    new_centers,
-                    key=lambda item: (
-                        int(item[1].get("end_bar_index", -1)),
-                        item[0],
-                    ),
-                )
-                if object_id not in promotion_candidate_ids
-                and value.get("confirmed") is True
-                and value.get("analysis_level", "segment") == "segment"
-                and value.get("component_kind", "segment") == "segment"
-                and int(value.get("component_count", 0)) >= 9
-            ),
-            None,
-        )
-        if promotion is not None and active_level_id == "L0":
-            object_id, center = promotion
-            promotion_candidate_ids.add(object_id)
-            anchor = int(center.get("end_bar_index", bar.bar_index))
-            price = int(
-                center.get(
-                    "z_i64",
-                    (
-                        int(center.get("zd_i64", bar.close_i64))
-                        + int(center.get("zg_i64", bar.close_i64))
-                    )
-                    // 2,
-                )
-            )
-            output.transition(
-                bar,
-                "same_level_promotion_candidate",
-                "NINE_COMPONENT_HIGHER_LEVEL_CENTER_CANDIDATE",
-                object_id,
-                anchor_bar_index=anchor,
-                price_i64=price,
-                details={
-                    "component_count": int(center["component_count"]),
-                    "promotion_status": "candidate",
-                    "small_level_action": "wait_for_confirmed_level_center",
-                },
-            )
-            output.chart_event(
-                bar,
-                "promote_level_candidate",
-                "NINE_COMPONENT_HIGHER_LEVEL_CENTER_CANDIDATE",
-                object_id,
-                anchor_bar_index=anchor,
-                price_i64=price,
-                details={
-                    "component_count": int(center["component_count"]),
-                    "promotion_status": "candidate",
-                    "from_level_id": "L0",
-                    "to_level_id": "L1",
-                },
-            )
-
-        confirmed_promotion = next(
-            (
-                (object_id, value)
-                for object_id, value in sorted(
-                    new_level_centers,
-                    key=lambda item: (
-                        int(item[1].get("confirmed_at_bar_index") or -1),
-                        item[0],
-                    ),
-                )
-                if value.get("confirmed") is True
-                and value.get("parent_level_id") == active_level_id
-                and isinstance(value.get("promoted_from_center_id"), str)
-                and value.get("promoted_from_center_id") in active_centers
-                and int(
-                    active_centers[str(value["promoted_from_center_id"])].get("component_count", 0)
-                )
-                >= 9
-            ),
-            None,
-        )
-        if confirmed_promotion is not None:
-            object_id, center = confirmed_promotion
-            source_center_id = str(center["promoted_from_center_id"])
-            source_center = active_centers[source_center_id]
-            target_level_id = str(center.get("level_id", ""))
-            if not target_level_id.startswith("L") or target_level_id == active_level_id:
-                raise ValueError(
-                    "confirmed level promotion must advance to another structural level"
-                )
-            anchor = int(center.get("end_bar_index", bar.bar_index))
-            price = (
-                int(center.get("zd_i64", bar.close_i64)) + int(center.get("zg_i64", bar.close_i64))
-            ) // 2
-            details = {
-                "component_count": int(source_center["component_count"]),
-                "promotion_status": "confirmed",
-                "migration_status": "waiting_higher_level_sequence",
-                "from_level_id": active_level_id,
-                "to_level_id": target_level_id,
-                "promoted_from_center_id": source_center_id,
-            }
-            stage_id = output.transition(
-                bar,
-                "same_level_promoted_waiting_sequence",
-                "CONFIRMED_HIGHER_LEVEL_CENTER_PROMOTION",
-                object_id,
-                anchor_bar_index=anchor,
-                price_i64=price,
-                details=details,
-            )
-            close_position(
-                bar,
-                "CONFIRMED_HIGHER_LEVEL_CENTER_PROMOTION",
-                object_id,
-                stage_id,
-                anchor_bar_index=anchor,
-                price_i64=price,
-            )
-            output.chart_event(
-                bar,
-                "promote_level",
-                "CONFIRMED_HIGHER_LEVEL_CENTER_PROMOTION",
-                object_id,
-                anchor_bar_index=anchor,
-                price_i64=price,
-                details=details,
-            )
-            active_level_id = target_level_id
-            active_promotion_id = object_id
-            sequence.clear()
-            pending_branch = None
-            continue
-
         for object_id, value in sorted(
-            new_segments,
+            new_movements,
             key=lambda item: (
                 int(item[1].get("end_bar_index", -1)),
                 int(item[1].get("start_bar_index", -1)),
                 item[0],
             ),
         ):
-            append_segment(bar, object_id, value)
+            append_movement(bar, object_id, value)
 
         if active_level_id != "L0":
             continue
@@ -5531,9 +5567,12 @@ def _run_same_level_decomposition_program(
             divergence = active_divergences.get(divergence_id)
             if divergence is None or divergence.get("confirmed") is not True:
                 continue
-            endpoint = int(divergence.get("bar_index", -1))
             current = next(
-                (unit for unit in reversed(sequence) if unit["end_bar_index"] == endpoint),
+                (
+                    unit
+                    for unit in reversed(sequence)
+                    if unit["object_id"] == divergence.get("comparison_current_object_id")
+                ),
                 None,
             )
             if current is None or sequence[-1]["sequence_index"] - current["sequence_index"] > 1:
@@ -5546,7 +5585,7 @@ def _run_same_level_decomposition_program(
                 ),
                 None,
             )
-            matched = matching_divergence(current)
+            matched = None if reference is None else matching_divergence(reference, current)
             if reference is not None and matched is not None and matched[0] == divergence_id:
                 reverse_operation(bar, reference, current, matched)
 

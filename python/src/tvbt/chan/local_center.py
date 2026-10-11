@@ -384,9 +384,7 @@ def _restart_position(
     return retest_position
 
 
-def _incoming_exit_role(
-    previous: LocalCenter | None, first_seed: CenterUnit
-) -> EntryRole | None:
+def _incoming_exit_role(previous: LocalCenter | None, first_seed: CenterUnit) -> EntryRole | None:
     if previous is None or previous.exit_id != first_seed.id:
         return None
     if previous.break_direction == "up" and first_seed.direction == "up":

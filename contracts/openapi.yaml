@@ -1441,7 +1441,7 @@ components:
                   display_name: {type: string, minLength: 1}
                   pane: {enum: [main, indicator]}
                   series_type: {enum: [line, histogram, semantic_objects]}
-                  object_type: {enum: [processed_bar, fractal, bi, bi_state, segment, local_center, center_connection, center_audit_event, movement_state, center_monitor, divergence, trade_point, strategy_state, stage_signal, trade_signal, chart_event, risk_decision]}
+                  object_type: {enum: [processed_bar, fractal, bi, bi_state, segment, local_center, center_connection, center_audit_event, movement_state, center_monitor, recursive_movement, recursive_center, recursive_membership, divergence, trade_point, strategy_state, stage_signal, trade_signal, chart_event, risk_decision]}
             warmup:
               type: object
               additionalProperties: false
@@ -1599,6 +1599,22 @@ components:
         trade_points:
           type: array
           items: {$ref: "#/components/schemas/ChanSignalPoint"}
+        recursive_movements:
+          type: array
+          items: {$ref: "#/components/schemas/ChanRecursiveMovement"}
+        recursive_centers:
+          type: array
+          items: {$ref: "#/components/schemas/ChanRecursiveCenter"}
+        recursive_memberships:
+          type: array
+          items: {$ref: "#/components/schemas/ChanRecursiveMembership"}
+
+    ChanRecursiveMovement:
+      $ref: "schemas/recursive-structure.schema.json#/$defs/movement"
+    ChanRecursiveCenter:
+      $ref: "schemas/recursive-structure.schema.json#/$defs/center"
+    ChanRecursiveMembership:
+      $ref: "schemas/recursive-structure.schema.json#/$defs/membership"
 
     ChanProcessedBar:
       type: object
@@ -1965,7 +1981,7 @@ components:
         macd_parameter_profile: {type: [string, "null"], enum: [macd_12_26_9_histogram_x2, null]}
         c_contains_type3: {type: [boolean, "null"]}
         c_meets_sublevel: {type: [boolean, "null"]}
-        c_sublevel_profile: {type: [string, "null"], enum: [bi_two_confirmed_centers_type3_v1, null]}
+        c_sublevel_profile: {type: [string, "null"], enum: [bi_two_confirmed_centers_type3_v1, recursive_completed_movement_type3_v2, null]}
         c_sublevel_center_ids: {type: array, items: {type: string}}
         c_type3_departure_id: {type: [string, "null"]}
         c_type3_retest_id: {type: [string, "null"]}
@@ -1981,7 +1997,7 @@ components:
         lower_level_turn_object_id: {type: [string, "null"]}
         catalog_event: {type: [string, "null"], enum: [B1_candidate, B1_confirmed, B1_invalidated, S1_candidate, S1_confirmed, S1_invalidated, null]}
         catalog_algorithm_id: {type: [string, "null"], enum: [ALG-SIG-001, null]}
-        evidence_profile: {type: string, const: chan108_single_scope_v1}
+        evidence_profile: {type: string, enum: [chan108_single_scope_v1, fixed_same_level_recursive_v2]}
         comparison_reference_object_id: {type: [string, "null"]}
         comparison_current_object_id: {type: [string, "null"]}
         comparison_rule: {type: [string, "null"]}
@@ -2008,7 +2024,7 @@ components:
         confirmation_latency_bars: {type: integer, minimum: 0}
         reference_center_ordinal: {type: [integer, "null"], minimum: 1}
         older_center_count: {type: [integer, "null"], minimum: 0}
-        center_chain_profile: {type: [string, "null"], enum: [confirmed_same_level_centers_known_at_signal_v1, null]}
+        center_chain_profile: {type: [string, "null"], enum: [confirmed_same_level_centers_known_at_signal_v1, fixed_same_level_recursive_v2, null]}
         confirmed: {type: boolean}
         confirmed_at_bar_index: {type: [integer, "null"], minimum: 0}
         known_at_bar_index: {type: integer, minimum: 0}

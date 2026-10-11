@@ -23,7 +23,7 @@ test('zoomed-out historical windows retain left segments, higher centers and MAC
         { name: 'histogram', display_name: 'MACD', pane: 'indicator', series_type: 'histogram' },
       ] } }],
     strategySources: [{ source_type: 'StrategySource', source_id: 'chan', job_id: 'job-chan', status: 'completed', visible: true, parameters: {},
-      category_visibility: { bi: false, fractals: false, segments: true, local_centers: false, level_centers: true, divergences: false, trade_points: false },
+      category_visibility: { bi: false, fractals: false, segments: true, segment_boundary_confirmations: true, center_objects: true, segment_centers: true, bi_centers: false, divergences: false, trade_points: false },
       definition: { ...baseDefinition, kind: 'chan', algorithm_id: 'chan_engineering', name: '缠论', outputs: [] } }],
   }
   await page.addInitScript((value) => {
@@ -76,10 +76,10 @@ test('zoomed-out historical windows retain left segments, higher centers and MAC
         { object_id: 'right-center', start_bar_index: 10200, end_bar_index: 11800 },
       ].filter((s) => s.start_bar_index <= to && s.end_bar_index >= from)
         .map((s) => ({ ...s, object_revision: 1, start_time: timestamp(s.start_bar_index), end_time: timestamp(s.end_bar_index),
-          zd_i64: 2750, zg_i64: 2830, confirmed: true, level_id: 'L1', status: 'confirmed' }))
+          zd_i64: 2750, zg_i64: 2830, level: 1, status: 'active', seed_refs: [], component_refs: [], known_at_bar_index: to }))
       await route.fulfill({ json: { ...base, result_kind: 'chan', objects: {
         processed_bars: [], fractals: [], bi: [], bi_states: [], segments, local_centers: [], center_connections: [],
-        center_audit_events: [], level_centers: centers, level_movements: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [],
+        center_audit_events: [], recursive_centers: centers, recursive_movements: [], recursive_memberships: [], movement_states: [], center_monitors: [], divergences: [], trade_points: [],
       } } }); return
     }
     await route.fulfill({ status: 404, json: {} })
@@ -98,14 +98,14 @@ test('zoomed-out historical windows retain left segments, higher centers and MAC
   await page.evaluate((size) => (window as any).chartWindowChart.timeScale().setVisibleLogicalRange({ from: 0, to: size-1 }), count)
   await expect.poll(async () => page.evaluate(() => {
     const geometry = (window as any).chartWindowPrimitive.geometry()
-    return { segments: geometry.segments.length, centers: geometry.levelCenters.length }
+    return { segments: geometry.segments.length, centers: geometry.recursiveCenters.length }
   })).toEqual({ segments: 20, centers: 3 })
   expect(await page.evaluate(() => {
     const geometry = (window as any).chartWindowPrimitive.geometry()
     // The first candle's center can sit half a bar outside the left clip edge.
     return geometry.segments[0].end.x > 0 && geometry.segments[0].end.x < 400
-      && geometry.levelCenters[0].left > 0 && geometry.levelCenters[0].left < 400
-      && geometry.levelCenters[0].bottom - geometry.levelCenters[0].top > 10
+      && geometry.recursiveCenters[0].left > 0 && geometry.recursiveCenters[0].left < 400
+      && Math.abs(geometry.recursiveCenters[0].bottom - geometry.recursiveCenters[0].top) > 10
   })).toBe(true)
   await expect.poll(async () => page.evaluate(() => {
     const histogram = (window as any).chartWindowChart.panes()[1].getSeries().at(-1)

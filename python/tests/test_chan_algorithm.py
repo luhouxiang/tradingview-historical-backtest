@@ -119,6 +119,9 @@ def test_definition_documents_how_go_and_vue_should_call_chan() -> None:
         "center_monitor",
         "divergence",
         "trade_point",
+        "recursive_movement",
+        "recursive_center",
+        "recursive_membership",
     }
     logger.info(spec["outputs"])
 

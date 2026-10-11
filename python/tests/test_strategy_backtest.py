@@ -2440,7 +2440,6 @@ def test_centre_oscillation_spread_stops_on_S3_center_or_source_revision(
             )
 
 
-@pytest.mark.skip(reason="withdrawn with the recursive higher-level center graph in milestone 15F")
 def test_same_level_decomposition_compares_Ai_Ai_plus_2_and_branches_on_Ai_plus_3(
     tmp_path: Path, monkeypatch: object
 ) -> None:
@@ -2477,7 +2476,7 @@ def test_same_level_decomposition_compares_Ai_Ai_plus_2_and_branches_on_Ai_plus_
     ) -> object:
         return SimpleNamespace(
             known_at_bar_index=known_at,
-            object_type="segment",
+            object_type="recursive_movement",
             object_id=object_id,
             operation="upsert",
             payload_json=json.dumps(
@@ -2490,6 +2489,8 @@ def test_same_level_decomposition_compares_Ai_Ai_plus_2_and_branches_on_Ai_plus_
                     "start_price_i64": start_price,
                     "end_price_i64": end_price,
                     "direction": direction,
+                    "level": 0,
+                    "status": "completed",
                 }
             ),
         )
@@ -2506,6 +2507,38 @@ def test_same_level_decomposition_compares_Ai_Ai_plus_2_and_branches_on_Ai_plus_
         # A6 相对 A4 不创新高，反向为做空。
         segment(6, "A6-up", 5, 6, 140, 155, "up"),
     ]
+    # The strategy fixture supplies already certified movement events; the
+    # producer proof and seed intersection are tested independently. A parent
+    # observer must never stop, close, or reassign the L0 sequence.
+    fake_events.extend(
+        [
+            SimpleNamespace(
+                known_at_bar_index=4,
+                object_type="recursive_center",
+                object_id="parent-L1",
+                operation="upsert",
+                payload_json=json.dumps(
+                    {
+                        "level": 1,
+                        "end_bar_index": 3,
+                        "zd_i64": 100,
+                        "zg_i64": 150,
+                        "seed_refs": [
+                            {"object_id": value, "object_revision": 1}
+                            for value in ["A1-down", "A2-up", "A3-down"]
+                        ],
+                    }
+                ),
+            ),
+            SimpleNamespace(
+                known_at_bar_index=7,
+                object_type="recursive_center",
+                object_id="parent-L1",
+                operation="delete",
+                payload_json="{}",
+            ),
+        ]
+    )
     monkeypatch.setattr(
         "tvbt.strategy.run_chan",
         lambda *args, **kwargs: (
@@ -2541,6 +2574,15 @@ def test_same_level_decomposition_compares_Ai_Ai_plus_2_and_branches_on_Ai_plus_
         "open_short",
     ]
     assert [value["quantity"] for value in result.trade_signals] == [2, 2, 2]
+    assert {"recursive_parent_formed", "recursive_parent_invalidated"} <= {
+        value["event_type"] for value in result.chart_events
+    }
+    assert not any("PROMOTION" in value["reason_code"] for value in result.trade_signals)
+    assert all(
+        value.get("decomposition_unit", "completed_recursive_movement")
+        == "completed_recursive_movement"
+        for value in result.strategy_states
+    )
     assert result.trade_signals[0]["reason_code"] == (
         "SAME_LEVEL_LATER_MOVEMENT_FAILED_NEW_EXTREME"
     )
